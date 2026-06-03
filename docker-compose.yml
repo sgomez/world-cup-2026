@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: world-cup-2026-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: world_cup_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  inbucket:
+    image: inbucket/inbucket:latest
+    container_name: world-cup-2026-inbucket
+    restart: always
+    ports:
+      - "9000:9000"  # Web UI
+      - "2500:2500"  # SMTP Server
+      - "1100:1100"  # POP3 Server
+
+volumes:
+  postgres_data:
