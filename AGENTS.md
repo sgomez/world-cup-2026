@@ -17,3 +17,19 @@ Default canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `read
 ### Domain docs
 
 Single-context: `CONTEXT.md` + `docs/adr/` at repo root. See `docs/agents/domain.md`.
+
+### implement-issue
+
+Local issue implementation — replaces sandcastle. No API key, no containers. See `.agents/skills/implement-issue/SKILL.md`.
+
+### review-pr
+
+Local PR review — replaces agent-review workflow. Posts inline review, marks PR ready. See `.agents/skills/review-pr/SKILL.md`.
+
+### fix-pr
+
+Local PR comment fix — replaces agent-implement-pr workflow. Reads review threads, implements fixes, replies. See `.agents/skills/fix-pr/SKILL.md`.
+
+### update-branch
+
+Local branch update — replaces agent-update-branch workflow. Rebases PR branch onto main. See `.agents/skills/update-branch/SKILL.md`.
