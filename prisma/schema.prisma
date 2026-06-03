@@ -14,8 +14,13 @@ model User {
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
+  role          String    @default("user")
+  banned        Boolean   @default(false)
+  banReason     String?
+  banExpires    DateTime?
   sessions      Session[]
   accounts      Account[]
+  bets          Bet[]
 
   @@unique([email])
   @@map("user")
@@ -27,10 +32,11 @@ model Session {
   token     String
   createdAt DateTime
   updatedAt DateTime
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress       String?
+  userAgent       String?
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy  String?
 
   @@unique([token])
   @@map("session")
@@ -53,6 +59,17 @@ model Account {
   updatedAt             DateTime
 
   @@map("account")
+}
+
+model Bet {
+  id        String   @id @default(cuid())
+  label     String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("bet")
 }
 
 model Verification {
