@@ -90,6 +90,7 @@ export function GroupStage({
           Top 8 qualify — drag to rank
         </p>
         <TeamClassification
+          key={orderedThirdPlaceTeams.map((t) => t.originalId).join(",")}
           teams={orderedThirdPlaceTeams}
           qualifiedCount={8}
           dividerAfter={8}

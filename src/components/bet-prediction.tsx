@@ -32,7 +32,7 @@ export function BetPrediction({
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      updateBetPredictions(betId, state);
+      updateBetPredictions(betId, state).catch(console.error);
     }, 500);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
