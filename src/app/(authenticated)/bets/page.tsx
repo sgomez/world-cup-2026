@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CreateBetForm } from "@/components/create-bet-form";
 import { prisma } from "@/lib/prisma";
@@ -32,16 +33,17 @@ export default async function BetsPage() {
           </div>
         ) : (
           bets.map((bet) => (
-            <div
+            <Link
               key={bet.id}
-              className="rounded-xl border border-white/5 bg-slate-900/60 px-5 py-4"
+              href={`/bets/${bet.id}`}
+              className="block rounded-xl border border-white/5 bg-slate-900/60 px-5 py-4 hover:border-white/10 hover:bg-slate-900/80 transition-colors"
             >
               <p className="font-medium text-white">{bet.label}</p>
               <div className="mt-2 flex gap-4 text-xs text-slate-500">
                 <span>Created {bet.createdAt.toLocaleDateString()}</span>
                 <span>Updated {bet.updatedAt.toLocaleDateString()}</span>
               </div>
-            </div>
+            </Link>
           ))
         )}
       </div>

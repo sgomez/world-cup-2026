@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -25,12 +26,12 @@ export async function createBet(
   if (!label) return { error: "Label is required" };
   if (label.length > 200) return { error: "Label too long (max 200 chars)" };
 
-  await prisma.bet.create({
+  const bet = await prisma.bet.create({
     data: { label, userId: session.user.id },
   });
 
   revalidatePath("/bets");
-  return { success: true };
+  redirect(`/bets/${bet.id}`);
 }
 
 export async function updateBetPredictions(
