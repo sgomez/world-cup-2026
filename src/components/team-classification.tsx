@@ -94,11 +94,13 @@ function TeamRowOverlay({ team }: { team: SortableTeam }) {
 }
 
 export function TeamClassification({
+  id,
   teams: initialTeams,
   qualifiedCount,
   dividerAfter,
   onOrderChange,
 }: {
+  id: string;
   teams: SortableTeam[];
   qualifiedCount: number;
   dividerAfter?: number;
@@ -136,6 +138,7 @@ export function TeamClassification({
 
   return (
     <DndContext
+      id={id}
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}

@@ -40,6 +40,7 @@ function GroupCard({
         Group {group.group}
       </p>
       <TeamClassification
+        id={`group-${group.group}`}
         teams={orderedTeams}
         qualifiedCount={2}
         onOrderChange={onOrderChange}
@@ -90,6 +91,7 @@ export function GroupStage({
           Top 8 qualify — drag to rank
         </p>
         <TeamClassification
+          id="third-place"
           key={orderedThirdPlaceTeams.map((t) => t.originalId).join(",")}
           teams={orderedThirdPlaceTeams}
           qualifiedCount={8}
