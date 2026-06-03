@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin, magicLink } from "better-auth/plugins";
+import { adminAc } from "better-auth/plugins/admin/access";
 import { sendMagicLinkEmail } from "./email";
 import { prisma } from "./prisma";
 
@@ -17,6 +18,10 @@ export const auth = betterAuth({
     admin({
       adminRoles: ["admin", "super_admin"],
       defaultRole: "user",
+      roles: {
+        admin: adminAc,
+        super_admin: adminAc,
+      },
     }),
   ],
   databaseHooks: {
