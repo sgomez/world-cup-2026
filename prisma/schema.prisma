@@ -62,12 +62,13 @@ model Account {
 }
 
 model Bet {
-  id        String   @id @default(cuid())
-  label     String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(cuid())
+  label            String
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupPredictions Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@map("bet")
 }
