@@ -126,13 +126,11 @@ export function TeamClassification({
     const { active, over } = event;
     setActiveId(null);
     if (over && active.id !== over.id) {
-      setTeams((items) => {
-        const oldIndex = items.findIndex((t) => t.id === active.id);
-        const newIndex = items.findIndex((t) => t.id === over.id);
-        const next = arrayMove(items, oldIndex, newIndex);
-        onOrderChange(next.map((t) => t.id));
-        return next;
-      });
+      const oldIndex = teams.findIndex((t) => t.id === active.id);
+      const newIndex = teams.findIndex((t) => t.id === over.id);
+      const next = arrayMove(teams, oldIndex, newIndex);
+      setTeams(next);
+      onOrderChange(next.map((t) => t.id));
     }
   }
 
