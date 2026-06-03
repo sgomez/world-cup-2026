@@ -61,10 +61,10 @@ export function GroupStage({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_220px] md:items-start">
       <div
         className="grid gap-3"
-        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(175px, 1fr))" }}
+        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}
       >
         {groups.map((group) => (
           <GroupCard
@@ -82,7 +82,7 @@ export function GroupStage({
         ))}
       </div>
 
-      <div className="rounded-xl border border-white/5 bg-slate-900/60 px-3 pb-3 pt-2">
+      <div className="rounded-xl border border-white/5 bg-slate-900/60 px-3 pb-3 pt-2 md:sticky md:top-4">
         <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
           Best 3rd Place Teams
         </p>

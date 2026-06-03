@@ -55,7 +55,7 @@ function SortableTeamRow({
       {...attributes}
       {...listeners}
       className={cn(
-        "flex flex-1 cursor-grab touch-none items-center gap-2 rounded border px-2 py-1.5 text-sm",
+        "flex min-w-0 flex-1 cursor-grab touch-none items-center gap-2 rounded border px-2 py-1.5 text-sm",
         "transition-[box-shadow,opacity,background-color] duration-200",
         "hover:shadow-sm active:cursor-grabbing",
         isDragging && "z-50 opacity-40",
@@ -154,7 +154,7 @@ export function TeamClassification({
                   <div className="h-px flex-1 bg-rose-700/50" />
                 </div>
               )}
-              <div className="flex items-center gap-1.5">
+              <div className="flex min-w-0 items-center gap-1.5">
                 <span className="w-4 shrink-0 text-center text-[10px] text-slate-600">
                   {index + 1}
                 </span>
