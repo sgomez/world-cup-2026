@@ -15,6 +15,7 @@ export async function createBet(
 
   const label = formData.get("label")?.toString().trim();
   if (!label) return { error: "Label is required" };
+  if (label.length > 200) return { error: "Label too long (max 200 chars)" };
 
   await prisma.bet.create({
     data: { label, userId: session.user.id },
