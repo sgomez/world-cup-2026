@@ -22,7 +22,13 @@ import { redirect } from "next/navigation";
 import type { TournamentState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { closeBet, createBet, removeBet, reopenBet, updateBetPredictions } from "./bets";
+import {
+  closeBet,
+  createBet,
+  removeBet,
+  reopenBet,
+  updateBetPredictions,
+} from "./bets";
 
 const mockGetSession = vi.mocked(getSession);
 const mockRedirect = vi.mocked(redirect);
