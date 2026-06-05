@@ -10,6 +10,13 @@ import { getSession } from "@/lib/session";
 export type { PredictionState } from "@/lib/prediction-state";
 export type BetActionState = { error?: string; success?: boolean } | null;
 
+async function getBetForOwner(betId: string, userId: string) {
+  const bet = await prisma.bet.findUnique({ where: { id: betId } });
+  if (!bet) return { error: "Bet not found" as const };
+  if (bet.userId !== userId) return { error: "Not authorized" as const };
+  return { bet };
+}
+
 export async function createBet(
   _prev: BetActionState,
   formData: FormData,
@@ -43,6 +50,38 @@ export async function removeBet(betId: string): Promise<BetActionState> {
   return { success: true };
 }
 
+export async function closeBet(betId: string): Promise<BetActionState> {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  const result = await getBetForOwner(betId, session.user.id);
+  if ("error" in result) return { error: result.error };
+
+  if (BET_DEADLINE.getTime() < Date.now())
+    return { error: "Deadline has passed" };
+
+  await prisma.bet.update({ where: { id: betId }, data: { status: "closed" } });
+  revalidatePath(`/bets/${betId}`);
+  revalidatePath("/bets");
+  return { success: true };
+}
+
+export async function reopenBet(betId: string): Promise<BetActionState> {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  const result = await getBetForOwner(betId, session.user.id);
+  if ("error" in result) return { error: result.error };
+
+  if (BET_DEADLINE.getTime() < Date.now())
+    return { error: "Deadline has passed" };
+
+  await prisma.bet.update({ where: { id: betId }, data: { status: "draft" } });
+  revalidatePath(`/bets/${betId}`);
+  revalidatePath("/bets");
+  return { success: true };
+}
+
 export async function updateBetPredictions(
   betId: string,
   state: TournamentState,
@@ -53,6 +92,7 @@ export async function updateBetPredictions(
   const bet = await prisma.bet.findUnique({ where: { id: betId } });
   if (!bet) return { error: "Bet not found" };
   if (bet.userId !== session.user.id) return { error: "Not authorized" };
+  if (bet.status === "closed") return { error: "Bet is closed" };
 
   const groupPredictions: PredictionState = {
     groupOrders: state.groupOrders,

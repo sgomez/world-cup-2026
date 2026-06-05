@@ -95,6 +95,7 @@ function MatchCard({
   team2,
   winnerId,
   onSelectWinner,
+  readOnly,
 }: {
   matchNumber: number;
   matchId: string;
@@ -102,8 +103,9 @@ function MatchCard({
   team2: Team | null;
   winnerId: string | null;
   onSelectWinner: (teamId: string) => void;
+  readOnly: boolean;
 }) {
-  const canSelect = team1 !== null && team2 !== null;
+  const canSelect = team1 !== null && team2 !== null && !readOnly;
   return (
     <div className="rounded-lg bg-white/90 p-2 shadow-md dark:bg-slate-800/90">
       <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
@@ -142,12 +144,14 @@ function RoundSection({
   state,
   dispatch,
   accent = "cyan",
+  readOnly = false,
 }: {
   title: string;
   round: KnockoutRound;
   state: TournamentState;
   dispatch: Dispatch<TournamentAction>;
   accent?: keyof typeof accentColors;
+  readOnly?: boolean;
 }) {
   const teamsLookup = getAllTeamsLookup();
   const matchIds = KNOCKOUT_MATCH_IDS[round];
@@ -198,6 +202,7 @@ function RoundSection({
           <MatchCard
             key={match.matchId}
             {...match}
+            readOnly={readOnly}
             onSelectWinner={(teamId) =>
               handleSelectWinner(match.matchId, teamId)
             }
@@ -211,9 +216,11 @@ function RoundSection({
 export function KnockoutStage({
   state,
   dispatch,
+  readOnly = false,
 }: {
   state: TournamentState;
   dispatch: Dispatch<TournamentAction>;
+  readOnly?: boolean;
 }) {
   return (
     <div className="space-y-4">
@@ -223,6 +230,7 @@ export function KnockoutStage({
         state={state}
         dispatch={dispatch}
         accent="cyan"
+        readOnly={readOnly}
       />
       <RoundSection
         title="Round of 16"
@@ -230,6 +238,7 @@ export function KnockoutStage({
         state={state}
         dispatch={dispatch}
         accent="cyan"
+        readOnly={readOnly}
       />
       <RoundSection
         title="Quarter Finals"
@@ -237,6 +246,7 @@ export function KnockoutStage({
         state={state}
         dispatch={dispatch}
         accent="amber"
+        readOnly={readOnly}
       />
       <div className="grid gap-4 sm:grid-cols-2">
         <RoundSection
@@ -245,6 +255,7 @@ export function KnockoutStage({
           state={state}
           dispatch={dispatch}
           accent="amber"
+          readOnly={readOnly}
         />
         <RoundSection
           title="3rd Place Match"
@@ -252,6 +263,7 @@ export function KnockoutStage({
           state={state}
           dispatch={dispatch}
           accent="rose"
+          readOnly={readOnly}
         />
       </div>
       <RoundSection
@@ -260,6 +272,7 @@ export function KnockoutStage({
         state={state}
         dispatch={dispatch}
         accent="emerald"
+        readOnly={readOnly}
       />
     </div>
   );
