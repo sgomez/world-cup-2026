@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
+import combinationsData from "../../data/worldcup.combinations.json";
 import {
   computeR32Matches,
   createInitialState,
   getOrderedThirdPlaceTeams,
   predictionReducer,
 } from "./prediction-state";
-import combinationsData from "../../data/worldcup.combinations.json";
 
 describe("createInitialState", () => {
   it("builds groupOrders from saved predictions when present", () => {
@@ -35,7 +35,10 @@ describe("createInitialState", () => {
     const winner = state.groupOrders.A[1]; // 2A runner-up
     // R32-73: 2A vs 2B
     const restored = createInitialState(
-      { groupOrders: state.groupOrders, thirdPlaceOrder: state.thirdPlaceOrder },
+      {
+        groupOrders: state.groupOrders,
+        thirdPlaceOrder: state.thirdPlaceOrder,
+      },
       { "R32-73": winner },
     );
     expect(restored.knockoutMatches["R32-73"].winnerId).toBe(winner);
@@ -46,7 +49,10 @@ describe("createInitialState", () => {
   it("discards stale knockout winners when team is not in match", () => {
     const state = createInitialState(null);
     const restored = createInitialState(
-      { groupOrders: state.groupOrders, thirdPlaceOrder: state.thirdPlaceOrder },
+      {
+        groupOrders: state.groupOrders,
+        thirdPlaceOrder: state.thirdPlaceOrder,
+      },
       { "R32-73": "nonexistent-team-xyz" },
     );
     expect(restored.knockoutMatches["R32-73"].winnerId).toBeNull();
@@ -59,7 +65,10 @@ describe("createInitialState", () => {
     const r75Winner = state.groupOrders.F[0]; // 1F (R32-75 is 1F vs 2C)
     // R32-73 winner goes to R16-90 slot 1; R32-75 winner goes to R16-90 slot 2
     const restored = createInitialState(
-      { groupOrders: state.groupOrders, thirdPlaceOrder: state.thirdPlaceOrder },
+      {
+        groupOrders: state.groupOrders,
+        thirdPlaceOrder: state.thirdPlaceOrder,
+      },
       { "R32-73": r32Winner, "R32-75": r75Winner },
     );
     expect(restored.knockoutMatches["R16-90"].team1Id).toBe(r32Winner);
@@ -71,7 +80,11 @@ describe("computeR32Matches", () => {
   it("R32-73 has 2A vs 2B (runner-ups of groups A and B)", () => {
     const state = createInitialState(null);
     const { groupOrders, thirdPlaceOrder } = state;
-    const matches = computeR32Matches(groupOrders, thirdPlaceOrder, combinationsData);
+    const matches = computeR32Matches(
+      groupOrders,
+      thirdPlaceOrder,
+      combinationsData,
+    );
     expect(matches["R32-73"].team1Id).toBe(groupOrders.A[1]); // 2A
     expect(matches["R32-73"].team2Id).toBe(groupOrders.B[1]); // 2B
   });
@@ -81,7 +94,11 @@ describe("computeR32Matches", () => {
     const { groupOrders, thirdPlaceOrder } = state;
     // Default top 8 = 3rd-a..3rd-h → key "abcdefgh"
     // combinations["abcdefgh"]["1a"] = "3h" → group H's third
-    const matches = computeR32Matches(groupOrders, thirdPlaceOrder, combinationsData);
+    const matches = computeR32Matches(
+      groupOrders,
+      thirdPlaceOrder,
+      combinationsData,
+    );
     expect(matches["R32-79"].team1Id).toBe(groupOrders.A[0]); // 1A
     expect(matches["R32-79"].team2Id).toBe(groupOrders.H[2]); // 3H
   });
@@ -90,7 +107,11 @@ describe("computeR32Matches", () => {
     const state = createInitialState(null);
     const { groupOrders, thirdPlaceOrder } = state;
     // combinations["abcdefgh"]["1g"] = "3a" → group A's third
-    const matches = computeR32Matches(groupOrders, thirdPlaceOrder, combinationsData);
+    const matches = computeR32Matches(
+      groupOrders,
+      thirdPlaceOrder,
+      combinationsData,
+    );
     expect(matches["R32-82"].team2Id).toBe(groupOrders.A[2]); // 3A
   });
 
@@ -99,8 +120,18 @@ describe("computeR32Matches", () => {
     const { groupOrders } = state;
     // Top 8 = l,k,j,i,h,g,f,e → sorted → "efghijkl"
     const newOrder = [
-      "3rd-l","3rd-k","3rd-j","3rd-i","3rd-h","3rd-g","3rd-f","3rd-e",
-      "3rd-d","3rd-c","3rd-b","3rd-a",
+      "3rd-l",
+      "3rd-k",
+      "3rd-j",
+      "3rd-i",
+      "3rd-h",
+      "3rd-g",
+      "3rd-f",
+      "3rd-e",
+      "3rd-d",
+      "3rd-c",
+      "3rd-b",
+      "3rd-a",
     ];
     const matches = computeR32Matches(groupOrders, newOrder, combinationsData);
     // combinations["efghijkl"]["1a"] = "3e" → group E's third
@@ -109,7 +140,11 @@ describe("computeR32Matches", () => {
 
   it("produces 16 matches with IDs R32-73 through R32-88", () => {
     const state = createInitialState(null);
-    const matches = computeR32Matches(state.groupOrders, state.thirdPlaceOrder, combinationsData);
+    const matches = computeR32Matches(
+      state.groupOrders,
+      state.thirdPlaceOrder,
+      combinationsData,
+    );
     expect(Object.keys(matches)).toHaveLength(16);
     for (let n = 73; n <= 88; n++) {
       expect(matches[`R32-${n}`]).toBeDefined();
@@ -132,8 +167,18 @@ describe("predictionReducer", () => {
   it("SET_THIRD_PLACE_ORDER updates thirdPlaceOrder", () => {
     const state = createInitialState(null);
     const newOrder = [
-      "3rd-l","3rd-k","3rd-j","3rd-i","3rd-h","3rd-g",
-      "3rd-f","3rd-e","3rd-d","3rd-c","3rd-b","3rd-a",
+      "3rd-l",
+      "3rd-k",
+      "3rd-j",
+      "3rd-i",
+      "3rd-h",
+      "3rd-g",
+      "3rd-f",
+      "3rd-e",
+      "3rd-d",
+      "3rd-c",
+      "3rd-b",
+      "3rd-a",
     ];
     const next = predictionReducer(state, {
       type: "SET_THIRD_PLACE_ORDER",
@@ -185,16 +230,28 @@ describe("predictionReducer", () => {
     const [a0, a1, a2, a3] = state.groupOrders.A;
     const [b0, b1] = state.groupOrders.B;
     // Set R32-73 winner (a1 = 2A)
-    state = predictionReducer(state, { type: "SET_KNOCKOUT_WINNER", matchId: "R32-73", winnerId: a1 });
+    state = predictionReducer(state, {
+      type: "SET_KNOCKOUT_WINNER",
+      matchId: "R32-73",
+      winnerId: a1,
+    });
     // Set R32-75 winner (b0 = 1F... actually R32-75 is 1F vs 2C, not group B)
     // Let me just set R16-90 winner manually... but we can't do that directly
     // Instead: need both teams in R16-90 to set a winner
     // R16-90: W73 vs W75. R32-75 = 1F vs 2C
     // Let me use the F group (group F)
     const [f0] = state.groupOrders.F;
-    state = predictionReducer(state, { type: "SET_KNOCKOUT_WINNER", matchId: "R32-75", winnerId: f0 });
+    state = predictionReducer(state, {
+      type: "SET_KNOCKOUT_WINNER",
+      matchId: "R32-75",
+      winnerId: f0,
+    });
     // Now R16-90 has team1=a1, team2=f0 — set winner to a1
-    state = predictionReducer(state, { type: "SET_KNOCKOUT_WINNER", matchId: "R16-90", winnerId: a1 });
+    state = predictionReducer(state, {
+      type: "SET_KNOCKOUT_WINNER",
+      matchId: "R16-90",
+      winnerId: a1,
+    });
     expect(state.knockoutMatches["R16-90"].winnerId).toBe(a1);
     expect(state.knockoutMatches["QF-97"].team2Id).toBe(a1);
 
@@ -228,8 +285,18 @@ describe("predictionReducer", () => {
 
     // Change top-8 order so group A's 3rd is no longer in top 8
     const newOrder = [
-      "3rd-l","3rd-k","3rd-j","3rd-i","3rd-h","3rd-g","3rd-f","3rd-e",
-      "3rd-d","3rd-c","3rd-b","3rd-a",
+      "3rd-l",
+      "3rd-k",
+      "3rd-j",
+      "3rd-i",
+      "3rd-h",
+      "3rd-g",
+      "3rd-f",
+      "3rd-e",
+      "3rd-d",
+      "3rd-c",
+      "3rd-b",
+      "3rd-a",
     ];
     const next = predictionReducer(withWinner, {
       type: "SET_THIRD_PLACE_ORDER",
@@ -282,7 +349,7 @@ describe("predictionReducer", () => {
           winnerId: null,
           loserId: null,
         },
-        "F": {
+        F: {
           id: "F",
           round: "F" as const,
           team1Id: null,
@@ -325,7 +392,7 @@ describe("predictionReducer", () => {
           winnerId: null,
           loserId: null,
         },
-        "F": {
+        F: {
           id: "F",
           round: "F" as const,
           team1Id: null,
@@ -341,7 +408,7 @@ describe("predictionReducer", () => {
       winnerId: "team-b",
     });
     expect(next.knockoutMatches["3RD"].team2Id).toBe("team-a"); // loser → 3RD slot 2
-    expect(next.knockoutMatches["F"].team2Id).toBe("team-b");   // winner → Final slot 2
+    expect(next.knockoutMatches["F"].team2Id).toBe("team-b"); // winner → Final slot 2
   });
 
   it("CLEAR_KNOCKOUT_WINNER clears winner and removes team from downstream slot", () => {
@@ -354,7 +421,10 @@ describe("predictionReducer", () => {
     });
     expect(withWinner.knockoutMatches["R16-90"].team1Id).toBe(winner);
 
-    const cleared = predictionReducer(withWinner, { type: "CLEAR_KNOCKOUT_WINNER", matchId: "R32-73" });
+    const cleared = predictionReducer(withWinner, {
+      type: "CLEAR_KNOCKOUT_WINNER",
+      matchId: "R32-73",
+    });
     expect(cleared.knockoutMatches["R32-73"].winnerId).toBeNull();
     expect(cleared.knockoutMatches["R16-90"].team1Id).toBeNull();
   });
@@ -364,13 +434,28 @@ describe("predictionReducer", () => {
     const [a0, a1] = state.groupOrders.A;
     const [f0] = state.groupOrders.F;
     // Set chain: R32-73 winner → R16-90, then R16-90 winner → QF-97
-    state = predictionReducer(state, { type: "SET_KNOCKOUT_WINNER", matchId: "R32-73", winnerId: a1 });
-    state = predictionReducer(state, { type: "SET_KNOCKOUT_WINNER", matchId: "R32-75", winnerId: f0 });
-    state = predictionReducer(state, { type: "SET_KNOCKOUT_WINNER", matchId: "R16-90", winnerId: a1 });
+    state = predictionReducer(state, {
+      type: "SET_KNOCKOUT_WINNER",
+      matchId: "R32-73",
+      winnerId: a1,
+    });
+    state = predictionReducer(state, {
+      type: "SET_KNOCKOUT_WINNER",
+      matchId: "R32-75",
+      winnerId: f0,
+    });
+    state = predictionReducer(state, {
+      type: "SET_KNOCKOUT_WINNER",
+      matchId: "R16-90",
+      winnerId: a1,
+    });
     expect(state.knockoutMatches["QF-97"].team2Id).toBe(a1);
 
     // Clear R32-73 winner — cascades to clear R16-90 team1 and R16-90 winner, then QF-97 team2
-    state = predictionReducer(state, { type: "CLEAR_KNOCKOUT_WINNER", matchId: "R32-73" });
+    state = predictionReducer(state, {
+      type: "CLEAR_KNOCKOUT_WINNER",
+      matchId: "R32-73",
+    });
     expect(state.knockoutMatches["R32-73"].winnerId).toBeNull();
     expect(state.knockoutMatches["R16-90"].team1Id).toBeNull();
     expect(state.knockoutMatches["R16-90"].winnerId).toBeNull();
@@ -387,7 +472,10 @@ describe("predictionReducer", () => {
     });
     expect(withWinner.knockoutMatches["R32-73"].winnerId).toBe(winner);
     // Clicking the same team again — UI dispatches CLEAR_KNOCKOUT_WINNER (handled by component)
-    const cleared = predictionReducer(withWinner, { type: "CLEAR_KNOCKOUT_WINNER", matchId: "R32-73" });
+    const cleared = predictionReducer(withWinner, {
+      type: "CLEAR_KNOCKOUT_WINNER",
+      matchId: "R32-73",
+    });
     expect(cleared.knockoutMatches["R32-73"].winnerId).toBeNull();
   });
 });
