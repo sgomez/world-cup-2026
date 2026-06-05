@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.migrations
+    restart: no
     environment:
       - 'DOTENV_PRIVATE_KEY_PRODUCTION=${DOTENV_PRIVATE_KEY_PRODUCTION}'
       - 'BETTER_AUTH_URL=${BETTER_AUTH_URL}'
@@ -13,6 +14,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
       - 'DOTENV_PRIVATE_KEY_PRODUCTION=${DOTENV_PRIVATE_KEY_PRODUCTION}'
       - 'BETTER_AUTH_URL=${BETTER_AUTH_URL}'
