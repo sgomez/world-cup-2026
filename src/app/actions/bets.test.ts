@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+vi.mock("@/lib/bet-constants", () => ({
+  BET_DEADLINE: new Date("2026-06-11T19:00:00Z"),
+  MAX_BETS_PER_USER: 3,
+}));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     bet: {
@@ -9,6 +13,7 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      count: vi.fn(),
     },
   },
 }));
@@ -36,6 +41,7 @@ const mockCreate = vi.mocked(prisma.bet.create);
 const mockFindUnique = vi.mocked(prisma.bet.findUnique);
 const mockUpdate = vi.mocked(prisma.bet.update);
 const mockDelete = vi.mocked(prisma.bet.delete);
+const mockCount = vi.mocked(prisma.bet.count);
 
 function mockSession(userId = OWNER_ID) {
   mockGetSession.mockResolvedValue({ user: { id: userId } } as Awaited<
@@ -89,31 +95,79 @@ describe("createBet", () => {
   });
 
   it("returns error when label missing", async () => {
-    mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
-      ReturnType<typeof getSession>
-    >);
-    const fd = new FormData();
-    const result = await createBet(null, fd);
-    expect(result).toEqual({ error: "Label is required" });
-    expect(mockCreate).not.toHaveBeenCalled();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T00:00:00Z"));
+    try {
+      mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
+        ReturnType<typeof getSession>
+      >);
+      const fd = new FormData();
+      const result = await createBet(null, fd);
+      expect(result).toEqual({ error: "Label is required" });
+      expect(mockCreate).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("redirects to /bets/[id] after successful creation", async () => {
-    mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
-      ReturnType<typeof getSession>
-    >);
-    mockCreate.mockResolvedValue({
-      id: BET_ID,
-      label: "My bet",
-      userId: OWNER_ID,
-    } as Awaited<ReturnType<typeof mockCreate>>);
-    const fd = new FormData();
-    fd.append("label", "My bet");
-    await createBet(null, fd);
-    expect(mockCreate).toHaveBeenCalledWith({
-      data: { label: "My bet", userId: OWNER_ID },
-    });
-    expect(mockRedirect).toHaveBeenCalledWith(`/bets/${BET_ID}`);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T00:00:00Z"));
+    try {
+      mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
+        ReturnType<typeof getSession>
+      >);
+      mockCount.mockResolvedValue(0);
+      mockCreate.mockResolvedValue({
+        id: BET_ID,
+        label: "My bet",
+        userId: OWNER_ID,
+      } as Awaited<ReturnType<typeof mockCreate>>);
+      const fd = new FormData();
+      fd.append("label", "My bet");
+      await createBet(null, fd);
+      expect(mockCreate).toHaveBeenCalledWith({
+        data: { label: "My bet", userId: OWNER_ID },
+      });
+      expect(mockRedirect).toHaveBeenCalledWith(`/bets/${BET_ID}`);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("returns error when deadline has passed", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-12T00:00:00Z"));
+    try {
+      mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
+        ReturnType<typeof getSession>
+      >);
+      const fd = new FormData();
+      fd.append("label", "My bet");
+      const result = await createBet(null, fd);
+      expect(result).toEqual({ error: "Deadline passed" });
+      expect(mockCreate).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("returns error when bet limit reached", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T00:00:00Z"));
+    try {
+      mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
+        ReturnType<typeof getSession>
+      >);
+      mockCount.mockResolvedValue(3);
+      const fd = new FormData();
+      fd.append("label", "My bet");
+      const result = await createBet(null, fd);
+      expect(result).toEqual({ error: "Bet limit reached" });
+      expect(mockCreate).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

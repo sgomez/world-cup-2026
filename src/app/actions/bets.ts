@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { BET_DEADLINE } from "@/lib/bet-constants";
+import { BET_DEADLINE, MAX_BETS_PER_USER } from "@/lib/bet-constants";
 import type { PredictionState, TournamentState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -24,9 +24,16 @@ export async function createBet(
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
+  if (new Date() > BET_DEADLINE) return { error: "Deadline passed" };
+
   const label = formData.get("label")?.toString().trim();
   if (!label) return { error: "Label is required" };
   if (label.length > 200) return { error: "Label too long (max 200 chars)" };
+
+  const betCount = await prisma.bet.count({
+    where: { userId: session.user.id },
+  });
+  if (betCount >= MAX_BETS_PER_USER) return { error: "Bet limit reached" };
 
   const bet = await prisma.bet.create({
     data: { label, userId: session.user.id },
