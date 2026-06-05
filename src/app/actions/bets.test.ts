@@ -95,31 +95,44 @@ describe("createBet", () => {
   });
 
   it("returns error when label missing", async () => {
-    mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
-      ReturnType<typeof getSession>
-    >);
-    const fd = new FormData();
-    const result = await createBet(null, fd);
-    expect(result).toEqual({ error: "Label is required" });
-    expect(mockCreate).not.toHaveBeenCalled();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T00:00:00Z"));
+    try {
+      mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
+        ReturnType<typeof getSession>
+      >);
+      const fd = new FormData();
+      const result = await createBet(null, fd);
+      expect(result).toEqual({ error: "Label is required" });
+      expect(mockCreate).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("redirects to /bets/[id] after successful creation", async () => {
-    mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
-      ReturnType<typeof getSession>
-    >);
-    mockCreate.mockResolvedValue({
-      id: BET_ID,
-      label: "My bet",
-      userId: OWNER_ID,
-    } as Awaited<ReturnType<typeof mockCreate>>);
-    const fd = new FormData();
-    fd.append("label", "My bet");
-    await createBet(null, fd);
-    expect(mockCreate).toHaveBeenCalledWith({
-      data: { label: "My bet", userId: OWNER_ID },
-    });
-    expect(mockRedirect).toHaveBeenCalledWith(`/bets/${BET_ID}`);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T00:00:00Z"));
+    try {
+      mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
+        ReturnType<typeof getSession>
+      >);
+      mockCount.mockResolvedValue(0);
+      mockCreate.mockResolvedValue({
+        id: BET_ID,
+        label: "My bet",
+        userId: OWNER_ID,
+      } as Awaited<ReturnType<typeof mockCreate>>);
+      const fd = new FormData();
+      fd.append("label", "My bet");
+      await createBet(null, fd);
+      expect(mockCreate).toHaveBeenCalledWith({
+        data: { label: "My bet", userId: OWNER_ID },
+      });
+      expect(mockRedirect).toHaveBeenCalledWith(`/bets/${BET_ID}`);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("returns error when deadline has passed", async () => {
