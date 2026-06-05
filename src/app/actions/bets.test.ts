@@ -8,9 +8,10 @@ vi.mock("@/lib/prisma", () => ({
 vi.mock("@/lib/session", () => ({ getSession: vi.fn() }));
 
 import { redirect } from "next/navigation";
+import type { TournamentState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { createBet, type PredictionState, updateBetPredictions } from "./bets";
+import { createBet, updateBetPredictions } from "./bets";
 
 const mockGetSession = vi.mocked(getSession);
 const mockRedirect = vi.mocked(redirect);
@@ -20,9 +21,19 @@ const mockUpdate = vi.mocked(prisma.bet.update);
 
 const OWNER_ID = "user-1";
 const BET_ID = "bet-1";
-const VALID_STATE: PredictionState = {
+const VALID_STATE: TournamentState = {
   groupOrders: { A: ["mex", "rsa", "kor", "cze"] },
   thirdPlaceOrder: ["3rd-a"],
+  knockoutMatches: {
+    "R32-1": {
+      id: "R32-1",
+      round: "R32",
+      team1Id: "mex",
+      team2Id: null,
+      winnerId: null,
+      loserId: null,
+    },
+  },
 };
 
 beforeEach(() => {
@@ -99,7 +110,7 @@ describe("updateBetPredictions", () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  it("persists prediction state and returns success when owner calls", async () => {
+  it("persists only group predictions (strips knockout matches) and returns success", async () => {
     mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
       ReturnType<typeof getSession>
     >);
@@ -113,13 +124,21 @@ describe("updateBetPredictions", () => {
       label: "x",
       createdAt: new Date(),
       updatedAt: new Date(),
-      groupPredictions: VALID_STATE,
+      groupPredictions: {
+        groupOrders: VALID_STATE.groupOrders,
+        thirdPlaceOrder: VALID_STATE.thirdPlaceOrder,
+      },
     } as Awaited<ReturnType<typeof mockUpdate>>);
     const result = await updateBetPredictions(BET_ID, VALID_STATE);
     expect(result).toEqual({ success: true });
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: BET_ID },
-      data: { groupPredictions: VALID_STATE },
+      data: {
+        groupPredictions: {
+          groupOrders: VALID_STATE.groupOrders,
+          thirdPlaceOrder: VALID_STATE.thirdPlaceOrder,
+        },
+      },
     });
   });
 });

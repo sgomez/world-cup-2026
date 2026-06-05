@@ -19,7 +19,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -55,40 +54,46 @@ function SortableTeamRow({
       {...attributes}
       {...listeners}
       className={cn(
-        "flex min-w-0 flex-1 cursor-grab touch-none items-center gap-2 rounded border px-2 py-1.5 text-sm",
-        "transition-[box-shadow,opacity,background-color] duration-200",
-        "hover:shadow-sm active:cursor-grabbing",
-        isDragging && "z-50 opacity-40",
-        isQualified
-          ? "border-emerald-700/50 bg-emerald-950/40 text-white"
-          : "border-white/5 bg-slate-900/40 text-slate-500",
+        "flex cursor-grab touch-none items-center gap-2 rounded-md px-2 py-1.5 transition-all duration-200",
+        "hover:bg-slate-200/50 active:cursor-grabbing dark:hover:bg-white/10",
+        isDragging && "z-50 opacity-50",
+        !isQualified && "opacity-40",
       )}
     >
-      <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-600" />
       <span
         role="img"
         aria-label={`${team.name} flag`}
-        className="text-base leading-none"
+        className="shrink-0 text-base leading-none"
       >
         {team.flag}
       </span>
-      <span className="flex-1 truncate text-xs">{team.name}</span>
+      <span
+        className={cn(
+          "min-w-0 flex-1 truncate text-xs font-bold tracking-tight",
+          isQualified
+            ? "text-slate-900 dark:text-white"
+            : "text-slate-400 dark:text-slate-500",
+        )}
+      >
+        {team.name}
+      </span>
     </div>
   );
 }
 
 function TeamRowOverlay({ team }: { team: SortableTeam }) {
   return (
-    <div className="flex cursor-grabbing items-center gap-2 rounded border border-emerald-500 bg-slate-800 px-2 py-1.5 text-sm shadow-xl ring-1 ring-emerald-500/50">
-      <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+    <div className="flex cursor-grabbing items-center gap-2 rounded-md bg-white px-2 py-1.5 shadow-xl ring-2 ring-cyan-500 dark:bg-slate-700 dark:ring-cyan-400">
       <span
         role="img"
         aria-label={`${team.name} flag`}
-        className="text-base leading-none"
+        className="shrink-0 text-base leading-none"
       >
         {team.flag}
       </span>
-      <span className="flex-1 truncate text-xs text-white">{team.name}</span>
+      <span className="min-w-0 flex-1 truncate text-xs font-bold tracking-tight text-slate-900 dark:text-white">
+        {team.name}
+      </span>
     </div>
   );
 }
@@ -143,27 +148,22 @@ export function TeamClassification({
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={teams} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col">
           {teams.map((team, index) => (
             <div key={team.id}>
               {dividerAfter !== undefined && index === dividerAfter && (
                 <div className="my-1.5 flex items-center gap-2">
-                  <div className="h-px flex-1 bg-rose-700/50" />
-                  <span className="text-[10px] font-medium text-rose-400 uppercase tracking-wider">
+                  <div className="h-px flex-1 bg-rose-300 dark:bg-rose-700/50" />
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-rose-500 dark:text-rose-400">
                     eliminated
                   </span>
-                  <div className="h-px flex-1 bg-rose-700/50" />
+                  <div className="h-px flex-1 bg-rose-300 dark:bg-rose-700/50" />
                 </div>
               )}
-              <div className="flex min-w-0 items-center gap-1.5">
-                <span className="w-4 shrink-0 text-center text-[10px] text-slate-600">
-                  {index + 1}
-                </span>
-                <SortableTeamRow
-                  team={team}
-                  isQualified={index < qualifiedCount}
-                />
-              </div>
+              <SortableTeamRow
+                team={team}
+                isQualified={index < qualifiedCount}
+              />
             </div>
           ))}
         </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -46,11 +47,11 @@ export function Navbar({ user }: NavbarProps) {
   const isAdmin = user.role === "admin" || user.role === "super_admin";
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
+    <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-xl dark:border-white/5 dark:bg-slate-950/80">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link
           href="/bets"
-          className="text-sm font-bold tracking-wide text-white hover:text-emerald-400 transition-colors"
+          className="text-sm font-bold tracking-wide text-slate-900 transition-colors hover:text-emerald-600 dark:text-white dark:hover:text-emerald-400"
         >
           ⚽ WC 2026
         </Link>
@@ -58,10 +59,11 @@ export function Navbar({ user }: NavbarProps) {
         <div className="flex items-center gap-4">
           <Link
             href="/bets"
-            className="text-sm text-slate-400 hover:text-white transition-colors"
+            className="text-sm text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           >
             My Bets
           </Link>
+          <ThemeToggle />
 
           <DropdownMenu>
             <DropdownMenuTrigger className="rounded-full outline-none ring-2 ring-transparent hover:ring-emerald-500/30 transition-all">

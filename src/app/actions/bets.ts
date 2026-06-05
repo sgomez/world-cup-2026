@@ -2,18 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import type { PredictionState, TournamentState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
+export type { PredictionState } from "@/lib/prediction-state";
 export type BetActionState = { error?: string; success?: boolean } | null;
-
-export type GroupOrders = Record<string, string[]>;
-export type ThirdPlaceOrder = string[];
-
-export type PredictionState = {
-  groupOrders: GroupOrders;
-  thirdPlaceOrder: ThirdPlaceOrder;
-};
 
 export async function createBet(
   _prev: BetActionState,
@@ -36,7 +30,7 @@ export async function createBet(
 
 export async function updateBetPredictions(
   betId: string,
-  state: PredictionState,
+  state: TournamentState,
 ): Promise<BetActionState> {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
@@ -45,9 +39,14 @@ export async function updateBetPredictions(
   if (!bet) return { error: "Bet not found" };
   if (bet.userId !== session.user.id) return { error: "Not authorized" };
 
+  const groupPredictions: PredictionState = {
+    groupOrders: state.groupOrders,
+    thirdPlaceOrder: state.thirdPlaceOrder,
+  };
+
   await prisma.bet.update({
     where: { id: betId },
-    data: { groupPredictions: state },
+    data: { groupPredictions },
   });
 
   return { success: true };

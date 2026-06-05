@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { updateBetPredictions } from "@/app/actions/bets";
 import { GroupStage } from "@/components/group-stage";
+import { KnockoutStage } from "@/components/knockout-stage";
+import { ScoreTab } from "@/components/score-tab";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   createInitialState,
   type PredictionState,
-  predictionReducer,
+  tournamentReducer,
 } from "@/lib/prediction-state";
-
-type Tab = "group" | "knockout";
 
 export function BetPrediction({
   betId,
@@ -18,8 +19,7 @@ export function BetPrediction({
   betId: string;
   savedPredictions: PredictionState | null;
 }) {
-  const [tab, setTab] = useState<Tab>("group");
-  const [state, dispatch] = useReducer(predictionReducer, null, () =>
+  const [state, dispatch] = useReducer(tournamentReducer, null, () =>
     createInitialState(savedPredictions),
   );
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -40,44 +40,39 @@ export function BetPrediction({
   }, [state, betId]);
 
   return (
-    <div>
-      <div className="flex gap-1 border-b border-white/10">
-        <button
-          type="button"
-          onClick={() => setTab("group")}
-          className={
-            tab === "group"
-              ? "border-b-2 border-emerald-500 px-4 py-2 text-sm font-medium text-white"
-              : "px-4 py-2 text-sm font-medium text-slate-400 transition-colors hover:text-slate-200"
-          }
+    <Tabs defaultValue="groups" className="w-full">
+      <TabsList className="mb-6 bg-white shadow-sm dark:bg-slate-800/50">
+        <TabsTrigger
+          value="groups"
+          className="data-[state=active]:bg-slate-900 data-[state=active]:text-white dark:data-[state=active]:bg-cyan-500"
         >
           Group Stage
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("knockout")}
-          className={
-            tab === "knockout"
-              ? "border-b-2 border-emerald-500 px-4 py-2 text-sm font-medium text-white"
-              : "px-4 py-2 text-sm font-medium text-slate-400 transition-colors hover:text-slate-200"
-          }
+        </TabsTrigger>
+        <TabsTrigger
+          value="knockout"
+          className="data-[state=active]:bg-slate-900 data-[state=active]:text-white dark:data-[state=active]:bg-cyan-500"
         >
           Knockout Stage
-        </button>
-      </div>
+        </TabsTrigger>
+        <TabsTrigger
+          value="score"
+          className="data-[state=active]:bg-slate-900 data-[state=active]:text-white dark:data-[state=active]:bg-cyan-500"
+        >
+          Score
+        </TabsTrigger>
+      </TabsList>
 
-      <div className="mt-6">
-        {tab === "group" ? (
-          <GroupStage state={state} dispatch={dispatch} />
-        ) : (
-          <div className="rounded-xl border border-white/5 bg-slate-900/40 px-6 py-10 text-center">
-            <p className="text-sm font-medium text-slate-400">Knockout Stage</p>
-            <p className="mt-1 text-xs text-slate-600">
-              Coming soon — complete the group stage first.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+      <TabsContent value="groups">
+        <GroupStage state={state} dispatch={dispatch} />
+      </TabsContent>
+
+      <TabsContent value="knockout">
+        <KnockoutStage state={state} dispatch={dispatch} />
+      </TabsContent>
+
+      <TabsContent value="score">
+        <ScoreTab state={state} />
+      </TabsContent>
+    </Tabs>
   );
 }

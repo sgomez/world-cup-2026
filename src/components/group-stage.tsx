@@ -4,12 +4,12 @@ import { type Dispatch, useMemo } from "react";
 import { TeamClassification } from "@/components/team-classification";
 import {
   getOrderedThirdPlaceTeams,
-  type PredictionAction,
-  type PredictionState,
+  type TournamentAction,
+  type TournamentState,
 } from "@/lib/prediction-state";
 import { type GroupData, groups } from "@/lib/teams";
 
-function getGroupTeamsOrdered(state: PredictionState, groupLetter: string) {
+function getGroupTeamsOrdered(state: TournamentState, groupLetter: string) {
   const group = groups.find((g) => g.group === groupLetter);
   if (!group) return [];
   const orderedIds =
@@ -26,7 +26,7 @@ function GroupCard({
   onOrderChange,
 }: {
   group: GroupData;
-  state: PredictionState;
+  state: TournamentState;
   onOrderChange: (orderedIds: string[]) => void;
 }) {
   const orderedTeams = useMemo(
@@ -35,10 +35,13 @@ function GroupCard({
   );
 
   return (
-    <div className="rounded-xl border border-white/5 bg-slate-900/60 px-3 pb-3 pt-2">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-        Group {group.group}
-      </p>
+    <div className="rounded-xl bg-white/80 p-3 shadow-lg dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
+      <div className="mb-2 flex items-center gap-2">
+        <div className="h-4 w-1 rounded-full bg-cyan-500 dark:bg-cyan-400" />
+        <p className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-white">
+          Group {group.group}
+        </p>
+      </div>
       <TeamClassification
         id={`group-${group.group}`}
         teams={orderedTeams}
@@ -53,8 +56,8 @@ export function GroupStage({
   state,
   dispatch,
 }: {
-  state: PredictionState;
-  dispatch: Dispatch<PredictionAction>;
+  state: TournamentState;
+  dispatch: Dispatch<TournamentAction>;
 }) {
   const orderedThirdPlaceTeams = useMemo(
     () => getOrderedThirdPlaceTeams(state),
@@ -62,44 +65,53 @@ export function GroupStage({
   );
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_220px] md:items-start">
-      <div
-        className="grid gap-3"
-        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}
-      >
-        {groups.map((group) => (
-          <GroupCard
-            key={group.group}
-            group={group}
-            state={state}
-            onOrderChange={(orderedIds) =>
-              dispatch({
-                type: "SET_GROUP_ORDER",
-                groupName: group.group,
-                orderedIds,
-              })
-            }
-          />
-        ))}
+    <div className="flex flex-col gap-4 min-[640px]:flex-row">
+      <div className="order-1 min-w-0 flex-1 min-[640px]:order-none">
+        <div
+          className="grid gap-4"
+          style={{
+            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+          }}
+        >
+          {groups.map((group) => (
+            <GroupCard
+              key={group.group}
+              group={group}
+              state={state}
+              onOrderChange={(orderedIds) =>
+                dispatch({
+                  type: "SET_GROUP_ORDER",
+                  groupName: group.group,
+                  orderedIds,
+                })
+              }
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="rounded-xl border border-white/5 bg-slate-900/60 px-3 pb-3 pt-2 md:sticky md:top-4">
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-          Best 3rd Place Teams
-        </p>
-        <p className="mb-3 text-[11px] text-slate-500">
-          Top 8 qualify — drag to rank
-        </p>
-        <TeamClassification
-          id="third-place"
-          key={orderedThirdPlaceTeams.map((t) => t.originalId).join(",")}
-          teams={orderedThirdPlaceTeams}
-          qualifiedCount={8}
-          dividerAfter={8}
-          onOrderChange={(orderedIds) =>
-            dispatch({ type: "SET_THIRD_PLACE_ORDER", orderedIds })
-          }
-        />
+      <div className="order-2 w-full min-[640px]:order-none min-[640px]:w-[200px] min-[640px]:shrink-0">
+        <div className="rounded-xl bg-white/80 p-3 shadow-lg dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
+          <div className="mb-2 flex items-center gap-2">
+            <div className="h-4 w-1 rounded-full bg-amber-500" />
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-amber-400">
+              Best 3rd Place
+            </p>
+          </div>
+          <p className="mb-3 text-[10px] text-slate-500 dark:text-slate-400">
+            Top 8 of 12 qualify
+          </p>
+          <TeamClassification
+            id="third-place"
+            key={orderedThirdPlaceTeams.map((t) => t.originalId).join(",")}
+            teams={orderedThirdPlaceTeams}
+            qualifiedCount={8}
+            dividerAfter={8}
+            onOrderChange={(orderedIds) =>
+              dispatch({ type: "SET_THIRD_PLACE_ORDER", orderedIds })
+            }
+          />
+        </div>
       </div>
     </div>
   );

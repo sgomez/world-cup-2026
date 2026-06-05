@@ -20,11 +20,11 @@ export default async function BetPage({
   const savedPredictions = bet.groupPredictions as PredictionState | null;
 
   return (
-    <div className="max-w-5xl">
-      <h1 className="text-2xl font-bold text-white">{bet.label}</h1>
-      <div className="mt-6">
-        <BetPrediction betId={bet.id} savedPredictions={savedPredictions} />
-      </div>
+    <div>
+      <h1 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">
+        {bet.label}
+      </h1>
+      <BetPrediction betId={bet.id} savedPredictions={savedPredictions} />
     </div>
   );
 }
