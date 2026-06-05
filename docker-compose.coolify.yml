@@ -1,0 +1,20 @@
+services:
+  migration:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrations
+    environment:
+      - 'DOTENV_PRIVATE_KEY_PRODUCTION=${DOTENV_PRIVATE_KEY_PRODUCTION}'
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - 'DOTENV_PRIVATE_KEY_PRODUCTION=${DOTENV_PRIVATE_KEY_PRODUCTION}'
+      - PORT=3000
+    ports:
+      - '3000:3000'
+    depends_on:
+      migration:
+        condition: service_completed_successfully

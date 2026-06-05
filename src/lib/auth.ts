@@ -5,6 +5,9 @@ import { adminAc } from "better-auth/plugins/admin/access";
 import { prisma } from "./prisma";
 
 export const auth = betterAuth({
+  advanced: {
+    trustedProxyHeaders: true,
+  },
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),

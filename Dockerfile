@@ -21,12 +21,6 @@ FROM base AS builder
     # Build-time placeholders — real secrets are injected at runtime via dotenvx.
     # These override the encrypted values in .env.production so Next.js static
     # generation doesn't choke on encrypted strings.
-    ARG BETTER_AUTH_URL=http://localhost:3000
-    ARG BETTER_AUTH_SECRET=build-time-placeholder
-    ARG DATABASE_URL=postgresql://postgres:postgres@localhost:5432/build
-    ENV BETTER_AUTH_URL=$BETTER_AUTH_URL
-    ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
-    ENV DATABASE_URL=$DATABASE_URL
     RUN pnpm prisma generate
     RUN pnpm build
 
@@ -54,4 +48,4 @@ RUN pnpm add --global @dotenvx/dotenvx@1.61.1
     ENV PORT=3000
     ENV HOSTNAME="0.0.0.0"
 
-    CMD ["/bin/sh", "-c", "dotenvx run -f .env.production -- node server.js"]
+    CMD ["dotenvx", "run", "-f", ".env.production", "--", "node", "server.js"]

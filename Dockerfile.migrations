@@ -4,18 +4,18 @@ FROM node:24-alpine
     ENV LEFTHOOK=0
     RUN corepack enable && corepack prepare pnpm@11.5.1 --activate
 
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
+    RUN apk add --no-cache libc6-compat
+    WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY prisma ./prisma
-COPY prisma.config.ts ./
+    COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+    COPY prisma ./prisma
+    COPY prisma.config.ts ./
 
-RUN pnpm install --frozen-lockfile
+    RUN pnpm install --frozen-lockfile
 
-# dotenvx: decrypts .env.production at startup using DOTENV_PRIVATE_KEY_PRODUCTION
-RUN pnpm add --global @dotenvx/dotenvx@1.61.1
+    # dotenvx: decrypts .env.production at startup using DOTENV_PRIVATE_KEY_PRODUCTION
+    RUN pnpm add --global @dotenvx/dotenvx@1.61.1
 
-COPY .env.production ./
+    COPY .env.production ./
 
-CMD ["/bin/sh", "-c", "dotenvx run -f .env.production -- pnpm prisma migrate deploy"]
+    CMD ["dotenvx", "run", "-f", ".env.production", "--", "pnpm", "prisma", "migrate", "deploy"]
