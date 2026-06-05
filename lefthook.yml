@@ -8,6 +8,8 @@ commit-msg:
 
 pre-commit:
   commands:
+    check-env-production:
+      run: sh scripts/check-env-production.sh
     biome-check:
       glob: "*.{js,ts,jsx,tsx,json,css}"
       run: npx biome check --write --no-errors-on-unmatched {staged_files}

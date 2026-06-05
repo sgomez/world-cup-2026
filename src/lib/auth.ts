@@ -1,20 +1,20 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { admin, magicLink } from "better-auth/plugins";
+import { admin } from "better-auth/plugins";
 import { adminAc } from "better-auth/plugins/admin/access";
-import { sendMagicLinkEmail } from "./email";
 import { prisma } from "./prisma";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+    },
+  },
   plugins: [
-    magicLink({
-      sendMagicLink: async ({ email, url }) => {
-        await sendMagicLinkEmail({ email, url });
-      },
-    }),
     admin({
       adminRoles: ["admin", "super_admin"],
       defaultRole: "user",

@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# World Cup 2026
 
-## Getting Started
+Bet tracker for the 2026 World Cup. Sign in with Google, place predictions, and compete with friends.
 
-First, run the development server:
+## Prerequisites
+
+- Node.js 20+
+- pnpm 11+
+- PostgreSQL
+
+## Setup
+
+### 1. Install dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Create `.env.development`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copy `.env` and fill in your values:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp .env .env.development
+```
 
-## Learn More
+Then edit `.env.development`:
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `BETTER_AUTH_SECRET` | Random secret ≥32 chars — run `openssl rand -hex 32` |
+| `BETTER_AUTH_URL` | `http://localhost:3000` for local dev |
+| `GOOGLE_CLIENT_ID` | From [Google Cloud Console](https://console.cloud.google.com/) |
+| `GOOGLE_CLIENT_SECRET` | From [Google Cloud Console](https://console.cloud.google.com/) |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Google OAuth setup:**
+1. Create a project in Google Cloud Console
+2. Enable the **Google+ API** (or **Google Identity**)
+3. Create OAuth 2.0 credentials (Web application)
+4. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 3. Set up the database
 
-## Deploy on Vercel
+```bash
+pnpm db:push
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 4. Run the dev server
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Production setup
+
+`.env.production` is committed to the repo **encrypted** via [dotenvx](https://dotenvx.com/).
+
+### First-time setup
+
+```bash
+# Create and populate .env.production (gitignored while unencrypted)
+cp .env .env.production
+# Edit .env.production with real production values, then encrypt:
+pnpm env:encrypt
+# Now .env.production is safe to commit
+git add .env.production
+```
+
+The private key is stored in `.env.keys` — **never commit this file** (it is gitignored).
+
+### Decrypting locally
+
+```bash
+pnpm env:decrypt
+```
+
+**Google OAuth for production:** add `https://yourdomain.com/api/auth/callback/google` as an authorized redirect URI in Google Cloud Console.
+
+---
+
+## Scripts
+
+| Command | Description |
+|---|---|
+| `pnpm dev` | Start dev server |
+| `pnpm build` | Production build |
+| `pnpm test` | Run tests |
+| `pnpm lint` | Lint with Biome |
+| `pnpm typecheck` | Type check |
+| `pnpm db:push` | Push schema to DB |
+| `pnpm db:migrate` | Run migrations |
+| `pnpm db:studio` | Open Prisma Studio |
+| `pnpm env:encrypt` | Encrypt `.env.production` |
+| `pnpm env:decrypt` | Decrypt `.env.production` |

@@ -4,37 +4,22 @@ import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-
+  const handleGoogleSignIn = async () => {
     setLoading(true);
     setError("");
-    setSuccess(false);
 
     try {
-      const res = await authClient.signIn.magicLink({
-        email,
+      await authClient.signIn.social({
+        provider: "google",
         callbackURL: "/",
       });
-
-      if (res.error) {
-        setError(
-          res.error.message || "Something went wrong. Please try again.",
-        );
-      } else {
-        setSuccess(true);
-      }
     } catch (err: unknown) {
       const errorMsg =
         err instanceof Error ? err.message : "An unexpected error occurred.";
       setError(errorMsg);
-    } finally {
       setLoading(false);
     }
   };
@@ -46,7 +31,7 @@ export default function LoginPage() {
       <div className="absolute bottom-0 -right-40 h-[600px] w-[600px] rounded-full bg-blue-600/10 blur-[120px]" />
 
       <div className="relative w-full max-w-md">
-        {/* Decorative elements */}
+        {/* Decorative element */}
         <div className="absolute -top-6 -right-6 h-12 w-12 rounded-full bg-amber-500/20 blur-xl animate-pulse" />
 
         {/* Main Card */}
@@ -59,99 +44,69 @@ export default function LoginPage() {
               World Cup 2026
             </h2>
             <p className="mt-2 text-sm text-slate-400">
-              Sign in instantly via email magic link
+              Sign in to place your bets
             </p>
           </div>
 
-          <div className="mt-8">
-            {success ? (
-              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center">
-                <span className="inline-block text-2xl mb-2">✉️</span>
-                <h3 className="font-semibold text-emerald-400">
-                  Check your email
-                </h3>
-                <p className="mt-1 text-sm text-slate-300">
-                  We sent a magic link to{" "}
-                  <span className="font-medium text-white">{email}</span>. Click
-                  the link to log in.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setSuccess(false)}
-                  className="mt-4 text-xs font-semibold text-emerald-400 underline hover:text-emerald-300"
-                >
-                  Try a different email
-                </button>
+          <div className="mt-8 space-y-4">
+            {error && (
+              <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-400">
+                ⚠️ {error}
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
-                  >
-                    Email Address
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="block w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all duration-200 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none text-sm"
-                    />
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-400">
-                    ⚠️ {error}
-                  </div>
-                )}
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="group relative flex w-full justify-center rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 py-3.5 px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 hover:from-violet-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
-                  >
-                    {loading ? (
-                      <div className="flex items-center gap-2">
-                        <svg
-                          className="h-4 w-4 animate-spin text-white"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          role="img"
-                          aria-label="Loading indicator"
-                        >
-                          <title>Loading</title>
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
-                        Sending link...
-                      </div>
-                    ) : (
-                      "Send Magic Link"
-                    )}
-                  </button>
-                </div>
-              </form>
             )}
+
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="group relative flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white px-4 py-3.5 text-sm font-semibold text-slate-900 shadow-lg transition-all duration-200 hover:bg-slate-50 hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <svg
+                  className="h-5 w-5 animate-spin text-slate-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  aria-label="Loading"
+                >
+                  <title>Loading</title>
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    fill="#FBBC05"
+                  />
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    fill="#EA4335"
+                  />
+                </svg>
+              )}
+              <span>
+                {loading ? "Redirecting to Google..." : "Sign in with Google"}
+              </span>
+            </button>
           </div>
         </div>
       </div>
