@@ -18,25 +18,15 @@ const ROUND_POINTS: Record<string, number> = {
 const THIRD_PLACE_POINTS = 5;
 const CHAMPION_POINTS = 10;
 
-function getSimulatedActualResults(_state: TournamentState) {
-  const teamsLookup = getAllTeamsLookup();
-  const allTeamIds = Array.from(teamsLookup.keys());
-  const seed = 42;
-  const shuffled = [...allTeamIds].sort((a, b) => {
-    const hashA = a.split("").reduce((acc, c) => acc + c.charCodeAt(0), seed);
-    const hashB = b.split("").reduce((acc, c) => acc + c.charCodeAt(0), seed);
-    return hashA - hashB;
-  });
-  return {
-    R32: new Set(shuffled.slice(0, 32)),
-    R16: new Set(shuffled.slice(0, 16)),
-    QF: new Set(shuffled.slice(0, 8)),
-    SF: new Set(shuffled.slice(0, 4)),
-    F: new Set(shuffled.slice(0, 2)),
-    champion: shuffled[0],
-    thirdPlace: shuffled[3],
-  };
-}
+const EMPTY_ACTUAL_RESULTS = {
+  R32: new Set<string>(),
+  R16: new Set<string>(),
+  QF: new Set<string>(),
+  SF: new Set<string>(),
+  F: new Set<string>(),
+  champion: null as string | null,
+  thirdPlace: null as string | null,
+};
 
 interface Team {
   id: string;
@@ -233,7 +223,7 @@ function WinnerCard({
 
 export function ScoreTab({ state }: { state: TournamentState }) {
   const teamsLookup = getAllTeamsLookup();
-  const actualResults = getSimulatedActualResults(state);
+  const actualResults = EMPTY_ACTUAL_RESULTS;
 
   const r32Teams = getTeamsInRound(state, "R32");
   const r16Teams = getTeamsInRound(state, "R16");
