@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 describe("BET_DEADLINE", () => {
   it("is a Date instance", async () => {
@@ -14,10 +14,6 @@ describe("BET_DEADLINE", () => {
 
 describe("MAX_BETS_PER_USER", () => {
   const ORIGINAL = process.env.MAX_BETS_PER_USER;
-
-  beforeEach(() => {
-    vi.resetModules();
-  });
 
   afterEach(() => {
     if (ORIGINAL === undefined) {
@@ -38,6 +34,12 @@ describe("MAX_BETS_PER_USER", () => {
     process.env.MAX_BETS_PER_USER = "5";
     const { MAX_BETS_PER_USER } = await import("./bet-constants");
     expect(MAX_BETS_PER_USER).toBe(5);
+  });
+
+  it("falls back to 3 when env var is non-numeric", async () => {
+    process.env.MAX_BETS_PER_USER = "abc";
+    const { MAX_BETS_PER_USER } = await import("./bet-constants");
+    expect(MAX_BETS_PER_USER).toBe(3);
   });
 
   it("is a number", async () => {
