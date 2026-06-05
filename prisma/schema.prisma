@@ -64,6 +64,7 @@ model Account {
 model Bet {
   id               String   @id @default(cuid())
   label            String
+  status           String   @default("draft")
   userId           String
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   groupPredictions Json?
