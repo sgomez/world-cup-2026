@@ -5,13 +5,14 @@ services:
       dockerfile: Dockerfile.migrations
     environment:
       - 'DOTENV_PRIVATE_KEY_PRODUCTION=${DOTENV_PRIVATE_KEY_PRODUCTION}'
-
+      - 'BETTER_AUTH_URL=${BETTER_AUTH_URL}'
   app:
     build:
       context: .
       dockerfile: Dockerfile
     environment:
       - 'DOTENV_PRIVATE_KEY_PRODUCTION=${DOTENV_PRIVATE_KEY_PRODUCTION}'
+      - 'BETTER_AUTH_URL=${BETTER_AUTH_URL}'
       - PORT=3000
     ports:
       - '3000:3000'
