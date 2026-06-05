@@ -29,6 +29,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import {
   closeBet,
+  copyBet,
   createBet,
   removeBet,
   reopenBet,
@@ -401,5 +402,144 @@ describe("reopenBet", () => {
       where: { id: BET_ID },
       data: { status: "draft" },
     });
+  });
+});
+
+describe("copyBet", () => {
+  const SOURCE_BET = {
+    id: BET_ID,
+    userId: OWNER_ID,
+    label: "My Bet",
+    status: "draft",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    groupPredictions: {
+      groupOrders: VALID_STATE.groupOrders,
+      thirdPlaceOrder: VALID_STATE.thirdPlaceOrder,
+    },
+    knockoutWinners: { "R32-1": "mex" },
+  };
+  const NEW_BET_ID = "bet-2";
+
+  it("returns error when not authenticated", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const result = await copyBet(BET_ID);
+    expect(result).toEqual({ error: "Not authenticated" });
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("returns error when source bet not found", async () => {
+    mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
+      ReturnType<typeof getSession>
+    >);
+    mockFindUnique.mockResolvedValue(null);
+    const result = await copyBet(BET_ID);
+    expect(result).toEqual({ error: "Bet not found" });
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("returns error when caller does not own the source bet", async () => {
+    mockGetSession.mockResolvedValue({ user: { id: "other-user" } } as Awaited<
+      ReturnType<typeof getSession>
+    >);
+    mockFindUnique.mockResolvedValue(
+      SOURCE_BET as Awaited<ReturnType<typeof mockFindUnique>>,
+    );
+    const result = await copyBet(BET_ID);
+    expect(result).toEqual({ error: "Not authorized" });
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("returns error when deadline has passed", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-12T00:00:00Z"));
+    mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
+      ReturnType<typeof getSession>
+    >);
+    mockFindUnique.mockResolvedValue(
+      SOURCE_BET as Awaited<ReturnType<typeof mockFindUnique>>,
+    );
+    const result = await copyBet(BET_ID);
+    expect(result).toEqual({ error: "Bet deadline has passed" });
+    expect(mockCreate).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it("returns error when user is at the bet limit", async () => {
+    mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
+      ReturnType<typeof getSession>
+    >);
+    mockFindUnique.mockResolvedValue(
+      SOURCE_BET as Awaited<ReturnType<typeof mockFindUnique>>,
+    );
+    mockCount.mockResolvedValue(3);
+    const result = await copyBet(BET_ID);
+    expect(result).toEqual({ error: "Bet limit reached" });
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("creates a new draft bet with copied predictions and 'Copy of ' label prefix", async () => {
+    mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
+      ReturnType<typeof getSession>
+    >);
+    mockFindUnique.mockResolvedValue(
+      SOURCE_BET as Awaited<ReturnType<typeof mockFindUnique>>,
+    );
+    mockCount.mockResolvedValue(1);
+    mockCreate.mockResolvedValue({
+      ...SOURCE_BET,
+      id: NEW_BET_ID,
+      label: "Copy of My Bet",
+    } as Awaited<ReturnType<typeof mockCreate>>);
+    await copyBet(BET_ID);
+    expect(mockCreate).toHaveBeenCalledWith({
+      data: {
+        label: "Copy of My Bet",
+        userId: OWNER_ID,
+        status: "draft",
+        groupPredictions: SOURCE_BET.groupPredictions,
+        knockoutWinners: SOURCE_BET.knockoutWinners,
+      },
+    });
+    expect(mockRedirect).toHaveBeenCalledWith(`/bets/${NEW_BET_ID}`);
+  });
+
+  it("truncates label to 200 characters when prefixed label exceeds limit", async () => {
+    const longLabel = "A".repeat(197);
+    mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
+      ReturnType<typeof getSession>
+    >);
+    mockFindUnique.mockResolvedValue({
+      ...SOURCE_BET,
+      label: longLabel,
+    } as Awaited<ReturnType<typeof mockFindUnique>>);
+    mockCount.mockResolvedValue(0);
+    mockCreate.mockResolvedValue({
+      ...SOURCE_BET,
+      id: NEW_BET_ID,
+      label: `Copy of ${longLabel}`.slice(0, 200),
+    } as Awaited<ReturnType<typeof mockCreate>>);
+    await copyBet(BET_ID);
+    const createCall = mockCreate.mock.calls[0][0];
+    expect(createCall.data.label.length).toBe(200);
+    expect(createCall.data.label).toBe(`Copy of ${longLabel}`.slice(0, 200));
+  });
+
+  it("revalidates /bets path on success", async () => {
+    const { revalidatePath } = await import("next/cache");
+    const mockRevalidate = vi.mocked(revalidatePath);
+    mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
+      ReturnType<typeof getSession>
+    >);
+    mockFindUnique.mockResolvedValue(
+      SOURCE_BET as Awaited<ReturnType<typeof mockFindUnique>>,
+    );
+    mockCount.mockResolvedValue(0);
+    mockCreate.mockResolvedValue({
+      ...SOURCE_BET,
+      id: NEW_BET_ID,
+    } as Awaited<ReturnType<typeof mockCreate>>);
+    await copyBet(BET_ID);
+    expect(mockRevalidate).toHaveBeenCalledWith("/bets");
   });
 });

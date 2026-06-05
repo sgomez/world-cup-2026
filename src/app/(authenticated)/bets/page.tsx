@@ -16,6 +16,7 @@ export default async function BetsPage() {
 
   const isPastDeadline = new Date() > BET_DEADLINE;
   const isAtLimit = bets.length >= MAX_BETS_PER_USER;
+  const showCopyButtons = !isPastDeadline && !isAtLimit;
 
   return (
     <div className="max-w-2xl">
@@ -43,7 +44,11 @@ export default async function BetsPage() {
       </div>
 
       <div className="mt-8">
-        <BetList bets={bets} deadlinePassed={isPastDeadline} />
+        <BetList
+          bets={bets}
+          deadlinePassed={isPastDeadline}
+          showCopyButtons={showCopyButtons}
+        />
       </div>
     </div>
   );
