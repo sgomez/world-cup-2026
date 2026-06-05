@@ -15,8 +15,8 @@ export function RemoveBetButton({ betId, onRemoved }: RemoveBetButtonProps) {
 
   function handleConfirm() {
     startTransition(async () => {
-      await removeBet(betId);
-      onRemoved();
+      const result = await removeBet(betId);
+      if ("success" in result) onRemoved();
     });
   }
 
