@@ -6,6 +6,9 @@ services:
     environment:
       - 'DOTENV_PRIVATE_KEY_PRODUCTION=${DOTENV_PRIVATE_KEY_PRODUCTION}'
       - 'BETTER_AUTH_URL=${BETTER_AUTH_URL}'
+    networks:
+      - coolify
+
   app:
     build:
       context: .
@@ -19,3 +22,9 @@ services:
     depends_on:
       migration:
         condition: service_completed_successfully
+    networks:
+      - coolify
+
+networks:
+  coolify:
+    external: true
