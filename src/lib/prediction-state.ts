@@ -33,25 +33,28 @@ export type TournamentAction =
 export type PredictionAction = TournamentAction;
 
 // null team2 = third-place slot resolved via combinations table
-const R32_MATCHUPS: Array<{ num: number; team1: string; team2: string | null }> =
-  [
-    { num: 73, team1: "2A", team2: "2B" },
-    { num: 74, team1: "1E", team2: null },
-    { num: 75, team1: "1F", team2: "2C" },
-    { num: 76, team1: "1C", team2: "2F" },
-    { num: 77, team1: "1I", team2: null },
-    { num: 78, team1: "2E", team2: "2I" },
-    { num: 79, team1: "1A", team2: null },
-    { num: 80, team1: "1L", team2: null },
-    { num: 81, team1: "1D", team2: null },
-    { num: 82, team1: "1G", team2: null },
-    { num: 83, team1: "2K", team2: "2L" },
-    { num: 84, team1: "1H", team2: "2J" },
-    { num: 85, team1: "1B", team2: null },
-    { num: 86, team1: "1J", team2: "2H" },
-    { num: 87, team1: "1K", team2: null },
-    { num: 88, team1: "2D", team2: "2G" },
-  ];
+const R32_MATCHUPS: Array<{
+  num: number;
+  team1: string;
+  team2: string | null;
+}> = [
+  { num: 73, team1: "2A", team2: "2B" },
+  { num: 74, team1: "1E", team2: null },
+  { num: 75, team1: "1F", team2: "2C" },
+  { num: 76, team1: "1C", team2: "2F" },
+  { num: 77, team1: "1I", team2: null },
+  { num: 78, team1: "2E", team2: "2I" },
+  { num: 79, team1: "1A", team2: null },
+  { num: 80, team1: "1L", team2: null },
+  { num: 81, team1: "1D", team2: null },
+  { num: 82, team1: "1G", team2: null },
+  { num: 83, team1: "2K", team2: "2L" },
+  { num: 84, team1: "1H", team2: "2J" },
+  { num: 85, team1: "1B", team2: null },
+  { num: 86, team1: "1J", team2: "2H" },
+  { num: 87, team1: "1K", team2: null },
+  { num: 88, team1: "2D", team2: "2G" },
+];
 
 // Derived from worldcup.json W-references
 const matchProgression: Record<string, { nextMatch: string; slot: 1 | 2 }> = {
@@ -107,7 +110,7 @@ function getTeamIdFromPosition(
   positionCode: string,
   groupOrders: GroupOrders,
 ): string | null {
-  const position = parseInt(positionCode[0]) - 1;
+  const position = parseInt(positionCode[0], 10) - 1;
   const groupName = positionCode.slice(1);
   return groupOrders[groupName]?.[position] ?? null;
 }
@@ -177,8 +180,7 @@ function applyWinnerToMatches(
 ): Record<string, KnockoutMatch> {
   const match = matches[matchId];
   if (!match) return matches;
-  const loserId =
-    match.team1Id === winnerId ? match.team2Id : match.team1Id;
+  const loserId = match.team1Id === winnerId ? match.team2Id : match.team1Id;
   let newMatches = {
     ...matches,
     [matchId]: { ...match, winnerId, loserId },
@@ -319,11 +321,12 @@ export function createInitialState(
     });
     for (const [matchId, winnerId] of sorted) {
       const match = knockoutMatches[matchId];
-      if (
-        match &&
-        (match.team1Id === winnerId || match.team2Id === winnerId)
-      ) {
-        knockoutMatches = applyWinnerToMatches(knockoutMatches, matchId, winnerId);
+      if (match && (match.team1Id === winnerId || match.team2Id === winnerId)) {
+        knockoutMatches = applyWinnerToMatches(
+          knockoutMatches,
+          matchId,
+          winnerId,
+        );
       }
     }
   }
@@ -381,7 +384,10 @@ export function tournamentReducer(
       if (!match) return state;
       return {
         ...state,
-        knockoutMatches: cascadeClearWinner(state.knockoutMatches, action.matchId),
+        knockoutMatches: cascadeClearWinner(
+          state.knockoutMatches,
+          action.matchId,
+        ),
       };
     }
     default:

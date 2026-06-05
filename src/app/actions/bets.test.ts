@@ -139,6 +139,7 @@ describe("updateBetPredictions", () => {
           groupOrders: VALID_STATE.groupOrders,
           thirdPlaceOrder: VALID_STATE.thirdPlaceOrder,
         },
+        knockoutWinners: expect.any(Object),
       }),
     });
   });
