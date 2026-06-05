@@ -22,7 +22,13 @@ import { redirect } from "next/navigation";
 import type { TournamentState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { createBet, removeBet, updateBetPredictions } from "./bets";
+import {
+  closeBet,
+  createBet,
+  removeBet,
+  reopenBet,
+  updateBetPredictions,
+} from "./bets";
 
 const mockGetSession = vi.mocked(getSession);
 const mockRedirect = vi.mocked(redirect);
@@ -30,6 +36,26 @@ const mockCreate = vi.mocked(prisma.bet.create);
 const mockFindUnique = vi.mocked(prisma.bet.findUnique);
 const mockUpdate = vi.mocked(prisma.bet.update);
 const mockDelete = vi.mocked(prisma.bet.delete);
+
+function mockSession(userId = OWNER_ID) {
+  mockGetSession.mockResolvedValue({ user: { id: userId } } as Awaited<
+    ReturnType<typeof getSession>
+  >);
+}
+
+function mockBet(overrides: Record<string, unknown> = {}) {
+  mockFindUnique.mockResolvedValue({
+    id: BET_ID,
+    userId: OWNER_ID,
+    status: "draft",
+    label: "x",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    groupPredictions: null,
+    knockoutWinners: null,
+    ...overrides,
+  } as Awaited<ReturnType<typeof mockFindUnique>>);
+}
 
 const OWNER_ID = "user-1";
 const BET_ID = "bet-1";
@@ -174,9 +200,7 @@ describe("updateBetPredictions", () => {
   });
 
   it("returns error when bet not found", async () => {
-    mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
-      ReturnType<typeof getSession>
-    >);
+    mockSession();
     mockFindUnique.mockResolvedValue(null);
     const result = await updateBetPredictions(BET_ID, VALID_STATE);
     expect(result).toEqual({ error: "Bet not found" });
@@ -184,26 +208,24 @@ describe("updateBetPredictions", () => {
   });
 
   it("returns error when caller does not own the bet", async () => {
-    mockGetSession.mockResolvedValue({ user: { id: "other-user" } } as Awaited<
-      ReturnType<typeof getSession>
-    >);
-    mockFindUnique.mockResolvedValue({
-      id: BET_ID,
-      userId: OWNER_ID,
-    } as Awaited<ReturnType<typeof mockFindUnique>>);
+    mockSession("other-user");
+    mockBet();
     const result = await updateBetPredictions(BET_ID, VALID_STATE);
     expect(result).toEqual({ error: "Not authorized" });
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
+  it("returns error when bet is closed", async () => {
+    mockSession();
+    mockBet({ status: "closed" });
+    const result = await updateBetPredictions(BET_ID, VALID_STATE);
+    expect(result).toEqual({ error: "Bet is closed" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
   it("persists only group predictions (strips knockout matches) and returns success", async () => {
-    mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
-      ReturnType<typeof getSession>
-    >);
-    mockFindUnique.mockResolvedValue({
-      id: BET_ID,
-      userId: OWNER_ID,
-    } as Awaited<ReturnType<typeof mockFindUnique>>);
+    mockSession();
+    mockBet();
     mockUpdate.mockResolvedValue({
       id: BET_ID,
       userId: OWNER_ID,
@@ -228,6 +250,102 @@ describe("updateBetPredictions", () => {
         },
         knockoutWinners: expect.any(Object),
       }),
+    });
+  });
+});
+
+describe("closeBet", () => {
+  it("returns error when not authenticated", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const result = await closeBet(BET_ID);
+    expect(result).toEqual({ error: "Not authenticated" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("returns error when bet not found", async () => {
+    mockSession();
+    mockFindUnique.mockResolvedValue(null);
+    const result = await closeBet(BET_ID);
+    expect(result).toEqual({ error: "Bet not found" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("returns error when caller does not own the bet", async () => {
+    mockSession("other-user");
+    mockBet();
+    const result = await closeBet(BET_ID);
+    expect(result).toEqual({ error: "Not authorized" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("returns error when deadline has passed", async () => {
+    const { BET_DEADLINE } = await import("@/lib/bet-constants");
+    vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
+    mockSession();
+    mockBet();
+    const result = await closeBet(BET_ID);
+    expect(result).toEqual({ error: "Deadline has passed" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
+  it("sets status to closed and returns success", async () => {
+    mockSession();
+    mockBet();
+    mockUpdate.mockResolvedValue({} as Awaited<ReturnType<typeof mockUpdate>>);
+    const result = await closeBet(BET_ID);
+    expect(result).toEqual({ success: true });
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: BET_ID },
+      data: { status: "closed" },
+    });
+  });
+});
+
+describe("reopenBet", () => {
+  it("returns error when not authenticated", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const result = await reopenBet(BET_ID);
+    expect(result).toEqual({ error: "Not authenticated" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("returns error when bet not found", async () => {
+    mockSession();
+    mockFindUnique.mockResolvedValue(null);
+    const result = await reopenBet(BET_ID);
+    expect(result).toEqual({ error: "Bet not found" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("returns error when caller does not own the bet", async () => {
+    mockSession("other-user");
+    mockBet();
+    const result = await reopenBet(BET_ID);
+    expect(result).toEqual({ error: "Not authorized" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("returns error when deadline has passed", async () => {
+    const { BET_DEADLINE } = await import("@/lib/bet-constants");
+    vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
+    mockSession();
+    mockBet({ status: "closed" });
+    const result = await reopenBet(BET_ID);
+    expect(result).toEqual({ error: "Deadline has passed" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
+  it("sets status to draft and returns success", async () => {
+    mockSession();
+    mockBet({ status: "closed" });
+    mockUpdate.mockResolvedValue({} as Awaited<ReturnType<typeof mockUpdate>>);
+    const result = await reopenBet(BET_ID);
+    expect(result).toEqual({ success: true });
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: BET_ID },
+      data: { status: "draft" },
     });
   });
 });

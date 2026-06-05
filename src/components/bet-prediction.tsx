@@ -16,10 +16,12 @@ export function BetPrediction({
   betId,
   savedPredictions,
   savedKnockoutWinners,
+  readOnly = false,
 }: {
   betId: string;
   savedPredictions: PredictionState | null;
   savedKnockoutWinners?: Record<string, string> | null;
+  readOnly?: boolean;
 }) {
   const [state, dispatch] = useReducer(tournamentReducer, null, () =>
     createInitialState(savedPredictions, savedKnockoutWinners),
@@ -32,6 +34,7 @@ export function BetPrediction({
       isFirst.current = false;
       return;
     }
+    if (readOnly) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       updateBetPredictions(betId, state).catch(console.error);
@@ -39,7 +42,7 @@ export function BetPrediction({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [state, betId]);
+  }, [state, betId, readOnly]);
 
   return (
     <Tabs defaultValue="groups" className="w-full">
@@ -65,11 +68,11 @@ export function BetPrediction({
       </TabsList>
 
       <TabsContent value="groups">
-        <GroupStage state={state} dispatch={dispatch} />
+        <GroupStage state={state} dispatch={dispatch} readOnly={readOnly} />
       </TabsContent>
 
       <TabsContent value="knockout">
-        <KnockoutStage state={state} dispatch={dispatch} />
+        <KnockoutStage state={state} dispatch={dispatch} readOnly={readOnly} />
       </TabsContent>
 
       <TabsContent value="score">

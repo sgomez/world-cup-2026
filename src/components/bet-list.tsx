@@ -35,7 +35,14 @@ export function BetList({ bets: initialBets, deadlinePassed }: BetListProps) {
             href={`/bets/${bet.id}`}
             className="block rounded-xl border border-white/5 bg-slate-900/60 px-5 py-4 hover:border-white/10 hover:bg-slate-900/80 transition-colors"
           >
-            <p className="font-medium text-white">{bet.label}</p>
+            <div className="flex items-center gap-3">
+              <p className="font-medium text-white">{bet.label}</p>
+              {bet.status === "closed" && (
+                <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs font-medium text-slate-300">
+                  Closed
+                </span>
+              )}
+            </div>
             <div className="mt-2 flex gap-4 text-xs text-slate-500">
               <span>Created {bet.createdAt.toLocaleDateString()}</span>
               <span>Updated {bet.updatedAt.toLocaleDateString()}</span>

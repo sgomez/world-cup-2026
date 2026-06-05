@@ -24,10 +24,12 @@ function GroupCard({
   group,
   state,
   onOrderChange,
+  readOnly,
 }: {
   group: GroupData;
   state: TournamentState;
   onOrderChange: (orderedIds: string[]) => void;
+  readOnly: boolean;
 }) {
   const orderedTeams = useMemo(
     () => getGroupTeamsOrdered(state, group.group),
@@ -47,6 +49,7 @@ function GroupCard({
         teams={orderedTeams}
         qualifiedCount={2}
         onOrderChange={onOrderChange}
+        disabled={readOnly}
       />
     </div>
   );
@@ -55,9 +58,11 @@ function GroupCard({
 export function GroupStage({
   state,
   dispatch,
+  readOnly = false,
 }: {
   state: TournamentState;
   dispatch: Dispatch<TournamentAction>;
+  readOnly?: boolean;
 }) {
   const orderedThirdPlaceTeams = useMemo(
     () => getOrderedThirdPlaceTeams(state),
@@ -78,6 +83,7 @@ export function GroupStage({
               key={group.group}
               group={group}
               state={state}
+              readOnly={readOnly}
               onOrderChange={(orderedIds) =>
                 dispatch({
                   type: "SET_GROUP_ORDER",
@@ -110,6 +116,7 @@ export function GroupStage({
             onOrderChange={(orderedIds) =>
               dispatch({ type: "SET_THIRD_PLACE_ORDER", orderedIds })
             }
+            disabled={readOnly}
           />
         </div>
       </div>

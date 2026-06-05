@@ -31,9 +31,11 @@ export type SortableTeam = {
 function SortableTeamRow({
   team,
   isQualified,
+  disabled,
 }: {
   team: SortableTeam;
   isQualified: boolean;
+  disabled: boolean;
 }) {
   const {
     attributes,
@@ -44,6 +46,7 @@ function SortableTeamRow({
     isDragging,
   } = useSortable({
     id: team.id,
+    disabled,
     transition: { duration: 250, easing: "cubic-bezier(0.25, 1, 0.5, 1)" },
   });
 
@@ -52,10 +55,12 @@ function SortableTeamRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       {...attributes}
-      {...listeners}
+      {...(disabled ? {} : listeners)}
       className={cn(
-        "flex cursor-grab touch-none items-center gap-2 rounded-md px-2 py-1.5 transition-all duration-200",
-        "hover:bg-slate-200/50 active:cursor-grabbing dark:hover:bg-white/10",
+        "flex touch-none items-center gap-2 rounded-md px-2 py-1.5 transition-all duration-200",
+        !disabled &&
+          "cursor-grab hover:bg-slate-200/50 active:cursor-grabbing dark:hover:bg-white/10",
+        disabled && "cursor-default",
         isDragging && "z-50 opacity-50",
         !isQualified && "opacity-40",
       )}
@@ -104,12 +109,14 @@ export function TeamClassification({
   qualifiedCount,
   dividerAfter,
   onOrderChange,
+  disabled = false,
 }: {
   id: string;
   teams: SortableTeam[];
   qualifiedCount: number;
   dividerAfter?: number;
   onOrderChange: (orderedIds: string[]) => void;
+  disabled?: boolean;
 }) {
   const [teams, setTeams] = useState(initialTeams);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -130,6 +137,7 @@ export function TeamClassification({
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     setActiveId(null);
+    if (disabled) return;
     if (over && active.id !== over.id) {
       const oldIndex = teams.findIndex((t) => t.id === active.id);
       const newIndex = teams.findIndex((t) => t.id === over.id);
@@ -163,6 +171,7 @@ export function TeamClassification({
               <SortableTeamRow
                 team={team}
                 isQualified={index < qualifiedCount}
+                disabled={disabled}
               />
             </div>
           ))}
