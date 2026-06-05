@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { BET_DEADLINE } from "@/lib/bet-constants";
 import type { PredictionState, TournamentState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -26,6 +27,20 @@ export async function createBet(
 
   revalidatePath("/bets");
   redirect(`/bets/${bet.id}`);
+}
+
+export async function removeBet(betId: string): Promise<BetActionState> {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  const bet = await prisma.bet.findUnique({ where: { id: betId } });
+  if (!bet) return { error: "Not found" };
+  if (bet.userId !== session.user.id) return { error: "Not authorized" };
+  if (Date.now() >= BET_DEADLINE.getTime()) return { error: "Deadline passed" };
+
+  await prisma.bet.delete({ where: { id: betId } });
+  revalidatePath("/bets");
+  return { success: true };
 }
 
 export async function updateBetPredictions(
