@@ -3,14 +3,20 @@
 import type { Bet } from "@prisma/client";
 import Link from "next/link";
 import { useState } from "react";
+import { CopyBetButton } from "@/components/copy-bet-button";
 import { RemoveBetButton } from "@/components/remove-bet-button";
 
 interface BetListProps {
   bets: Bet[];
   deadlinePassed: boolean;
+  showCopyButtons?: boolean;
 }
 
-export function BetList({ bets: initialBets, deadlinePassed }: BetListProps) {
+export function BetList({
+  bets: initialBets,
+  deadlinePassed,
+  showCopyButtons = false,
+}: BetListProps) {
   const [bets, setBets] = useState(initialBets);
 
   function handleRemoved(betId: string) {
@@ -49,7 +55,8 @@ export function BetList({ bets: initialBets, deadlinePassed }: BetListProps) {
             </div>
           </Link>
           {!deadlinePassed && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {showCopyButtons && <CopyBetButton betId={bet.id} />}
               <RemoveBetButton
                 betId={bet.id}
                 onRemoved={() => handleRemoved(bet.id)}

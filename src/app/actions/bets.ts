@@ -89,6 +89,37 @@ export async function reopenBet(betId: string): Promise<BetActionState> {
   return { success: true };
 }
 
+export async function copyBet(betId: string): Promise<BetActionState> {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  const source = await prisma.bet.findUnique({ where: { id: betId } });
+  if (!source) return { error: "Bet not found" };
+  if (source.userId !== session.user.id) return { error: "Not authorized" };
+
+  if (Date.now() >= BET_DEADLINE.getTime())
+    return { error: "Bet deadline has passed" };
+
+  const count = await prisma.bet.count({ where: { userId: session.user.id } });
+  if (count >= MAX_BETS_PER_USER) return { error: "Bet limit reached" };
+
+  const rawLabel = `Copy of ${source.label}`;
+  const label = rawLabel.slice(0, 200);
+
+  const newBet = await prisma.bet.create({
+    data: {
+      label,
+      userId: session.user.id,
+      status: "draft",
+      groupPredictions: source.groupPredictions ?? undefined,
+      knockoutWinners: source.knockoutWinners ?? undefined,
+    },
+  });
+
+  revalidatePath("/bets");
+  redirect(`/bets/${newBet.id}`);
+}
+
 export async function updateBetPredictions(
   betId: string,
   state: TournamentState,
