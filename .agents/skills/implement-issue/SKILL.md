@@ -21,13 +21,13 @@ One sub-issue per invocation — keeps sessions short and focused.
 
 ### 1. Select issue
 
-**If a parent issue number is given**, fetch its open sub-issues and pick the first unblocked one:
+**Always check for sub-issues first** — even when a specific issue number is given, it may be a parent:
 
 ```bash
 gh api graphql -f query='
 {
   repository(owner:"OWNER", name:"REPO") {
-    issue(number: PARENT_NUM) {
+    issue(number: ISSUE_NUM) {
       subIssues(first: 20) {
         nodes { number title state body }
       }
@@ -36,13 +36,15 @@ gh api graphql -f query='
 }' --jq '.data.repository.issue.subIssues.nodes[] | select(.state == "OPEN") | "#\(.number) \(.title)"'
 ```
 
-For each open sub-issue (in order), check its "Blocked by" section. Parse any issue references (`#N`) from that section and verify they are all closed:
+If sub-issues exist, pick the first unblocked one. Check "Blocked by" in each sub-issue body and verify all referenced issues are closed:
 
 ```bash
 gh issue view <N> --json state --jq '.state'  # must be "CLOSED" for each blocker
 ```
 
 Pick the first open sub-issue where all blockers are closed. If none are unblocked, report to user and stop.
+
+If no sub-issues exist, implement the issue directly.
 
 **If no number given**, list candidates from the tracker:
 
@@ -117,15 +119,9 @@ gh pr create \
 - [ ] <acceptance criterion 2>"
 ```
 
-### 7. Close issue
+### 7. Done
 
-Close only the sub-issue that was implemented — never the parent:
-
-```bash
-gh issue close <SUB_ISSUE_N> --comment "Implemented in PR #<PR_NUMBER>. <one-line summary of what was done>."
-```
-
-Only close after commit is pushed and PR is open. The parent issue stays open until all sub-issues are closed.
+The PR body contains `Closes #<N>` — GitHub auto-closes the implemented sub-issue when the PR is merged. Do **not** close the issue manually. The parent issue stays open until all sub-issues are merged.
 
 ## Blocked
 
@@ -139,7 +135,7 @@ Do **not** close the issue. Stop and report to user.
 
 ## Rules
 
-- One issue per invocation
+- One sub-issue per invocation — always check for sub-issues before treating an issue as standalone
 - No commented-out code or TODO comments in committed code
 - Do not modify files unrelated to the issue
-- Do not close until tests pass and PR is open
+- Never close the issue manually — `Closes #N` in the PR body handles it on merge

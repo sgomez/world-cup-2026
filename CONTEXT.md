@@ -14,7 +14,9 @@ The access level of a User. One of three values:
 Only one `super_admin` exists at any time (the first registrant). All other elevated users hold `admin`.
 
 ### Bet
-A named tournament bracket prediction created by a User. A User may hold many Bets. Each Bet has a user-given **label** and system-managed timestamps (`createdAt`, `updatedAt`). In future iterations, a Bet will contain full knockout-stage predictions (group positions, round results, champion).
+A named tournament bracket prediction created by a User. A User may hold many Bets. Each Bet has a user-given **label** and system-managed timestamps (`createdAt`, `updatedAt`). A Bet contains two kinds of prediction:
+- **Group Prediction**: the user's predicted finishing order for each of the 12 groups, and their ranked ordering of the 12 third-place teams (determining which eight advance).
+- **Knockout Prediction**: the user's selected winner for each match in the knockout bracket, stored as a sparse map of match ID to team ID. Winners propagate forward through the bracket and are cascade-cleared when a group prediction change invalidates them.
 
 ### Profile
 A User's public-facing identity: `name` and optional `image`. A User may edit their own Profile (name and image only; email is immutable). Admins and super_admins may view any User's Profile together with their Bet list.
