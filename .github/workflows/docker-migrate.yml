@@ -1,19 +1,19 @@
-name: Docker
+name: Docker Migrate
 
 on:
   workflow_dispatch:
 
 concurrency:
-  group: docker
+  group: docker-migrate
   cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository }}-migrate
 
 jobs:
   build-and-push:
-    name: Build & push image
+    name: Build & push migrate image
     runs-on: ubuntu-latest
 
     permissions:
@@ -32,10 +32,10 @@ jobs:
       - name: Cache Docker layers
         uses: actions/cache@v4
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          path: /tmp/.buildx-cache-migrate
+          key: ${{ runner.os }}-buildx-migrate-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-
+            ${{ runner.os }}-buildx-migrate-
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -59,13 +59,14 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: Dockerfile.migrations
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          cache-from: type=local,src=/tmp/.buildx-cache-migrate
+          cache-to: type=local,dest=/tmp/.buildx-cache-migrate-new,mode=max
 
       - name: Move cache
         run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+          rm -rf /tmp/.buildx-cache-migrate
+          mv /tmp/.buildx-cache-migrate-new /tmp/.buildx-cache-migrate
