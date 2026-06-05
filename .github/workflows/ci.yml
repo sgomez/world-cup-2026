@@ -87,7 +87,7 @@ jobs:
         run: pnpm prisma generate
 
       - name: Push DB schema
-        run: pnpm prisma db push --skip-generate
+        run: pnpm prisma db push
 
       - name: Build
         run: pnpm build
