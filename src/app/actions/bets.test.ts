@@ -122,6 +122,7 @@ describe("updateBetPredictions", () => {
       id: BET_ID,
       userId: OWNER_ID,
       label: "x",
+      status: "draft",
       createdAt: new Date(),
       updatedAt: new Date(),
       groupPredictions: {
