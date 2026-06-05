@@ -44,9 +44,14 @@ export async function updateBetPredictions(
     thirdPlaceOrder: state.thirdPlaceOrder,
   };
 
+  const knockoutWinners: Record<string, string> = {};
+  for (const [matchId, match] of Object.entries(state.knockoutMatches)) {
+    if (match.winnerId) knockoutWinners[matchId] = match.winnerId;
+  }
+
   await prisma.bet.update({
     where: { id: betId },
-    data: { groupPredictions },
+    data: { groupPredictions, knockoutWinners },
   });
 
   return { success: true };

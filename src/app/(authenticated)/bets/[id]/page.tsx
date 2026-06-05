@@ -18,13 +18,21 @@ export default async function BetPage({
   if (!bet || bet.userId !== session.user.id) redirect("/bets");
 
   const savedPredictions = bet.groupPredictions as PredictionState | null;
+  const savedKnockoutWinners = bet.knockoutWinners as Record<
+    string,
+    string
+  > | null;
 
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">
         {bet.label}
       </h1>
-      <BetPrediction betId={bet.id} savedPredictions={savedPredictions} />
+      <BetPrediction
+        betId={bet.id}
+        savedPredictions={savedPredictions}
+        savedKnockoutWinners={savedKnockoutWinners}
+      />
     </div>
   );
 }

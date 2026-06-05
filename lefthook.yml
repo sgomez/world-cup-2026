@@ -11,3 +11,4 @@ pre-commit:
     biome-check:
       glob: "*.{js,ts,jsx,tsx,json,css}"
       run: npx biome check --write --no-errors-on-unmatched {staged_files}
+      stage_fixed: true

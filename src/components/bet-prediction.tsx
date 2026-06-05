@@ -15,12 +15,14 @@ import {
 export function BetPrediction({
   betId,
   savedPredictions,
+  savedKnockoutWinners,
 }: {
   betId: string;
   savedPredictions: PredictionState | null;
+  savedKnockoutWinners?: Record<string, string> | null;
 }) {
   const [state, dispatch] = useReducer(tournamentReducer, null, () =>
-    createInitialState(savedPredictions),
+    createInitialState(savedPredictions, savedKnockoutWinners),
   );
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirst = useRef(true);
