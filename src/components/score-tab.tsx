@@ -317,24 +317,22 @@ export function ScoreTab({ state }: { state: TournamentState }) {
         accent="bg-cyan-500"
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <RoundCard
-          title="Quarter Finals"
-          round="QF"
-          points={ROUND_POINTS.QF}
-          teams={qfTeams}
-          actualTeamIds={actualResults.QF}
-          accent="bg-amber-500"
-        />
-        <RoundCard
-          title="Semi Finals"
-          round="SF"
-          points={ROUND_POINTS.SF}
-          teams={sfTeams}
-          actualTeamIds={actualResults.SF}
-          accent="bg-amber-500"
-        />
-      </div>
+      <RoundCard
+        title="Quarter Finals"
+        round="QF"
+        points={ROUND_POINTS.QF}
+        teams={qfTeams}
+        actualTeamIds={actualResults.QF}
+        accent="bg-amber-500"
+      />
+      <RoundCard
+        title="Semi Finals"
+        round="SF"
+        points={ROUND_POINTS.SF}
+        teams={sfTeams}
+        actualTeamIds={actualResults.SF}
+        accent="bg-amber-500"
+      />
 
       <RoundCard
         title="Final"
