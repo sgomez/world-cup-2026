@@ -228,7 +228,7 @@ describe("predictionReducer", () => {
   it("SET_GROUP_ORDER cascade-clears downstream R16 winner when R32 winner changes", () => {
     let state = createInitialState(null);
     const [a0, a1, a2, a3] = state.groupOrders.A;
-    const [b0, b1] = state.groupOrders.B;
+    const [_b0, _b1] = state.groupOrders.B;
     // Set R32-73 winner (a1 = 2A)
     state = predictionReducer(state, {
       type: "SET_KNOCKOUT_WINNER",
@@ -367,7 +367,7 @@ describe("predictionReducer", () => {
     expect(next.knockoutMatches["SF-101"].winnerId).toBe("team-x");
     expect(next.knockoutMatches["SF-101"].loserId).toBe("team-y");
     expect(next.knockoutMatches["3RD"].team1Id).toBe("team-y"); // loser goes to 3RD slot 1
-    expect(next.knockoutMatches["F"].team1Id).toBe("team-x"); // winner goes to Final slot 1
+    expect(next.knockoutMatches.F.team1Id).toBe("team-x"); // winner goes to Final slot 1
   });
 
   it("SET_KNOCKOUT_WINNER for SF-102 sets loser in 3RD match slot 2 and winner in Final slot 2", () => {
@@ -408,7 +408,7 @@ describe("predictionReducer", () => {
       winnerId: "team-b",
     });
     expect(next.knockoutMatches["3RD"].team2Id).toBe("team-a"); // loser → 3RD slot 2
-    expect(next.knockoutMatches["F"].team2Id).toBe("team-b"); // winner → Final slot 2
+    expect(next.knockoutMatches.F.team2Id).toBe("team-b"); // winner → Final slot 2
   });
 
   it("CLEAR_KNOCKOUT_WINNER clears winner and removes team from downstream slot", () => {
@@ -431,7 +431,7 @@ describe("predictionReducer", () => {
 
   it("CLEAR_KNOCKOUT_WINNER cascades forward to remove team from QF when R16 winner depended on it", () => {
     let state = createInitialState(null);
-    const [a0, a1] = state.groupOrders.A;
+    const [_a0, a1] = state.groupOrders.A;
     const [f0] = state.groupOrders.F;
     // Set chain: R32-73 winner → R16-90, then R16-90 winner → QF-97
     state = predictionReducer(state, {

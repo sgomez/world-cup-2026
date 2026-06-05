@@ -219,7 +219,7 @@ function cascadeClearWinner(
   matchId: string,
 ): Record<string, KnockoutMatch> {
   const match = matches[matchId];
-  if (!match || !match.winnerId) return matches;
+  if (!match?.winnerId) return matches;
 
   const clearedWinnerId = match.winnerId;
   const clearedLoserId = match.loserId;
