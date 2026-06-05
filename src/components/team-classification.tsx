@@ -55,7 +55,7 @@ function SortableTeamRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       {...attributes}
-      {...(!disabled && listeners)}
+      {...(disabled ? {} : listeners)}
       className={cn(
         "flex touch-none items-center gap-2 rounded-md px-2 py-1.5 transition-all duration-200",
         !disabled &&
