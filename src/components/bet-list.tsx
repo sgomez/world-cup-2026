@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { CopyBetButton } from "@/components/copy-bet-button";
 import { RemoveBetButton } from "@/components/remove-bet-button";
+import { Banner } from "@/components/ui/banner";
 
 interface BetListProps {
   bets: Bet[];
@@ -24,13 +25,7 @@ export function BetList({
   }
 
   if (bets.length === 0) {
-    return (
-      <div className="rounded-xl border border-white/5 bg-slate-900/40 px-6 py-10 text-center">
-        <p className="text-slate-500 text-sm">
-          No bets yet. Add your first prediction above.
-        </p>
-      </div>
-    );
+    return <Banner>No bets yet. Add your first prediction above.</Banner>;
   }
 
   return (
@@ -39,12 +34,19 @@ export function BetList({
         <div key={bet.id} className="relative">
           <Link
             href={`/bets/${bet.id}`}
-            className="block rounded-xl border border-white/5 bg-slate-900/60 px-5 py-4 hover:border-white/10 hover:bg-slate-900/80 transition-colors"
+            className="block rounded-xl border border-slate-200 bg-white px-5 py-4 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-white/5 dark:bg-slate-900/60 dark:hover:border-white/10 dark:hover:bg-slate-900/80"
           >
             <div className="flex items-center gap-3">
-              <p className="font-medium text-white">{bet.label}</p>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {bet.label}
+              </p>
+              {bet.status === "draft" && (
+                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
+                  Draft
+                </span>
+              )}
               {bet.status === "closed" && (
-                <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs font-medium text-slate-300">
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
                   Closed
                 </span>
               )}

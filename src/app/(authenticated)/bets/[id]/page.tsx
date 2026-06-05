@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { BetPrediction } from "@/components/bet-prediction";
 import { BetStatusToggle } from "@/components/bet-status-toggle";
+import { PageHeader } from "@/components/ui/page-header";
 import { BET_DEADLINE } from "@/lib/bet-constants";
 import type { PredictionState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
@@ -29,13 +30,15 @@ export default async function BetPage({
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          {bet.label}
-        </h1>
-        {!isPastDeadline && (
-          <BetStatusToggle betId={bet.id} isClosed={isClosed} />
-        )}
+      <div className="mb-6">
+        <PageHeader
+          title={bet.label}
+          action={
+            !isPastDeadline ? (
+              <BetStatusToggle betId={bet.id} isClosed={isClosed} />
+            ) : undefined
+          }
+        />
       </div>
       <BetPrediction
         betId={bet.id}
