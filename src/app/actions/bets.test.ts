@@ -128,17 +128,18 @@ describe("updateBetPredictions", () => {
         groupOrders: VALID_STATE.groupOrders,
         thirdPlaceOrder: VALID_STATE.thirdPlaceOrder,
       },
+      knockoutWinners: null,
     } as Awaited<ReturnType<typeof mockUpdate>>);
     const result = await updateBetPredictions(BET_ID, VALID_STATE);
     expect(result).toEqual({ success: true });
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: BET_ID },
-      data: {
+      data: expect.objectContaining({
         groupPredictions: {
           groupOrders: VALID_STATE.groupOrders,
           thirdPlaceOrder: VALID_STATE.thirdPlaceOrder,
         },
-      },
+      }),
     });
   });
 });

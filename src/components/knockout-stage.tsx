@@ -3,6 +3,7 @@
 import type { Dispatch } from "react";
 import {
   getAllTeamsLookup,
+  KNOCKOUT_MATCH_IDS,
   type KnockoutRound,
   type TournamentAction,
   type TournamentState,
@@ -138,22 +139,21 @@ const accentColors = {
 function RoundSection({
   title,
   round,
-  matchCount,
   state,
   dispatch,
   accent = "cyan",
 }: {
   title: string;
   round: KnockoutRound;
-  matchCount: number;
   state: TournamentState;
   dispatch: Dispatch<TournamentAction>;
   accent?: keyof typeof accentColors;
 }) {
   const teamsLookup = getAllTeamsLookup();
+  const matchIds = KNOCKOUT_MATCH_IDS[round];
+  const matchCount = matchIds.length;
 
-  const matches = Array.from({ length: matchCount }, (_, i) => {
-    const matchId = `${round}-${i + 1}`;
+  const matches = matchIds.map((matchId, i) => {
     const match = state.knockoutMatches[matchId];
     return {
       matchId,
@@ -220,7 +220,6 @@ export function KnockoutStage({
       <RoundSection
         title="Round of 32"
         round="R32"
-        matchCount={16}
         state={state}
         dispatch={dispatch}
         accent="cyan"
@@ -228,7 +227,6 @@ export function KnockoutStage({
       <RoundSection
         title="Round of 16"
         round="R16"
-        matchCount={8}
         state={state}
         dispatch={dispatch}
         accent="cyan"
@@ -236,7 +234,6 @@ export function KnockoutStage({
       <RoundSection
         title="Quarter Finals"
         round="QF"
-        matchCount={4}
         state={state}
         dispatch={dispatch}
         accent="amber"
@@ -245,7 +242,6 @@ export function KnockoutStage({
         <RoundSection
           title="Semi Finals"
           round="SF"
-          matchCount={2}
           state={state}
           dispatch={dispatch}
           accent="amber"
@@ -253,7 +249,6 @@ export function KnockoutStage({
         <RoundSection
           title="3rd Place Match"
           round="3RD"
-          matchCount={1}
           state={state}
           dispatch={dispatch}
           accent="rose"
@@ -262,7 +257,6 @@ export function KnockoutStage({
       <RoundSection
         title="Final"
         round="F"
-        matchCount={1}
         state={state}
         dispatch={dispatch}
         accent="emerald"
