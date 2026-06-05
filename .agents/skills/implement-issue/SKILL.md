@@ -12,13 +12,39 @@ Full issue → PR → close flow, locally, using `gh` and `git`.
 ```
 /implement-issue          # lists open issues to pick from
 /implement-issue 42       # implements issue #42 directly
+/implement-issue 17       # if #17 has sub-issues, picks the first unblocked open one
 ```
+
+One sub-issue per invocation — keeps sessions short and focused.
 
 ## Flow
 
 ### 1. Select issue
 
-If no number given, list candidates:
+**If a parent issue number is given**, fetch its open sub-issues and pick the first unblocked one:
+
+```bash
+gh api graphql -f query='
+{
+  repository(owner:"OWNER", name:"REPO") {
+    issue(number: PARENT_NUM) {
+      subIssues(first: 20) {
+        nodes { number title state body }
+      }
+    }
+  }
+}' --jq '.data.repository.issue.subIssues.nodes[] | select(.state == "OPEN") | "#\(.number) \(.title)"'
+```
+
+For each open sub-issue (in order), check its "Blocked by" section. Parse any issue references (`#N`) from that section and verify they are all closed:
+
+```bash
+gh issue view <N> --json state --jq '.state'  # must be "CLOSED" for each blocker
+```
+
+Pick the first open sub-issue where all blockers are closed. If none are unblocked, report to user and stop.
+
+**If no number given**, list candidates from the tracker:
 
 ```bash
 gh issue list --state open --label "ready-for-agent" --json number,title,labels \
@@ -36,7 +62,7 @@ Priority order: **bugs > tracer bullets > polish > refactors**. Pick highest-pri
 gh issue view <N> --comments
 ```
 
-Read the full body, acceptance criteria, and all comments. Pull parent PRD if referenced.
+Read the full body, acceptance criteria, and all comments. Pull parent PRD if referenced (the "Parent" section in the issue body).
 
 ### 3. Create branch
 
@@ -93,11 +119,13 @@ gh pr create \
 
 ### 7. Close issue
 
+Close only the sub-issue that was implemented — never the parent:
+
 ```bash
-gh issue close <N> --comment "Implemented in PR #<PR_NUMBER>. <one-line summary of what was done>."
+gh issue close <SUB_ISSUE_N> --comment "Implemented in PR #<PR_NUMBER>. <one-line summary of what was done>."
 ```
 
-Only close after commit is pushed and PR is open.
+Only close after commit is pushed and PR is open. The parent issue stays open until all sub-issues are closed.
 
 ## Blocked
 

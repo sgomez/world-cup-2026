@@ -55,6 +55,31 @@ For each approved slice, publish a new issue to the issue tracker. Use the issue
 
 Publish issues in dependency order (blockers first) so you can reference real issue identifiers in the "Blocked by" field.
 
+When a parent issue exists, create each child issue in one step using the GraphQL `createIssue` mutation, which accepts `parentIssueId`. This avoids a separate `addSubIssue` call. Gather the required node IDs and label IDs first, then create each issue:
+
+```bash
+# Gather once
+repo_id=$(gh api graphql -f query='{ repository(owner:"OWNER",name:"REPO"){ id } }' --jq '.data.repository.id')
+parent_id=$(gh api graphql -f query='{ repository(owner:"OWNER",name:"REPO"){ issue(number:PARENT_NUM){ id } } }' --jq '.data.repository.issue.id')
+label_id=$(gh api graphql -f query='{ repository(owner:"OWNER",name:"REPO"){ label(name:"ready-for-agent"){ id } } }' --jq '.data.repository.label.id')
+
+# Create each child issue with parent set
+gh api graphql -f query='
+  mutation {
+    createIssue(input: {
+      repositoryId: "'"$repo_id"'"
+      parentIssueId: "'"$parent_id"'"
+      labelIds: ["'"$label_id"'"]
+      title: "TITLE"
+      body: "BODY"
+    }) {
+      issue { number url }
+    }
+  }'
+```
+
+If no parent exists, fall back to `gh issue create` as normal.
+
 <issue-template>
 ## Parent
 
