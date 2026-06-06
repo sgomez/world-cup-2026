@@ -57,6 +57,12 @@ export function Navbar({ user }: NavbarProps) {
 
         <div className="flex items-center gap-4">
           <Link
+            href="/communities"
+            className="text-caption-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Communities
+          </Link>
+          <Link
             href="/bets"
             className="text-caption-md text-muted-foreground hover:text-foreground transition-colors"
           >
@@ -92,6 +98,12 @@ export function Navbar({ user }: NavbarProps) {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/bets")}>
                 My Bets
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/communities")}>
+                Communities
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/communities/new")}>
+                Create Community
               </DropdownMenuItem>
               {isAdmin && (
                 <DropdownMenuItem onClick={() => router.push("/admin")}>

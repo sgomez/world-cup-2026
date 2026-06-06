@@ -33,9 +33,17 @@ export default async function AdminPage() {
 
   return (
     <div>
-      <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
-        Users
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
+          Users
+        </h1>
+        <Link
+          href="/admin/communities"
+          className="text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
+        >
+          Communities
+        </Link>
+      </div>
       <p className="mt-1 text-caption-md text-muted-foreground">
         {users.length} registered participant{users.length !== 1 ? "s" : ""}
       </p>
