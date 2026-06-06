@@ -28,7 +28,6 @@ const mockGetSession = vi.mocked(getSession);
 const mockRedirect = vi.mocked(redirect);
 const mockCommunityCreate = vi.mocked(prisma.community.create);
 const mockCommunityFindUnique = vi.mocked(prisma.community.findUnique);
-const mockCommunityFindFirst = vi.mocked(prisma.community.findFirst);
 const mockCommunityMemberUpsert = vi.mocked(prisma.communityMember.upsert);
 
 const USER_ID = "user-1";
