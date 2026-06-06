@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -46,75 +47,137 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Sports Brand & Accent colors */
+  --color-ink: var(--ink);
+  --color-on-primary: var(--on-primary);
+  --color-canvas: var(--canvas);
+  --color-soft-cloud: var(--soft-cloud);
+  --color-hairline: var(--hairline);
+  --color-hairline-soft: var(--hairline-soft);
+
+  /* Text colors */
+  --color-charcoal: var(--charcoal);
+  --color-ash: var(--ash);
+  --color-mute: var(--mute);
+  --color-stone: var(--stone);
+
+  /* Semantic colors */
+  --color-sale: var(--sale);
+  --color-sale-deep: var(--sale-deep);
+  --color-success: var(--success);
+  --color-success-bright: var(--success-bright);
+  --color-info: var(--info);
+  --color-info-deep: var(--info-deep);
+
+  /* Category Accents */
+  --color-accent-pink: var(--accent-pink);
+  --color-accent-pink-soft: var(--accent-pink-soft);
+  --color-accent-purple-soft: var(--accent-purple-soft);
+  --color-accent-purple-pale: var(--accent-purple-pale);
+  --color-accent-teal: var(--accent-teal);
+  --color-accent-pink-deep: var(--accent-pink-deep);
+
+  /* Spacing */
+  --spacing-xxs: 2px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 18px;
+  --spacing-xl: 24px;
+  --spacing-xxl: 30px;
+  --spacing-section: 48px;
+
+  /* Border radius overrides */
+  --radius-none: 0px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-full: 9999px;
+
+  /* Fonts */
+  --font-display-campaign:
+    "Sports Futura ND", "Bebas Neue", "Anton", sans-serif;
+  --font-heading-display: "Helvetica Now Display Medium", "Inter", sans-serif;
+  --font-text-medium: "Helvetica Now Text Medium", "Inter", sans-serif;
+  --font-text: "Helvetica Now Text", "Inter", sans-serif;
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Brand & Accent Design Tokens */
+  --ink: #111111;
+  --on-primary: #ffffff;
+  --canvas: #ffffff;
+  --soft-cloud: #f5f5f5;
+  --hairline: #cacacb;
+  --hairline-soft: #e5e5e5;
+
+  /* Text */
+  --charcoal: #39393b;
+  --ash: #4b4b4d;
+  --mute: #707072;
+  --stone: #9e9ea0;
+
+  /* Semantic */
+  --sale: #d30005;
+  --sale-deep: #780700;
+  --success: #007d48;
+  --success-bright: #1eaa52;
+  --info: #1151ff;
+  --info-deep: #0034e3;
+
+  /* Category Accents */
+  --accent-pink: #ed1aa0;
+  --accent-pink-soft: #ffb0dd;
+  --accent-purple-soft: #beaffd;
+  --accent-purple-pale: #d6d1ff;
+  --accent-teal: #0a7281;
+  --accent-pink-deep: #4c012d;
+
+  /* shadcn/ui mappings to Sports Design Tokens */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card: var(--canvas);
+  --card-foreground: var(--ink);
+  --popover: var(--canvas);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--on-primary);
+  --secondary: var(--soft-cloud);
+  --secondary-foreground: var(--ink);
+  --muted: var(--soft-cloud);
+  --muted-foreground: var(--mute);
+  --accent: var(--soft-cloud);
+  --accent-foreground: var(--ink);
+  --destructive: var(--sale);
+  --destructive-foreground: var(--on-primary);
+  --border: var(--hairline);
+  --input: var(--hairline);
+  --ring: var(--ink);
+  --radius: 6px;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Dark mode theme overrides */
+  --background: var(--ink);
+  --foreground: var(--canvas);
+  --card: var(--ink);
+  --card-foreground: var(--canvas);
+  --popover: var(--ink);
+  --popover-foreground: var(--canvas);
+  --primary: var(--canvas);
+  --primary-foreground: var(--ink);
+  --secondary: var(--charcoal);
+  --secondary-foreground: var(--canvas);
+  --muted: var(--charcoal);
+  --muted-foreground: var(--stone);
+  --accent: var(--charcoal);
+  --accent-foreground: var(--canvas);
+  --destructive: var(--sale-deep);
+  --destructive-foreground: var(--canvas);
+  --border: var(--ash);
+  --input: var(--ash);
+  --ring: var(--canvas);
 }
 
 @layer base {
@@ -127,4 +190,328 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Typography Utilities */
+
+@utility text-display-campaign {
+  font-family: var(--font-display-campaign);
+  font-size: 96px;
+  font-weight: 500;
+  line-height: 0.9;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  /* Approximate Futura optical weight by tightening substitute letter spacing */
+  @supports not (font-family: "Sports Futura ND") {
+    letter-spacing: -0.05em;
+  }
+}
+
+@utility text-heading-xl {
+  font-family: var(--font-heading-display);
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+@utility text-heading-lg {
+  font-family: var(--font-heading-display);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+@utility text-heading-md {
+  font-family: var(--font-heading-display);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.75;
+  letter-spacing: 0;
+}
+
+@utility text-body-md {
+  font-family: var(--font-text);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+@utility text-body-strong {
+  font-family: var(--font-text-medium);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+@utility text-button-lg {
+  font-family: var(--font-heading-display);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+@utility text-button-md {
+  font-family: var(--font-text-medium);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+@utility text-button-sm {
+  font-family: var(--font-text-medium);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+@utility text-link-md {
+  font-family: var(--font-text);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.75;
+  letter-spacing: 0;
+  text-decoration: underline;
+}
+
+@utility text-caption-md {
+  font-family: var(--font-text-medium);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+@utility text-caption-sm {
+  font-family: var(--font-text-medium);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+@utility text-utility-xs {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.75;
+  letter-spacing: 0;
+}
+
+/* Component Utilities matching DESIGN.md specs */
+
+@utility button-primary {
+  background-color: var(--ink);
+  color: var(--on-primary);
+  font-family: var(--font-text-medium);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  border-radius: var(--radius-lg);
+  padding: 16px 32px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    opacity 0.1s ease;
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+}
+
+@utility button-secondary {
+  background-color: var(--soft-cloud);
+  color: var(--ink);
+  font-family: var(--font-text-medium);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  border-radius: var(--radius-lg);
+  padding: 16px 32px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    opacity 0.1s ease;
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+}
+
+@utility button-outline-on-image {
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-text-medium);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  border-radius: var(--radius-lg);
+  padding: 12px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    opacity 0.1s ease;
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+}
+
+@utility button-icon-circular {
+  background-color: var(--soft-cloud);
+  color: var(--ink);
+  border-radius: var(--radius-full);
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    opacity 0.1s ease;
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+}
+
+@utility search-pill {
+  background-color: var(--soft-cloud);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  height: 40px;
+  outline: none;
+  border: 2px solid transparent;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+
+  &:focus {
+    background-color: var(--canvas);
+    border-color: var(--ink);
+    box-shadow: 0 0 0 12px var(--soft-cloud);
+  }
+}
+
+@utility filter-chip {
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-text-medium);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  border-radius: var(--radius-lg);
+  padding: 8px 16px;
+  border: 1px solid var(--hairline);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+@utility filter-chip-active {
+  background-color: var(--ink);
+  color: var(--on-primary);
+  border-color: var(--ink);
+}
+
+@utility badge-promo {
+  background-color: var(--canvas);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  font-family: var(--font-text-medium);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  border-radius: var(--radius-lg);
+  padding: 4px 12px;
+  display: inline-flex;
+  align-items: center;
+}
+
+@utility badge-sale-text {
+  color: var(--sale);
+  font-family: var(--font-text-medium);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+@utility product-card {
+  background-color: var(--canvas);
+  border-radius: var(--radius-none);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+@utility product-card-image {
+  background-color: var(--soft-cloud);
+  border-radius: var(--radius-none);
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  object-fit: cover;
+}
+
+@utility swatch-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: inline-block;
+}
+
+@utility swatch-dot-active {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@utility pdp-disclosure-row {
+  border-bottom: 1px solid var(--hairline);
+  padding: 24px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+@utility faq-row {
+  border-bottom: 1px solid var(--hairline);
+  padding: 24px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
 }

@@ -18,6 +18,10 @@ Default canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `read
 
 Single-context: `CONTEXT.md` + `docs/adr/` at repo root. See `docs/agents/domain.md`.
 
+### Design system
+
+The agent MUST read and adhere to all design tokens, spacing scales, typography styles, and component guidelines in `DESIGN.md` when writing UI code or editing `src/app/globals.css`.
+
 ### implement-issue
 
 Local issue implementation — replaces sandcastle. No API key, no containers. See `.agents/skills/implement-issue/SKILL.md`.
