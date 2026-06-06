@@ -217,6 +217,20 @@ describe("removeBet", () => {
     expect(mockDelete).not.toHaveBeenCalled();
   });
 
+  it("returns error when admin user does not own the bet", async () => {
+    vi.setSystemTime(BEFORE_DEADLINE);
+    mockGetSession.mockResolvedValue({
+      user: { id: "admin-user", role: "admin" },
+    } as Awaited<ReturnType<typeof getSession>>);
+    mockFindUnique.mockResolvedValue({
+      id: BET_ID,
+      userId: OWNER_ID,
+    } as Awaited<ReturnType<typeof mockFindUnique>>);
+    const result = await removeBet(BET_ID);
+    expect(result).toEqual({ error: "Not authorized" });
+    expect(mockDelete).not.toHaveBeenCalled();
+  });
+
   it("returns error when called after deadline", async () => {
     vi.setSystemTime(AFTER_DEADLINE);
     mockGetSession.mockResolvedValue({ user: { id: OWNER_ID } } as Awaited<
@@ -264,6 +278,16 @@ describe("updateBetPredictions", () => {
 
   it("returns error when caller does not own the bet", async () => {
     mockSession("other-user");
+    mockBet();
+    const result = await updateBetPredictions(BET_ID, VALID_STATE);
+    expect(result).toEqual({ error: "Not authorized" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("returns error when admin user does not own the bet", async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: "admin-user", role: "admin" },
+    } as Awaited<ReturnType<typeof getSession>>);
     mockBet();
     const result = await updateBetPredictions(BET_ID, VALID_STATE);
     expect(result).toEqual({ error: "Not authorized" });
@@ -333,6 +357,16 @@ describe("closeBet", () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
+  it("returns error when admin user does not own the bet", async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: "admin-user", role: "admin" },
+    } as Awaited<ReturnType<typeof getSession>>);
+    mockBet();
+    const result = await closeBet(BET_ID);
+    expect(result).toEqual({ error: "Not authorized" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
   it("returns error when deadline has passed", async () => {
     const { BET_DEADLINE } = await import("@/lib/bet-constants");
     vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
@@ -375,6 +409,16 @@ describe("reopenBet", () => {
 
   it("returns error when caller does not own the bet", async () => {
     mockSession("other-user");
+    mockBet();
+    const result = await reopenBet(BET_ID);
+    expect(result).toEqual({ error: "Not authorized" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("returns error when admin user does not own the bet", async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: "admin-user", role: "admin" },
+    } as Awaited<ReturnType<typeof getSession>>);
     mockBet();
     const result = await reopenBet(BET_ID);
     expect(result).toEqual({ error: "Not authorized" });
@@ -442,6 +486,18 @@ describe("copyBet", () => {
     mockGetSession.mockResolvedValue({ user: { id: "other-user" } } as Awaited<
       ReturnType<typeof getSession>
     >);
+    mockFindUnique.mockResolvedValue(
+      SOURCE_BET as Awaited<ReturnType<typeof mockFindUnique>>,
+    );
+    const result = await copyBet(BET_ID);
+    expect(result).toEqual({ error: "Not authorized" });
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("returns error when admin user does not own the source bet", async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: "admin-user", role: "admin" },
+    } as Awaited<ReturnType<typeof getSession>>);
     mockFindUnique.mockResolvedValue(
       SOURCE_BET as Awaited<ReturnType<typeof mockFindUnique>>,
     );

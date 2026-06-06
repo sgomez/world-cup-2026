@@ -18,8 +18,9 @@ export default async function BetPage({
   const { id } = await params;
   const bet = await prisma.bet.findUnique({ where: { id } });
 
-  if (!bet || bet.userId !== session.user.id) redirect("/bets");
+  if (!bet) redirect("/bets");
 
+  const isOwner = bet.userId === session.user.id;
   const savedPredictions = bet.groupPredictions as PredictionState | null;
   const savedKnockoutWinners = bet.knockoutWinners as Record<
     string,
@@ -34,7 +35,7 @@ export default async function BetPage({
         <PageHeader
           title={bet.label}
           action={
-            !isPastDeadline ? (
+            isOwner && !isPastDeadline ? (
               <BetStatusToggle betId={bet.id} isClosed={isClosed} />
             ) : undefined
           }
@@ -44,7 +45,7 @@ export default async function BetPage({
         betId={bet.id}
         savedPredictions={savedPredictions}
         savedKnockoutWinners={savedKnockoutWinners}
-        readOnly={isClosed}
+        readOnly={!isOwner || isClosed}
       />
     </div>
   );
