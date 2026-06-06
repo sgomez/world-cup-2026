@@ -15,10 +15,13 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
       findMany: vi.fn(),
       findFirst: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     communityMember: {
       create: vi.fn(),
       upsert: vi.fn(),
+      delete: vi.fn(),
     },
   },
 }));
@@ -27,13 +30,24 @@ vi.mock("@/lib/session", () => ({ getSession: vi.fn() }));
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { createCommunity, getCommunity, joinCommunity } from "./communities";
+import {
+  createCommunity,
+  deleteCommunity,
+  getCommunity,
+  joinCommunity,
+  leaveCommunity,
+  regenerateInviteToken,
+  removeMember,
+} from "./communities";
 
 const mockGetSession = vi.mocked(getSession);
 const mockRedirect = vi.mocked(redirect);
 const mockCommunityCreate = vi.mocked(prisma.community.create);
 const mockCommunityFindUnique = vi.mocked(prisma.community.findUnique);
+const mockCommunityUpdate = vi.mocked(prisma.community.update);
+const mockCommunityDelete = vi.mocked(prisma.community.delete);
 const mockCommunityMemberUpsert = vi.mocked(prisma.communityMember.upsert);
+const mockCommunityMemberDelete = vi.mocked(prisma.communityMember.delete);
 
 const USER_ID = "user-1";
 const COMMUNITY_ID = "community-1";
@@ -349,5 +363,231 @@ describe("getCommunity", () => {
     expect(result?.members[0].user.bets).toHaveLength(1);
     expect(result?.members[0].user.bets[0].id).toBe(bet.id);
     vi.restoreAllMocks();
+  });
+});
+
+function mockCommunity(ownerId = OWNER_ID) {
+  mockCommunityFindUnique.mockResolvedValue({
+    id: COMMUNITY_ID,
+    slug: COMMUNITY_SLUG,
+    ownerId,
+  } as Awaited<ReturnType<typeof mockCommunityFindUnique>>);
+}
+
+describe("leaveCommunity", () => {
+  it("returns error when not authenticated", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const result = await leaveCommunity(COMMUNITY_SLUG, null, new FormData());
+    expect(result).toEqual({ error: "Not authenticated" });
+  });
+
+  it("returns error when community not found", async () => {
+    mockSession();
+    mockCommunityFindUnique.mockResolvedValue(null);
+    const result = await leaveCommunity(COMMUNITY_SLUG, null, new FormData());
+    expect(result).toEqual({ error: "Community not found" });
+    expect(mockCommunityMemberDelete).not.toHaveBeenCalled();
+  });
+
+  it("returns error when owner tries to leave", async () => {
+    mockSession(OWNER_ID);
+    mockCommunity();
+    const result = await leaveCommunity(COMMUNITY_SLUG, null, new FormData());
+    expect(result).toEqual({
+      error: "Owner cannot leave. Delete the community instead.",
+    });
+    expect(mockCommunityMemberDelete).not.toHaveBeenCalled();
+  });
+
+  it("removes membership and redirects for a regular member", async () => {
+    mockSession(USER_ID);
+    mockCommunity();
+    mockCommunityMemberDelete.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof mockCommunityMemberDelete>>,
+    );
+
+    await leaveCommunity(COMMUNITY_SLUG, null, new FormData());
+
+    expect(mockCommunityMemberDelete).toHaveBeenCalledWith({
+      where: {
+        communityId_userId: { communityId: COMMUNITY_ID, userId: USER_ID },
+      },
+    });
+    expect(mockRedirect).toHaveBeenCalledWith("/communities");
+  });
+});
+
+describe("removeMember", () => {
+  it("returns error when not authenticated", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const result = await removeMember(
+      COMMUNITY_SLUG,
+      USER_ID,
+      null,
+      new FormData(),
+    );
+    expect(result).toEqual({ error: "Not authenticated" });
+  });
+
+  it("returns error when community not found", async () => {
+    mockSession(OWNER_ID);
+    mockCommunityFindUnique.mockResolvedValue(null);
+    const result = await removeMember(
+      COMMUNITY_SLUG,
+      USER_ID,
+      null,
+      new FormData(),
+    );
+    expect(result).toEqual({ error: "Community not found" });
+    expect(mockCommunityMemberDelete).not.toHaveBeenCalled();
+  });
+
+  it("returns error for non-owner caller", async () => {
+    mockSession(USER_ID);
+    mockCommunity();
+    const result = await removeMember(
+      COMMUNITY_SLUG,
+      "another-user",
+      null,
+      new FormData(),
+    );
+    expect(result).toEqual({ error: "Only the owner can remove members" });
+    expect(mockCommunityMemberDelete).not.toHaveBeenCalled();
+  });
+
+  it("returns error when owner tries to remove themselves", async () => {
+    mockSession(OWNER_ID);
+    mockCommunity();
+    const result = await removeMember(
+      COMMUNITY_SLUG,
+      OWNER_ID,
+      null,
+      new FormData(),
+    );
+    expect(result).toEqual({ error: "Owner cannot remove themselves" });
+    expect(mockCommunityMemberDelete).not.toHaveBeenCalled();
+  });
+
+  it("removes the target member and returns success", async () => {
+    mockSession(OWNER_ID);
+    mockCommunity();
+    mockCommunityMemberDelete.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof mockCommunityMemberDelete>>,
+    );
+
+    const result = await removeMember(
+      COMMUNITY_SLUG,
+      USER_ID,
+      null,
+      new FormData(),
+    );
+
+    expect(mockCommunityMemberDelete).toHaveBeenCalledWith({
+      where: {
+        communityId_userId: { communityId: COMMUNITY_ID, userId: USER_ID },
+      },
+    });
+    expect(result).toEqual({ success: true });
+  });
+});
+
+describe("deleteCommunity", () => {
+  it("returns error when not authenticated", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const result = await deleteCommunity(COMMUNITY_SLUG, null, new FormData());
+    expect(result).toEqual({ error: "Not authenticated" });
+  });
+
+  it("returns error when community not found", async () => {
+    mockSession(OWNER_ID);
+    mockCommunityFindUnique.mockResolvedValue(null);
+    const result = await deleteCommunity(COMMUNITY_SLUG, null, new FormData());
+    expect(result).toEqual({ error: "Community not found" });
+    expect(mockCommunityDelete).not.toHaveBeenCalled();
+  });
+
+  it("returns error for non-owner caller", async () => {
+    mockSession(USER_ID);
+    mockCommunity();
+    const result = await deleteCommunity(COMMUNITY_SLUG, null, new FormData());
+    expect(result).toEqual({
+      error: "Only the owner can delete the community",
+    });
+    expect(mockCommunityDelete).not.toHaveBeenCalled();
+  });
+
+  it("deletes the community and redirects for the owner", async () => {
+    mockSession(OWNER_ID);
+    mockCommunity();
+    mockCommunityDelete.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof mockCommunityDelete>>,
+    );
+
+    await deleteCommunity(COMMUNITY_SLUG, null, new FormData());
+
+    expect(mockCommunityDelete).toHaveBeenCalledWith({
+      where: { id: COMMUNITY_ID },
+    });
+    expect(mockRedirect).toHaveBeenCalledWith("/communities");
+  });
+});
+
+describe("regenerateInviteToken", () => {
+  it("returns error when not authenticated", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const result = await regenerateInviteToken(
+      COMMUNITY_SLUG,
+      null,
+      new FormData(),
+    );
+    expect(result).toEqual({ error: "Not authenticated" });
+  });
+
+  it("returns error when community not found", async () => {
+    mockSession(OWNER_ID);
+    mockCommunityFindUnique.mockResolvedValue(null);
+    const result = await regenerateInviteToken(
+      COMMUNITY_SLUG,
+      null,
+      new FormData(),
+    );
+    expect(result).toEqual({ error: "Community not found" });
+    expect(mockCommunityUpdate).not.toHaveBeenCalled();
+  });
+
+  it("returns error for non-owner caller", async () => {
+    mockSession(USER_ID);
+    mockCommunity();
+    const result = await regenerateInviteToken(
+      COMMUNITY_SLUG,
+      null,
+      new FormData(),
+    );
+    expect(result).toEqual({
+      error: "Only the owner can regenerate the invite link",
+    });
+    expect(mockCommunityUpdate).not.toHaveBeenCalled();
+  });
+
+  it("updates invite token and returns success for owner", async () => {
+    mockSession(OWNER_ID);
+    mockCommunity();
+    mockCommunityUpdate.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof mockCommunityUpdate>>,
+    );
+
+    const result = await regenerateInviteToken(
+      COMMUNITY_SLUG,
+      null,
+      new FormData(),
+    );
+
+    const call = mockCommunityUpdate.mock.calls[0][0];
+    const token = call.data.inviteToken as string;
+    expect(call.where).toEqual({ id: COMMUNITY_ID });
+    expect(token).toBeTruthy();
+    expect(typeof token).toBe("string");
+    expect(token.length).toBeGreaterThan(16);
+    expect(result).toEqual({ success: true });
   });
 });
