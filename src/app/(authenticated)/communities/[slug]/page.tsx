@@ -1,8 +1,10 @@
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getCommunity } from "@/app/actions/communities";
+import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
-import { prisma } from "@/lib/prisma";
+import { BET_DEADLINE } from "@/lib/bet-constants";
 import { getSession } from "@/lib/session";
 
 export default async function CommunityPage({
@@ -14,17 +16,12 @@ export default async function CommunityPage({
   if (!session) redirect("/login");
 
   const { slug } = await params;
-  const community = await prisma.community.findUnique({
-    where: { slug },
-    include: {
-      owner: { select: { name: true } },
-      members: { include: { user: { select: { id: true, name: true } } } },
-    },
-  });
+  const community = await getCommunity(slug);
 
   if (!community) notFound();
 
-  const isOwner = community.ownerId === session.user.id;
+  const isOwner = community.ownerId === community.currentUserId;
+  const isPastDeadline = BET_DEADLINE.getTime() < Date.now();
 
   const headersList = await headers();
   const host = headersList.get("host") ?? "";
@@ -58,15 +55,29 @@ export default async function CommunityPage({
           Members ({community.members.length})
         </p>
         <ul className="mt-2 divide-y divide-hairline border border-hairline">
-          {community.members.map(({ user }) => (
+          {community.members.map(({ user, userId }) => (
             <li
               key={user.id}
-              className="px-6 py-3 text-body-md text-foreground"
+              className="flex items-center justify-between px-6 py-3"
             >
-              {user.name}
+              <span className="text-body-md text-foreground">{user.name}</span>
+              {userId === community.ownerId && (
+                <span className="text-caption-sm text-muted-foreground">
+                  Owner
+                </span>
+              )}
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="mt-8">
+        <p className="text-caption-md font-medium text-foreground">Bets</p>
+        {isPastDeadline ? null : (
+          <Banner className="mt-2">
+            Bets will be visible after the deadline.
+          </Banner>
+        )}
       </div>
 
       <div className="mt-6">

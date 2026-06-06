@@ -22,7 +22,7 @@ vi.mock("@/lib/session", () => ({ getSession: vi.fn() }));
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { createCommunity, joinCommunity } from "./communities";
+import { createCommunity, getCommunity, joinCommunity } from "./communities";
 
 const mockGetSession = vi.mocked(getSession);
 const mockRedirect = vi.mocked(redirect);
@@ -226,5 +226,66 @@ describe("joinCommunity", () => {
 
     expect(mockCommunityMemberUpsert).toHaveBeenCalledTimes(1);
     expect(mockRedirect).toHaveBeenCalledWith(`/communities/${COMMUNITY_SLUG}`);
+  });
+});
+
+const OWNER_ID = "owner-1";
+
+function makeCommunity(memberUserIds: string[]) {
+  return {
+    id: COMMUNITY_ID,
+    slug: COMMUNITY_SLUG,
+    name: "My Friends",
+    ownerId: OWNER_ID,
+    inviteToken: "tok",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    owner: { name: "Owner Name" },
+    members: memberUserIds.map((uid) => ({
+      userId: uid,
+      communityId: COMMUNITY_ID,
+      joinedAt: new Date(),
+      user: { id: uid, name: `User ${uid}` },
+    })),
+  } as Awaited<ReturnType<typeof mockCommunityFindUnique>>;
+}
+
+describe("getCommunity", () => {
+  it("returns null when not authenticated", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const result = await getCommunity("any-slug");
+    expect(result).toBeNull();
+    expect(mockCommunityFindUnique).not.toHaveBeenCalled();
+  });
+
+  it("returns null when community does not exist", async () => {
+    mockSession();
+    mockCommunityFindUnique.mockResolvedValue(null);
+    const result = await getCommunity("nonexistent");
+    expect(result).toBeNull();
+  });
+
+  it("returns null when authenticated user is not a member", async () => {
+    mockSession("non-member");
+    mockCommunityFindUnique.mockResolvedValue(makeCommunity([USER_ID]));
+    const result = await getCommunity(COMMUNITY_SLUG);
+    expect(result).toBeNull();
+  });
+
+  it("returns community data when user is a member", async () => {
+    mockSession();
+    mockCommunityFindUnique.mockResolvedValue(makeCommunity([USER_ID]));
+    const result = await getCommunity(COMMUNITY_SLUG);
+    expect(result).not.toBeNull();
+    expect(result?.id).toBe(COMMUNITY_ID);
+    expect(result?.currentUserId).toBe(USER_ID);
+  });
+
+  it("returns community data when user is the owner", async () => {
+    mockSession(OWNER_ID);
+    mockCommunityFindUnique.mockResolvedValue(makeCommunity([OWNER_ID]));
+    const result = await getCommunity(COMMUNITY_SLUG);
+    expect(result).not.toBeNull();
+    expect(result?.currentUserId).toBe(OWNER_ID);
   });
 });

@@ -76,6 +76,26 @@ export async function createCommunity(
   redirect(`/communities/${community.slug}`);
 }
 
+export async function getCommunity(slug: string) {
+  const session = await getSession();
+  if (!session) return null;
+
+  const community = await prisma.community.findUnique({
+    where: { slug },
+    include: {
+      owner: { select: { name: true } },
+      members: { include: { user: { select: { id: true, name: true } } } },
+    },
+  });
+
+  if (!community) return null;
+
+  const isMember = community.members.some((m) => m.userId === session.user.id);
+  if (!isMember) return null;
+
+  return { ...community, currentUserId: session.user.id };
+}
+
 export async function joinCommunity(
   token: string,
   _prev: JoinCommunityState,
