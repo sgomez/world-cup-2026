@@ -1,6 +1,7 @@
 "use client";
 
 import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar";
+import NextImage from "next/image";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -29,10 +30,21 @@ function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
-      className={cn(
-        "aspect-square size-full rounded-sm object-cover",
-        className,
-      )}
+      className={cn("rounded-sm object-cover", className)}
+      render={(imgProps: React.ImgHTMLAttributes<HTMLImageElement>) => {
+        const { src, alt, width, height, ...rest } = imgProps;
+        if (!src || typeof src !== "string")
+          return (
+            <img
+              src={src instanceof Blob ? undefined : src}
+              alt={alt}
+              {...rest}
+            />
+          );
+        return (
+          <NextImage fill src={src} alt={alt ?? ""} sizes="40px" {...rest} />
+        );
+      }}
       {...props}
     />
   );
