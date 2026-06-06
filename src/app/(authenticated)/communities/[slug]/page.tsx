@@ -18,7 +18,7 @@ export default async function CommunityPage({
     where: { slug },
     include: {
       owner: { select: { name: true } },
-      members: { include: { user: { select: { name: true } } } },
+      members: { include: { user: { select: { id: true, name: true } } } },
     },
   });
 
@@ -28,8 +28,12 @@ export default async function CommunityPage({
 
   const headersList = await headers();
   const host = headersList.get("host") ?? "";
-  const protocol = host.startsWith("localhost") ? "http" : "https";
-  const inviteUrl = `${protocol}://${host}/communities/join/${community.inviteToken}`;
+  const proto =
+    headersList.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") || host.startsWith("127.")
+      ? "http"
+      : "https");
+  const inviteUrl = `${proto}://${host}/communities/join/${community.inviteToken}`;
 
   return (
     <div className="max-w-2xl">
@@ -56,7 +60,7 @@ export default async function CommunityPage({
         <ul className="mt-2 divide-y divide-hairline border border-hairline">
           {community.members.map(({ user }) => (
             <li
-              key={user.name}
+              key={user.id}
               className="px-6 py-3 text-body-md text-foreground"
             >
               {user.name}

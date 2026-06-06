@@ -84,7 +84,7 @@ export async function joinCommunity(
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  const community = await prisma.community.findFirst({
+  const community = await prisma.community.findUnique({
     where: { inviteToken: token },
   });
 

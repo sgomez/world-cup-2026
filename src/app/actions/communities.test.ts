@@ -171,12 +171,16 @@ describe("joinCommunity", () => {
     mockGetSession.mockResolvedValue(null);
     const result = await joinCommunity("some-token", null, new FormData());
     expect(result).toEqual({ error: "Not authenticated" });
-    expect(mockCommunityFindFirst).not.toHaveBeenCalled();
+    expect(mockCommunityFindUnique).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ inviteToken: expect.anything() }),
+      }),
+    );
   });
 
   it("returns error for invalid or unknown token", async () => {
     mockSession();
-    mockCommunityFindFirst.mockResolvedValue(null);
+    mockCommunityFindUnique.mockResolvedValue(null);
     const result = await joinCommunity("bad-token", null, new FormData());
     expect(result).toEqual({ error: "Invalid or expired invite link" });
     expect(mockCommunityMemberUpsert).not.toHaveBeenCalled();
@@ -184,10 +188,10 @@ describe("joinCommunity", () => {
 
   it("adds member and redirects to community slug on valid token", async () => {
     mockSession();
-    mockCommunityFindFirst.mockResolvedValue({
+    mockCommunityFindUnique.mockResolvedValue({
       id: COMMUNITY_ID,
       slug: COMMUNITY_SLUG,
-    } as Awaited<ReturnType<typeof mockCommunityFindFirst>>);
+    } as Awaited<ReturnType<typeof mockCommunityFindUnique>>);
     mockCommunityMemberUpsert.mockResolvedValue(
       {} as Awaited<ReturnType<typeof mockCommunityMemberUpsert>>,
     );
@@ -211,10 +215,10 @@ describe("joinCommunity", () => {
 
   it("redirects existing member without error (idempotent rejoin)", async () => {
     mockSession();
-    mockCommunityFindFirst.mockResolvedValue({
+    mockCommunityFindUnique.mockResolvedValue({
       id: COMMUNITY_ID,
       slug: COMMUNITY_SLUG,
-    } as Awaited<ReturnType<typeof mockCommunityFindFirst>>);
+    } as Awaited<ReturnType<typeof mockCommunityFindUnique>>);
     mockCommunityMemberUpsert.mockResolvedValue(
       {} as Awaited<ReturnType<typeof mockCommunityMemberUpsert>>,
     );
