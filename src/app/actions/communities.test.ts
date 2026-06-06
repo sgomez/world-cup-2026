@@ -1,8 +1,13 @@
+import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+vi.mock("@/lib/bet-constants", () => ({
+  BET_DEADLINE: new Date("2026-06-11T19:00:00Z"),
+  MAX_BETS_PER_USER: 3,
+}));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     community: {
@@ -231,7 +236,26 @@ describe("joinCommunity", () => {
 
 const OWNER_ID = "owner-1";
 
-function makeCommunity(memberUserIds: string[]) {
+type MockBet = {
+  id: string;
+  label: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+function makeBet(overrides: Partial<MockBet> = {}): MockBet {
+  return {
+    id: randomUUID(),
+    label: "My Bet",
+    status: "draft",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+function makeCommunity(memberUserIds: string[], betsPerUser: MockBet[] = []) {
   return {
     id: COMMUNITY_ID,
     slug: COMMUNITY_SLUG,
@@ -245,7 +269,7 @@ function makeCommunity(memberUserIds: string[]) {
       userId: uid,
       communityId: COMMUNITY_ID,
       joinedAt: new Date(),
-      user: { id: uid, name: `User ${uid}` },
+      user: { id: uid, name: `User ${uid}`, bets: betsPerUser },
     })),
   } as Awaited<ReturnType<typeof mockCommunityFindUnique>>;
 }
@@ -287,5 +311,43 @@ describe("getCommunity", () => {
     const result = await getCommunity(COMMUNITY_SLUG);
     expect(result).not.toBeNull();
     expect(result?.currentUserId).toBe(OWNER_ID);
+  });
+
+  it("returns isPastDeadline false before the bet deadline", async () => {
+    mockSession();
+    mockCommunityFindUnique.mockResolvedValue(makeCommunity([USER_ID]));
+    const result = await getCommunity(COMMUNITY_SLUG);
+    expect(result?.isPastDeadline).toBe(false);
+  });
+
+  it("hides member bets before the bet deadline", async () => {
+    mockSession();
+    mockCommunityFindUnique.mockResolvedValue(
+      makeCommunity([USER_ID], [makeBet()]),
+    );
+    const result = await getCommunity(COMMUNITY_SLUG);
+    expect(result?.members[0].user.bets).toHaveLength(0);
+  });
+
+  it("returns isPastDeadline true after the bet deadline", async () => {
+    const { BET_DEADLINE } = await import("@/lib/bet-constants");
+    vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
+    mockSession();
+    mockCommunityFindUnique.mockResolvedValue(makeCommunity([USER_ID]));
+    const result = await getCommunity(COMMUNITY_SLUG);
+    expect(result?.isPastDeadline).toBe(true);
+    vi.restoreAllMocks();
+  });
+
+  it("exposes member bets after the bet deadline", async () => {
+    const { BET_DEADLINE } = await import("@/lib/bet-constants");
+    vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
+    mockSession();
+    const bet = makeBet();
+    mockCommunityFindUnique.mockResolvedValue(makeCommunity([USER_ID], [bet]));
+    const result = await getCommunity(COMMUNITY_SLUG);
+    expect(result?.members[0].user.bets).toHaveLength(1);
+    expect(result?.members[0].user.bets[0].id).toBe(bet.id);
+    vi.restoreAllMocks();
   });
 });
