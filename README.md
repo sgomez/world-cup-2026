@@ -33,10 +33,11 @@ Then edit `.env.development`:
 | `BETTER_AUTH_URL` | `http://localhost:3000` for local dev |
 | `GOOGLE_CLIENT_ID` | From [Google Cloud Console](https://console.cloud.google.com/) |
 | `GOOGLE_CLIENT_SECRET` | From [Google Cloud Console](https://console.cloud.google.com/) |
+| `MAX_BETS_PER_USER` | Max bets per user (optional, default: `3`) |
 
 **Google OAuth setup:**
 1. Create a project in Google Cloud Console
-2. Enable the **Google+ API** (or **Google Identity**)
+2. Enable the **Google Identity** API
 3. Create OAuth 2.0 credentials (Web application)
 4. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
 
@@ -89,11 +90,14 @@ pnpm env:decrypt
 |---|---|
 | `pnpm dev` | Start dev server |
 | `pnpm build` | Production build |
+| `pnpm start` | Start production server |
 | `pnpm test` | Run tests |
 | `pnpm lint` | Lint with Biome |
+| `pnpm format` | Format with Biome |
 | `pnpm typecheck` | Type check |
 | `pnpm db:push` | Push schema to DB |
 | `pnpm db:migrate` | Run migrations |
+| `pnpm db:generate` | Generate Prisma client |
 | `pnpm db:studio` | Open Prisma Studio |
 | `pnpm env:encrypt` | Encrypt `.env.production` |
 | `pnpm env:decrypt` | Decrypt `.env.production` |
