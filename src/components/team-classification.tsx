@@ -7,7 +7,8 @@ import {
   DragOverlay,
   type DragStartEvent,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -57,7 +58,7 @@ function SortableTeamRow({
       {...attributes}
       {...(disabled ? {} : listeners)}
       className={cn(
-        "flex touch-none items-center gap-2 rounded-md px-2 py-1.5 transition-all duration-200",
+        "flex items-center gap-2 rounded-md px-2 py-2.5 transition-all duration-200 sm:py-1.5",
         !disabled &&
           "cursor-grab hover:bg-slate-200/50 active:cursor-grabbing dark:hover:bg-white/10",
         disabled && "cursor-default",
@@ -68,13 +69,13 @@ function SortableTeamRow({
       <span
         role="img"
         aria-label={`${team.name} flag`}
-        className="shrink-0 text-base leading-none"
+        className="shrink-0 text-xl leading-none sm:text-base"
       >
         {team.flag}
       </span>
       <span
         className={cn(
-          "min-w-0 flex-1 truncate text-xs font-bold tracking-tight",
+          "min-w-0 flex-1 truncate text-sm font-bold tracking-tight sm:text-xs",
           isQualified
             ? "text-slate-900 dark:text-white"
             : "text-slate-400 dark:text-slate-500",
@@ -122,7 +123,10 @@ export function TeamClassification({
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 250, tolerance: 5 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
