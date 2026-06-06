@@ -1,5 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import createMiddleware from "next-intl/middleware";
+import { routing } from "@/i18n/routing";
+
+const intlMiddleware = createMiddleware(routing);
 
 const PROTECTED_PATHS = ["/profile", "/bets", "/admin"];
 const SESSION_COOKIE = "better-auth.session_token";
@@ -35,7 +39,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  return intlMiddleware(request);
 }
 
 export const config = {
