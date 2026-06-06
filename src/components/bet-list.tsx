@@ -50,8 +50,8 @@ export function BetList({
               )}
             </div>
             <div className="mt-2 flex gap-4 text-caption-sm text-muted-foreground">
-              <span>Created {bet.createdAt.toLocaleDateString()}</span>
-              <span>Updated {bet.updatedAt.toLocaleDateString()}</span>
+              <span>Created {bet.createdAt.toISOString().slice(0, 10)}</span>
+              <span>Updated {bet.updatedAt.toISOString().slice(0, 10)}</span>
             </div>
           </Link>
           {!deadlinePassed && (
