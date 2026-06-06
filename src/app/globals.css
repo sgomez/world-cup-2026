@@ -77,16 +77,6 @@
   --color-accent-teal: var(--accent-teal);
   --color-accent-pink-deep: var(--accent-pink-deep);
 
-  /* Spacing */
-  --spacing-xxs: 2px;
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 18px;
-  --spacing-xl: 24px;
-  --spacing-xxl: 30px;
-  --spacing-section: 48px;
-
   /* Border radius overrides */
   --radius-none: 0px;
   --radius-sm: 2px;

@@ -9,7 +9,7 @@ export default async function NewCommunityPage() {
   if (!session) redirect("/login");
 
   return (
-    <div className="max-w-md">
+    <div className="max-w-xl">
       <PageHeader
         title="New Community"
         description="Create a group to compare predictions with friends."
