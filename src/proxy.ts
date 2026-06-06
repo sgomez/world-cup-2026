@@ -33,7 +33,10 @@ export function proxy(request: NextRequest) {
   const pathnameWithoutLocale = stripLocalePrefix(pathname);
 
   if (isProtected(pathnameWithoutLocale) && !hasSessionCookie(request)) {
-    const localePrefix = pathname.startsWith("/es") ? "/es" : "";
+    const localePrefix = pathname.slice(
+      0,
+      pathname.length - pathnameWithoutLocale.length,
+    );
     const loginUrl = new URL(`${localePrefix}/login`, request.url);
     loginUrl.searchParams.set("from", pathnameWithoutLocale);
     return NextResponse.redirect(loginUrl);
