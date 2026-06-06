@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { BET_DEADLINE } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -80,11 +81,31 @@ export async function getCommunity(slug: string) {
   const session = await getSession();
   if (!session) return null;
 
+  const isPastDeadline = BET_DEADLINE.getTime() < Date.now();
+
   const community = await prisma.community.findUnique({
     where: { slug },
     include: {
       owner: { select: { name: true } },
-      members: { include: { user: { select: { id: true, name: true } } } },
+      members: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              bets: {
+                select: {
+                  id: true,
+                  label: true,
+                  status: true,
+                  createdAt: true,
+                  updatedAt: true,
+                },
+              },
+            },
+          },
+        },
+      },
     },
   });
 
@@ -93,7 +114,19 @@ export async function getCommunity(slug: string) {
   const isMember = community.members.some((m) => m.userId === session.user.id);
   if (!isMember) return null;
 
-  return { ...community, currentUserId: session.user.id };
+  const members = isPastDeadline
+    ? community.members
+    : community.members.map((m) => ({
+        ...m,
+        user: { ...m.user, bets: [] as typeof m.user.bets },
+      }));
+
+  return {
+    ...community,
+    members,
+    currentUserId: session.user.id,
+    isPastDeadline,
+  };
 }
 
 export async function joinCommunity(
