@@ -178,13 +178,11 @@ function RoundSection({
   };
 
   const gridCols =
-    matchCount >= 8
-      ? "grid-cols-2 sm:grid-cols-4 lg:grid-cols-8"
-      : matchCount >= 4
-        ? "grid-cols-2 sm:grid-cols-4"
-        : matchCount >= 2
-          ? "grid-cols-2"
-          : "grid-cols-1";
+    matchCount >= 4
+      ? "grid-cols-2 sm:grid-cols-4"
+      : matchCount >= 2
+        ? "grid-cols-2"
+        : "grid-cols-1";
 
   return (
     <div className="rounded-xl bg-white/60 p-3 shadow-lg dark:bg-slate-800/40">
