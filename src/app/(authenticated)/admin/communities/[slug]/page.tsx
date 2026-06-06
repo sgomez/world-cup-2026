@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -23,6 +24,7 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
       owner: { select: { name: true } },
       members: {
         select: {
+          userId: true,
           user: { select: { name: true } },
           joinedAt: true,
         },
@@ -47,9 +49,9 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
           Members ({community.members.length})
         </p>
         <ul className="mt-2 divide-y divide-hairline border border-hairline">
-          {community.members.map(({ user, joinedAt }) => (
+          {community.members.map(({ userId, user, joinedAt }) => (
             <li
-              key={user.name + joinedAt.toISOString()}
+              key={userId}
               className="flex items-center justify-between px-6 py-3"
             >
               <span className="text-body-md text-foreground">{user.name}</span>
@@ -59,6 +61,15 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="mt-6">
+        <Link
+          href="/admin/communities"
+          className="text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
+        >
+          Back to Communities
+        </Link>
       </div>
     </div>
   );
