@@ -18,9 +18,11 @@ interface Team {
 
 function EmptySlot() {
   return (
-    <div className="flex items-center gap-2 rounded-md border border-dashed border-slate-300 bg-slate-100/50 px-2 py-1.5 dark:border-slate-600 dark:bg-slate-800/50">
+    <div className="flex items-center gap-2 rounded-md border border-dashed border-slate-300 bg-slate-100/50 px-2 py-2.5 dark:border-slate-600 dark:bg-slate-800/50 sm:py-1.5">
       <div className="h-4 w-4 rounded-sm bg-slate-200 dark:bg-slate-700" />
-      <span className="text-xs text-slate-400 dark:text-slate-500">TBD</span>
+      <span className="text-sm text-slate-400 dark:text-slate-500 sm:text-xs">
+        TBD
+      </span>
     </div>
   );
 }
@@ -45,7 +47,7 @@ function MatchTeamRow({
       disabled={!canSelect}
       type="button"
       className={cn(
-        "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-all",
+        "flex w-full items-center gap-2 rounded-md px-2 py-2.5 text-left transition-all sm:py-1.5",
         canSelect &&
           "cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-600/80",
         !canSelect && "cursor-default",
@@ -56,13 +58,13 @@ function MatchTeamRow({
       <span
         role="img"
         aria-label={`${team.name} flag`}
-        className="shrink-0 text-sm leading-none"
+        className="shrink-0 text-xl leading-none sm:text-sm"
       >
         {team.flag}
       </span>
       <span
         className={cn(
-          "min-w-0 flex-1 truncate text-xs font-bold tracking-tight",
+          "min-w-0 flex-1 truncate text-sm font-bold tracking-tight sm:text-xs",
           isWinner
             ? "text-emerald-700 dark:text-emerald-400"
             : "text-slate-900 dark:text-white",
