@@ -10,7 +10,6 @@ import { getSession } from "@/lib/session";
 
 export type CommunityActionState = { error?: string; success?: boolean } | null;
 export type JoinCommunityState = { error?: string } | null;
-export type MemberActionState = { error?: string; success?: boolean } | null;
 
 function deriveSlug(name: string): string {
   return name
@@ -132,9 +131,9 @@ export async function getCommunity(slug: string) {
 
 export async function leaveCommunity(
   slug: string,
-  _prev: MemberActionState,
+  _prev: CommunityActionState,
   _formData: FormData,
-): Promise<MemberActionState> {
+): Promise<CommunityActionState> {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
@@ -161,9 +160,9 @@ export async function leaveCommunity(
 export async function removeMember(
   slug: string,
   targetUserId: string,
-  _prev: MemberActionState,
+  _prev: CommunityActionState,
   _formData: FormData,
-): Promise<MemberActionState> {
+): Promise<CommunityActionState> {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
@@ -188,14 +187,15 @@ export async function removeMember(
   });
 
   revalidatePath(`/communities/${slug}/settings`);
+  revalidatePath(`/communities/${slug}`);
   return { success: true };
 }
 
 export async function deleteCommunity(
   slug: string,
-  _prev: MemberActionState,
+  _prev: CommunityActionState,
   _formData: FormData,
-): Promise<MemberActionState> {
+): Promise<CommunityActionState> {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
@@ -214,9 +214,9 @@ export async function deleteCommunity(
 
 export async function regenerateInviteToken(
   slug: string,
-  _prev: MemberActionState,
+  _prev: CommunityActionState,
   _formData: FormData,
-): Promise<MemberActionState> {
+): Promise<CommunityActionState> {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 

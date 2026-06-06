@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import {
-  type MemberActionState,
+  type CommunityActionState,
   removeMember,
 } from "@/app/actions/communities";
 
@@ -18,10 +18,10 @@ export function RemoveMemberForm({
   userName,
 }: RemoveMemberFormProps) {
   const boundAction = removeMember.bind(null, slug, userId);
-  const [state, action, pending] = useActionState<MemberActionState, FormData>(
-    boundAction,
-    null,
-  );
+  const [state, action, pending] = useActionState<
+    CommunityActionState,
+    FormData
+  >(boundAction, null);
 
   return (
     <div>

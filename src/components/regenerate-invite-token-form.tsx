@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import {
-  type MemberActionState,
+  type CommunityActionState,
   regenerateInviteToken,
 } from "@/app/actions/communities";
 
@@ -14,10 +14,10 @@ export function RegenerateInviteTokenForm({
   slug,
 }: RegenerateInviteTokenFormProps) {
   const boundAction = regenerateInviteToken.bind(null, slug);
-  const [state, action, pending] = useActionState<MemberActionState, FormData>(
-    boundAction,
-    null,
-  );
+  const [state, action, pending] = useActionState<
+    CommunityActionState,
+    FormData
+  >(boundAction, null);
 
   return (
     <div>

@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 import {
+  type CommunityActionState,
   deleteCommunity,
-  type MemberActionState,
 } from "@/app/actions/communities";
 
 interface DeleteCommunityFormProps {
@@ -16,10 +16,10 @@ export function DeleteCommunityForm({
   communityName,
 }: DeleteCommunityFormProps) {
   const boundAction = deleteCommunity.bind(null, slug);
-  const [state, action, pending] = useActionState<MemberActionState, FormData>(
-    boundAction,
-    null,
-  );
+  const [state, action, pending] = useActionState<
+    CommunityActionState,
+    FormData
+  >(boundAction, null);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     if (

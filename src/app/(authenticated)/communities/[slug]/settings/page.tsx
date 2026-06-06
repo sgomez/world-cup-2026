@@ -7,6 +7,7 @@ import { DeleteCommunityForm } from "@/components/delete-community-form";
 import { RegenerateInviteTokenForm } from "@/components/regenerate-invite-token-form";
 import { RemoveMemberForm } from "@/components/remove-member-form";
 import { PageHeader } from "@/components/ui/page-header";
+import { buildInviteUrl } from "@/lib/communities";
 import { getSession } from "@/lib/session";
 
 export default async function CommunitySettingsPage({
@@ -25,14 +26,7 @@ export default async function CommunitySettingsPage({
   const isOwner = community.ownerId === community.currentUserId;
   if (!isOwner) notFound();
 
-  const headersList = await headers();
-  const host = headersList.get("host") ?? "";
-  const proto =
-    headersList.get("x-forwarded-proto") ??
-    (host.startsWith("localhost") || host.startsWith("127.")
-      ? "http"
-      : "https");
-  const inviteUrl = `${proto}://${host}/communities/join/${community.inviteToken}`;
+  const inviteUrl = buildInviteUrl(await headers(), community.inviteToken);
 
   const nonOwnerMembers = community.members.filter(
     (m) => m.userId !== community.ownerId,
