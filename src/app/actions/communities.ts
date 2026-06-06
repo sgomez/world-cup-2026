@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
 export type CommunityActionState = { error?: string; success?: boolean } | null;
+export type JoinCommunityState = { error?: string } | null;
 
 function deriveSlug(name: string): string {
   return name
@@ -48,8 +49,9 @@ export async function createCommunity(
   const slug = await uniqueSlug(base);
   const inviteToken = randomBytes(32).toString("hex");
 
+  let community: { id: string; slug: string };
   try {
-    await prisma.community.create({
+    community = await prisma.community.create({
       data: {
         name,
         slug,
@@ -71,5 +73,34 @@ export async function createCommunity(
   }
 
   revalidatePath("/communities");
-  redirect("/communities");
+  redirect(`/communities/${community.slug}`);
+}
+
+export async function joinCommunity(
+  token: string,
+  _prev: JoinCommunityState,
+  _formData: FormData,
+): Promise<JoinCommunityState> {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  const community = await prisma.community.findUnique({
+    where: { inviteToken: token },
+  });
+
+  if (!community) return { error: "Invalid or expired invite link" };
+
+  await prisma.communityMember.upsert({
+    where: {
+      communityId_userId: {
+        communityId: community.id,
+        userId: session.user.id,
+      },
+    },
+    create: { communityId: community.id, userId: session.user.id },
+    update: {},
+  });
+
+  revalidatePath("/communities");
+  redirect(`/communities/${community.slug}`);
 }

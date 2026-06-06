@@ -9,9 +9,11 @@ vi.mock("@/lib/prisma", () => ({
       create: vi.fn(),
       findUnique: vi.fn(),
       findMany: vi.fn(),
+      findFirst: vi.fn(),
     },
     communityMember: {
       create: vi.fn(),
+      upsert: vi.fn(),
     },
   },
 }));
@@ -20,15 +22,17 @@ vi.mock("@/lib/session", () => ({ getSession: vi.fn() }));
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { createCommunity } from "./communities";
+import { createCommunity, joinCommunity } from "./communities";
 
 const mockGetSession = vi.mocked(getSession);
 const mockRedirect = vi.mocked(redirect);
 const mockCommunityCreate = vi.mocked(prisma.community.create);
 const mockCommunityFindUnique = vi.mocked(prisma.community.findUnique);
+const mockCommunityMemberUpsert = vi.mocked(prisma.communityMember.upsert);
 
 const USER_ID = "user-1";
 const COMMUNITY_ID = "community-1";
+const COMMUNITY_SLUG = "my-friends";
 
 function mockSession(userId = USER_ID) {
   mockGetSession.mockResolvedValue({ user: { id: userId } } as Awaited<
@@ -58,12 +62,12 @@ describe("createCommunity", () => {
     expect(mockCommunityCreate).not.toHaveBeenCalled();
   });
 
-  it("creates community with slug derived from name, adds owner as member, redirects", async () => {
+  it("creates community with slug derived from name, adds owner as member, redirects to community page", async () => {
     mockSession();
     mockCommunityFindUnique.mockResolvedValue(null);
     mockCommunityCreate.mockResolvedValue({
       id: COMMUNITY_ID,
-      slug: "my-friends",
+      slug: COMMUNITY_SLUG,
     } as Awaited<ReturnType<typeof mockCommunityCreate>>);
 
     const fd = new FormData();
@@ -74,7 +78,7 @@ describe("createCommunity", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           name: "My Friends",
-          slug: "my-friends",
+          slug: COMMUNITY_SLUG,
           ownerId: USER_ID,
           members: {
             create: { userId: USER_ID },
@@ -82,7 +86,7 @@ describe("createCommunity", () => {
         }),
       }),
     );
-    expect(mockRedirect).toHaveBeenCalledWith("/communities");
+    expect(mockRedirect).toHaveBeenCalledWith(`/communities/${COMMUNITY_SLUG}`);
   });
 
   it("resolves duplicate slug by appending counter", async () => {
@@ -122,7 +126,7 @@ describe("createCommunity", () => {
     expect(mockCommunityCreate).not.toHaveBeenCalled();
   });
 
-  it("retries on P2002 slug collision and redirects", async () => {
+  it("retries on P2002 slug collision and redirects to community page", async () => {
     mockSession();
     mockCommunityFindUnique.mockResolvedValue(null);
     const p2002 = new Prisma.PrismaClientKnownRequestError(
@@ -139,7 +143,7 @@ describe("createCommunity", () => {
     await createCommunity(null, fd);
 
     expect(mockCommunityCreate).toHaveBeenCalledTimes(2);
-    expect(mockRedirect).toHaveBeenCalledWith("/communities");
+    expect(mockRedirect).toHaveBeenCalledWith("/communities/my-friends-2");
   });
 
   it("stores a non-empty invite token", async () => {
@@ -158,5 +162,69 @@ describe("createCommunity", () => {
     expect(call.data.inviteToken).toBeTruthy();
     expect(typeof call.data.inviteToken).toBe("string");
     expect(call.data.inviteToken.length).toBeGreaterThan(16);
+  });
+});
+
+describe("joinCommunity", () => {
+  it("returns error when not authenticated", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const result = await joinCommunity("some-token", null, new FormData());
+    expect(result).toEqual({ error: "Not authenticated" });
+    expect(mockCommunityFindUnique).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ inviteToken: expect.anything() }),
+      }),
+    );
+  });
+
+  it("returns error for invalid or unknown token", async () => {
+    mockSession();
+    mockCommunityFindUnique.mockResolvedValue(null);
+    const result = await joinCommunity("bad-token", null, new FormData());
+    expect(result).toEqual({ error: "Invalid or expired invite link" });
+    expect(mockCommunityMemberUpsert).not.toHaveBeenCalled();
+  });
+
+  it("adds member and redirects to community slug on valid token", async () => {
+    mockSession();
+    mockCommunityFindUnique.mockResolvedValue({
+      id: COMMUNITY_ID,
+      slug: COMMUNITY_SLUG,
+    } as Awaited<ReturnType<typeof mockCommunityFindUnique>>);
+    mockCommunityMemberUpsert.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof mockCommunityMemberUpsert>>,
+    );
+
+    await joinCommunity("valid-token", null, new FormData());
+
+    expect(mockCommunityMemberUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          communityId_userId: {
+            communityId: COMMUNITY_ID,
+            userId: USER_ID,
+          },
+        },
+        create: { communityId: COMMUNITY_ID, userId: USER_ID },
+        update: {},
+      }),
+    );
+    expect(mockRedirect).toHaveBeenCalledWith(`/communities/${COMMUNITY_SLUG}`);
+  });
+
+  it("redirects existing member without error (idempotent rejoin)", async () => {
+    mockSession();
+    mockCommunityFindUnique.mockResolvedValue({
+      id: COMMUNITY_ID,
+      slug: COMMUNITY_SLUG,
+    } as Awaited<ReturnType<typeof mockCommunityFindUnique>>);
+    mockCommunityMemberUpsert.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof mockCommunityMemberUpsert>>,
+    );
+
+    await joinCommunity("valid-token", null, new FormData());
+
+    expect(mockCommunityMemberUpsert).toHaveBeenCalledTimes(1);
+    expect(mockRedirect).toHaveBeenCalledWith(`/communities/${COMMUNITY_SLUG}`);
   });
 });
