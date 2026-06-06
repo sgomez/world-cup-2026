@@ -18,6 +18,7 @@ services:
     environment:
       - 'DOTENV_PRIVATE_KEY_PRODUCTION=${DOTENV_PRIVATE_KEY_PRODUCTION}'
       - 'BETTER_AUTH_URL=${BETTER_AUTH_URL}'
+      - 'NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}'
       - PORT=3000
     ports:
       - '3000:3000'
