@@ -41,10 +41,7 @@ export default async function CommunitiesPage() {
         ) : (
           <ul className="divide-y divide-hairline border border-hairline">
             {communities.map((community) => (
-              <li
-                key={community.id}
-                className="flex items-center justify-between px-6 py-4"
-              >
+              <li key={community.id} className="flex items-center px-6 py-4">
                 <div>
                   <p className="text-body-strong font-medium text-foreground">
                     {community.name}

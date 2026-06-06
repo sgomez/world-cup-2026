@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -108,6 +109,37 @@ describe("createCommunity", () => {
         data: expect.objectContaining({ slug: "my-friends-3" }),
       }),
     );
+  });
+
+  it("returns error when name contains only non-alphanumeric characters", async () => {
+    mockSession();
+    const fd = new FormData();
+    fd.append("name", "!!!");
+    const result = await createCommunity(null, fd);
+    expect(result).toEqual({
+      error: "Name must contain at least one letter or digit",
+    });
+    expect(mockCommunityCreate).not.toHaveBeenCalled();
+  });
+
+  it("retries on P2002 slug collision and redirects", async () => {
+    mockSession();
+    mockCommunityFindUnique.mockResolvedValue(null);
+    const p2002 = new Prisma.PrismaClientKnownRequestError(
+      "Unique constraint failed",
+      { code: "P2002", clientVersion: "5.0" },
+    );
+    mockCommunityCreate.mockRejectedValueOnce(p2002).mockResolvedValueOnce({
+      id: COMMUNITY_ID,
+      slug: "my-friends-2",
+    } as Awaited<ReturnType<typeof mockCommunityCreate>>);
+
+    const fd = new FormData();
+    fd.append("name", "My Friends");
+    await createCommunity(null, fd);
+
+    expect(mockCommunityCreate).toHaveBeenCalledTimes(2);
+    expect(mockRedirect).toHaveBeenCalledWith("/communities");
   });
 
   it("stores a non-empty invite token", async () => {

@@ -1,6 +1,7 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -42,20 +43,32 @@ export async function createCommunity(
   if (!name) return { error: "Name is required" };
 
   const base = deriveSlug(name);
+  if (!base) return { error: "Name must contain at least one letter or digit" };
+
   const slug = await uniqueSlug(base);
   const inviteToken = randomBytes(32).toString("hex");
 
-  await prisma.community.create({
-    data: {
-      name,
-      slug,
-      ownerId: session.user.id,
-      inviteToken,
-      members: {
-        create: { userId: session.user.id },
+  try {
+    await prisma.community.create({
+      data: {
+        name,
+        slug,
+        ownerId: session.user.id,
+        inviteToken,
+        members: {
+          create: { userId: session.user.id },
+        },
       },
-    },
-  });
+    });
+  } catch (e) {
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2002"
+    ) {
+      return createCommunity(_prev, formData);
+    }
+    throw e;
+  }
 
   revalidatePath("/communities");
   redirect("/communities");
