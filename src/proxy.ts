@@ -12,6 +12,12 @@ function hasSessionCookie(request: NextRequest): boolean {
   );
 }
 
+function stripLocalePrefix(pathname: string): string {
+  if (pathname.startsWith("/es/")) return pathname.slice(3);
+  if (pathname === "/es") return "/";
+  return pathname;
+}
+
 function isProtected(pathname: string): boolean {
   return PROTECTED_PATHS.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
@@ -20,10 +26,12 @@ function isProtected(pathname: string): boolean {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const pathnameWithoutLocale = stripLocalePrefix(pathname);
 
-  if (isProtected(pathname) && !hasSessionCookie(request)) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
+  if (isProtected(pathnameWithoutLocale) && !hasSessionCookie(request)) {
+    const localePrefix = pathname.startsWith("/es") ? "/es" : "";
+    const loginUrl = new URL(`${localePrefix}/login`, request.url);
+    loginUrl.searchParams.set("from", pathnameWithoutLocale);
     return NextResponse.redirect(loginUrl);
   }
 

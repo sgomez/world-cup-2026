@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+vi.mock("next-intl/server", () => ({
+  getLocale: vi.fn().mockResolvedValue("en"),
+}));
+vi.mock("@/i18n/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("@/lib/bet-constants", () => ({
   BET_DEADLINE: new Date("2026-06-11T19:00:00Z"),
   MAX_BETS_PER_USER: 3,
@@ -23,7 +26,7 @@ vi.mock("@/lib/bet-constants", () => ({
   MAX_BETS_PER_USER: 3,
 }));
 
-import { redirect } from "next/navigation";
+import { redirect } from "@/i18n/navigation";
 import type { TournamentState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -130,7 +133,10 @@ describe("createBet", () => {
       expect(mockCreate).toHaveBeenCalledWith({
         data: { label: "My bet", userId: OWNER_ID },
       });
-      expect(mockRedirect).toHaveBeenCalledWith(`/bets/${BET_ID}`);
+      expect(mockRedirect).toHaveBeenCalledWith({
+        href: `/bets/${BET_ID}`,
+        locale: "en",
+      });
     } finally {
       vi.useRealTimers();
     }
@@ -557,7 +563,10 @@ describe("copyBet", () => {
         knockoutWinners: SOURCE_BET.knockoutWinners,
       },
     });
-    expect(mockRedirect).toHaveBeenCalledWith(`/bets/${NEW_BET_ID}`);
+    expect(mockRedirect).toHaveBeenCalledWith({
+      href: `/bets/${NEW_BET_ID}`,
+      locale: "en",
+    });
   });
 
   it("truncates label to 200 characters when prefixed label exceeds limit", async () => {

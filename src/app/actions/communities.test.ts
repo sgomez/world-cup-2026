@@ -3,7 +3,10 @@ import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+vi.mock("next-intl/server", () => ({
+  getLocale: vi.fn().mockResolvedValue("en"),
+}));
+vi.mock("@/i18n/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("@/lib/bet-constants", () => ({
   BET_DEADLINE: new Date("2026-06-11T19:00:00Z"),
   MAX_BETS_PER_USER: 3,
@@ -27,7 +30,7 @@ vi.mock("@/lib/prisma", () => ({
 }));
 vi.mock("@/lib/session", () => ({ getSession: vi.fn() }));
 
-import { redirect } from "next/navigation";
+import { redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import {
@@ -105,7 +108,10 @@ describe("createCommunity", () => {
         }),
       }),
     );
-    expect(mockRedirect).toHaveBeenCalledWith(`/communities/${COMMUNITY_SLUG}`);
+    expect(mockRedirect).toHaveBeenCalledWith({
+      href: `/communities/${COMMUNITY_SLUG}`,
+      locale: "en",
+    });
   });
 
   it("resolves duplicate slug by appending counter", async () => {
@@ -162,7 +168,10 @@ describe("createCommunity", () => {
     await createCommunity(null, fd);
 
     expect(mockCommunityCreate).toHaveBeenCalledTimes(2);
-    expect(mockRedirect).toHaveBeenCalledWith("/communities/my-friends-2");
+    expect(mockRedirect).toHaveBeenCalledWith({
+      href: "/communities/my-friends-2",
+      locale: "en",
+    });
   });
 
   it("stores a non-empty invite token", async () => {
@@ -228,7 +237,10 @@ describe("joinCommunity", () => {
         update: {},
       }),
     );
-    expect(mockRedirect).toHaveBeenCalledWith(`/communities/${COMMUNITY_SLUG}`);
+    expect(mockRedirect).toHaveBeenCalledWith({
+      href: `/communities/${COMMUNITY_SLUG}`,
+      locale: "en",
+    });
   });
 
   it("redirects existing member without error (idempotent rejoin)", async () => {
@@ -244,7 +256,10 @@ describe("joinCommunity", () => {
     await joinCommunity("valid-token", null, new FormData());
 
     expect(mockCommunityMemberUpsert).toHaveBeenCalledTimes(1);
-    expect(mockRedirect).toHaveBeenCalledWith(`/communities/${COMMUNITY_SLUG}`);
+    expect(mockRedirect).toHaveBeenCalledWith({
+      href: `/communities/${COMMUNITY_SLUG}`,
+      locale: "en",
+    });
   });
 });
 
@@ -413,7 +428,10 @@ describe("leaveCommunity", () => {
         communityId_userId: { communityId: COMMUNITY_ID, userId: USER_ID },
       },
     });
-    expect(mockRedirect).toHaveBeenCalledWith("/communities");
+    expect(mockRedirect).toHaveBeenCalledWith({
+      href: "/communities",
+      locale: "en",
+    });
   });
 });
 
@@ -528,7 +546,10 @@ describe("deleteCommunity", () => {
     expect(mockCommunityDelete).toHaveBeenCalledWith({
       where: { id: COMMUNITY_ID },
     });
-    expect(mockRedirect).toHaveBeenCalledWith("/communities");
+    expect(mockRedirect).toHaveBeenCalledWith({
+      href: "/communities",
+      locale: "en",
+    });
   });
 });
 

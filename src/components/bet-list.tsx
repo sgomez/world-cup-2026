@@ -1,11 +1,11 @@
 "use client";
 
 import type { Bet } from "@prisma/client";
-import Link from "next/link";
 import { useState } from "react";
 import { CopyBetButton } from "@/components/copy-bet-button";
 import { RemoveBetButton } from "@/components/remove-bet-button";
 import { Banner } from "@/components/ui/banner";
+import { Link } from "@/i18n/navigation";
 
 interface BetListProps {
   bets: Bet[];

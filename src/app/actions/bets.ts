@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE, MAX_BETS_PER_USER } from "@/lib/bet-constants";
 import type { PredictionState, TournamentState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
@@ -39,8 +40,9 @@ export async function createBet(
     data: { label, userId: session.user.id },
   });
 
+  const locale = await getLocale();
   revalidatePath("/bets");
-  redirect(`/bets/${bet.id}`);
+  redirect({ href: `/bets/${bet.id}`, locale });
 }
 
 export async function removeBet(betId: string): Promise<BetActionState> {
@@ -116,8 +118,9 @@ export async function copyBet(betId: string): Promise<BetActionState> {
     },
   });
 
+  const locale = await getLocale();
   revalidatePath("/bets");
-  redirect(`/bets/${newBet.id}`);
+  redirect({ href: `/bets/${newBet.id}`, locale });
 }
 
 export async function updateBetPredictions(
