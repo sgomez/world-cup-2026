@@ -357,6 +357,36 @@
   }
 }
 
+@utility button-danger {
+  background-color: var(--sale);
+  color: #ffffff;
+  font-family: var(--font-text-medium);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  border-radius: var(--radius-lg);
+  padding: 16px 32px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    opacity 0.1s ease;
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
 @utility button-outline-on-image {
   background-color: var(--canvas);
   color: var(--ink);

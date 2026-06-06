@@ -2,8 +2,10 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCommunity } from "@/app/actions/communities";
+import { LeaveCommunityForm } from "@/components/leave-community-form";
 import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
+import { buildInviteUrl } from "@/lib/communities";
 import { getSession } from "@/lib/session";
 
 export default async function CommunityPage({
@@ -22,14 +24,7 @@ export default async function CommunityPage({
   const isOwner = community.ownerId === community.currentUserId;
   const { isPastDeadline } = community;
 
-  const headersList = await headers();
-  const host = headersList.get("host") ?? "";
-  const proto =
-    headersList.get("x-forwarded-proto") ??
-    (host.startsWith("localhost") || host.startsWith("127.")
-      ? "http"
-      : "https");
-  const inviteUrl = `${proto}://${host}/communities/join/${community.inviteToken}`;
+  const inviteUrl = buildInviteUrl(await headers(), community.inviteToken);
 
   return (
     <div className="max-w-2xl">
@@ -46,6 +41,14 @@ export default async function CommunityPage({
           <p className="mt-1 break-all text-caption-sm text-muted-foreground">
             {inviteUrl}
           </p>
+          <div className="mt-4">
+            <Link
+              href={`/communities/${slug}/settings`}
+              className="text-caption-md text-muted-foreground underline"
+            >
+              Manage community
+            </Link>
+          </div>
         </div>
       )}
 
@@ -117,13 +120,14 @@ export default async function CommunityPage({
         )}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 flex items-center justify-between">
         <Link
           href="/communities"
           className="text-caption-md text-muted-foreground underline"
         >
           Back to Communities
         </Link>
+        {!isOwner && <LeaveCommunityForm slug={slug} />}
       </div>
     </div>
   );

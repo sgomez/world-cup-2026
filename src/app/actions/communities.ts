@@ -129,6 +129,114 @@ export async function getCommunity(slug: string) {
   };
 }
 
+export async function leaveCommunity(
+  slug: string,
+  _prev: CommunityActionState,
+  _formData: FormData,
+): Promise<CommunityActionState> {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  const community = await prisma.community.findUnique({ where: { slug } });
+  if (!community) return { error: "Community not found" };
+
+  if (community.ownerId === session.user.id) {
+    return { error: "Owner cannot leave. Delete the community instead." };
+  }
+
+  await prisma.communityMember.delete({
+    where: {
+      communityId_userId: {
+        communityId: community.id,
+        userId: session.user.id,
+      },
+    },
+  });
+
+  revalidatePath("/communities");
+  redirect("/communities");
+}
+
+export async function removeMember(
+  slug: string,
+  targetUserId: string,
+  _prev: CommunityActionState,
+  _formData: FormData,
+): Promise<CommunityActionState> {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  const community = await prisma.community.findUnique({ where: { slug } });
+  if (!community) return { error: "Community not found" };
+
+  if (community.ownerId !== session.user.id) {
+    return { error: "Only the owner can remove members" };
+  }
+
+  if (targetUserId === session.user.id) {
+    return { error: "Owner cannot remove themselves" };
+  }
+
+  await prisma.communityMember.delete({
+    where: {
+      communityId_userId: {
+        communityId: community.id,
+        userId: targetUserId,
+      },
+    },
+  });
+
+  revalidatePath(`/communities/${slug}/settings`);
+  revalidatePath(`/communities/${slug}`);
+  return { success: true };
+}
+
+export async function deleteCommunity(
+  slug: string,
+  _prev: CommunityActionState,
+  _formData: FormData,
+): Promise<CommunityActionState> {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  const community = await prisma.community.findUnique({ where: { slug } });
+  if (!community) return { error: "Community not found" };
+
+  if (community.ownerId !== session.user.id) {
+    return { error: "Only the owner can delete the community" };
+  }
+
+  await prisma.community.delete({ where: { id: community.id } });
+
+  revalidatePath("/communities");
+  redirect("/communities");
+}
+
+export async function regenerateInviteToken(
+  slug: string,
+  _prev: CommunityActionState,
+  _formData: FormData,
+): Promise<CommunityActionState> {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  const community = await prisma.community.findUnique({ where: { slug } });
+  if (!community) return { error: "Community not found" };
+
+  if (community.ownerId !== session.user.id) {
+    return { error: "Only the owner can regenerate the invite link" };
+  }
+
+  const newToken = randomBytes(32).toString("hex");
+  await prisma.community.update({
+    where: { id: community.id },
+    data: { inviteToken: newToken },
+  });
+
+  revalidatePath(`/communities/${slug}/settings`);
+  return { success: true };
+}
+
 export async function joinCommunity(
   token: string,
   _prev: JoinCommunityState,
