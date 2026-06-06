@@ -37,3 +37,13 @@ Local PR comment fix — replaces agent-implement-pr workflow. Reads review thre
 ### update-branch
 
 Local branch update — replaces agent-update-branch workflow. Rebases PR branch onto main. See `.agents/skills/update-branch/SKILL.md`.
+
+## Internationalisation (i18n)
+
+The app supports English (`en`, default) and Spanish (`es`) via `next-intl`. See ADR 0004.
+
+- **All routes** live under `app/[locale]/`. Never add pages directly under `app/` (except `api/`).
+- **Navigation**: always use locale-aware wrappers from `src/i18n/navigation.ts` (`Link`, `useRouter`, `usePathname`, `redirect`). Never import these from `next/navigation` or `next/link` directly in app code.
+- **Translations**: UI strings live in `messages/en.json` and `messages/es.json`. Server components use `getTranslations({locale, namespace})`. Client components use `useTranslations(namespace)`.
+- **Team data**: locale-specific names/continents are in `data/worldcup.teams.en.json` and `data/worldcup.teams.es.json`. Use `src/lib/teams.ts` with a locale argument — never import the JSON directly.
+- **New strings**: add to both `messages/en.json` and `messages/es.json` simultaneously. Never hardcode user-visible strings in components.
