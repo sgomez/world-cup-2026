@@ -46,22 +46,25 @@ export function BetPrediction({
 
   return (
     <Tabs defaultValue="groups" className="w-full">
-      <TabsList className="mb-6 bg-white shadow-sm dark:bg-slate-800/50">
+      <TabsList
+        variant="line"
+        className="mb-6 border-b border-hairline w-full justify-start gap-6 pb-0"
+      >
         <TabsTrigger
           value="groups"
-          className="data-[state=active]:bg-slate-900 data-[state=active]:text-white dark:data-[state=active]:bg-cyan-500"
+          className="px-1 py-2 text-caption-md data-[state=active]:text-foreground"
         >
           Group Stage
         </TabsTrigger>
         <TabsTrigger
           value="knockout"
-          className="data-[state=active]:bg-slate-900 data-[state=active]:text-white dark:data-[state=active]:bg-cyan-500"
+          className="px-1 py-2 text-caption-md data-[state=active]:text-foreground"
         >
           Knockout Stage
         </TabsTrigger>
         <TabsTrigger
           value="score"
-          className="data-[state=active]:bg-slate-900 data-[state=active]:text-white dark:data-[state=active]:bg-cyan-500"
+          className="px-1 py-2 text-caption-md data-[state=active]:text-foreground"
         >
           Score
         </TabsTrigger>

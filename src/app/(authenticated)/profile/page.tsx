@@ -13,9 +13,11 @@ export default async function ProfilePage() {
   };
 
   return (
-    <div className="max-w-lg">
-      <h1 className="text-2xl font-bold text-white">Edit Profile</h1>
-      <p className="mt-1 text-sm text-slate-400">
+    <div className="max-w-[512px]">
+      <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
+        Edit Profile
+      </h1>
+      <p className="mt-1 text-caption-md text-muted-foreground">
         Update your display name and avatar.
       </p>
 

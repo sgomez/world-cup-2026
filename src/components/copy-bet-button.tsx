@@ -19,11 +19,11 @@ export function CopyBetButton({ betId }: { betId: string }) {
             if (result?.error) setError(result.error);
           })
         }
-        className="rounded-lg border border-white/10 bg-slate-800 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-700 hover:text-white disabled:opacity-50 transition-colors whitespace-nowrap"
+        className="button-secondary text-button-sm !h-8 !py-1.5 !px-3 whitespace-nowrap"
       >
         {pending ? "Copying…" : "Copy"}
       </button>
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-caption-sm text-sale">{error}</p>}
     </div>
   );
 }

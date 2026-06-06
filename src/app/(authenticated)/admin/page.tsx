@@ -25,15 +25,18 @@ export default async function AdminPage() {
   });
 
   const roleColor: Record<string, string> = {
-    super_admin: "text-amber-400 bg-amber-500/10 ring-amber-500/20",
-    admin: "text-violet-400 bg-violet-500/10 ring-violet-500/20",
-    user: "text-slate-400 bg-slate-500/10 ring-slate-500/20",
+    super_admin:
+      "text-accent-pink border border-accent-pink/30 bg-accent-pink/5",
+    admin: "text-info border border-info/30 bg-info/5",
+    user: "text-muted-foreground border border-hairline bg-soft-cloud/10",
   };
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white">Users</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
+        Users
+      </h1>
+      <p className="mt-1 text-caption-md text-muted-foreground">
         {users.length} registered participant{users.length !== 1 ? "s" : ""}
       </p>
 
@@ -42,18 +45,20 @@ export default async function AdminPage() {
           <Link
             key={user.id}
             href={`/admin/users/${user.id}`}
-            className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-900/60 px-5 py-4 hover:border-white/10 hover:bg-slate-900/80 transition-all"
+            className="flex items-center justify-between rounded-none border border-hairline bg-canvas px-5 py-4 hover:bg-soft-cloud dark:bg-ink dark:hover:bg-charcoal transition-all"
           >
             <div>
-              <p className="font-medium text-white">{user.name}</p>
-              <p className="text-sm text-slate-400">{user.email}</p>
+              <p className="text-body-strong text-foreground">{user.name}</p>
+              <p className="text-caption-md text-muted-foreground">
+                {user.email}
+              </p>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-xs text-slate-500">
+              <span className="text-caption-sm text-muted-foreground">
                 {user._count.bets} bet{user._count.bets !== 1 ? "s" : ""}
               </span>
               <span
-                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${roleColor[user.role] ?? roleColor.user}`}
+                className={`inline-flex items-center rounded-lg px-2.5 py-0.5 text-caption-sm font-medium ${roleColor[user.role] ?? roleColor.user}`}
               >
                 {user.role}
               </span>

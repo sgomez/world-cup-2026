@@ -20,7 +20,7 @@ export function ProfileForm({ name, email, image }: ProfileFormProps) {
       <div>
         <label
           htmlFor="email"
-          className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+          className="block text-caption-sm uppercase tracking-wider text-muted-foreground"
         >
           Email
         </label>
@@ -29,9 +29,9 @@ export function ProfileForm({ name, email, image }: ProfileFormProps) {
           type="email"
           value={email}
           disabled
-          className="mt-2 block w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-slate-500 text-sm cursor-not-allowed"
+          className="mt-2 block w-full rounded-md border border-hairline bg-soft-cloud px-4 py-3 text-muted-foreground text-body-md cursor-not-allowed opacity-60 dark:bg-charcoal"
         />
-        <p className="mt-1 text-xs text-slate-600">
+        <p className="mt-1 text-caption-sm text-muted-foreground">
           Email cannot be changed — it is your identity.
         </p>
       </div>
@@ -39,7 +39,7 @@ export function ProfileForm({ name, email, image }: ProfileFormProps) {
       <div>
         <label
           htmlFor="name"
-          className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+          className="block text-caption-sm uppercase tracking-wider text-muted-foreground"
         >
           Name
         </label>
@@ -49,14 +49,14 @@ export function ProfileForm({ name, email, image }: ProfileFormProps) {
           type="text"
           defaultValue={name}
           required
-          className="mt-2 block w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-colors"
+          className="mt-2 block w-full rounded-md border border-hairline bg-soft-cloud px-4 py-3 text-foreground placeholder:text-muted-foreground text-body-md focus:border-ink focus:bg-canvas outline-none transition-colors dark:bg-charcoal dark:focus:bg-ink dark:focus:border-canvas"
         />
       </div>
 
       <div>
         <label
           htmlFor="image"
-          className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+          className="block text-caption-sm uppercase tracking-wider text-muted-foreground"
         >
           Profile Image URL
         </label>
@@ -66,19 +66,21 @@ export function ProfileForm({ name, email, image }: ProfileFormProps) {
           type="url"
           defaultValue={image ?? ""}
           placeholder="https://example.com/avatar.jpg"
-          className="mt-2 block w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-colors"
+          className="mt-2 block w-full rounded-md border border-hairline bg-soft-cloud px-4 py-3 text-foreground placeholder:text-muted-foreground text-body-md focus:border-ink focus:bg-canvas outline-none transition-colors dark:bg-charcoal dark:focus:bg-ink dark:focus:border-canvas"
         />
       </div>
 
-      {state?.error && <p className="text-sm text-rose-400">{state.error}</p>}
+      {state?.error && (
+        <p className="text-body-strong text-sale">{state.error}</p>
+      )}
       {state?.success && (
-        <p className="text-sm text-emerald-400">Profile updated.</p>
+        <p className="text-body-strong text-success">Profile updated.</p>
       )}
 
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-500 hover:to-teal-500 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 transition-all"
+        className="button-primary w-full"
       >
         {pending ? "Saving…" : "Save Changes"}
       </button>

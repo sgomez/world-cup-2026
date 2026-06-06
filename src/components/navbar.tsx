@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -47,29 +46,32 @@ export function Navbar({ user }: NavbarProps) {
   const isAdmin = user.role === "admin" || user.role === "super_admin";
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-xl dark:border-white/5 dark:bg-slate-950/80">
+    <nav className="sticky top-0 z-50 border-b border-hairline bg-canvas/80 backdrop-blur-xl dark:bg-ink/80">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link
           href="/bets"
-          className="text-sm font-bold tracking-wide text-slate-900 transition-colors hover:text-emerald-600 dark:text-white dark:hover:text-emerald-400"
+          className="font-display-campaign tracking-widest text-xl text-foreground hover:opacity-85 transition-opacity"
         >
-          ⚽ WC 2026
+          WORLD CUP 26
         </Link>
 
         <div className="flex items-center gap-4">
           <Link
             href="/bets"
-            className="text-sm text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            className="text-caption-md text-muted-foreground hover:text-foreground transition-colors"
           >
             My Bets
           </Link>
-          <ThemeToggle />
 
           <DropdownMenu>
-            <DropdownMenuTrigger className="rounded-full outline-none ring-2 ring-transparent hover:ring-emerald-500/30 transition-all">
-              <Avatar className="h-9 w-9 cursor-pointer">
-                <AvatarImage src={user.image ?? undefined} alt={user.name} />
-                <AvatarFallback className="bg-gradient-to-tr from-emerald-500 to-teal-500 text-white text-sm font-bold">
+            <DropdownMenuTrigger className="rounded-sm outline-none transition-all">
+              <Avatar className="h-9 w-9 cursor-pointer rounded-sm">
+                <AvatarImage
+                  src={user.image ?? undefined}
+                  alt={user.name}
+                  className="rounded-sm"
+                />
+                <AvatarFallback className="bg-soft-cloud text-foreground border border-hairline text-sm font-bold dark:bg-charcoal rounded-sm">
                   {getInitials(user.name || user.email)}
                 </AvatarFallback>
               </Avatar>

@@ -34,24 +34,22 @@ export function BetList({
         <div key={bet.id} className="relative">
           <Link
             href={`/bets/${bet.id}`}
-            className="block rounded-xl border border-slate-200 bg-white px-5 py-4 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-white/5 dark:bg-slate-900/60 dark:hover:border-white/10 dark:hover:bg-slate-900/80"
+            className="block rounded-none border border-hairline bg-canvas px-5 py-4 transition-all hover:bg-soft-cloud dark:bg-ink dark:hover:bg-charcoal"
           >
             <div className="flex items-center gap-3">
-              <p className="font-medium text-slate-900 dark:text-white">
-                {bet.label}
-              </p>
+              <p className="text-body-strong text-foreground">{bet.label}</p>
               {bet.status === "draft" && (
-                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
+                <span className="rounded-lg border border-info/30 bg-info/5 px-2 py-0.5 text-caption-sm font-medium text-info">
                   Draft
                 </span>
               )}
               {bet.status === "closed" && (
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+                <span className="rounded-lg border border-success/30 bg-success/5 px-2 py-0.5 text-caption-sm font-medium text-success dark:text-success-bright">
                   Closed
                 </span>
               )}
             </div>
-            <div className="mt-2 flex gap-4 text-xs text-slate-500">
+            <div className="mt-2 flex gap-4 text-caption-sm text-muted-foreground">
               <span>Created {bet.createdAt.toLocaleDateString()}</span>
               <span>Updated {bet.updatedAt.toLocaleDateString()}</span>
             </div>

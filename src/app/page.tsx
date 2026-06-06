@@ -1,63 +1,74 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 
 export default async function Home() {
   const session = await getSession();
-  if (session) redirect("/bets");
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-slate-950 px-4 text-slate-100 sm:px-6 lg:px-8">
-      <div className="absolute top-0 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-emerald-600/10 blur-[100px]" />
-      <div className="absolute bottom-0 left-1/3 h-[500px] w-[500px] rounded-full bg-blue-600/10 blur-[100px]" />
+    <div className="relative w-full min-h-screen flex flex-col justify-between bg-ink text-canvas overflow-hidden">
+      {/* Campaign background image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center opacity-65 mix-blend-luminosity"
+        style={{ backgroundImage: "url('/soccer_campaign_hero.png')" }}
+      />
 
-      <div className="relative w-full max-w-2xl text-center space-y-8 py-12">
-        <div className="flex flex-col items-center">
-          <span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 text-4xl shadow-xl shadow-indigo-500/20">
-            🏆
-          </span>
-        </div>
+      {/* Overlay gradient to ensure text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-ink/40" />
 
-        <div className="space-y-4">
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-            World Cup 2026
-          </h1>
-          <p className="mx-auto max-w-xl text-lg text-slate-400 leading-relaxed">
-            A sweepstake platform for the greatest tournament on Earth. Sign in
-            to submit your bracket predictions and compete with friends.
-          </p>
-        </div>
-
-        <div className="mx-auto max-w-sm rounded-xl border border-white/5 bg-slate-900/60 p-6 text-left space-y-3">
-          <div className="flex items-start gap-3">
-            <span className="text-emerald-400 text-lg">⚽</span>
-            <p className="text-sm text-slate-300">
-              Create named bracket predictions
-            </p>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-emerald-400 text-lg">🔗</span>
-            <p className="text-sm text-slate-300">
-              Sign in securely via magic link — no password needed
-            </p>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-emerald-400 text-lg">👥</span>
-            <p className="text-sm text-slate-300">
-              See all participants and their picks
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+      {/* Utility/Header Bar */}
+      <header className="relative z-10 mx-auto w-full max-w-7xl px-6 py-6 flex items-center justify-between">
+        <span className="font-display-campaign tracking-widest text-xl text-canvas select-none">
+          WORLD CUP 26
+        </span>
+        {session ? (
+          <Link
+            href="/bets"
+            className="button-outline-on-image !py-2 !px-6 !h-auto text-button-sm"
+          >
+            Go to Dashboard
+          </Link>
+        ) : (
           <Link
             href="/login"
-            className="flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-8 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-violet-500 hover:to-indigo-500 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="button-outline-on-image !py-2 !px-6 !h-auto text-button-sm"
           >
-            Get Started — it&apos;s free
+            Sign In
           </Link>
+        )}
+      </header>
+
+      {/* Main campaign hero lockup */}
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-24 md:py-36 flex flex-col items-start justify-end flex-grow gap-6">
+        <h1 className="text-display-campaign text-6xl sm:text-8xl md:text-[90px] text-canvas leading-[0.9] font-medium uppercase max-w-2xl select-none">
+          World Cup 2026
+        </h1>
+        <p className="text-body-md text-canvas/80 max-w-[448px] leading-relaxed font-normal">
+          Predict the groups. Forecast the knockout matches. Project your
+          tournament path and track your scores live to compete against friends
+          for the ultimate sweepstake.
+        </p>
+        <div className="mt-4">
+          {session ? (
+            <Link href="/bets" className="button-outline-on-image">
+              View My Predictions
+            </Link>
+          ) : (
+            <Link href="/login" className="button-outline-on-image">
+              Enter the Bracket
+            </Link>
+          )}
         </div>
       </div>
+
+      {/* Footer bar */}
+      <footer className="relative z-10 mx-auto w-full max-w-7xl px-6 py-8 border-t border-canvas/10 flex flex-col sm:flex-row justify-between items-center gap-4 text-canvas/50">
+        <span className="text-caption-sm uppercase tracking-wider">
+          ⚽ Predict. Compete. Win.
+        </span>
+        <span className="text-utility-xs">
+          © 2026 World Cup Sweepstake. All Rights Reserved.
+        </span>
+      </footer>
     </div>
   );
 }
