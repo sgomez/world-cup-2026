@@ -179,9 +179,9 @@ function RoundSection({
 
   const gridCols =
     matchCount >= 4
-      ? "grid-cols-2 sm:grid-cols-4"
+      ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
       : matchCount >= 2
-        ? "grid-cols-2"
+        ? "grid-cols-1 sm:grid-cols-2"
         : "grid-cols-1";
 
   return (
