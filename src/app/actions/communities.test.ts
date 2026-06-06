@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -245,7 +246,7 @@ type MockBet = {
 
 function makeBet(overrides: Partial<MockBet> = {}): MockBet {
   return {
-    id: "bet-1",
+    id: randomUUID(),
     label: "My Bet",
     status: "draft",
     createdAt: new Date(),
