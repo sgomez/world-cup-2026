@@ -26,18 +26,20 @@ export const metadata: Metadata = {
   ),
   title: "World Cup 2026 Sweepstake",
   description:
-    "Predict the FIFA World Cup 2026 bracket. Pick your group standings and knockout winners before the deadline.",
+    "Predict the World Cup 2026 bracket. Pick your group standings and knockout winners before the deadline.",
   openGraph: {
     title: "World Cup 2026 Sweepstake",
     description:
-      "Predict the FIFA World Cup 2026 bracket. Pick your group standings and knockout winners before the deadline.",
+      "Predict the World Cup 2026 bracket. Pick your group standings and knockout winners before the deadline.",
     type: "website",
     locale: "en_US",
+    siteName: "World Cup 2026 Sweepstake",
+    url: "/",
     images: [
       {
-        url: "/soccer_campaign_hero.png",
+        url: "/og_image.png",
         width: 1200,
-        height: 1200,
+        height: 630,
         alt: "World Cup 2026 Sweepstake Campaign Hero Image",
       },
     ],
@@ -46,8 +48,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "World Cup 2026 Sweepstake",
     description:
-      "Predict the FIFA World Cup 2026 bracket. Pick your group standings and knockout winners before the deadline.",
-    images: ["/soccer_campaign_hero.png"],
+      "Predict the World Cup 2026 bracket. Pick your group standings and knockout winners before the deadline.",
+    images: [{ url: "/og_image.png", width: 1200, height: 630 }],
   },
 };
 
