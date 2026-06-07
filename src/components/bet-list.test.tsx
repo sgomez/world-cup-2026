@@ -13,7 +13,7 @@ vi.mock("next-intl", () => ({
             noBets: "No bets yet.",
             draft: "Draft",
             closed: "Closed",
-            signature: "Sig",
+            signature: "Signature",
             copy: "Copy",
             removeBetAriaLabel: "Remove bet",
             removeDialogTitle: "Remove bet?",
@@ -111,7 +111,7 @@ describe("BetList", () => {
           showCopyButtons={false}
         />,
       );
-      expect(screen.getByText("Sig")).toBeInTheDocument();
+      expect(screen.getByText("Signature")).toBeInTheDocument();
       expect(screen.getByText("abc123de")).toBeInTheDocument();
     });
 
@@ -123,7 +123,7 @@ describe("BetList", () => {
           showCopyButtons={false}
         />,
       );
-      expect(screen.queryByText("Sig")).not.toBeInTheDocument();
+      expect(screen.queryByText("Signature")).not.toBeInTheDocument();
     });
 
     it("does not show verified/invalid badge on signature", () => {

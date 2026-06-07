@@ -73,15 +73,15 @@ export function BetList({
               </span>
             </div>
             {bet.status === "closed" && bet.signature && (
-              <div className="mt-3 flex items-center gap-2 border border-hairline bg-soft-cloud px-3 py-2 dark:bg-charcoal">
+              <div className="mt-3 flex flex-wrap items-baseline gap-2 border border-hairline bg-soft-cloud px-3 py-2 dark:bg-charcoal">
                 <ShieldCheck
-                  className="size-4 shrink-0 text-success dark:text-success-bright"
+                  className="size-4 shrink-0 self-center text-success dark:text-success-bright"
                   aria-hidden="true"
                 />
                 <span className="text-caption-sm font-medium text-muted-foreground">
                   {t("signature")}
                 </span>
-                <code className="font-mono text-caption-sm text-foreground">
+                <code className="truncate font-mono text-caption-sm text-foreground">
                   {bet.signature.slice(0, 8)}
                 </code>
               </div>
