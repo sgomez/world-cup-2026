@@ -10,6 +10,7 @@ export type TeamBadgeProps = {
   matched?: boolean;
   size?: "default" | "compact";
   showGrip?: boolean;
+  rightAddon?: React.ReactNode;
 };
 
 export function TeamBadge({
@@ -18,6 +19,7 @@ export function TeamBadge({
   matched = false,
   size = "default",
   showGrip = false,
+  rightAddon,
 }: TeamBadgeProps) {
   const flagUrl = `https://flagcdn.com/w320/${team.code.toLowerCase()}.png`;
 
@@ -54,7 +56,7 @@ export function TeamBadge({
       <div className="relative z-10 flex items-center justify-between w-full gap-2">
         <span
           className={cn(
-            "font-[family-name:var(--font-oswald)] uppercase tracking-wider font-semibold truncate",
+            "font-[family-name:var(--font-oswald)] uppercase tracking-wider font-semibold truncate min-w-0",
             size === "default" ? "text-sm" : "text-xs",
           )}
         >
@@ -63,6 +65,7 @@ export function TeamBadge({
         {showGrip && (
           <GripVertical className="h-4 w-4 shrink-0 text-mute dark:text-stone opacity-70" />
         )}
+        {rightAddon}
       </div>
     </div>
   );
