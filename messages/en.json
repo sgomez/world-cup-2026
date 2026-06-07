@@ -75,7 +75,17 @@
     "groupChangeWarningTitle": "Reset knockout predictions?",
     "groupChangeWarningDescription": "Changing standings will reset conflicting predictions in your knockout stage bracket.",
     "groupChangeWarningConfirm": "Confirm",
-    "signature": "Sig"
+    "signature": "Sig",
+    "save": "Save",
+    "saving": "Saving…",
+    "editBetAriaLabel": "Edit bet label",
+    "labelRequired": "Label is required",
+    "labelTooLong": "Label too long (max 200 chars)",
+    "genericError": "An error occurred",
+    "notAuthenticated": "Not authenticated",
+    "betNotFound": "Bet not found",
+    "notAuthorized": "Not authorized",
+    "betClosed": "Bet is closed"
   },
   "groupStage": {
     "group": "Group {letter}",

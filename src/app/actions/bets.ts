@@ -161,3 +161,48 @@ export async function updateBetPredictions(
 
   return { success: true };
 }
+
+export async function renameBet(
+  betId: string,
+  label: string,
+): Promise<BetActionState> {
+  const session = await getSession();
+  if (!session) {
+    return { error: "Not authenticated" };
+  }
+
+  const trimmedLabel = label?.trim();
+  if (!trimmedLabel) {
+    return { error: "Label is required" };
+  }
+  if (trimmedLabel.length > 200) {
+    return { error: "Label too long (max 200 chars)" };
+  }
+
+  const bet = await prisma.bet.findUnique({ where: { id: betId } });
+  if (!bet) {
+    return { error: "Bet not found" };
+  }
+
+  if (bet.userId !== session.user.id) {
+    return { error: "Not authorized" };
+  }
+
+  if (bet.status !== "draft") {
+    return { error: "Bet is closed" };
+  }
+
+  if (Date.now() >= BET_DEADLINE.getTime()) {
+    return { error: "Deadline passed" };
+  }
+
+  await prisma.bet.update({
+    where: { id: betId },
+    data: { label: trimmedLabel },
+  });
+
+  revalidatePath(`/bets/${betId}`);
+  revalidatePath("/bets");
+
+  return { success: true };
+}

@@ -35,6 +35,7 @@ import {
   copyBet,
   createBet,
   removeBet,
+  renameBet,
   reopenBet,
   updateBetPredictions,
 } from "./bets";
@@ -616,6 +617,81 @@ describe("copyBet", () => {
       id: NEW_BET_ID,
     } as Awaited<ReturnType<typeof mockCreate>>);
     await copyBet(BET_ID);
+    expect(mockRevalidate).toHaveBeenCalledWith("/bets");
+  });
+});
+
+describe("renameBet", () => {
+  it("returns error when not authenticated", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const result = await renameBet(BET_ID, "New label");
+    expect(result).toEqual({ error: "Not authenticated" });
+  });
+
+  it("returns error when label is empty or only whitespace", async () => {
+    mockSession();
+    const result1 = await renameBet(BET_ID, "");
+    expect(result1).toEqual({ error: "Label is required" });
+
+    const result2 = await renameBet(BET_ID, "   ");
+    expect(result2).toEqual({ error: "Label is required" });
+  });
+
+  it("returns error when label is too long (> 200 characters)", async () => {
+    mockSession();
+    const result = await renameBet(BET_ID, "a".repeat(201));
+    expect(result).toEqual({ error: "Label too long (max 200 chars)" });
+  });
+
+  it("returns error when bet not found", async () => {
+    mockSession();
+    mockFindUnique.mockResolvedValue(null);
+    const result = await renameBet(BET_ID, "New label");
+    expect(result).toEqual({ error: "Bet not found" });
+  });
+
+  it("returns error when caller does not own the bet", async () => {
+    mockSession("other-user");
+    mockBet();
+    const result = await renameBet(BET_ID, "New label");
+    expect(result).toEqual({ error: "Not authorized" });
+  });
+
+  it("returns error when bet status is closed", async () => {
+    mockSession();
+    mockBet({ status: "closed" });
+    const result = await renameBet(BET_ID, "New label");
+    expect(result).toEqual({ error: "Bet is closed" });
+  });
+
+  it("returns error when deadline has passed", async () => {
+    mockSession();
+    mockBet();
+    const { BET_DEADLINE } = await import("@/lib/bet-constants");
+    vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
+    try {
+      const result = await renameBet(BET_ID, "New label");
+      expect(result).toEqual({ error: "Deadline passed" });
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("updates the label and returns success on success path", async () => {
+    mockSession();
+    mockBet();
+    mockUpdate.mockResolvedValue({} as Awaited<ReturnType<typeof mockUpdate>>);
+    const { revalidatePath } = await import("next/cache");
+    const mockRevalidate = vi.mocked(revalidatePath);
+
+    const result = await renameBet(BET_ID, "New label");
+
+    expect(result).toEqual({ success: true });
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: BET_ID },
+      data: { label: "New label" },
+    });
+    expect(mockRevalidate).toHaveBeenCalledWith(`/bets/${BET_ID}`);
     expect(mockRevalidate).toHaveBeenCalledWith("/bets");
   });
 });
