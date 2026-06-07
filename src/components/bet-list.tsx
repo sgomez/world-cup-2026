@@ -47,7 +47,9 @@ export function BetList({
             href={`/bets/${bet.id}`}
             className="block border border-hairline bg-canvas px-5 py-4 transition-colors hover:bg-soft-cloud dark:bg-ink dark:hover:bg-charcoal"
           >
-            <div className="flex items-center gap-3 pr-24">
+            <div
+              className={`flex items-center gap-3${!deadlinePassed ? " pr-24" : ""}`}
+            >
               <p className="text-body-strong text-foreground">{bet.label}</p>
               {bet.status === "draft" && (
                 <span className="border border-info/30 bg-info/5 px-2 py-0.5 text-caption-sm font-medium text-info">
@@ -81,7 +83,7 @@ export function BetList({
                 <span className="text-caption-sm font-medium text-muted-foreground">
                   {t("signature")}
                 </span>
-                <code className="truncate font-mono text-caption-sm text-foreground">
+                <code className="font-mono text-caption-sm text-foreground">
                   {bet.signature.slice(0, 8)}
                 </code>
               </div>
