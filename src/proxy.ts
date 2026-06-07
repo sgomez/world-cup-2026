@@ -5,7 +5,7 @@ import { routing } from "@/i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
 
-const PROTECTED_PATHS = ["/profile", "/bets", "/admin"];
+const PROTECTED_PATHS = ["/profile", "/bets", "/admin", "/communities"];
 const SESSION_COOKIE = "better-auth.session_token";
 
 function hasSessionCookie(request: NextRequest): boolean {
