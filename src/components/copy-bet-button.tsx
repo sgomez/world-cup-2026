@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { copyBet } from "@/app/actions/bets";
 
 export function CopyBetButton({ betId }: { betId: string }) {
+  const t = useTranslations("bets");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +23,7 @@ export function CopyBetButton({ betId }: { betId: string }) {
         }
         className="button-secondary text-button-sm !h-8 !py-1.5 !px-3 whitespace-nowrap"
       >
-        {pending ? "Copying…" : "Copy"}
+        {pending ? t("copying") : t("copy")}
       </button>
       {error && <p className="text-caption-sm text-sale">{error}</p>}
     </div>

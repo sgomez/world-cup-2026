@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ProfileForm } from "@/components/profile-form";
 import { redirect } from "@/i18n/navigation";
 import { getSession } from "@/lib/session";
@@ -10,6 +10,7 @@ export default async function ProfilePage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("profile");
 
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
@@ -23,10 +24,10 @@ export default async function ProfilePage({
   return (
     <div className="max-w-[512px]">
       <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
-        Edit Profile
+        {t("title")}
       </h1>
       <p className="mt-1 text-caption-md text-muted-foreground">
-        Update your display name and avatar.
+        {t("description")}
       </p>
 
       <ProfileForm name={user.name} email={user.email} image={user.image} />

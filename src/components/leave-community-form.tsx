@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import {
   type CommunityActionState,
@@ -11,6 +12,7 @@ interface LeaveCommunityFormProps {
 }
 
 export function LeaveCommunityForm({ slug }: LeaveCommunityFormProps) {
+  const t = useTranslations("communities");
   const boundAction = leaveCommunity.bind(null, slug);
   const [state, action, pending] = useActionState<
     CommunityActionState,
@@ -24,7 +26,7 @@ export function LeaveCommunityForm({ slug }: LeaveCommunityFormProps) {
       )}
       <form action={action}>
         <button type="submit" disabled={pending} className="button-danger">
-          {pending ? "Leaving…" : "Leave Community"}
+          {pending ? t("leaving") : t("leaveCommunity")}
         </button>
       </form>
     </div>

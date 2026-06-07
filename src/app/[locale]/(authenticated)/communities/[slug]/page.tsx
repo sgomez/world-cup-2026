@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getCommunity } from "@/app/actions/communities";
 import { LeaveCommunityForm } from "@/components/leave-community-form";
 import { Banner } from "@/components/ui/banner";
@@ -16,6 +16,7 @@ export default async function CommunityPage({
 }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("communities");
 
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
@@ -33,13 +34,13 @@ export default async function CommunityPage({
     <div className="max-w-2xl">
       <PageHeader
         title={community.name}
-        description={`Owner: ${community.owner.name}`}
+        description={t("ownerLabel", { name: community.owner.name })}
       />
 
       {isOwner && (
         <div className="mt-8 border border-hairline p-6">
           <p className="text-caption-md font-medium text-foreground">
-            Invite link
+            {t("inviteLink")}
           </p>
           <p className="mt-1 break-all text-caption-sm text-muted-foreground">
             {inviteUrl}
@@ -49,7 +50,7 @@ export default async function CommunityPage({
               href={`/communities/${slug}/settings`}
               className="text-caption-md text-muted-foreground underline"
             >
-              Manage community
+              {t("manageCommunity")}
             </Link>
           </div>
         </div>
@@ -57,7 +58,7 @@ export default async function CommunityPage({
 
       <div className="mt-8">
         <p className="text-caption-md font-medium text-foreground">
-          Members ({community.members.length})
+          {t("members", { count: community.members.length })}
         </p>
         <ul className="mt-2 divide-y divide-hairline border border-hairline">
           {community.members.map(({ user, userId }) => (
@@ -68,7 +69,7 @@ export default async function CommunityPage({
               <span className="text-body-md text-foreground">{user.name}</span>
               {userId === community.ownerId && (
                 <span className="text-caption-sm text-muted-foreground">
-                  Owner
+                  {t("owner")}
                 </span>
               )}
             </li>
@@ -77,7 +78,9 @@ export default async function CommunityPage({
       </div>
 
       <div className="mt-8">
-        <p className="text-caption-md font-medium text-foreground">Bets</p>
+        <p className="text-caption-md font-medium text-foreground">
+          {t("betsTitle")}
+        </p>
         {isPastDeadline ? (
           <div className="mt-2 space-y-6">
             {community.members.map(({ user }) => (
@@ -87,7 +90,7 @@ export default async function CommunityPage({
                 </p>
                 {user.bets.length === 0 ? (
                   <p className="mt-1 text-caption-sm text-muted-foreground">
-                    No bets.
+                    {t("noBets")}
                   </p>
                 ) : (
                   <ul className="mt-1 divide-y divide-hairline border border-hairline">
@@ -101,12 +104,12 @@ export default async function CommunityPage({
                         </span>
                         {bet.status === "draft" && (
                           <span className="rounded-lg border border-info/30 bg-info/5 px-2 py-0.5 text-caption-sm font-medium text-info">
-                            Draft
+                            {t("draft")}
                           </span>
                         )}
                         {bet.status === "closed" && (
                           <span className="rounded-lg border border-success/30 bg-success/5 px-2 py-0.5 text-caption-sm font-medium text-success dark:text-success-bright">
-                            Closed
+                            {t("closed")}
                           </span>
                         )}
                       </li>
@@ -117,9 +120,7 @@ export default async function CommunityPage({
             ))}
           </div>
         ) : (
-          <Banner className="mt-2">
-            Bets will be visible after the deadline.
-          </Banner>
+          <Banner className="mt-2">{t("betsAfterDeadline")}</Banner>
         )}
       </div>
 
@@ -128,7 +129,7 @@ export default async function CommunityPage({
           href="/communities"
           className="text-caption-md text-muted-foreground underline"
         >
-          Back to Communities
+          {t("backToCommunities")}
         </Link>
         {!isOwner && <LeaveCommunityForm slug={slug} />}
       </div>

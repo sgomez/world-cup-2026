@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -11,6 +11,7 @@ interface Props {
 export default async function AdminCommunityDetailPage({ params }: Props) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("admin");
 
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
@@ -44,12 +45,12 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
         {community.name}
       </h1>
       <p className="mt-1 text-caption-md text-muted-foreground">
-        Owner: {community.owner.name}
+        {t("ownerLabel", { name: community.owner.name })}
       </p>
 
       <div className="mt-8">
         <p className="text-caption-md font-medium text-foreground">
-          Members ({community.members.length})
+          {t("membersLabel", { count: community.members.length })}
         </p>
         <ul className="mt-2 divide-y divide-hairline border border-hairline">
           {community.members.map(({ userId, user, joinedAt }) => (
@@ -59,7 +60,7 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
             >
               <span className="text-body-md text-foreground">{user.name}</span>
               <span className="text-caption-sm text-muted-foreground">
-                Joined {joinedAt.toLocaleDateString()}
+                {t("joinedLabel", { date: joinedAt.toLocaleDateString() })}
               </span>
             </li>
           ))}
@@ -71,7 +72,7 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
           href="/admin/communities"
           className="text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
         >
-          Back to Communities
+          {t("backToCommunities")}
         </Link>
       </div>
     </div>

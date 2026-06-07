@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -10,6 +10,7 @@ export default async function AdminCommunitiesPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("admin");
 
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
@@ -32,10 +33,10 @@ export default async function AdminCommunitiesPage({
   return (
     <div>
       <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
-        Communities
+        {t("communitiesTitle")}
       </h1>
       <p className="mt-1 text-caption-md text-muted-foreground">
-        {communities.length} communit{communities.length !== 1 ? "ies" : "y"}
+        {t("communitiesCount", { count: communities.length })}
       </p>
 
       <div className="mt-8 space-y-2">
@@ -50,19 +51,18 @@ export default async function AdminCommunitiesPage({
                 {community.name}
               </p>
               <p className="text-caption-md text-muted-foreground">
-                Owner: {community.owner.name}
+                {t("ownerLabel", { name: community.owner.name })}
               </p>
             </div>
             <span className="text-caption-sm text-muted-foreground">
-              {community._count.members} member
-              {community._count.members !== 1 ? "s" : ""}
+              {t("membersCount", { count: community._count.members })}
             </span>
           </Link>
         ))}
 
         {communities.length === 0 && (
           <p className="text-caption-md text-muted-foreground">
-            No communities yet.
+            {t("noCommunitiesYet")}
           </p>
         )}
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { type ProfileActionState, updateProfile } from "@/app/actions/profile";
 
@@ -10,6 +11,7 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ name, email, image }: ProfileFormProps) {
+  const t = useTranslations("profile");
   const [state, action, pending] = useActionState<ProfileActionState, FormData>(
     updateProfile,
     null,
@@ -22,7 +24,7 @@ export function ProfileForm({ name, email, image }: ProfileFormProps) {
           htmlFor="email"
           className="block text-caption-sm uppercase tracking-wider text-muted-foreground"
         >
-          Email
+          {t("emailLabel")}
         </label>
         <input
           id="email"
@@ -32,7 +34,7 @@ export function ProfileForm({ name, email, image }: ProfileFormProps) {
           className="mt-2 block w-full rounded-md border border-hairline bg-soft-cloud px-4 py-3 text-muted-foreground text-body-md cursor-not-allowed opacity-60 dark:bg-charcoal"
         />
         <p className="mt-1 text-caption-sm text-muted-foreground">
-          Email cannot be changed — it is your identity.
+          {t("emailNote")}
         </p>
       </div>
 
@@ -41,7 +43,7 @@ export function ProfileForm({ name, email, image }: ProfileFormProps) {
           htmlFor="name"
           className="block text-caption-sm uppercase tracking-wider text-muted-foreground"
         >
-          Name
+          {t("nameLabel")}
         </label>
         <input
           id="name"
@@ -58,7 +60,7 @@ export function ProfileForm({ name, email, image }: ProfileFormProps) {
           htmlFor="image"
           className="block text-caption-sm uppercase tracking-wider text-muted-foreground"
         >
-          Profile Image URL
+          {t("imageLabel")}
         </label>
         <input
           id="image"
@@ -74,7 +76,7 @@ export function ProfileForm({ name, email, image }: ProfileFormProps) {
         <p className="text-body-strong text-sale">{state.error}</p>
       )}
       {state?.success && (
-        <p className="text-body-strong text-success">Profile updated.</p>
+        <p className="text-body-strong text-success">{t("profileUpdated")}</p>
       )}
 
       <button
@@ -82,7 +84,7 @@ export function ProfileForm({ name, email, image }: ProfileFormProps) {
         disabled={pending}
         className="button-primary w-full"
       >
-        {pending ? "Saving…" : "Save Changes"}
+        {pending ? t("saving") : t("saveChanges")}
       </button>
     </form>
   );

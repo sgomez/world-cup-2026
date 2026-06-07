@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useReducer, useRef } from "react";
 import { updateBetPredictions } from "@/app/actions/bets";
 import { GroupStage } from "@/components/group-stage";
@@ -23,6 +24,7 @@ export function BetPrediction({
   savedKnockoutWinners?: Record<string, string> | null;
   readOnly?: boolean;
 }) {
+  const t = useTranslations("bets");
   const [state, dispatch] = useReducer(tournamentReducer, null, () =>
     createInitialState(savedPredictions, savedKnockoutWinners),
   );
@@ -54,19 +56,19 @@ export function BetPrediction({
           value="groups"
           className="px-1 py-2 text-caption-md data-[state=active]:text-foreground"
         >
-          Group Stage
+          {t("groupStageTab")}
         </TabsTrigger>
         <TabsTrigger
           value="knockout"
           className="px-1 py-2 text-caption-md data-[state=active]:text-foreground"
         >
-          Knockout Stage
+          {t("knockoutStageTab")}
         </TabsTrigger>
         <TabsTrigger
           value="score"
           className="px-1 py-2 text-caption-md data-[state=active]:text-foreground"
         >
-          Score
+          {t("scoreTab")}
         </TabsTrigger>
       </TabsList>
 

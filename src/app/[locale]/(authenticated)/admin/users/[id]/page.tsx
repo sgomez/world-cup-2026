@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { setUserRole } from "@/app/actions/admin";
 import { redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
@@ -12,6 +12,7 @@ interface Props {
 export default async function AdminUserPage({ params }: Props) {
   const { locale, id } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("admin");
 
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
@@ -79,10 +80,10 @@ export default async function AdminUserPage({ params }: Props) {
       {canChangeRole && (
         <div className="mt-8 rounded-none border border-hairline bg-soft-cloud/50 p-5 dark:bg-charcoal/30">
           <h2 className="text-heading-md font-medium uppercase tracking-tight text-foreground">
-            Role Management
+            {t("roleManagement")}
           </h2>
           <p className="mt-1 text-caption-md text-muted-foreground">
-            Current role:{" "}
+            {t("currentRole")}{" "}
             <strong className="text-foreground font-semibold">
               {target.role}
             </strong>
@@ -99,7 +100,7 @@ export default async function AdminUserPage({ params }: Props) {
                   type="submit"
                   className="button-primary !h-9 !py-1 !px-4 text-button-sm"
                 >
-                  Grant Admin
+                  {t("grantAdmin")}
                 </button>
               </form>
             )}
@@ -114,7 +115,7 @@ export default async function AdminUserPage({ params }: Props) {
                   type="submit"
                   className="button-secondary !h-9 !py-1 !px-4 text-button-sm"
                 >
-                  Revoke Admin
+                  {t("revokeAdmin")}
                 </button>
               </form>
             )}
@@ -125,7 +126,7 @@ export default async function AdminUserPage({ params }: Props) {
       {isSelf && (
         <div className="mt-8 rounded-none border border-sale/30 bg-sale/5 p-5">
           <p className="text-caption-md text-sale font-medium">
-            You cannot change your own role.
+            {t("cannotChangeSelfRole")}
           </p>
         </div>
       )}
@@ -133,19 +134,19 @@ export default async function AdminUserPage({ params }: Props) {
       {isSuperAdmin && !isSelf && (
         <div className="mt-8 rounded-none border border-sale/30 bg-sale/5 p-5">
           <p className="text-caption-md text-sale font-medium">
-            The super admin role cannot be changed.
+            {t("cannotChangeSuperAdminRole")}
           </p>
         </div>
       )}
 
       <div className="mt-8">
         <h2 className="text-heading-md font-medium uppercase tracking-tight text-foreground">
-          Bets ({target.bets.length})
+          {t("betsTitle", { count: target.bets.length })}
         </h2>
         <div className="mt-4 space-y-2">
           {target.bets.length === 0 ? (
             <p className="text-caption-md text-muted-foreground">
-              No bets yet.
+              {t("noBetsYet")}
             </p>
           ) : (
             target.bets.map((bet) => (
@@ -155,8 +156,16 @@ export default async function AdminUserPage({ params }: Props) {
               >
                 <p className="text-body-strong text-foreground">{bet.label}</p>
                 <div className="mt-1 flex gap-4 text-caption-sm text-muted-foreground">
-                  <span>Created {bet.createdAt.toLocaleDateString()}</span>
-                  <span>Updated {bet.updatedAt.toLocaleDateString()}</span>
+                  <span>
+                    {t("createdLabel", {
+                      date: bet.createdAt.toLocaleDateString(),
+                    })}
+                  </span>
+                  <span>
+                    {t("updatedLabel", {
+                      date: bet.updatedAt.toLocaleDateString(),
+                    })}
+                  </span>
                 </div>
               </div>
             ))

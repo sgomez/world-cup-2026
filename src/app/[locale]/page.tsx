@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getSession } from "@/lib/session";
 
@@ -9,6 +9,7 @@ export default async function Home({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("home");
 
   const session = await getSession();
 
@@ -30,14 +31,14 @@ export default async function Home({
             href="/bets"
             className="button-outline-on-image !py-2 !px-6 !h-auto text-button-sm"
           >
-            Go to Dashboard
+            {t("goToDashboard")}
           </Link>
         ) : (
           <Link
             href="/login"
             className="button-outline-on-image !py-2 !px-6 !h-auto text-button-sm"
           >
-            Sign In
+            {t("signIn")}
           </Link>
         )}
       </header>
@@ -47,18 +48,16 @@ export default async function Home({
           World Cup 2026
         </h1>
         <p className="text-body-md text-canvas/80 max-w-[448px] leading-relaxed font-normal">
-          Predict the groups. Forecast the knockout matches. Project your
-          tournament path and track your scores live to compete against friends
-          for the ultimate sweepstake.
+          {t("subtitle")}
         </p>
         <div className="mt-4">
           {session ? (
             <Link href="/bets" className="button-outline-on-image">
-              View My Predictions
+              {t("viewMyPredictions")}
             </Link>
           ) : (
             <Link href="/login" className="button-outline-on-image">
-              Enter the Bracket
+              {t("enterTheBracket")}
             </Link>
           )}
         </div>
@@ -66,11 +65,9 @@ export default async function Home({
 
       <footer className="relative z-10 mx-auto w-full max-w-7xl px-6 py-8 border-t border-canvas/10 flex flex-col sm:flex-row justify-between items-center gap-4 text-canvas/50">
         <span className="text-caption-sm uppercase tracking-wider">
-          ⚽ Predict. Compete. Win.
+          {t("tagline")}
         </span>
-        <span className="text-utility-xs">
-          © 2026 World Cup Sweepstake. All Rights Reserved.
-        </span>
+        <span className="text-utility-xs">{t("copyright")}</span>
       </footer>
     </div>
   );

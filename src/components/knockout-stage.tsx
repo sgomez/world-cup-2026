@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { Dispatch } from "react";
 import {
   getAllTeamsLookup,
@@ -108,11 +108,12 @@ function MatchCard({
   onSelectWinner: (teamId: string) => void;
   readOnly: boolean;
 }) {
+  const t = useTranslations("knockoutStage");
   const canSelect = team1 !== null && team2 !== null && !readOnly;
   return (
     <div className="rounded-lg bg-white/90 p-2 shadow-md dark:bg-slate-800/90">
       <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-        Match {matchNumber}
+        {t("match", { number: matchNumber })}
       </div>
       <div className="flex flex-col gap-0.5">
         <MatchTeamRow
@@ -156,6 +157,7 @@ function RoundSection({
   accent?: keyof typeof accentColors;
   readOnly?: boolean;
 }) {
+  const t = useTranslations("knockoutStage");
   const locale = useLocale();
   const teamsLookup = getAllTeamsLookup(locale);
   const matchIds = KNOCKOUT_MATCH_IDS[round];
@@ -196,7 +198,7 @@ function RoundSection({
           {title}
         </h3>
         <span className="text-xs text-slate-400 dark:text-slate-500">
-          ({matchCount} {matchCount === 1 ? "match" : "matches"})
+          ({t("matchCount", { count: matchCount })})
         </span>
       </div>
       <div className={cn("grid gap-2", gridCols)}>
@@ -224,10 +226,11 @@ export function KnockoutStage({
   dispatch: Dispatch<TournamentAction>;
   readOnly?: boolean;
 }) {
+  const t = useTranslations("knockoutStage");
   return (
     <div className="space-y-4">
       <RoundSection
-        title="Round of 32"
+        title={t("roundOf32")}
         round="R32"
         state={state}
         dispatch={dispatch}
@@ -235,7 +238,7 @@ export function KnockoutStage({
         readOnly={readOnly}
       />
       <RoundSection
-        title="Round of 16"
+        title={t("roundOf16")}
         round="R16"
         state={state}
         dispatch={dispatch}
@@ -243,7 +246,7 @@ export function KnockoutStage({
         readOnly={readOnly}
       />
       <RoundSection
-        title="Quarter Finals"
+        title={t("quarterFinals")}
         round="QF"
         state={state}
         dispatch={dispatch}
@@ -252,7 +255,7 @@ export function KnockoutStage({
       />
       <div className="grid gap-4 sm:grid-cols-2">
         <RoundSection
-          title="Semi Finals"
+          title={t("semiFinals")}
           round="SF"
           state={state}
           dispatch={dispatch}
@@ -260,7 +263,7 @@ export function KnockoutStage({
           readOnly={readOnly}
         />
         <RoundSection
-          title="3rd Place Match"
+          title={t("thirdPlaceMatch")}
           round="3RD"
           state={state}
           dispatch={dispatch}
@@ -269,7 +272,7 @@ export function KnockoutStage({
         />
       </div>
       <RoundSection
-        title="Final"
+        title={t("final")}
         round="F"
         state={state}
         dispatch={dispatch}

@@ -1,6 +1,7 @@
 "use client";
 
 import type { Bet } from "@prisma/client";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CopyBetButton } from "@/components/copy-bet-button";
 import { RemoveBetButton } from "@/components/remove-bet-button";
@@ -18,6 +19,7 @@ export function BetList({
   deadlinePassed,
   showCopyButtons = false,
 }: BetListProps) {
+  const t = useTranslations("bets");
   const [bets, setBets] = useState(initialBets);
 
   function handleRemoved(betId: string) {
@@ -25,7 +27,7 @@ export function BetList({
   }
 
   if (bets.length === 0) {
-    return <Banner>No bets yet. Add your first prediction above.</Banner>;
+    return <Banner>{t("noBets")}</Banner>;
   }
 
   return (
@@ -40,18 +42,22 @@ export function BetList({
               <p className="text-body-strong text-foreground">{bet.label}</p>
               {bet.status === "draft" && (
                 <span className="rounded-lg border border-info/30 bg-info/5 px-2 py-0.5 text-caption-sm font-medium text-info">
-                  Draft
+                  {t("draft")}
                 </span>
               )}
               {bet.status === "closed" && (
                 <span className="rounded-lg border border-success/30 bg-success/5 px-2 py-0.5 text-caption-sm font-medium text-success dark:text-success-bright">
-                  Closed
+                  {t("closed")}
                 </span>
               )}
             </div>
             <div className="mt-2 flex gap-4 text-caption-sm text-muted-foreground">
-              <span>Created {bet.createdAt.toISOString().slice(0, 10)}</span>
-              <span>Updated {bet.updatedAt.toISOString().slice(0, 10)}</span>
+              <span>
+                {t("createdLabel")} {bet.createdAt.toISOString().slice(0, 10)}
+              </span>
+              <span>
+                {t("updatedLabel")} {bet.updatedAt.toISOString().slice(0, 10)}
+              </span>
             </div>
           </Link>
           {!deadlinePassed && (

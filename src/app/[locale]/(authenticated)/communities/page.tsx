@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
 import { Link, redirect } from "@/i18n/navigation";
@@ -12,6 +12,7 @@ export default async function CommunitiesPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("communities");
 
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
@@ -27,11 +28,11 @@ export default async function CommunitiesPage({
   return (
     <div className="max-w-2xl">
       <PageHeader
-        title="Communities"
-        description="Groups where members compare predictions."
+        title={t("title")}
+        description={t("description")}
         action={
           <Link href="/communities/new" className="button-primary">
-            New Community
+            {t("newCommunity")}
           </Link>
         }
       />
@@ -39,11 +40,11 @@ export default async function CommunitiesPage({
       <div className="mt-8">
         {communities.length === 0 ? (
           <Banner>
-            You haven&apos;t joined any communities yet.{" "}
+            {t("noCommunitiesYet")}{" "}
             <Link href="/communities/new" className="underline">
-              Create one
+              {t("createOne")}
             </Link>{" "}
-            or ask a friend for an invite link.
+            {t("orAskForInvite")}
           </Banner>
         ) : (
           <ul className="divide-y divide-hairline border border-hairline">
@@ -58,7 +59,7 @@ export default async function CommunitiesPage({
                       {community.name}
                     </p>
                     <p className="text-caption-sm text-muted-foreground">
-                      Owner: {community.owner.name}
+                      {t("ownerLabel", { name: community.owner.name })}
                     </p>
                   </div>
                 </Link>

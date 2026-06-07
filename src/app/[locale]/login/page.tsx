@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
+  const t = useTranslations("auth");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -40,7 +42,7 @@ export default function LoginPage() {
               WORLD CUP 26
             </h2>
             <p className="mt-2 text-caption-md text-muted-foreground">
-              Sign in to project predictions and track your standings.
+              {t("subtitle")}
             </p>
 
             <div className="mt-8 w-full space-y-4">
@@ -61,9 +63,9 @@ export default function LoginPage() {
                     className="h-5 w-5 animate-spin text-foreground"
                     fill="none"
                     viewBox="0 0 24 24"
-                    aria-label="Loading"
+                    aria-label={t("loadingLabel")}
                   >
-                    <title>Loading</title>
+                    <title>{t("loadingLabel")}</title>
                     <circle
                       className="opacity-25"
                       cx="12"
@@ -103,7 +105,7 @@ export default function LoginPage() {
                   </svg>
                 )}
                 <span>
-                  {loading ? "Redirecting to Google..." : "Sign in with Google"}
+                  {loading ? t("redirectingToGoogle") : t("signInWithGoogle")}
                 </span>
               </button>
             </div>

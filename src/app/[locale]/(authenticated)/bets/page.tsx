@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { BetList } from "@/components/bet-list";
 import { CreateBetForm } from "@/components/create-bet-form";
 import { Banner } from "@/components/ui/banner";
@@ -15,6 +15,7 @@ export default async function BetsPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("bets");
 
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
@@ -30,20 +31,13 @@ export default async function BetsPage({
 
   return (
     <div className="max-w-2xl">
-      <PageHeader
-        title="My Bets"
-        description="Create and manage your tournament predictions."
-      />
+      <PageHeader title={t("title")} description={t("description")} />
 
       <div className="mt-8">
         {isPastDeadline ? (
-          <Banner variant="warning">
-            The bet deadline has passed. No further changes can be made.
-          </Banner>
+          <Banner variant="warning">{t("deadlinePassed")}</Banner>
         ) : isAtLimit ? (
-          <Banner>
-            You&apos;ve reached the maximum of {MAX_BETS_PER_USER} bets.
-          </Banner>
+          <Banner>{t("limitReached", { count: MAX_BETS_PER_USER })}</Banner>
         ) : (
           <CreateBetForm />
         )}

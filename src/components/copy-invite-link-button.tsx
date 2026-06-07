@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 interface CopyInviteLinkButtonProps {
@@ -7,6 +8,7 @@ interface CopyInviteLinkButtonProps {
 }
 
 export function CopyInviteLinkButton({ url }: CopyInviteLinkButtonProps) {
+  const t = useTranslations("communitySettings");
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -17,7 +19,7 @@ export function CopyInviteLinkButton({ url }: CopyInviteLinkButtonProps) {
 
   return (
     <button type="button" onClick={handleCopy} className="button-secondary">
-      {copied ? "Copied!" : "Copy Invite Link"}
+      {copied ? t("copied") : t("copyInviteLink")}
     </button>
   );
 }

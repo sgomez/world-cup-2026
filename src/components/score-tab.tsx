@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   getAllTeamsLookup,
   getTeamsInRound,
@@ -49,8 +49,11 @@ function RoundCard({
   actualTeamIds: Set<string>;
   accent: string;
 }) {
-  const matchedTeams = teams.filter((t) => actualTeamIds.has(t.id));
+  const t = useTranslations("score");
+  const matchedTeams = teams.filter((team) => actualTeamIds.has(team.id));
   const totalPoints = matchedTeams.length * points;
+  const noTeamsYet = t("noTeamsYet");
+  const subtotal = t("subtotal");
 
   return (
     <div className="rounded-xl bg-white/80 p-4 shadow-lg dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
@@ -63,10 +66,10 @@ function RoundCard({
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500 dark:text-slate-400">
-            {matchedTeams.length}/{teams.length} correct
+            {matchedTeams.length}/{teams.length} {t("correct")}
           </span>
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-700 dark:text-slate-300">
-            {points} pts/team
+            {points} {t("ptsPerTeam")}
           </span>
         </div>
       </div>
@@ -108,13 +111,13 @@ function RoundCard({
         </div>
       ) : (
         <div className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">
-          No teams yet — complete the knockout bracket
+          {noTeamsYet}
         </div>
       )}
 
       <div className="mt-3 flex items-center justify-end border-t border-slate-200 pt-2 dark:border-slate-700">
         <span className="text-sm font-bold text-slate-900 dark:text-white">
-          Subtotal:{" "}
+          {subtotal}{" "}
           <span
             className={cn(
               totalPoints > 0
@@ -145,6 +148,7 @@ function WinnerCard({
   accent: string;
   icon: React.ReactNode;
 }) {
+  const t = useTranslations("score");
   const isMatched = team && actualWinnerId && team.id === actualWinnerId;
   const earnedPoints = isMatched ? points : 0;
 
@@ -202,12 +206,12 @@ function WinnerCard({
         <div className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 p-4 dark:border-slate-700">
           {icon}
           <span className="text-sm text-slate-400 dark:text-slate-500">
-            Not yet determined
+            {t("notYetDetermined")}
           </span>
         </div>
       )}
       <div className="mt-2 text-right text-sm font-bold text-slate-900 dark:text-white">
-        Subtotal:{" "}
+        {t("subtotal")}{" "}
         <span
           className={cn(
             earnedPoints > 0
@@ -223,6 +227,7 @@ function WinnerCard({
 }
 
 export function ScoreTab({ state }: { state: TournamentState }) {
+  const t = useTranslations("score");
   const locale = useLocale();
   const teamsLookup = getAllTeamsLookup(locale);
   const actualResults = EMPTY_ACTUAL_RESULTS;
@@ -242,18 +247,27 @@ export function ScoreTab({ state }: { state: TournamentState }) {
     ? (teamsLookup.get(thirdMatch.winnerId) ?? null)
     : null;
 
-  const r32Points =
-    r32Teams.filter((t) => actualResults.R32.has(t.id)).length *
-    ROUND_POINTS.R32;
-  const r16Points =
-    r16Teams.filter((t) => actualResults.R16.has(t.id)).length *
-    ROUND_POINTS.R16;
-  const qfPoints =
-    qfTeams.filter((t) => actualResults.QF.has(t.id)).length * ROUND_POINTS.QF;
-  const sfPoints =
-    sfTeams.filter((t) => actualResults.SF.has(t.id)).length * ROUND_POINTS.SF;
-  const finalPoints =
-    finalTeams.filter((t) => actualResults.F.has(t.id)).length * ROUND_POINTS.F;
+  const r32Correct = r32Teams.filter((team) =>
+    actualResults.R32.has(team.id),
+  ).length;
+  const r16Correct = r16Teams.filter((team) =>
+    actualResults.R16.has(team.id),
+  ).length;
+  const qfCorrect = qfTeams.filter((team) =>
+    actualResults.QF.has(team.id),
+  ).length;
+  const sfCorrect = sfTeams.filter((team) =>
+    actualResults.SF.has(team.id),
+  ).length;
+  const finalCorrect = finalTeams.filter((team) =>
+    actualResults.F.has(team.id),
+  ).length;
+
+  const r32Points = r32Correct * ROUND_POINTS.R32;
+  const r16Points = r16Correct * ROUND_POINTS.R16;
+  const qfPoints = qfCorrect * ROUND_POINTS.QF;
+  const sfPoints = sfCorrect * ROUND_POINTS.SF;
+  const finalPoints = finalCorrect * ROUND_POINTS.F;
   const championPoints =
     predictedChampion?.id === actualResults.champion ? CHAMPION_POINTS : 0;
   const thirdPlacePoints =
@@ -294,7 +308,7 @@ export function ScoreTab({ state }: { state: TournamentState }) {
     <div className="space-y-4">
       <div className="rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 p-6 text-center shadow-xl dark:from-slate-700 dark:to-slate-800">
         <h2 className="mb-2 text-sm font-medium uppercase tracking-wider text-slate-400">
-          Total Score
+          {t("totalScore")}
         </h2>
         <div className="text-5xl font-extrabold text-white">
           {totalPoints}
@@ -303,7 +317,7 @@ export function ScoreTab({ state }: { state: TournamentState }) {
       </div>
 
       <RoundCard
-        title="Round of 32"
+        title={t("roundOf32")}
         round="R32"
         points={ROUND_POINTS.R32}
         teams={r32Teams}
@@ -311,7 +325,7 @@ export function ScoreTab({ state }: { state: TournamentState }) {
         accent="bg-cyan-500"
       />
       <RoundCard
-        title="Round of 16"
+        title={t("roundOf16")}
         round="R16"
         points={ROUND_POINTS.R16}
         teams={r16Teams}
@@ -320,7 +334,7 @@ export function ScoreTab({ state }: { state: TournamentState }) {
       />
 
       <RoundCard
-        title="Quarter Finals"
+        title={t("quarterFinals")}
         round="QF"
         points={ROUND_POINTS.QF}
         teams={qfTeams}
@@ -328,7 +342,7 @@ export function ScoreTab({ state }: { state: TournamentState }) {
         accent="bg-amber-500"
       />
       <RoundCard
-        title="Semi Finals"
+        title={t("semiFinals")}
         round="SF"
         points={ROUND_POINTS.SF}
         teams={sfTeams}
@@ -337,7 +351,7 @@ export function ScoreTab({ state }: { state: TournamentState }) {
       />
 
       <RoundCard
-        title="Final"
+        title={t("final")}
         round="F"
         points={ROUND_POINTS.F}
         teams={finalTeams}
@@ -347,7 +361,7 @@ export function ScoreTab({ state }: { state: TournamentState }) {
 
       <div className="grid gap-4 md:grid-cols-2">
         <WinnerCard
-          title="Champion"
+          title={t("champion")}
           team={predictedChampion}
           actualWinnerId={actualResults.champion}
           points={CHAMPION_POINTS}
@@ -355,7 +369,7 @@ export function ScoreTab({ state }: { state: TournamentState }) {
           icon={trophyIcon}
         />
         <WinnerCard
-          title="3rd Place"
+          title={t("thirdPlace")}
           team={predictedThirdPlace}
           actualWinnerId={actualResults.thirdPlace}
           points={THIRD_PLACE_POINTS}
@@ -366,32 +380,32 @@ export function ScoreTab({ state }: { state: TournamentState }) {
 
       <div className="rounded-xl bg-white/80 p-4 shadow-lg dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
         <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-900 dark:text-white">
-          Points Breakdown
+          {t("pointsBreakdown")}
         </h3>
         <div className="space-y-2">
           {[
             {
-              label: `Round of 32 (${r32Teams.filter((t) => actualResults.R32.has(t.id)).length} correct × 3 pts)`,
+              label: t("roundOf32Label", { count: r32Correct }),
               pts: r32Points,
             },
             {
-              label: `Round of 16 (${r16Teams.filter((t) => actualResults.R16.has(t.id)).length} correct × 4 pts)`,
+              label: t("roundOf16Label", { count: r16Correct }),
               pts: r16Points,
             },
             {
-              label: `Quarter Finals (${qfTeams.filter((t) => actualResults.QF.has(t.id)).length} correct × 5 pts)`,
+              label: t("quarterFinalsLabel", { count: qfCorrect }),
               pts: qfPoints,
             },
             {
-              label: `Semi Finals (${sfTeams.filter((t) => actualResults.SF.has(t.id)).length} correct × 6 pts)`,
+              label: t("semiFinalsLabel", { count: sfCorrect }),
               pts: sfPoints,
             },
             {
-              label: `Final (${finalTeams.filter((t) => actualResults.F.has(t.id)).length} correct × 8 pts)`,
+              label: t("finalLabel", { count: finalCorrect }),
               pts: finalPoints,
             },
-            { label: "3rd Place Winner", pts: thirdPlacePoints },
-            { label: "Champion", pts: championPoints },
+            { label: t("thirdPlaceWinner"), pts: thirdPlacePoints },
+            { label: t("championLabel"), pts: championPoints },
           ].map(({ label, pts }) => (
             <div
               key={label}
@@ -414,7 +428,7 @@ export function ScoreTab({ state }: { state: TournamentState }) {
           ))}
           <div className="flex items-center justify-between rounded-lg bg-gradient-to-r from-emerald-100 to-emerald-50 px-3 py-3 dark:from-emerald-900/50 dark:to-emerald-900/30">
             <span className="text-base font-bold text-emerald-800 dark:text-emerald-300">
-              Total
+              {t("total")}
             </span>
             <span className="text-xl font-extrabold text-emerald-700 dark:text-emerald-400">
               {totalPoints} pts

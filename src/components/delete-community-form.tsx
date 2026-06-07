@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import {
   type CommunityActionState,
@@ -15,6 +16,7 @@ export function DeleteCommunityForm({
   slug,
   communityName,
 }: DeleteCommunityFormProps) {
+  const t = useTranslations("communitySettings");
   const boundAction = deleteCommunity.bind(null, slug);
   const [state, action, pending] = useActionState<
     CommunityActionState,
@@ -22,11 +24,7 @@ export function DeleteCommunityForm({
   >(boundAction, null);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    if (
-      !confirm(
-        `Are you sure you want to delete "${communityName}"? This cannot be undone.`,
-      )
-    ) {
+    if (!confirm(t("deleteConfirm", { name: communityName }))) {
       e.preventDefault();
     }
   }
@@ -38,7 +36,7 @@ export function DeleteCommunityForm({
       )}
       <form action={action} onSubmit={handleSubmit}>
         <button type="submit" disabled={pending} className="button-danger">
-          {pending ? "Deleting…" : "Delete Community"}
+          {pending ? t("deleting") : t("deleteCommunityButton")}
         </button>
       </form>
     </div>
