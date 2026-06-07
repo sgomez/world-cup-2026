@@ -211,8 +211,8 @@ export function ScoreTab({ state }: { state: TournamentState }) {
   const sfTeams = getTeamsInRound(state, "SF", locale);
   const finalTeams = getTeamsInRound(state, "F", locale);
 
-  const finalMatch = state.knockoutMatches["F-1"];
-  const thirdMatch = state.knockoutMatches["3RD-1"];
+  const finalMatch = state.knockoutMatches.F;
+  const thirdMatch = state.knockoutMatches["3RD"];
   const predictedChampion = finalMatch?.winnerId
     ? (teamsLookup.get(finalMatch.winnerId) ?? null)
     : null;
@@ -267,14 +267,12 @@ export function ScoreTab({ state }: { state: TournamentState }) {
     </svg>
   );
   const medalIcon = (
-    <svg
+    <span
+      className="flex h-6 w-6 items-center justify-center text-xl select-none"
       aria-hidden="true"
-      className="h-6 w-6 text-amber-600"
-      fill="currentColor"
-      viewBox="0 0 24 24"
     >
-      <path d="M12 2L9 6.5L4 6L5.5 11L2 14L6.5 16L6 21L12 18L18 21L17.5 16L22 14L18.5 11L20 6L15 6.5L12 2Z" />
-    </svg>
+      🥉
+    </span>
   );
 
   return (
