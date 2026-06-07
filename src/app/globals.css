@@ -85,8 +85,9 @@
   --radius-full: 9999px;
 
   /* Fonts */
+  --font-oswald: var(--font-oswald);
   --font-display-campaign:
-    "Sports Futura ND", var(--font-bebas-neue), var(--font-anton), sans-serif;
+    var(--font-oswald), var(--font-bebas-neue), var(--font-anton), sans-serif;
   --font-heading-display:
     "Helvetica Now Display Medium", var(--font-inter), sans-serif;
   --font-text-medium:
@@ -188,14 +189,10 @@
 @utility text-display-campaign {
   font-family: var(--font-display-campaign);
   font-size: 96px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 0.9;
-  letter-spacing: 0;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
-  /* Approximate Futura optical weight by tightening substitute letter spacing */
-  @supports not (font-family: "Sports Futura ND") {
-    letter-spacing: -0.05em;
-  }
 }
 
 @utility text-heading-xl {

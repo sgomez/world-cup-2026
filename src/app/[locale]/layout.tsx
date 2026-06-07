@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Anton, Bebas_Neue, Inter } from "next/font/google";
+import { Anton, Bebas_Neue, Inter, Oswald } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
@@ -23,6 +23,12 @@ const anton = Anton({
   variable: "--font-anton",
   subsets: ["latin"],
   weight: "400",
+});
+
+const oswald = Oswald({
+  variable: "--font-oswald",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export async function generateMetadata({
@@ -81,7 +87,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
-      className={`${inter.variable} ${bebasNeue.variable} ${anton.variable} h-full antialiased`}
+      className={`${inter.variable} ${bebasNeue.variable} ${anton.variable} ${oswald.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

@@ -5,6 +5,7 @@ export type Team = {
   id: string;
   name: string;
   flag: string;
+  code: string;
 };
 
 export type GroupData = {
@@ -18,6 +19,7 @@ type RawTeam = {
   continent: string;
   flag_icon: string;
   fifa_code: string;
+  iso_code: string;
   group: string;
   confed: string;
 };
@@ -28,6 +30,7 @@ function buildGroups(rawTeams: RawTeam[]): GroupData[] {
       id: t.fifa_code.toLowerCase(),
       name: t.name_normalised ?? t.name,
       flag: t.flag_icon,
+      code: t.iso_code,
     };
     const g = t.group;
     if (!acc[g]) acc[g] = [];
