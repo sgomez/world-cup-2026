@@ -1,22 +1,48 @@
 "use client";
 
+import { useParams, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
-export default function LoginPage() {
+function LoginContent() {
   const t = useTranslations("auth");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const params = useParams();
+  const searchParams = useSearchParams();
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError("");
 
+    const from = searchParams.get("from");
+    const locale = params?.locale as string | undefined;
+
+    // Prevent open redirect vulnerabilities by checking if the 'from' parameter targets an external domain.
+    const isExternal =
+      from &&
+      (from.startsWith("http://") ||
+        from.startsWith("https://") ||
+        from.startsWith("//"));
+
+    let callbackURL = "/bets";
+    if (from && !isExternal) {
+      const path = from.startsWith("/") ? from : `/${from}`;
+      if (locale === "es") {
+        callbackURL =
+          path.startsWith("/es/") || path === "/es" ? path : `/es${path}`;
+      } else {
+        callbackURL = path;
+      }
+    } else {
+      callbackURL = locale === "es" ? "/es/bets" : "/bets";
+    }
+
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/bets",
+        callbackURL,
       });
     } catch (err: unknown) {
       const errorMsg =
@@ -113,5 +139,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   );
 }
