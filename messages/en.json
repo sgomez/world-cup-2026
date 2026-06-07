@@ -65,7 +65,10 @@
     "scoreTab": "Score",
     "incompleteTitle": "Incomplete Predictions",
     "incompleteDescription": "You have predicted {predicted} of {total} knockout matches. You must complete all matches before closing your bet.",
-    "ok": "OK"
+    "ok": "OK",
+    "closeConfirmTitle": "Close bet?",
+    "closeConfirmDescription": "Closing your bet locks your predictions. You will not be able to edit them unless you re-open the bet before the deadline.",
+    "closeConfirmAction": "Close bet"
   },
   "groupStage": {
     "group": "Group {letter}",

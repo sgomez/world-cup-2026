@@ -65,7 +65,10 @@
     "scoreTab": "Puntuación",
     "incompleteTitle": "Pronósticos incompletos",
     "incompleteDescription": "Has pronosticado {predicted} de {total} partidos de la fase eliminatoria. Debes completarlos todos antes de cerrar tu apuesta.",
-    "ok": "Aceptar"
+    "ok": "Aceptar",
+    "closeConfirmTitle": "¿Cerrar apuesta?",
+    "closeConfirmDescription": "Cerrar tu apuesta bloqueará tus predicciones. No podrás editarlas a menos que reabras la apuesta antes de la fecha límite.",
+    "closeConfirmAction": "Cerrar apuesta"
   },
   "groupStage": {
     "group": "Grupo {letter}",
