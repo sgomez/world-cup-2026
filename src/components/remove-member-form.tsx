@@ -35,7 +35,7 @@ export function RemoveMemberForm({
           type="submit"
           disabled={pending}
           aria-label={t("removeUser", { name: userName })}
-          className="text-caption-sm text-sale underline disabled:opacity-50"
+          className="text-caption-sm text-sale hover:underline disabled:opacity-50"
         >
           {pending ? t("removing") : t("remove")}
         </button>

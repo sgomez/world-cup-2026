@@ -142,10 +142,17 @@
     "closed": "Cerrado",
     "signature": "Sig",
     "owner": "Propietario",
+    "member": "Miembro",
     "backTo": "Volver a {name}",
     "cancel": "Cancelar",
     "leaving": "Saliendo…",
-    "leaveCommunity": "Abandonar Comunidad"
+    "leaveCommunity": "Abandonar Comunidad",
+    "searchPlaceholder": "Buscar comunidad...",
+    "noCommunitiesShow": "No hay comunidades que mostrar",
+    "noCommunitiesShowDescription": "Crea una nueva comunidad o ajusta tu búsqueda.",
+    "memberCount": "{count, plural, one {# miembro} other {# miembros}}",
+    "copyInviteLink": "Copiar enlace de invitación",
+    "copied": "¡Copiado!"
   },
   "joinCommunity": {
     "invalidInviteTitle": "Invitación Inválida",

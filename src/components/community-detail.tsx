@@ -1,0 +1,238 @@
+"use client";
+
+import {
+  ArrowLeft,
+  Check,
+  Copy,
+  Crown,
+  Link2,
+  Settings,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { LeaveCommunityForm } from "@/components/leave-community-form";
+import { Link } from "@/i18n/navigation";
+
+interface Bet {
+  id: string;
+  label: string;
+  status: string;
+  signature?: string;
+}
+
+interface Member {
+  userId: string;
+  joinedAt: Date;
+  user: {
+    id: string;
+    name: string;
+    bets: Bet[];
+  };
+}
+
+interface Community {
+  id: string;
+  name: string;
+  slug: string;
+  ownerId: string;
+  owner: {
+    name: string;
+  };
+  inviteToken: string;
+  members: Member[];
+  currentUserId: string;
+  isPastDeadline: boolean;
+}
+
+interface CommunityDetailProps {
+  community: Community;
+  inviteUrl: string;
+}
+
+export function CommunityDetail({
+  community,
+  inviteUrl,
+}: CommunityDetailProps) {
+  const t = useTranslations("communities");
+  const [copied, setCopied] = useState(false);
+
+  const isOwner = community.ownerId === community.currentUserId;
+
+  function handleCopy() {
+    navigator.clipboard?.writeText(inviteUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  return (
+    <div className="space-y-8">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Users className="size-6" aria-hidden="true" />
+          </div>
+          <div className="space-y-1">
+            <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
+              {community.name}
+            </h1>
+            <p className="inline-flex items-center gap-1.5 text-caption-md text-muted-foreground">
+              <Crown className="size-3.5 text-amber-500" aria-hidden="true" />
+              {t("ownerLabel", { name: community.owner.name })}
+            </p>
+          </div>
+        </div>
+      </header>
+
+      {/* Enlace de invitación */}
+      <section className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Link2 className="size-4 text-primary" aria-hidden="true" />
+          <h2 className="text-caption-md font-medium text-foreground">
+            {t("inviteLink")}
+          </h2>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <code className="flex-1 truncate rounded-lg border border-border bg-muted/40 px-3 py-2 font-mono text-xs text-muted-foreground">
+            {inviteUrl}
+          </code>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            {copied ? (
+              <Check className="size-3.5 text-primary" aria-hidden="true" />
+            ) : (
+              <Copy className="size-3.5" aria-hidden="true" />
+            )}
+            {copied ? t("copied") : t("copyInviteLink")}
+          </button>
+        </div>
+        {isOwner && (
+          <div className="pt-1">
+            <Link
+              href={`/communities/${community.slug}/settings`}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Settings className="size-3.5" aria-hidden="true" />
+              {t("manageCommunity")}
+            </Link>
+          </div>
+        )}
+      </section>
+
+      {/* Miembros */}
+      <section className="space-y-3">
+        <h2 className="text-caption-md font-medium text-foreground">
+          {t("members", { count: community.members.length })}
+        </h2>
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+          {community.members.map((m) => (
+            <li
+              key={m.user.id}
+              className="flex items-center justify-between gap-3 px-4 py-3"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                  {m.user.name.charAt(0)}
+                </div>
+                <span className="text-body-md text-foreground">
+                  {m.user.name}
+                </span>
+              </div>
+              {m.userId === community.ownerId ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-accent/40 bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent-foreground">
+                  <Crown className="size-3 text-amber-500" aria-hidden="true" />
+                  {t("owner")}
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  {t("member")}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Apuestas por miembro */}
+      <section className="space-y-3">
+        <h2 className="text-caption-md font-medium text-foreground">
+          {t("betsTitle")}
+        </h2>
+        <div className="space-y-5">
+          {community.members.map((m) => (
+            <div key={m.user.id} className="space-y-2">
+              <p className="text-caption-sm font-medium uppercase tracking-wide text-muted-foreground">
+                {m.user.name}
+              </p>
+              {m.user.bets.length > 0 ? (
+                <div className="space-y-2">
+                  {m.user.bets.map((b) => (
+                    <div
+                      key={b.id}
+                      className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
+                    >
+                      <span className="text-sm font-medium text-card-foreground">
+                        {b.label}
+                      </span>
+                      {b.status === "draft" && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-info/30 bg-info/5 px-2.5 py-0.5 text-xs font-medium text-info">
+                          <span
+                            className="size-1.5 rounded-full bg-info"
+                            aria-hidden="true"
+                          />
+                          {t("draft")}
+                        </span>
+                      )}
+                      {b.status === "closed" && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/5 px-2.5 py-0.5 text-xs font-medium text-success dark:text-success-bright">
+                          <span
+                            className="size-1.5 rounded-full bg-success dark:bg-success-bright"
+                            aria-hidden="true"
+                          />
+                          {t("closed")}
+                        </span>
+                      )}
+                      {b.status === "closed" && b.signature && (
+                        <span
+                          className="ml-auto inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+                          title={b.signature}
+                        >
+                          <ShieldCheck
+                            className="size-3.5 text-success"
+                            aria-hidden="true"
+                          />
+                          <code className="font-mono text-xs">
+                            {b.signature.slice(0, 8)}
+                          </code>
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-xl border border-dashed border-border px-4 py-3 text-xs text-muted-foreground">
+                  {t("noBets")}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="flex items-center justify-between pt-4">
+        <Link
+          href="/communities"
+          className="inline-flex items-center gap-1.5 text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          {t("backToCommunities")}
+        </Link>
+        {!isOwner && <LeaveCommunityForm slug={community.slug} />}
+      </div>
+    </div>
+  );
+}
