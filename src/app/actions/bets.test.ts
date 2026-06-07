@@ -622,63 +622,56 @@ describe("copyBet", () => {
 });
 
 describe("renameBet", () => {
-  it("throws error when not authenticated", async () => {
+  it("returns error when not authenticated", async () => {
     mockGetSession.mockResolvedValue(null);
-    await expect(renameBet(BET_ID, "New label")).rejects.toThrow(
-      "Not authenticated",
-    );
+    const result = await renameBet(BET_ID, "New label");
+    expect(result).toEqual({ error: "Not authenticated" });
   });
 
-  it("throws error when label is empty or only whitespace", async () => {
+  it("returns error when label is empty or only whitespace", async () => {
     mockSession();
-    await expect(renameBet(BET_ID, "")).rejects.toThrow(
-      "Label must be between 1 and 200 characters",
-    );
-    await expect(renameBet(BET_ID, "   ")).rejects.toThrow(
-      "Label must be between 1 and 200 characters",
-    );
+    const result1 = await renameBet(BET_ID, "");
+    expect(result1).toEqual({ error: "Label is required" });
+
+    const result2 = await renameBet(BET_ID, "   ");
+    expect(result2).toEqual({ error: "Label is required" });
   });
 
-  it("throws error when label is too long (> 200 characters)", async () => {
+  it("returns error when label is too long (> 200 characters)", async () => {
     mockSession();
-    await expect(renameBet(BET_ID, "a".repeat(201))).rejects.toThrow(
-      "Label must be between 1 and 200 characters",
-    );
+    const result = await renameBet(BET_ID, "a".repeat(201));
+    expect(result).toEqual({ error: "Label too long (max 200 chars)" });
   });
 
-  it("throws error when bet not found", async () => {
+  it("returns error when bet not found", async () => {
     mockSession();
     mockFindUnique.mockResolvedValue(null);
-    await expect(renameBet(BET_ID, "New label")).rejects.toThrow(
-      "Bet not found",
-    );
+    const result = await renameBet(BET_ID, "New label");
+    expect(result).toEqual({ error: "Bet not found" });
   });
 
-  it("throws error when caller does not own the bet", async () => {
+  it("returns error when caller does not own the bet", async () => {
     mockSession("other-user");
     mockBet();
-    await expect(renameBet(BET_ID, "New label")).rejects.toThrow(
-      "Not authorized",
-    );
+    const result = await renameBet(BET_ID, "New label");
+    expect(result).toEqual({ error: "Not authorized" });
   });
 
-  it("throws error when bet status is closed", async () => {
+  it("returns error when bet status is closed", async () => {
     mockSession();
     mockBet({ status: "closed" });
-    await expect(renameBet(BET_ID, "New label")).rejects.toThrow(
-      "Bet is closed",
-    );
+    const result = await renameBet(BET_ID, "New label");
+    expect(result).toEqual({ error: "Bet is closed" });
   });
 
-  it("throws error when deadline has passed", async () => {
+  it("returns error when deadline has passed", async () => {
     mockSession();
     mockBet();
     const { BET_DEADLINE } = await import("@/lib/bet-constants");
     vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
     try {
-      await expect(renameBet(BET_ID, "New label")).rejects.toThrow(
-        "Deadline passed",
-      );
+      const result = await renameBet(BET_ID, "New label");
+      expect(result).toEqual({ error: "Deadline passed" });
     } finally {
       vi.restoreAllMocks();
     }

@@ -168,29 +168,32 @@ export async function renameBet(
 ): Promise<BetActionState> {
   const session = await getSession();
   if (!session) {
-    throw new Error("Not authenticated");
+    return { error: "Not authenticated" };
   }
 
   const trimmedLabel = label?.trim();
-  if (!trimmedLabel || trimmedLabel.length > 200) {
-    throw new Error("Label must be between 1 and 200 characters");
+  if (!trimmedLabel) {
+    return { error: "Label is required" };
+  }
+  if (trimmedLabel.length > 200) {
+    return { error: "Label too long (max 200 chars)" };
   }
 
   const bet = await prisma.bet.findUnique({ where: { id: betId } });
   if (!bet) {
-    throw new Error("Bet not found");
+    return { error: "Bet not found" };
   }
 
   if (bet.userId !== session.user.id) {
-    throw new Error("Not authorized");
+    return { error: "Not authorized" };
   }
 
   if (bet.status !== "draft") {
-    throw new Error("Bet is closed");
+    return { error: "Bet is closed" };
   }
 
   if (Date.now() >= BET_DEADLINE.getTime()) {
-    throw new Error("Deadline passed");
+    return { error: "Deadline passed" };
   }
 
   await prisma.bet.update({

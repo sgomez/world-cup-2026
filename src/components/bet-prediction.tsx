@@ -89,22 +89,42 @@ export function BetPrediction({
   const handleSave = async () => {
     const trimmed = editValue.trim();
     if (!trimmed) {
-      setEditError(t("addBetPlaceholder"));
+      setEditError(t("labelRequired"));
       return;
     }
     if (trimmed.length > 200) {
-      setEditError("Label too long (max 200 chars)");
+      setEditError(t("labelTooLong"));
       return;
     }
 
     try {
       setIsSaving(true);
       setEditError(null);
-      await renameBet(betId, trimmed);
-      setCurrentLabel(trimmed);
-      setIsEditing(false);
-    } catch (err) {
-      setEditError(err instanceof Error ? err.message : "An error occurred");
+      const res = await renameBet(betId, trimmed);
+      if (res?.error) {
+        if (res.error === "Not authenticated") {
+          setEditError(t("notAuthenticated"));
+        } else if (res.error === "Label is required") {
+          setEditError(t("labelRequired"));
+        } else if (res.error === "Label too long (max 200 chars)") {
+          setEditError(t("labelTooLong"));
+        } else if (res.error === "Bet not found") {
+          setEditError(t("betNotFound"));
+        } else if (res.error === "Not authorized") {
+          setEditError(t("notAuthorized"));
+        } else if (res.error === "Bet is closed") {
+          setEditError(t("betClosed"));
+        } else if (res.error === "Deadline passed") {
+          setEditError(t("deadlinePassed"));
+        } else {
+          setEditError(res.error);
+        }
+      } else {
+        setCurrentLabel(trimmed);
+        setIsEditing(false);
+      }
+    } catch {
+      setEditError(t("genericError"));
     } finally {
       setIsSaving(false);
     }
@@ -227,46 +247,49 @@ export function BetPrediction({
   return (
     <div>
       <div className="mb-6">
-        <PageHeader
-          title={
-            isEditing ? (
-              <div className="flex flex-col gap-2 normal-case">
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="h-10 w-full sm:w-80 rounded-lg border border-hairline bg-canvas px-3 text-foreground placeholder:text-muted-foreground text-body-md focus:border-ink outline-none transition-colors dark:bg-ink dark:focus:border-canvas normal-case"
-                    maxLength={200}
-                    disabled={isSaving}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleSave()}
-                    disabled={isSaving}
-                    className="button-primary text-button-sm !h-10 !py-1 !px-4"
-                  >
-                    {isSaving ? t("saving") : t("save")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    disabled={isSaving}
-                    className="button-secondary text-button-sm !h-10 !py-1 !px-4"
-                  >
-                    {t("cancel")}
-                  </button>
-                </div>
-                {editError && (
-                  <p className="text-caption-sm text-sale normal-case font-normal">
-                    {editError}
-                  </p>
-                )}
-              </div>
-            ) : (
+        {isEditing ? (
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-2 normal-case">
               <div className="flex items-center gap-2">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="h-10 w-full sm:w-80 rounded-lg border border-hairline bg-canvas px-3 text-foreground placeholder:text-muted-foreground text-body-md focus:border-ink outline-none transition-colors dark:bg-ink dark:focus:border-canvas normal-case"
+                  maxLength={200}
+                  disabled={isSaving}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleSave()}
+                  disabled={isSaving}
+                  className="button-primary text-button-sm !h-10 !py-1 !px-4"
+                >
+                  {isSaving ? t("saving") : t("save")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={isSaving}
+                  className="button-secondary text-button-sm !h-10 !py-1 !px-4"
+                >
+                  {t("cancel")}
+                </button>
+              </div>
+              {editError && (
+                <p className="text-caption-sm text-sale normal-case font-normal">
+                  {editError}
+                </p>
+              )}
+            </div>
+            {actionContent && <div className="shrink-0">{actionContent}</div>}
+          </div>
+        ) : (
+          <PageHeader
+            title={
+              <span className="inline-flex items-center gap-2">
                 <span>{currentLabel}</span>
                 {isOwner && !isClosed && !isPastDeadline && (
                   <button
@@ -278,11 +301,11 @@ export function BetPrediction({
                     <Pencil className="size-4" />
                   </button>
                 )}
-              </div>
-            )
-          }
-          action={actionContent}
-        />
+              </span>
+            }
+            action={actionContent}
+          />
+        )}
       </div>
 
       <Tabs defaultValue="groups" className="w-full">

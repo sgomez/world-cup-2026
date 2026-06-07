@@ -78,7 +78,14 @@
     "signature": "Sig",
     "save": "Guardar",
     "saving": "Guardando…",
-    "editBetAriaLabel": "Editar nombre de la apuesta"
+    "editBetAriaLabel": "Editar nombre de la apuesta",
+    "labelRequired": "El nombre es obligatorio",
+    "labelTooLong": "El nombre es demasiado largo (máx. 200 caracteres)",
+    "genericError": "Ha ocurrido un error",
+    "notAuthenticated": "No autenticado",
+    "betNotFound": "Apuesta no encontrada",
+    "notAuthorized": "No autorizado",
+    "betClosed": "La apuesta está cerrada"
   },
   "groupStage": {
     "group": "Grupo {letter}",

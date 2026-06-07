@@ -723,7 +723,7 @@ describe("Inline label editing", () => {
   });
 
   it("handles errors during save gracefully", async () => {
-    mockRenameBet.mockRejectedValue(new Error("Database error"));
+    mockRenameBet.mockResolvedValue({ error: "Database error" });
     render(
       <BetPrediction
         betId="bet-1"
