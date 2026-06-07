@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CopyBetButton } from "@/components/copy-bet-button";
 import { RemoveBetButton } from "@/components/remove-bet-button";
+import { RenameBetButton } from "@/components/rename-bet-button";
 import { Banner } from "@/components/ui/banner";
 import { Link } from "@/i18n/navigation";
 
@@ -27,6 +28,12 @@ export function BetList({
 
   function handleRemoved(betId: string) {
     setBets((prev) => prev.filter((b) => b.id !== betId));
+  }
+
+  function handleRenamed(betId: string, newLabel: string) {
+    setBets((prev) =>
+      prev.map((b) => (b.id === betId ? { ...b, label: newLabel } : b)),
+    );
   }
 
   if (bets.length === 0) {
@@ -87,6 +94,13 @@ export function BetList({
             {!deadlinePassed && (
               <div className="relative z-10 flex shrink-0 items-center gap-1.5">
                 {showCopyButtons && <CopyBetButton betId={bet.id} />}
+                {bet.status === "draft" && (
+                  <RenameBetButton
+                    betId={bet.id}
+                    currentLabel={bet.label}
+                    onRenamed={(newLabel) => handleRenamed(bet.id, newLabel)}
+                  />
+                )}
                 <RemoveBetButton
                   betId={bet.id}
                   onRemoved={() => handleRemoved(bet.id)}
