@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import {
   type CommunityActionState,
@@ -17,6 +18,7 @@ export function RemoveMemberForm({
   userId,
   userName,
 }: RemoveMemberFormProps) {
+  const t = useTranslations("communitySettings");
   const boundAction = removeMember.bind(null, slug, userId);
   const [state, action, pending] = useActionState<
     CommunityActionState,
@@ -32,10 +34,10 @@ export function RemoveMemberForm({
         <button
           type="submit"
           disabled={pending}
-          aria-label={`Remove ${userName}`}
+          aria-label={t("removeUser", { name: userName })}
           className="text-caption-sm text-sale underline disabled:opacity-50"
         >
-          {pending ? "Removing…" : "Remove"}
+          {pending ? t("removing") : t("remove")}
         </button>
       </form>
     </div>

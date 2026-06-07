@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { type Dispatch, useMemo } from "react";
 import { TeamClassification } from "@/components/team-classification";
 import {
@@ -36,6 +36,7 @@ function GroupCard({
   onOrderChange: (orderedIds: string[]) => void;
   readOnly: boolean;
 }) {
+  const t = useTranslations("groupStage");
   const locale = useLocale();
   const orderedTeams = useMemo(
     () => getGroupTeamsOrdered(state, group.group, locale),
@@ -47,7 +48,7 @@ function GroupCard({
       <div className="mb-2 flex items-center gap-2">
         <div className="h-4 w-1 rounded-full bg-cyan-500 dark:bg-cyan-400" />
         <p className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-white">
-          Group {group.group}
+          {t("group", { letter: group.group })}
         </p>
       </div>
       <TeamClassification
@@ -70,6 +71,7 @@ export function GroupStage({
   dispatch: Dispatch<TournamentAction>;
   readOnly?: boolean;
 }) {
+  const t = useTranslations("groupStage");
   const locale = useLocale();
   const orderedThirdPlaceTeams = useMemo(
     () => getOrderedThirdPlaceTeams(state, locale),
@@ -108,11 +110,11 @@ export function GroupStage({
           <div className="mb-2 flex items-center gap-2">
             <div className="h-4 w-1 rounded-full bg-amber-500" />
             <p className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-amber-400">
-              Best 3rd Place
+              {t("bestThirdPlace")}
             </p>
           </div>
           <p className="mb-3 text-[10px] text-slate-500 dark:text-slate-400">
-            Top 8 of 12 qualify
+            {t("top8Qualify")}
           </p>
           <TeamClassification
             id="third-place"

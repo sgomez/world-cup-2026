@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getCommunity } from "@/app/actions/communities";
 import { CopyInviteLinkButton } from "@/components/copy-invite-link-button";
 import { DeleteCommunityForm } from "@/components/delete-community-form";
@@ -18,6 +18,7 @@ export default async function CommunitySettingsPage({
 }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("communitySettings");
 
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
@@ -38,13 +39,13 @@ export default async function CommunitySettingsPage({
   return (
     <div className="max-w-2xl">
       <PageHeader
-        title={`${community.name} — Settings`}
-        description="Manage your community"
+        title={t("settingsTitle", { name: community.name })}
+        description={t("manageYourCommunity")}
       />
 
       <div className="mt-8 border border-hairline p-6">
         <p className="text-caption-md font-medium text-foreground">
-          Invite link
+          {t("inviteLink")}
         </p>
         <p className="mt-1 break-all text-caption-sm text-muted-foreground">
           {inviteUrl}
@@ -57,7 +58,7 @@ export default async function CommunitySettingsPage({
 
       <div className="mt-8">
         <p className="text-caption-md font-medium text-foreground">
-          Members ({community.members.length})
+          {t("members", { count: community.members.length })}
         </p>
         <ul className="mt-2 divide-y divide-hairline border border-hairline">
           {community.members.map(({ user, userId }) => (
@@ -68,7 +69,7 @@ export default async function CommunitySettingsPage({
               <span className="text-body-md text-foreground">{user.name}</span>
               {userId === community.ownerId ? (
                 <span className="text-caption-sm text-muted-foreground">
-                  Owner
+                  {t("ownerLabel")}
                 </span>
               ) : (
                 <RemoveMemberForm
@@ -82,18 +83,17 @@ export default async function CommunitySettingsPage({
         </ul>
         {nonOwnerMembers.length === 0 && (
           <p className="mt-2 text-caption-sm text-muted-foreground">
-            No other members yet.
+            {t("noOtherMembers")}
           </p>
         )}
       </div>
 
       <div className="mt-12 border border-sale/20 p-6">
         <p className="text-caption-md font-medium text-foreground">
-          Delete community
+          {t("deleteCommunityTitle")}
         </p>
         <p className="mt-1 text-caption-sm text-muted-foreground">
-          Permanently delete this community and remove all members. This cannot
-          be undone.
+          {t("deleteCommunityDescription")}
         </p>
         <div className="mt-4">
           <DeleteCommunityForm slug={slug} communityName={community.name} />
@@ -105,7 +105,7 @@ export default async function CommunitySettingsPage({
           href={`/communities/${slug}`}
           className="text-caption-md text-muted-foreground underline"
         >
-          Back to {community.name}
+          {t("backTo", { name: community.name })}
         </Link>
       </div>
     </div>

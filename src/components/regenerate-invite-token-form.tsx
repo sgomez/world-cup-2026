@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import {
   type CommunityActionState,
@@ -13,6 +14,7 @@ interface RegenerateInviteTokenFormProps {
 export function RegenerateInviteTokenForm({
   slug,
 }: RegenerateInviteTokenFormProps) {
+  const t = useTranslations("communitySettings");
   const boundAction = regenerateInviteToken.bind(null, slug);
   const [state, action, pending] = useActionState<
     CommunityActionState,
@@ -26,12 +28,12 @@ export function RegenerateInviteTokenForm({
       )}
       {state?.success && (
         <p className="mb-3 text-caption-sm text-success">
-          Invite link regenerated.
+          {t("inviteLinkRegenerated")}
         </p>
       )}
       <form action={action}>
         <button type="submit" disabled={pending} className="button-secondary">
-          {pending ? "Regenerating…" : "Regenerate Invite Link"}
+          {pending ? t("regenerating") : t("regenerateInviteLink")}
         </button>
       </form>
     </div>

@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -10,6 +10,7 @@ export default async function AdminPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("admin");
 
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
@@ -42,17 +43,17 @@ export default async function AdminPage({
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
-          Users
+          {t("usersTitle")}
         </h1>
         <Link
           href="/admin/communities"
           className="text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
         >
-          Communities
+          {t("communitiesLink")}
         </Link>
       </div>
       <p className="mt-1 text-caption-md text-muted-foreground">
-        {users.length} registered participant{users.length !== 1 ? "s" : ""}
+        {t("participantsCount", { count: users.length })}
       </p>
 
       <div className="mt-8 space-y-2">
@@ -70,7 +71,7 @@ export default async function AdminPage({
             </div>
             <div className="flex items-center gap-4">
               <span className="text-caption-sm text-muted-foreground">
-                {user._count.bets} bet{user._count.bets !== 1 ? "s" : ""}
+                {t("betsCount", { count: user._count.bets })}
               </span>
               <span
                 className={`inline-flex items-center rounded-lg px-2.5 py-0.5 text-caption-sm font-medium ${roleColor[user.role] ?? roleColor.user}`}

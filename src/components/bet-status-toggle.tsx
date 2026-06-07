@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { closeBet, reopenBet } from "@/app/actions/bets";
 
@@ -10,6 +11,7 @@ export function BetStatusToggle({
   betId: string;
   isClosed: boolean;
 }) {
+  const t = useTranslations("bets");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +31,7 @@ export function BetStatusToggle({
         disabled={isPending}
         className="button-secondary whitespace-nowrap"
       >
-        {isClosed ? "Re-open bet" : "Close bet"}
+        {isClosed ? t("reopenBet") : t("closeBet")}
       </button>
       {error && (
         <p role="alert" className="text-caption-sm text-sale">

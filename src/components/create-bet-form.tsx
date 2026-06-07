@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { type BetActionState, createBet } from "@/app/actions/bets";
 
 export function CreateBetForm() {
+  const t = useTranslations("bets");
   const [state, action, pending] = useActionState<BetActionState, FormData>(
     createBet,
     null,
@@ -16,7 +18,7 @@ export function CreateBetForm() {
           name="label"
           type="text"
           required
-          placeholder="Bet label (e.g. France wins it all)"
+          placeholder={t("addBetPlaceholder")}
           className="flex-1 rounded-md border border-hairline bg-soft-cloud px-4 py-3 text-foreground placeholder:text-muted-foreground text-body-md focus:border-ink focus:bg-canvas outline-none transition-colors dark:bg-charcoal dark:focus:bg-ink dark:focus:border-canvas"
         />
         <button
@@ -24,7 +26,7 @@ export function CreateBetForm() {
           disabled={pending}
           className="button-primary whitespace-nowrap"
         >
-          {pending ? "Adding…" : "Add Bet"}
+          {pending ? t("adding") : t("addBet")}
         </button>
       </div>
       {state?.error && (

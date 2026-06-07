@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { JoinCommunityForm } from "@/components/join-community-form";
 import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
@@ -13,6 +13,7 @@ export default async function JoinCommunityPage({
 }) {
   const { locale, token } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("joinCommunity");
 
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
@@ -25,18 +26,16 @@ export default async function JoinCommunityPage({
   if (!community) {
     return (
       <div className="max-w-md">
-        <PageHeader title="Invalid Invite" />
+        <PageHeader title={t("invalidInviteTitle")} />
         <div className="mt-8">
-          <Banner variant="warning">
-            This invite link is invalid or has expired.
-          </Banner>
+          <Banner variant="warning">{t("invalidInviteMessage")}</Banner>
         </div>
         <div className="mt-4">
           <Link
             href="/communities"
             className="text-caption-md text-muted-foreground underline"
           >
-            Back to Communities
+            {t("backToCommunities")}
           </Link>
         </div>
       </div>
@@ -45,7 +44,7 @@ export default async function JoinCommunityPage({
 
   return (
     <div className="max-w-md">
-      <PageHeader title="Join Community" />
+      <PageHeader title={t("joinCommunityTitle")} />
       <div className="mt-8">
         <JoinCommunityForm token={token} communityName={community.name} />
       </div>
@@ -54,7 +53,7 @@ export default async function JoinCommunityPage({
           href="/communities"
           className="text-caption-md text-muted-foreground underline"
         >
-          Cancel
+          {t("cancel")}
         </Link>
       </div>
     </div>

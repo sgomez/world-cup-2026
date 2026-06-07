@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import {
   type JoinCommunityState,
@@ -15,6 +16,7 @@ export function JoinCommunityForm({
   token,
   communityName,
 }: JoinCommunityFormProps) {
+  const t = useTranslations("joinCommunity");
   const boundAction = joinCommunity.bind(null, token);
   const [state, action, pending] = useActionState<JoinCommunityState, FormData>(
     boundAction,
@@ -24,8 +26,10 @@ export function JoinCommunityForm({
   return (
     <div>
       <p className="text-body-md text-foreground">
-        You&apos;ve been invited to join{" "}
-        <span className="font-medium">{communityName}</span>. Confirm to join.
+        {t.rich("invitedToJoin", {
+          name: communityName,
+          strong: (chunks) => <span className="font-medium">{chunks}</span>,
+        })}
       </p>
 
       {state?.error && (
@@ -34,7 +38,7 @@ export function JoinCommunityForm({
 
       <form action={action} className="mt-6">
         <button type="submit" disabled={pending} className="button-primary">
-          {pending ? "Joining…" : "Join Community"}
+          {pending ? t("joining") : t("joinCommunityButton")}
         </button>
       </form>
     </div>

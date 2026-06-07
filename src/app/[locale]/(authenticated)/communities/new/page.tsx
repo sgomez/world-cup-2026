@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CreateCommunityForm } from "@/components/create-community-form";
 import { PageHeader } from "@/components/ui/page-header";
 import { Link, redirect } from "@/i18n/navigation";
@@ -11,6 +11,7 @@ export default async function NewCommunityPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("communities");
 
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
@@ -18,8 +19,8 @@ export default async function NewCommunityPage({
   return (
     <div className="max-w-xl">
       <PageHeader
-        title="New Community"
-        description="Create a group to compare predictions with friends."
+        title={t("newCommunityTitle")}
+        description={t("newCommunityDescription")}
       />
 
       <div className="mt-8">
@@ -31,7 +32,7 @@ export default async function NewCommunityPage({
           href="/communities"
           className="text-caption-md text-muted-foreground underline"
         >
-          Back to Communities
+          {t("backToCommunities")}
         </Link>
       </div>
     </div>

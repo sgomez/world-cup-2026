@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { LocaleToggle } from "@/components/locale-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -34,6 +35,7 @@ function getInitials(name: string): string {
 
 export function Navbar({ user }: NavbarProps) {
   const router = useRouter();
+  const t = useTranslations("nav");
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -60,13 +62,13 @@ export function Navbar({ user }: NavbarProps) {
             href="/communities"
             className="text-caption-md text-muted-foreground hover:text-foreground transition-colors"
           >
-            Communities
+            {t("communities")}
           </Link>
           <Link
             href="/bets"
             className="text-caption-md text-muted-foreground hover:text-foreground transition-colors"
           >
-            My Bets
+            {t("myBets")}
           </Link>
 
           <LocaleToggle />
@@ -96,20 +98,20 @@ export function Navbar({ user }: NavbarProps) {
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push("/profile")}>
-                Edit Profile
+                {t("editProfile")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/bets")}>
-                My Bets
+                {t("myBets")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/communities")}>
-                Communities
+                {t("communities")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/communities/new")}>
-                Create Community
+                {t("createCommunity")}
               </DropdownMenuItem>
               {isAdmin && (
                 <DropdownMenuItem onClick={() => router.push("/admin")}>
-                  Admin Panel
+                  {t("adminPanel")}
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -117,7 +119,7 @@ export function Navbar({ user }: NavbarProps) {
                 onClick={handleSignOut}
                 className="text-destructive"
               >
-                Sign Out
+                {t("signOut")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
