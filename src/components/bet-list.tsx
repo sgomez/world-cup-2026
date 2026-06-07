@@ -8,8 +8,10 @@ import { RemoveBetButton } from "@/components/remove-bet-button";
 import { Banner } from "@/components/ui/banner";
 import { Link } from "@/i18n/navigation";
 
+type BetWithSignature = Bet & { signature?: string };
+
 interface BetListProps {
-  bets: Bet[];
+  bets: BetWithSignature[];
   deadlinePassed: boolean;
   showCopyButtons?: boolean;
 }
@@ -62,6 +64,11 @@ export function BetList({
                   date: bet.updatedAt.toISOString().slice(0, 10),
                 })}
               </span>
+              {bet.status === "closed" && bet.signature && (
+                <span className="font-mono" title={bet.signature}>
+                  {t("signature")}: {bet.signature.slice(0, 8)}
+                </span>
+              )}
             </div>
           </Link>
           {!deadlinePassed && (

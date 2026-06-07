@@ -5,6 +5,8 @@ import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
 import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE, MAX_BETS_PER_USER } from "@/lib/bet-constants";
+import { computeBetSignature } from "@/lib/bet-signature";
+import type { PredictionState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -29,6 +31,17 @@ export default async function BetsPage({
   const isAtLimit = bets.length >= MAX_BETS_PER_USER;
   const showCopyButtons = !isPastDeadline && !isAtLimit;
 
+  const enrichedBets = bets.map((bet) => ({
+    ...bet,
+    signature:
+      bet.status === "closed"
+        ? computeBetSignature(
+            bet.groupPredictions as PredictionState | null,
+            bet.knockoutWinners as Record<string, string> | null,
+          )
+        : undefined,
+  }));
+
   return (
     <div className="max-w-2xl">
       <PageHeader title={t("title")} description={t("description")} />
@@ -45,7 +58,7 @@ export default async function BetsPage({
 
       <div className="mt-8">
         <BetList
-          bets={bets}
+          bets={enrichedBets}
           deadlinePassed={isPastDeadline}
           showCopyButtons={showCopyButtons}
         />
