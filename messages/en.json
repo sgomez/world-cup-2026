@@ -67,7 +67,8 @@
   "groupStage": {
     "group": "Group {letter}",
     "bestThirdPlace": "Best 3rd Place",
-    "top8Qualify": "Top 8 of 12 qualify"
+    "qualifies": "{qualify} qualify from {total}",
+    "cut": "Cut"
   },
   "knockoutStage": {
     "match": "Match {number}",

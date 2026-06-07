@@ -406,6 +406,7 @@ export type ThirdPlaceTeam = {
   originalId: string;
   name: string;
   flag: string;
+  code: string;
   groupName: string;
 };
 
@@ -423,6 +424,7 @@ export function getThirdPlaceTeams(
       originalId: team.id,
       name: team.name,
       flag: team.flag,
+      code: team.code,
       groupName: group.group,
     };
   });

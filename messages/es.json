@@ -67,7 +67,8 @@
   "groupStage": {
     "group": "Grupo {letter}",
     "bestThirdPlace": "Mejor 3er Clasificado",
-    "top8Qualify": "Los 8 mejores de 12 clasifican"
+    "qualifies": "Clasifican {qualify} de {total}",
+    "cut": "Corte"
   },
   "knockoutStage": {
     "match": "Partido {number}",

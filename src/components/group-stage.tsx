@@ -2,13 +2,13 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { type Dispatch, useMemo } from "react";
-import { TeamClassification } from "@/components/team-classification";
+import { GroupCard } from "@/components/group-card";
 import {
   getOrderedThirdPlaceTeams,
   type TournamentAction,
   type TournamentState,
 } from "@/lib/prediction-state";
-import { type GroupData, getGroups } from "@/lib/teams";
+import { getGroups, type Team } from "@/lib/teams";
 
 function getGroupTeamsOrdered(
   state: TournamentState,
@@ -23,43 +23,6 @@ function getGroupTeamsOrdered(
   return orderedIds
     .map((id) => byId.get(id))
     .filter(Boolean) as typeof group.teams;
-}
-
-function GroupCard({
-  group,
-  state,
-  onOrderChange,
-  readOnly,
-}: {
-  group: GroupData;
-  state: TournamentState;
-  onOrderChange: (orderedIds: string[]) => void;
-  readOnly: boolean;
-}) {
-  const t = useTranslations("groupStage");
-  const locale = useLocale();
-  const orderedTeams = useMemo(
-    () => getGroupTeamsOrdered(state, group.group, locale),
-    [state, group.group, locale],
-  );
-
-  return (
-    <div className="rounded-xl bg-white/80 p-3 shadow-lg dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
-      <div className="mb-2 flex items-center gap-2">
-        <div className="h-4 w-1 rounded-full bg-cyan-500 dark:bg-cyan-400" />
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-white">
-          {t("group", { letter: group.group })}
-        </p>
-      </div>
-      <TeamClassification
-        id={`group-${group.group}`}
-        teams={orderedTeams}
-        qualifiedCount={2}
-        onOrderChange={onOrderChange}
-        disabled={readOnly}
-      />
-    </div>
-  );
 }
 
 export function GroupStage({
@@ -87,47 +50,45 @@ export function GroupStage({
             gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
           }}
         >
-          {getGroups(locale).map((group) => (
-            <GroupCard
-              key={group.group}
-              group={group}
-              state={state}
-              readOnly={readOnly}
-              onOrderChange={(orderedIds) =>
-                dispatch({
-                  type: "SET_GROUP_ORDER",
-                  groupName: group.group,
-                  orderedIds,
-                })
-              }
-            />
-          ))}
+          {getGroups(locale).map((group) => {
+            const orderedTeams = getGroupTeamsOrdered(
+              state,
+              group.group,
+              locale,
+            );
+            return (
+              <GroupCard
+                key={group.group}
+                id={`group-${group.group}`}
+                title={t("group", { letter: group.group })}
+                teams={orderedTeams}
+                qualify={2}
+                disabled={readOnly}
+                onOrderChange={(orderedIds) =>
+                  dispatch({
+                    type: "SET_GROUP_ORDER",
+                    groupName: group.group,
+                    orderedIds,
+                  })
+                }
+              />
+            );
+          })}
         </div>
       </div>
 
       <div className="order-2 w-full min-[640px]:order-none min-[640px]:w-[200px] min-[640px]:shrink-0">
-        <div className="rounded-xl bg-white/80 p-3 shadow-lg dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
-          <div className="mb-2 flex items-center gap-2">
-            <div className="h-4 w-1 rounded-full bg-amber-500" />
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-amber-400">
-              {t("bestThirdPlace")}
-            </p>
-          </div>
-          <p className="mb-3 text-[10px] text-slate-500 dark:text-slate-400">
-            {t("top8Qualify")}
-          </p>
-          <TeamClassification
-            id="third-place"
-            key={orderedThirdPlaceTeams.map((t) => t.originalId).join(",")}
-            teams={orderedThirdPlaceTeams}
-            qualifiedCount={8}
-            dividerAfter={8}
-            onOrderChange={(orderedIds) =>
-              dispatch({ type: "SET_THIRD_PLACE_ORDER", orderedIds })
-            }
-            disabled={readOnly}
-          />
-        </div>
+        <GroupCard
+          id="third-place"
+          key={orderedThirdPlaceTeams.map((t) => t.originalId).join(",")}
+          title={t("bestThirdPlace")}
+          teams={orderedThirdPlaceTeams as Team[]}
+          qualify={8}
+          disabled={readOnly}
+          onOrderChange={(orderedIds) =>
+            dispatch({ type: "SET_THIRD_PLACE_ORDER", orderedIds })
+          }
+        />
       </div>
     </div>
   );
