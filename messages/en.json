@@ -142,10 +142,15 @@
     "closed": "Closed",
     "signature": "Sig",
     "owner": "Owner",
+    "member": "Member",
     "backTo": "Back to {name}",
     "cancel": "Cancel",
     "leaving": "Leaving…",
-    "leaveCommunity": "Leave Community"
+    "leaveCommunity": "Leave Community",
+    "searchPlaceholder": "Search community...",
+    "noCommunitiesShow": "No communities to show",
+    "noCommunitiesShowDescription": "Create a new community or adjust your search.",
+    "memberCount": "{count, plural, one {# member} other {# members}}"
   },
   "joinCommunity": {
     "invalidInviteTitle": "Invalid Invite",
