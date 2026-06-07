@@ -483,13 +483,13 @@ describe("predictionReducer", () => {
 describe("getOrderedThirdPlaceTeams", () => {
   it("returns 12 teams", () => {
     const state = createInitialState(null);
-    const teams = getOrderedThirdPlaceTeams(state);
+    const teams = getOrderedThirdPlaceTeams(state, "en");
     expect(teams).toHaveLength(12);
   });
 
   it("each team id is the 3rd-place slot id (3rd-a format)", () => {
     const state = createInitialState(null);
-    const teams = getOrderedThirdPlaceTeams(state);
+    const teams = getOrderedThirdPlaceTeams(state, "en");
     for (const team of teams) {
       expect(team.id).toMatch(/^3rd-[a-l]$/);
     }
@@ -503,7 +503,7 @@ describe("getOrderedThirdPlaceTeams", () => {
       groupName: "A",
       orderedIds: [groupA[1], groupA[2], groupA[0], groupA[3]],
     });
-    const teams = getOrderedThirdPlaceTeams(movedLast);
+    const teams = getOrderedThirdPlaceTeams(movedLast, "en");
     const thirdA = teams.find((t) => t.id === "3rd-a");
     expect(thirdA?.originalId).toBe(groupA[0]);
   });

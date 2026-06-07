@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import { type Dispatch, useMemo } from "react";
 import { TeamClassification } from "@/components/team-classification";
 import {
@@ -7,10 +8,14 @@ import {
   type TournamentAction,
   type TournamentState,
 } from "@/lib/prediction-state";
-import { type GroupData, groups } from "@/lib/teams";
+import { type GroupData, getGroups } from "@/lib/teams";
 
-function getGroupTeamsOrdered(state: TournamentState, groupLetter: string) {
-  const group = groups.find((g) => g.group === groupLetter);
+function getGroupTeamsOrdered(
+  state: TournamentState,
+  groupLetter: string,
+  locale: string,
+) {
+  const group = getGroups(locale).find((g) => g.group === groupLetter);
   if (!group) return [];
   const orderedIds =
     state.groupOrders[groupLetter] ?? group.teams.map((t) => t.id);
@@ -31,9 +36,10 @@ function GroupCard({
   onOrderChange: (orderedIds: string[]) => void;
   readOnly: boolean;
 }) {
+  const locale = useLocale();
   const orderedTeams = useMemo(
-    () => getGroupTeamsOrdered(state, group.group),
-    [state, group.group],
+    () => getGroupTeamsOrdered(state, group.group, locale),
+    [state, group.group, locale],
   );
 
   return (
@@ -64,9 +70,10 @@ export function GroupStage({
   dispatch: Dispatch<TournamentAction>;
   readOnly?: boolean;
 }) {
+  const locale = useLocale();
   const orderedThirdPlaceTeams = useMemo(
-    () => getOrderedThirdPlaceTeams(state),
-    [state],
+    () => getOrderedThirdPlaceTeams(state, locale),
+    [state, locale],
   );
 
   return (
@@ -78,7 +85,7 @@ export function GroupStage({
             gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
           }}
         >
-          {groups.map((group) => (
+          {getGroups(locale).map((group) => (
             <GroupCard
               key={group.group}
               group={group}

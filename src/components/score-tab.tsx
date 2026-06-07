@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import {
   getAllTeamsLookup,
   getTeamsInRound,
@@ -222,14 +223,15 @@ function WinnerCard({
 }
 
 export function ScoreTab({ state }: { state: TournamentState }) {
-  const teamsLookup = getAllTeamsLookup();
+  const locale = useLocale();
+  const teamsLookup = getAllTeamsLookup(locale);
   const actualResults = EMPTY_ACTUAL_RESULTS;
 
-  const r32Teams = getTeamsInRound(state, "R32");
-  const r16Teams = getTeamsInRound(state, "R16");
-  const qfTeams = getTeamsInRound(state, "QF");
-  const sfTeams = getTeamsInRound(state, "SF");
-  const finalTeams = getTeamsInRound(state, "F");
+  const r32Teams = getTeamsInRound(state, "R32", locale);
+  const r16Teams = getTeamsInRound(state, "R16", locale);
+  const qfTeams = getTeamsInRound(state, "QF", locale);
+  const sfTeams = getTeamsInRound(state, "SF", locale);
+  const finalTeams = getTeamsInRound(state, "F", locale);
 
   const finalMatch = state.knockoutMatches["F-1"];
   const thirdMatch = state.knockoutMatches["3RD-1"];

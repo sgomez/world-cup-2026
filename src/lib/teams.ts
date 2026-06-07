@@ -1,4 +1,5 @@
-import rawTeams from "../../data/worldcup.teams.json";
+import rawTeamsEn from "../../data/worldcup.teams.en.json";
+import rawTeamsEs from "../../data/worldcup.teams.es.json";
 
 export type Team = {
   id: string;
@@ -11,30 +12,39 @@ export type GroupData = {
   teams: Team[];
 };
 
-const teamsByGroup = rawTeams.reduce<Record<string, Team[]>>((acc, t) => {
-  const team: Team = {
-    id: t.fifa_code.toLowerCase(),
-    name:
-      "name_normalised" in t && t.name_normalised ? t.name_normalised : t.name,
-    flag: t.flag_icon,
-  };
-  const g = t.group;
-  if (!acc[g]) acc[g] = [];
-  acc[g].push(team);
-  return acc;
-}, {});
+type RawTeam = {
+  name: string;
+  name_normalised?: string;
+  continent: string;
+  flag_icon: string;
+  fifa_code: string;
+  group: string;
+  confed: string;
+};
 
-export const groups: GroupData[] = [
-  "A",
-  "B",
-  "C",
-  "D",
-  "E",
-  "F",
-  "G",
-  "H",
-  "I",
-  "J",
-  "K",
-  "L",
-].map((g) => ({ group: g, teams: teamsByGroup[g] ?? [] }));
+function buildGroups(rawTeams: RawTeam[]): GroupData[] {
+  const teamsByGroup = rawTeams.reduce<Record<string, Team[]>>((acc, t) => {
+    const team: Team = {
+      id: t.fifa_code.toLowerCase(),
+      name: t.name_normalised ?? t.name,
+      flag: t.flag_icon,
+    };
+    const g = t.group;
+    if (!acc[g]) acc[g] = [];
+    acc[g].push(team);
+    return acc;
+  }, {});
+
+  return ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"].map(
+    (g) => ({ group: g, teams: teamsByGroup[g] ?? [] }),
+  );
+}
+
+const groupsByLocale: Record<string, GroupData[]> = {
+  en: buildGroups(rawTeamsEn as RawTeam[]),
+  es: buildGroups(rawTeamsEs as RawTeam[]),
+};
+
+export function getGroups(locale: string): GroupData[] {
+  return groupsByLocale[locale] ?? groupsByLocale.en;
+}
