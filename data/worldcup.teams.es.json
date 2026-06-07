@@ -154,7 +154,7 @@
   },
   {
     "name": "Turquía",
-    "name_normalised": "Türkiye",
+    "name_normalised": "Turquía",
     "continent": "Europa",
     "flag_icon": "🇹🇷",
     "flag_unicode": "\\u{1F1F9}\\u{1F1F7}",
@@ -266,7 +266,7 @@
   },
   {
     "name": "Irán",
-    "name_normalised": "IR Irán",
+    "name_normalised": "Irán",
     "continent": "Asia",
     "flag_icon": "🇮🇷",
     "flag_unicode": "\\u{1F1EE}\\u{1F1F7}",
@@ -418,7 +418,7 @@
   },
   {
     "name": "Congo RD",
-    "name_normalised": "Congo RD",
+    "name_normalised": "Congo",
     "continent": "África",
     "flag_icon": "🇨🇩",
     "flag_unicode": "\\u{1F1E8}\\u{1F1E9}",
