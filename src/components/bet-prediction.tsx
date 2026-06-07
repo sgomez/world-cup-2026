@@ -42,6 +42,7 @@ export function BetPrediction({
   const readOnly = !isOwner || isClosed;
 
   const [isWarningOpen, setIsWarningOpen] = useState(false);
+  const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -70,10 +71,7 @@ export function BetPrediction({
     if (predictedCount < 32) {
       setIsWarningOpen(true);
     } else {
-      startTransition(async () => {
-        const result = await closeBet(betId);
-        if (result?.error) setError(result.error);
-      });
+      setIsCloseConfirmOpen(true);
     }
   }
 
@@ -168,6 +166,40 @@ export function BetPrediction({
             <div className="mt-6 flex justify-end gap-3">
               <AlertDialog.Close className="button-primary text-button-sm !h-9 !py-1 !px-4">
                 {t("ok")}
+              </AlertDialog.Close>
+            </div>
+          </AlertDialog.Popup>
+        </AlertDialog.Portal>
+      </AlertDialog.Root>
+
+      <AlertDialog.Root
+        open={isCloseConfirmOpen}
+        onOpenChange={setIsCloseConfirmOpen}
+      >
+        <AlertDialog.Portal>
+          <AlertDialog.Backdrop className="fixed inset-0 z-[100] bg-black/50 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
+          <AlertDialog.Popup className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-full max-w-[384px] rounded-none border border-hairline bg-canvas p-6 dark:bg-ink data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
+            <AlertDialog.Title className="text-heading-md font-medium text-foreground uppercase tracking-tight">
+              {t("closeConfirmTitle")}
+            </AlertDialog.Title>
+            <AlertDialog.Description className="mt-2 text-caption-md text-muted-foreground">
+              {t("closeConfirmDescription")}
+            </AlertDialog.Description>
+            <div className="mt-6 flex justify-end gap-3">
+              <AlertDialog.Close className="button-secondary text-button-sm !h-9 !py-1 !px-4">
+                {t("cancel")}
+              </AlertDialog.Close>
+              <AlertDialog.Close
+                onClick={() => {
+                  startTransition(async () => {
+                    const result = await closeBet(betId);
+                    if (result?.error) setError(result.error);
+                  });
+                }}
+                disabled={isPending}
+                className="button-primary text-button-sm !h-9 !py-1 !px-4"
+              >
+                {t("closeConfirmAction")}
               </AlertDialog.Close>
             </div>
           </AlertDialog.Popup>

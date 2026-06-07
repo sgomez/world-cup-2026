@@ -22,6 +22,11 @@ vi.mock("next-intl", () => ({
             groupStageTab: "Group Stage",
             knockoutStageTab: "Knockout Stage",
             scoreTab: "Score",
+            closeConfirmTitle: "Close bet?",
+            closeConfirmDescription:
+              "Closing your bet locks your predictions. You will not be able to edit them unless you re-open the bet before the deadline.",
+            closeConfirmAction: "Close bet",
+            cancel: "Cancel",
           }[key] ?? key
         );
       }
@@ -122,7 +127,66 @@ describe("BetPrediction", () => {
     expect(closeBet).not.toHaveBeenCalled();
   });
 
-  it("clicks close bet with complete predictions, calls closeBet directly", async () => {
+  it("clicks close bet with complete predictions, displays the confirmation modal", async () => {
+    const completeWinners = Object.fromEntries(
+      Array.from({ length: 32 }, (_, i) => [`M${i}`, `team-${i}`]),
+    );
+
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My test bet"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={completeWinners}
+      />,
+    );
+
+    const closeBtn = screen.getByRole("button", { name: "Close bet" });
+    await userEvent.click(closeBtn);
+
+    // Confirmation modal should be open
+    expect(screen.getByText("Close bet?")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Closing your bet locks your predictions. You will not be able to edit them unless you re-open the bet before the deadline.",
+      ),
+    ).toBeInTheDocument();
+    expect(closeBet).not.toHaveBeenCalled();
+  });
+
+  it("clicks Cancel inside confirmation modal, closes modal without calling closeBet", async () => {
+    const completeWinners = Object.fromEntries(
+      Array.from({ length: 32 }, (_, i) => [`M${i}`, `team-${i}`]),
+    );
+
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My test bet"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={completeWinners}
+      />,
+    );
+
+    const closeBtn = screen.getByRole("button", { name: "Close bet" });
+    await userEvent.click(closeBtn);
+
+    // Click Cancel
+    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
+    await userEvent.click(cancelBtn);
+
+    // Modal should close
+    expect(screen.queryByText("Close bet?")).not.toBeInTheDocument();
+    expect(closeBet).not.toHaveBeenCalled();
+  });
+
+  it("clicks Close bet inside confirmation modal, successfully calls closeBet", async () => {
     const completeWinners = Object.fromEntries(
       Array.from({ length: 32 }, (_, i) => [`M${i}`, `team-${i}`]),
     );
@@ -144,10 +208,11 @@ describe("BetPrediction", () => {
     const closeBtn = screen.getByRole("button", { name: "Close bet" });
     await userEvent.click(closeBtn);
 
-    // Modal should not open
-    expect(
-      screen.queryByText("Incomplete Predictions"),
-    ).not.toBeInTheDocument();
+    // The dialog close button is the only accessible button with name "Close bet"
+    // when the dialog is open because the header button is marked as inert/hidden.
+    const dialogConfirmBtn = screen.getByRole("button", { name: "Close bet" });
+    await userEvent.click(dialogConfirmBtn);
+
     expect(closeBet).toHaveBeenCalledWith("bet-1");
   });
 
