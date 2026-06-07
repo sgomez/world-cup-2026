@@ -439,15 +439,22 @@ export function getOrderedThirdPlaceTeams(
   return [...valid.map((id) => byId.get(id) as ThirdPlaceTeam), ...newEntries];
 }
 
+const teamLookupByLocale: Record<
+  string,
+  Map<string, { id: string; name: string; flag: string }>
+> = {};
+
 export function getAllTeamsLookup(
   locale: string,
 ): Map<string, { id: string; name: string; flag: string }> {
+  if (teamLookupByLocale[locale]) return teamLookupByLocale[locale];
   const lookup = new Map<string, { id: string; name: string; flag: string }>();
   for (const group of getGroups(locale)) {
     for (const team of group.teams) {
       lookup.set(team.id, team);
     }
   }
+  teamLookupByLocale[locale] = lookup;
   return lookup;
 }
 
