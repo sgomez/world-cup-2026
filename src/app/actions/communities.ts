@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
+import { mapBetWithSignature } from "@/lib/bet-signature";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -100,6 +101,8 @@ export async function getCommunity(slug: string) {
                   id: true,
                   label: true,
                   status: true,
+                  groupPredictions: true,
+                  knockoutWinners: true,
                   createdAt: true,
                   updatedAt: true,
                 },
@@ -116,12 +119,12 @@ export async function getCommunity(slug: string) {
   const isMember = community.members.some((m) => m.userId === session.user.id);
   if (!isMember) return null;
 
-  const members = isPastDeadline
-    ? community.members
-    : community.members.map((m) => ({
-        ...m,
-        user: { ...m.user, bets: [] as typeof m.user.bets },
-      }));
+  const members = community.members.map((m) => {
+    const bets = m.user.bets
+      .filter((b) => isPastDeadline || b.status === "closed")
+      .map(mapBetWithSignature);
+    return { ...m, user: { ...m.user, bets } };
+  });
 
   return {
     ...community,

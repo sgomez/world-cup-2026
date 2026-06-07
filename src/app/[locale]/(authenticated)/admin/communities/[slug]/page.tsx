@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
+import { mapBetWithSignature } from "@/lib/bet-signature";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -21,7 +22,7 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
     redirect({ href: "/", locale });
   }
 
-  const community = await prisma.community.findUnique({
+  const communityRaw = await prisma.community.findUnique({
     where: { slug },
     select: {
       name: true,
@@ -29,7 +30,23 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
       members: {
         select: {
           userId: true,
-          user: { select: { name: true } },
+          user: {
+            select: {
+              name: true,
+              bets: {
+                select: {
+                  id: true,
+                  label: true,
+                  status: true,
+                  groupPredictions: true,
+                  knockoutWinners: true,
+                  createdAt: true,
+                  updatedAt: true,
+                },
+                orderBy: { createdAt: "desc" },
+              },
+            },
+          },
           joinedAt: true,
         },
         orderBy: { joinedAt: "asc" },
@@ -37,7 +54,18 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
     },
   });
 
-  if (!community) notFound();
+  if (!communityRaw) notFound();
+
+  const community = {
+    ...communityRaw,
+    members: communityRaw.members.map((m) => ({
+      ...m,
+      user: {
+        ...m.user,
+        bets: m.user.bets.map(mapBetWithSignature),
+      },
+    })),
+  };
 
   return (
     <div className="max-w-2xl">
@@ -52,19 +80,53 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
         <p className="text-caption-md font-medium text-foreground">
           {t("membersLabel", { count: community.members.length })}
         </p>
-        <ul className="mt-2 divide-y divide-hairline border border-hairline">
+        <div className="mt-2 space-y-6">
           {community.members.map(({ userId, user, joinedAt }) => (
-            <li
-              key={userId}
-              className="flex items-center justify-between px-6 py-3"
-            >
-              <span className="text-body-md text-foreground">{user.name}</span>
-              <span className="text-caption-sm text-muted-foreground">
-                {t("joinedLabel", { date: joinedAt.toLocaleDateString() })}
-              </span>
-            </li>
+            <div key={userId}>
+              <div className="flex items-center justify-between border border-hairline px-6 py-3">
+                <span className="text-body-md text-foreground">
+                  {user.name}
+                </span>
+                <span className="text-caption-sm text-muted-foreground">
+                  {t("joinedLabel", { date: joinedAt.toLocaleDateString() })}
+                </span>
+              </div>
+              {user.bets.length === 0 ? (
+                <p className="mt-1 px-6 text-caption-sm text-muted-foreground">
+                  {t("noBetsYet")}
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  {user.bets.map((bet) => {
+                    const sig = bet.signature;
+                    return (
+                      <div
+                        key={bet.id}
+                        className="rounded-none border border-hairline bg-canvas px-5 py-3 dark:bg-ink"
+                      >
+                        <p className="text-body-md text-foreground">
+                          {bet.label}
+                        </p>
+                        <div className="mt-1 flex gap-4 text-caption-sm text-muted-foreground">
+                          <span>
+                            {t("createdLabel", {
+                              date: bet.createdAt.toLocaleDateString(),
+                            })}
+                          </span>
+                          {sig && (
+                            <span className="font-mono" title={sig}>
+                              {t("signature")}: {sig.slice(0, 8)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
 
       <div className="mt-6">
