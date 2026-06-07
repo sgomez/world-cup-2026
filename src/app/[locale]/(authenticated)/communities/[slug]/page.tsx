@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getCommunity } from "@/app/actions/communities";
 import { LeaveCommunityForm } from "@/components/leave-community-form";
-import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
 import { Link, redirect } from "@/i18n/navigation";
 import { buildInviteUrl } from "@/lib/communities";
@@ -26,7 +25,6 @@ export default async function CommunityPage({
   if (!community) notFound();
 
   const isOwner = community.ownerId === community.currentUserId;
-  const { isPastDeadline } = community;
 
   const inviteUrl = buildInviteUrl(await headers(), community.inviteToken);
 
@@ -81,20 +79,21 @@ export default async function CommunityPage({
         <p className="text-caption-md font-medium text-foreground">
           {t("betsTitle")}
         </p>
-        {isPastDeadline ? (
-          <div className="mt-2 space-y-6">
-            {community.members.map(({ user }) => (
-              <div key={user.id}>
-                <p className="text-caption-sm font-medium text-muted-foreground">
-                  {user.name}
+        <div className="mt-2 space-y-6">
+          {community.members.map(({ user }) => (
+            <div key={user.id}>
+              <p className="text-caption-sm font-medium text-muted-foreground">
+                {user.name}
+              </p>
+              {user.bets.length === 0 ? (
+                <p className="mt-1 text-caption-sm text-muted-foreground">
+                  {t("noBets")}
                 </p>
-                {user.bets.length === 0 ? (
-                  <p className="mt-1 text-caption-sm text-muted-foreground">
-                    {t("noBets")}
-                  </p>
-                ) : (
-                  <ul className="mt-1 divide-y divide-hairline border border-hairline">
-                    {user.bets.map((bet) => (
+              ) : (
+                <ul className="mt-1 divide-y divide-hairline border border-hairline">
+                  {user.bets.map((bet) => {
+                    const sig = (bet as { signature?: string }).signature;
+                    return (
                       <li
                         key={bet.id}
                         className="flex items-center gap-3 px-4 py-3"
@@ -112,16 +111,22 @@ export default async function CommunityPage({
                             {t("closed")}
                           </span>
                         )}
+                        {bet.status === "closed" && sig && (
+                          <span
+                            className="font-mono text-caption-sm text-muted-foreground"
+                            title={sig}
+                          >
+                            {t("signature")}: {sig.slice(0, 8)}
+                          </span>
+                        )}
                       </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <Banner className="mt-2">{t("betsAfterDeadline")}</Banner>
-        )}
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="mt-6 flex items-center justify-between">

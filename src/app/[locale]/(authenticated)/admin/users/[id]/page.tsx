@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { setUserRole } from "@/app/actions/admin";
 import { redirect } from "@/i18n/navigation";
+import { computeBetSignature } from "@/lib/bet-signature";
+import type { PredictionState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -22,12 +24,39 @@ export default async function AdminUserPage({ params }: Props) {
     redirect({ href: "/", locale });
   }
 
-  const target = await prisma.user.findUnique({
+  const targetRaw = await prisma.user.findUnique({
     where: { id },
     include: {
-      bets: { orderBy: { createdAt: "desc" } },
+      bets: {
+        select: {
+          id: true,
+          label: true,
+          status: true,
+          groupPredictions: true,
+          knockoutWinners: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
+  const target = targetRaw
+    ? {
+        ...targetRaw,
+        bets: targetRaw.bets.map((b) => {
+          const { groupPredictions, knockoutWinners, ...rest } = b;
+          if (b.status !== "closed") return rest;
+          return {
+            ...rest,
+            signature: computeBetSignature(
+              groupPredictions as PredictionState | null,
+              knockoutWinners as Record<string, string> | null,
+            ),
+          };
+        }),
+      }
+    : null;
 
   if (!target) notFound();
 
@@ -149,26 +178,36 @@ export default async function AdminUserPage({ params }: Props) {
               {t("noBetsYet")}
             </p>
           ) : (
-            target.bets.map((bet) => (
-              <div
-                key={bet.id}
-                className="rounded-none border border-hairline bg-canvas px-5 py-4 dark:bg-ink"
-              >
-                <p className="text-body-strong text-foreground">{bet.label}</p>
-                <div className="mt-1 flex gap-4 text-caption-sm text-muted-foreground">
-                  <span>
-                    {t("createdLabel", {
-                      date: bet.createdAt.toLocaleDateString(),
-                    })}
-                  </span>
-                  <span>
-                    {t("updatedLabel", {
-                      date: bet.updatedAt.toLocaleDateString(),
-                    })}
-                  </span>
+            target.bets.map((bet) => {
+              const sig = (bet as { signature?: string }).signature;
+              return (
+                <div
+                  key={bet.id}
+                  className="rounded-none border border-hairline bg-canvas px-5 py-4 dark:bg-ink"
+                >
+                  <p className="text-body-strong text-foreground">
+                    {bet.label}
+                  </p>
+                  <div className="mt-1 flex gap-4 text-caption-sm text-muted-foreground">
+                    <span>
+                      {t("createdLabel", {
+                        date: bet.createdAt.toLocaleDateString(),
+                      })}
+                    </span>
+                    <span>
+                      {t("updatedLabel", {
+                        date: bet.updatedAt.toLocaleDateString(),
+                      })}
+                    </span>
+                    {sig && (
+                      <span className="font-mono" title={sig}>
+                        {t("signature")}: {sig.slice(0, 8)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

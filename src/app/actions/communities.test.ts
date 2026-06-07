@@ -269,6 +269,8 @@ type MockBet = {
   id: string;
   label: string;
   status: string;
+  groupPredictions: unknown;
+  knockoutWinners: unknown;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -278,6 +280,8 @@ function makeBet(overrides: Partial<MockBet> = {}): MockBet {
     id: randomUUID(),
     label: "My Bet",
     status: "draft",
+    groupPredictions: null,
+    knockoutWinners: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -377,6 +381,62 @@ describe("getCommunity", () => {
     const result = await getCommunity(COMMUNITY_SLUG);
     expect(result?.members[0].user.bets).toHaveLength(1);
     expect(result?.members[0].user.bets[0].id).toBe(bet.id);
+    vi.restoreAllMocks();
+  });
+
+  it("exposes closed bets before deadline with signature, no prediction fields", async () => {
+    mockSession();
+    const bet = makeBet({ status: "closed" });
+    mockCommunityFindUnique.mockResolvedValue(makeCommunity([USER_ID], [bet]));
+    const result = await getCommunity(COMMUNITY_SLUG);
+    const bets = result?.members[0].user.bets;
+    expect(bets).toHaveLength(1);
+    expect(bets?.[0].id).toBe(bet.id);
+    expect((bets?.[0] as Record<string, unknown>).signature).toBeTypeOf(
+      "string",
+    );
+    expect(
+      (bets?.[0] as Record<string, unknown>).groupPredictions,
+    ).toBeUndefined();
+    expect(
+      (bets?.[0] as Record<string, unknown>).knockoutWinners,
+    ).toBeUndefined();
+  });
+
+  it("hides draft bets before deadline for other members", async () => {
+    mockSession();
+    const draft = makeBet({ status: "draft" });
+    mockCommunityFindUnique.mockResolvedValue(
+      makeCommunity([USER_ID], [draft]),
+    );
+    const result = await getCommunity(COMMUNITY_SLUG);
+    expect(result?.members[0].user.bets).toHaveLength(0);
+  });
+
+  it("attaches signature to closed bets after deadline, strips prediction fields", async () => {
+    const { BET_DEADLINE } = await import("@/lib/bet-constants");
+    vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
+    mockSession();
+    const bet = makeBet({ status: "closed" });
+    mockCommunityFindUnique.mockResolvedValue(makeCommunity([USER_ID], [bet]));
+    const result = await getCommunity(COMMUNITY_SLUG);
+    const b = result?.members[0].user.bets[0];
+    expect((b as Record<string, unknown>).signature).toBeTypeOf("string");
+    expect((b as Record<string, unknown>).groupPredictions).toBeUndefined();
+    expect((b as Record<string, unknown>).knockoutWinners).toBeUndefined();
+    vi.restoreAllMocks();
+  });
+
+  it("exposes draft bets after deadline without signature", async () => {
+    const { BET_DEADLINE } = await import("@/lib/bet-constants");
+    vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
+    mockSession();
+    const bet = makeBet({ status: "draft" });
+    mockCommunityFindUnique.mockResolvedValue(makeCommunity([USER_ID], [bet]));
+    const result = await getCommunity(COMMUNITY_SLUG);
+    const b = result?.members[0].user.bets[0];
+    expect(b).toBeDefined();
+    expect((b as Record<string, unknown>).signature).toBeUndefined();
     vi.restoreAllMocks();
   });
 });
