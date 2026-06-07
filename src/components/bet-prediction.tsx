@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   createInitialState,
   type PredictionState,
+  type TournamentAction,
   tournamentReducer,
 } from "@/lib/prediction-state";
 
@@ -43,8 +44,38 @@ export function BetPrediction({
 
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
+  const [isGroupWarningOpen, setIsGroupWarningOpen] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
+  const pendingGroupActionRef = useRef<TournamentAction | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  function handleGroupStageDispatch(action: TournamentAction) {
+    if (
+      (action.type === "SET_GROUP_ORDER" ||
+        action.type === "SET_THIRD_PLACE_ORDER") &&
+      predictedCount > 0
+    ) {
+      pendingGroupActionRef.current = action;
+      setIsGroupWarningOpen(true);
+    } else {
+      dispatch(action);
+    }
+  }
+
+  function handleConfirmGroupChange() {
+    if (pendingGroupActionRef.current) {
+      dispatch(pendingGroupActionRef.current);
+      pendingGroupActionRef.current = null;
+    }
+    setIsGroupWarningOpen(false);
+  }
+
+  function handleCancelGroupChange() {
+    pendingGroupActionRef.current = null;
+    setResetKey((prev) => prev + 1);
+    setIsGroupWarningOpen(false);
+  }
 
   // Count predicted knockout matches
   const predictedCount = Object.values(state.knockoutMatches).filter(
@@ -134,7 +165,12 @@ export function BetPrediction({
         </TabsList>
 
         <TabsContent value="groups">
-          <GroupStage state={state} dispatch={dispatch} readOnly={readOnly} />
+          <GroupStage
+            key={resetKey}
+            state={state}
+            dispatch={handleGroupStageDispatch}
+            readOnly={readOnly}
+          />
         </TabsContent>
 
         <TabsContent value="knockout">
@@ -200,6 +236,42 @@ export function BetPrediction({
                 className="button-primary text-button-sm !h-9 !py-1 !px-4"
               >
                 {t("closeConfirmAction")}
+              </AlertDialog.Close>
+            </div>
+          </AlertDialog.Popup>
+        </AlertDialog.Portal>
+      </AlertDialog.Root>
+
+      <AlertDialog.Root
+        open={isGroupWarningOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            if (pendingGroupActionRef.current) {
+              handleCancelGroupChange();
+            } else {
+              setIsGroupWarningOpen(false);
+            }
+          }
+        }}
+      >
+        <AlertDialog.Portal>
+          <AlertDialog.Backdrop className="fixed inset-0 z-[100] bg-black/50 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
+          <AlertDialog.Popup className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-full max-w-[384px] rounded-none border border-hairline bg-canvas p-6 dark:bg-ink data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
+            <AlertDialog.Title className="text-heading-md font-medium text-foreground uppercase tracking-tight">
+              {t("groupChangeWarningTitle")}
+            </AlertDialog.Title>
+            <AlertDialog.Description className="mt-2 text-caption-md text-muted-foreground">
+              {t("groupChangeWarningDescription")}
+            </AlertDialog.Description>
+            <div className="mt-6 flex justify-end gap-3">
+              <AlertDialog.Close className="button-secondary text-button-sm !h-9 !py-1 !px-4">
+                {t("cancel")}
+              </AlertDialog.Close>
+              <AlertDialog.Close
+                onClick={handleConfirmGroupChange}
+                className="button-primary text-button-sm !h-9 !py-1 !px-4"
+              >
+                {t("groupChangeWarningConfirm")}
               </AlertDialog.Close>
             </div>
           </AlertDialog.Popup>

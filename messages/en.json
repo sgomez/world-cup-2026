@@ -68,7 +68,10 @@
     "ok": "OK",
     "closeConfirmTitle": "Close bet?",
     "closeConfirmDescription": "Closing your bet locks your predictions. You will not be able to edit them unless you re-open the bet before the deadline.",
-    "closeConfirmAction": "Close bet"
+    "closeConfirmAction": "Close bet",
+    "groupChangeWarningTitle": "Reset knockout predictions?",
+    "groupChangeWarningDescription": "Changing standings will reset conflicting predictions in your knockout stage bracket.",
+    "groupChangeWarningConfirm": "Confirm"
   },
   "groupStage": {
     "group": "Group {letter}",

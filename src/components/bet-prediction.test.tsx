@@ -27,6 +27,10 @@ vi.mock("next-intl", () => ({
               "Closing your bet locks your predictions. You will not be able to edit them unless you re-open the bet before the deadline.",
             closeConfirmAction: "Close bet",
             cancel: "Cancel",
+            groupChangeWarningTitle: "Reset knockout predictions?",
+            groupChangeWarningDescription:
+              "Changing standings will reset conflicting predictions in your knockout stage bracket.",
+            groupChangeWarningConfirm: "Confirm",
           }[key] ?? key
         );
       }
@@ -40,6 +44,50 @@ vi.mock("@/app/actions/bets", () => ({
   reopenBet: vi.fn(),
   updateBetPredictions: vi.fn(),
 }));
+
+vi.mock("@/components/group-stage", () => {
+  const React = require("react");
+  return {
+    GroupStage: ({
+      dispatch,
+    }: {
+      state: unknown;
+      dispatch: (action: {
+        type: string;
+        groupName?: string;
+        orderedIds?: string[];
+      }) => void;
+      readOnly?: boolean;
+    }) => {
+      const [status, setStatus] = React.useState("clean");
+      return (
+        <div data-testid="mock-group-stage">
+          <span data-testid="group-stage-status">{status}</span>
+          <button
+            type="button"
+            data-testid="make-dirty-btn"
+            onClick={() => setStatus("dirty")}
+          >
+            Make Dirty
+          </button>
+          <button
+            type="button"
+            data-testid="reorder-group-btn"
+            onClick={() =>
+              dispatch({
+                type: "SET_GROUP_ORDER",
+                groupName: "A",
+                orderedIds: ["team-2", "team-1", "team-3", "team-4"],
+              })
+            }
+          >
+            Reorder Group A
+          </button>
+        </div>
+      );
+    },
+  };
+});
 
 vi.mock("@/lib/prediction-state", async (importOriginal) => {
   const actual =
@@ -235,5 +283,114 @@ describe("BetPrediction", () => {
     await userEvent.click(reopenBtn);
 
     expect(reopenBet).toHaveBeenCalledWith("bet-1");
+  });
+
+  it("reordering group standings when NO knockout predictions exist does not show warning and dispatches immediately", async () => {
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My test bet"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={null}
+      />,
+    );
+
+    const makeDirtyBtn = screen.getByTestId("make-dirty-btn");
+    await userEvent.click(makeDirtyBtn);
+    expect(screen.getByTestId("group-stage-status")).toHaveTextContent("dirty");
+
+    const reorderBtn = screen.getByTestId("reorder-group-btn");
+    await userEvent.click(reorderBtn);
+
+    // Warning dialog should NOT show
+    expect(
+      screen.queryByText("Reset knockout predictions?"),
+    ).not.toBeInTheDocument();
+
+    // Status should still be "dirty" because it did not remount
+    expect(screen.getByTestId("group-stage-status")).toHaveTextContent("dirty");
+  });
+
+  it("reordering group standings with knockout predictions shows warning dialog; clicking cancel reverts state", async () => {
+    const completeWinners = Object.fromEntries(
+      Array.from({ length: 32 }, (_, i) => [`M${i}`, `team-${i}`]),
+    );
+
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My test bet"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={completeWinners}
+      />,
+    );
+
+    const makeDirtyBtn = screen.getByTestId("make-dirty-btn");
+    await userEvent.click(makeDirtyBtn);
+    expect(screen.getByTestId("group-stage-status")).toHaveTextContent("dirty");
+
+    const reorderBtn = screen.getByTestId("reorder-group-btn");
+    await userEvent.click(reorderBtn);
+
+    // Warning dialog should show
+    expect(screen.getByText("Reset knockout predictions?")).toBeInTheDocument();
+
+    // Click Cancel
+    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
+    await userEvent.click(cancelBtn);
+
+    // Dialog should close
+    expect(
+      screen.queryByText("Reset knockout predictions?"),
+    ).not.toBeInTheDocument();
+
+    // Status should reset to "clean" because the component remounted
+    expect(screen.getByTestId("group-stage-status")).toHaveTextContent("clean");
+  });
+
+  it("reordering group standings with knockout predictions shows warning dialog; clicking confirm applies change", async () => {
+    const completeWinners = Object.fromEntries(
+      Array.from({ length: 32 }, (_, i) => [`M${i}`, `team-${i}`]),
+    );
+
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My test bet"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={completeWinners}
+      />,
+    );
+
+    const makeDirtyBtn = screen.getByTestId("make-dirty-btn");
+    await userEvent.click(makeDirtyBtn);
+    expect(screen.getByTestId("group-stage-status")).toHaveTextContent("dirty");
+
+    const reorderBtn = screen.getByTestId("reorder-group-btn");
+    await userEvent.click(reorderBtn);
+
+    // Warning dialog should show
+    expect(screen.getByText("Reset knockout predictions?")).toBeInTheDocument();
+
+    // Click Confirm
+    const confirmBtn = screen.getByRole("button", { name: "Confirm" });
+    await userEvent.click(confirmBtn);
+
+    // Dialog should close
+    expect(
+      screen.queryByText("Reset knockout predictions?"),
+    ).not.toBeInTheDocument();
+
+    // Status should still be "dirty" because it did NOT remount (reorder was applied, key did not change)
+    expect(screen.getByTestId("group-stage-status")).toHaveTextContent("dirty");
   });
 });
