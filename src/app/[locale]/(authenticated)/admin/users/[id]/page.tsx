@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { setUserRole } from "@/app/actions/admin";
 import { redirect } from "@/i18n/navigation";
-import { computeBetSignature } from "@/lib/bet-signature";
-import type { PredictionState } from "@/lib/prediction-state";
+import { mapBetWithSignature } from "@/lib/bet-signature";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -44,17 +43,7 @@ export default async function AdminUserPage({ params }: Props) {
   const target = targetRaw
     ? {
         ...targetRaw,
-        bets: targetRaw.bets.map((b) => {
-          const { groupPredictions, knockoutWinners, ...rest } = b;
-          if (b.status !== "closed") return rest;
-          return {
-            ...rest,
-            signature: computeBetSignature(
-              groupPredictions as PredictionState | null,
-              knockoutWinners as Record<string, string> | null,
-            ),
-          };
-        }),
+        bets: targetRaw.bets.map(mapBetWithSignature),
       }
     : null;
 
@@ -179,7 +168,7 @@ export default async function AdminUserPage({ params }: Props) {
             </p>
           ) : (
             target.bets.map((bet) => {
-              const sig = (bet as { signature?: string }).signature;
+              const sig = bet.signature;
               return (
                 <div
                   key={bet.id}

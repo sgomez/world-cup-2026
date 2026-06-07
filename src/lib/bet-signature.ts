@@ -5,6 +5,31 @@ import {
   type PredictionState,
 } from "./prediction-state";
 
+type BetInput = {
+  groupPredictions: unknown;
+  knockoutWinners: unknown;
+  status: string;
+};
+
+type BetWithSignature<T extends BetInput> = Omit<
+  T,
+  "groupPredictions" | "knockoutWinners"
+> & { signature?: string };
+
+export function mapBetWithSignature<T extends BetInput>(
+  bet: T,
+): BetWithSignature<T> {
+  const { groupPredictions, knockoutWinners, ...rest } = bet;
+  if (bet.status !== "closed") return rest as BetWithSignature<T>;
+  return {
+    ...rest,
+    signature: computeBetSignature(
+      groupPredictions as PredictionState | null,
+      knockoutWinners as Record<string, string> | null,
+    ),
+  };
+}
+
 const SCOREABLE_ROUNDS = ["R32", "R16", "QF", "SF", "F"] as const;
 
 export function computeBetSignature(

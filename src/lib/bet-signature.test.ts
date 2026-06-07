@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeBetSignature } from "./bet-signature";
+import { computeBetSignature, mapBetWithSignature } from "./bet-signature";
 import {
   createInitialState,
   KNOCKOUT_MATCH_IDS,
@@ -180,5 +180,42 @@ describe("computeBetSignature", () => {
     const sigB = computeBetSignature(preds, altWinners);
 
     expect(sigA).not.toBe(sigB);
+  });
+});
+
+describe("mapBetWithSignature", () => {
+  it("strips groupPredictions and knockoutWinners from closed bet and adds signature", () => {
+    const state = createInitialState(null);
+    const preds = {
+      groupOrders: state.groupOrders,
+      thirdPlaceOrder: state.thirdPlaceOrder,
+    };
+    const winners = buildTeam1WinsWinners(preds);
+    const bet = {
+      id: "1",
+      label: "test",
+      status: "closed" as const,
+      groupPredictions: preds,
+      knockoutWinners: winners,
+    };
+    const mapped = mapBetWithSignature(bet);
+    expect("groupPredictions" in mapped).toBe(false);
+    expect("knockoutWinners" in mapped).toBe(false);
+    expect(mapped.signature).toMatch(/^[0-9a-f]{64}$/);
+    expect(mapped.signature).toBe(computeBetSignature(preds, winners));
+  });
+
+  it("strips groupPredictions and knockoutWinners from non-closed bet, no signature", () => {
+    const bet = {
+      id: "2",
+      label: "draft",
+      status: "draft" as const,
+      groupPredictions: null,
+      knockoutWinners: null,
+    };
+    const mapped = mapBetWithSignature(bet);
+    expect("groupPredictions" in mapped).toBe(false);
+    expect("knockoutWinners" in mapped).toBe(false);
+    expect(mapped.signature).toBeUndefined();
   });
 });

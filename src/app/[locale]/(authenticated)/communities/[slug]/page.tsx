@@ -92,7 +92,7 @@ export default async function CommunityPage({
               ) : (
                 <ul className="mt-1 divide-y divide-hairline border border-hairline">
                   {user.bets.map((bet) => {
-                    const sig = (bet as { signature?: string }).signature;
+                    const sig = bet.signature;
                     return (
                       <li
                         key={bet.id}
