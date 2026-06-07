@@ -43,7 +43,7 @@ export default async function BetsPage({
   }));
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-5xl">
       <PageHeader title={t("title")} description={t("description")} />
 
       <div className="mt-8">

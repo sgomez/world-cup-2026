@@ -26,7 +26,7 @@ export function RemoveBetButton({ betId, onRemoved }: RemoveBetButtonProps) {
     <AlertDialog.Root>
       <AlertDialog.Trigger
         onClick={(e) => e.preventDefault()}
-        className="button-icon-circular !w-8 !h-8 hover:text-sale"
+        className="inline-flex size-8 items-center justify-center rounded-lg border border-hairline bg-canvas text-muted-foreground transition-colors hover:border-sale/40 hover:bg-sale/10 hover:text-sale dark:bg-ink dark:hover:bg-sale/20"
         aria-label={t("removeBetAriaLabel")}
       >
         <Trash2Icon className="size-4" />

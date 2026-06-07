@@ -57,16 +57,16 @@ export function Navbar({ user }: NavbarProps) {
           WORLD CUP 26
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <Link
             href="/communities"
-            className="text-caption-md text-muted-foreground hover:text-foreground transition-colors"
+            className="hidden sm:block text-caption-md text-muted-foreground hover:text-foreground transition-colors"
           >
             {t("communities")}
           </Link>
           <Link
             href="/bets"
-            className="text-caption-md text-muted-foreground hover:text-foreground transition-colors"
+            className="hidden sm:block text-caption-md text-muted-foreground hover:text-foreground transition-colors"
           >
             {t("myBets")}
           </Link>
