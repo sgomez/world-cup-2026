@@ -50,11 +50,32 @@ export function BetPrediction({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  // Count predicted knockout matches — computed before knockoutWarning so the
+  // lazy initialiser can seed the flag from predictedCount when localStorage is empty.
+  const predictedCount = Object.values(state.knockoutMatches).filter(
+    (m) => m.winnerId !== null,
+  ).length;
+
+  const [knockoutWarning, setKnockoutWarning] = useState<boolean>(() => {
+    if (typeof window === "undefined") return predictedCount > 0;
+    const stored = localStorage.getItem(`knockout-warning-${betId}`);
+    if (stored !== null) return stored === "true";
+    return predictedCount > 0;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(`knockout-warning-${betId}`, String(knockoutWarning));
+  }, [knockoutWarning, betId]);
+
+  useEffect(() => {
+    if (predictedCount === 0) setKnockoutWarning(false);
+  }, [predictedCount]);
+
   function handleGroupStageDispatch(action: TournamentAction) {
     if (
       (action.type === "SET_GROUP_ORDER" ||
         action.type === "SET_THIRD_PLACE_ORDER") &&
-      predictedCount > 0
+      knockoutWarning
     ) {
       pendingGroupActionRef.current = action;
       setIsGroupWarningOpen(true);
@@ -68,7 +89,13 @@ export function BetPrediction({
       dispatch(pendingGroupActionRef.current);
       pendingGroupActionRef.current = null;
     }
+    setKnockoutWarning(false);
     setIsGroupWarningOpen(false);
+  }
+
+  function handleKnockoutDispatch(action: TournamentAction) {
+    if (action.type === "SET_KNOCKOUT_WINNER") setKnockoutWarning(true);
+    dispatch(action);
   }
 
   function handleCancelGroupChange() {
@@ -76,11 +103,6 @@ export function BetPrediction({
     setResetKey((prev) => prev + 1);
     setIsGroupWarningOpen(false);
   }
-
-  // Count predicted knockout matches
-  const predictedCount = Object.values(state.knockoutMatches).filter(
-    (m) => m.winnerId !== null,
-  ).length;
 
   useEffect(() => {
     if (isFirst.current) {
@@ -176,7 +198,7 @@ export function BetPrediction({
         <TabsContent value="knockout">
           <KnockoutStage
             state={state}
-            dispatch={dispatch}
+            dispatch={handleKnockoutDispatch}
             readOnly={readOnly}
           />
         </TabsContent>
