@@ -1,12 +1,14 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
+import { TeamBadge } from "@/components/team-badge";
 import {
   getAllTeamsLookup,
   getTeamsInRound,
   type KnockoutRound,
   type TournamentState,
 } from "@/lib/prediction-state";
+import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
 const ROUND_POINTS: Record<string, number> = {
@@ -29,10 +31,21 @@ const EMPTY_ACTUAL_RESULTS = {
   thirdPlace: null as string | null,
 };
 
-interface Team {
-  id: string;
-  name: string;
-  flag: string;
+function ScoreTeamChip({
+  team,
+  isMatched,
+}: {
+  team: Team;
+  isMatched: boolean;
+}) {
+  return (
+    <TeamBadge
+      team={team}
+      matched={isMatched}
+      eliminated={!isMatched}
+      size="compact"
+    />
+  );
 }
 
 function RoundCard({
@@ -79,33 +92,7 @@ function RoundCard({
           {teams.map((team) => {
             const isMatched = actualTeamIds.has(team.id);
             return (
-              <div
-                key={team.id}
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-2 py-1.5",
-                  isMatched
-                    ? "bg-emerald-100 dark:bg-emerald-900/40"
-                    : "bg-slate-100 opacity-50 dark:bg-slate-700/30",
-                )}
-              >
-                <span
-                  role="img"
-                  aria-label={`${team.name} flag`}
-                  className="shrink-0 text-sm leading-none"
-                >
-                  {team.flag}
-                </span>
-                <span
-                  className={cn(
-                    "min-w-0 flex-1 truncate text-xs font-bold",
-                    isMatched
-                      ? "text-emerald-800 dark:text-emerald-300"
-                      : "text-slate-400 dark:text-slate-500",
-                  )}
-                >
-                  {team.name}
-                </span>
-              </div>
+              <ScoreTeamChip key={team.id} team={team} isMatched={isMatched} />
             );
           })}
         </div>
@@ -149,7 +136,8 @@ function WinnerCard({
   icon: React.ReactNode;
 }) {
   const t = useTranslations("score");
-  const isMatched = team && actualWinnerId && team.id === actualWinnerId;
+  const isMatched =
+    team !== null && actualWinnerId !== null && team.id === actualWinnerId;
   const earnedPoints = isMatched ? points : 0;
 
   return (
@@ -165,35 +153,18 @@ function WinnerCard({
       </div>
 
       {team ? (
-        <div
-          className={cn(
-            "flex items-center gap-3 rounded-lg p-3",
-            isMatched
-              ? "bg-emerald-100 dark:bg-emerald-900/40"
-              : "bg-slate-100 opacity-60 dark:bg-slate-700/30",
-          )}
-        >
+        <div className="flex items-center gap-3">
           {icon}
-          <span
-            role="img"
-            aria-label={`${team.name} flag`}
-            className="shrink-0 text-xl leading-none"
-          >
-            {team.flag}
-          </span>
-          <span
-            className={cn(
-              "min-w-0 flex-1 truncate text-base font-bold",
-              isMatched
-                ? "text-emerald-800 dark:text-emerald-300"
-                : "text-slate-400 dark:text-slate-500",
-            )}
-          >
-            {team.name}
-          </span>
+          <div className="flex-1 min-w-0">
+            <TeamBadge
+              team={team}
+              matched={isMatched}
+              eliminated={!isMatched}
+            />
+          </div>
           <span
             className={cn(
-              "text-lg font-bold",
+              "text-lg font-bold shrink-0",
               isMatched
                 ? "text-emerald-600 dark:text-emerald-400"
                 : "text-slate-300 dark:text-slate-600",

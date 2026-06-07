@@ -1,5 +1,5 @@
 import combinationsData from "../../data/worldcup.combinations.json";
-import { getGroups } from "./teams";
+import { getGroups, type Team } from "./teams";
 
 export type GroupOrders = Record<string, string[]>;
 export type ThirdPlaceOrder = string[];
@@ -441,16 +441,11 @@ export function getOrderedThirdPlaceTeams(
   return [...valid.map((id) => byId.get(id) as ThirdPlaceTeam), ...newEntries];
 }
 
-const teamLookupByLocale: Record<
-  string,
-  Map<string, { id: string; name: string; flag: string }>
-> = {};
+const teamLookupByLocale: Record<string, Map<string, Team>> = {};
 
-export function getAllTeamsLookup(
-  locale: string,
-): Map<string, { id: string; name: string; flag: string }> {
+export function getAllTeamsLookup(locale: string): Map<string, Team> {
   if (teamLookupByLocale[locale]) return teamLookupByLocale[locale];
-  const lookup = new Map<string, { id: string; name: string; flag: string }>();
+  const lookup = new Map<string, Team>();
   for (const group of getGroups(locale)) {
     for (const team of group.teams) {
       lookup.set(team.id, team);
@@ -464,7 +459,7 @@ export function getTeamsInRound(
   state: TournamentState,
   round: KnockoutRound,
   locale: string,
-): { id: string; name: string; flag: string }[] {
+): Team[] {
   const lookup = getAllTeamsLookup(locale);
   const ids = new Set<string>();
   for (const match of Object.values(state.knockoutMatches)) {
@@ -474,7 +469,5 @@ export function getTeamsInRound(
   }
   return Array.from(ids)
     .map((id) => lookup.get(id))
-    .filter(
-      (t): t is { id: string; name: string; flag: string } => t !== undefined,
-    );
+    .filter((t): t is Team => t !== undefined);
 }

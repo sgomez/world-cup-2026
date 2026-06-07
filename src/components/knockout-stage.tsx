@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import type { Dispatch } from "react";
+import { TeamBadge } from "@/components/team-badge";
 import {
   getAllTeamsLookup,
   KNOCKOUT_MATCH_IDS,
@@ -9,13 +10,8 @@ import {
   type TournamentAction,
   type TournamentState,
 } from "@/lib/prediction-state";
+import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
-
-interface Team {
-  id: string;
-  name: string;
-  flag: string;
-}
 
 function EmptySlot() {
   return (
@@ -28,7 +24,7 @@ function EmptySlot() {
   );
 }
 
-function MatchTeamRow({
+export function MatchTeamRow({
   team,
   isWinner,
   isLoser,
@@ -48,44 +44,27 @@ function MatchTeamRow({
       disabled={!canSelect}
       type="button"
       className={cn(
-        "flex w-full items-center gap-2 rounded-md px-2 py-2.5 text-left transition-all sm:py-1.5",
-        canSelect &&
-          "cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-600/80",
+        "relative block w-full text-left transition-all duration-200 focus:outline-none rounded-md",
+        canSelect && "cursor-pointer hover:opacity-90 active:scale-[0.99]",
         !canSelect && "cursor-default",
-        isWinner && "bg-emerald-100 dark:bg-emerald-900/40",
-        isLoser && "opacity-40 grayscale",
       )}
     >
-      <span
-        role="img"
-        aria-label={`${team.name} flag`}
-        className="shrink-0 text-xl leading-none sm:text-sm"
-      >
-        {team.flag}
-      </span>
-      <span
-        className={cn(
-          "min-w-0 flex-1 truncate text-sm font-bold tracking-tight sm:text-xs",
-          isWinner
-            ? "text-emerald-700 dark:text-emerald-400"
-            : "text-slate-900 dark:text-white",
-        )}
-      >
-        {team.name}
-      </span>
+      <TeamBadge team={team} matched={isWinner} eliminated={isLoser} />
       {isWinner && (
-        <svg
-          aria-hidden="true"
-          className="h-3 w-3 text-emerald-600 dark:text-emerald-400"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path
-            fillRule="evenodd"
-            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-            clipRule="evenodd"
-          />
-        </svg>
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center pointer-events-none">
+          <svg
+            aria-hidden="true"
+            className="h-4 w-4 text-success dark:text-success-bright"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
       )}
     </button>
   );
