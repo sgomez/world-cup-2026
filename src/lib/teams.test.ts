@@ -59,6 +59,29 @@ describe("getGroups", () => {
     expect(keys).not.toContain("confed");
   });
 
+  it("team shape includes code", () => {
+    const team: Team = groupA.teams[0];
+    expect(team).toHaveProperty("code");
+    expect(typeof team.code).toBe("string");
+    expect(team.code.length).toBeGreaterThan(0);
+  });
+
+  it("team code is correct for a standard team (Mexico = mx)", () => {
+    const mex = groupA.teams.find((t) => t.id === "mex");
+    expect(mex?.code).toBe("mx");
+  });
+
+  it("England code is gb-eng (sub-national, not derivable from emoji)", () => {
+    const groupL = enGroups.find((g) => g.group === "L")!;
+    const eng = groupL.teams.find((t) => t.id === "eng");
+    expect(eng?.code).toBe("gb-eng");
+  });
+
+  it("team code is present and non-empty in es locale", () => {
+    const kor = esGroups[0].teams.find((t) => t.id === "kor");
+    expect(kor?.code).toBe("kr");
+  });
+
   it("GroupData shape has group and teams", () => {
     const g: GroupData = enGroups[0];
     expect(g).toHaveProperty("group");

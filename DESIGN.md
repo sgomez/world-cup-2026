@@ -2,7 +2,7 @@
 version: alpha
 name: Sports-design-analysis
 description: |
-  A photography-first commerce system built on extreme typographic contrast — towering uppercase Futura display lockups burned into editorial campaign imagery, sitting above a dense, neutral, near-monochrome retail chrome of pill-shaped black CTAs, gray search and tag pills, and tight 8px-grid product cards. The brand's voice is athletic, kinetic, and absolute: pure black, pure white, a single soft surface gray, and a deliberately small set of semantic accents (sale red, success green, restrained category tints) — every chromatic moment is reserved for editorial photography or pricing signal, never decorative chrome.
+  A photography-first commerce system built on extreme typographic contrast — towering uppercase Oswald display lockups burned into editorial campaign imagery, sitting above a dense, neutral, near-monochrome retail chrome of pill-shaped black CTAs, gray search and tag pills, and tight 8px-grid product cards. The brand's voice is athletic, kinetic, and absolute: pure black, pure white, a single soft surface gray, and a deliberately small set of semantic accents (sale red, success green, restrained category tints) — every chromatic moment is reserved for editorial photography or pricing signal, never decorative chrome.
 
 colors:
   primary: "#111111"
@@ -31,11 +31,11 @@ colors:
 
 typography:
   display-campaign:
-    fontFamily: Sports Futura ND
+    fontFamily: Oswald
     fontSize: 96px
-    fontWeight: 500
+    fontWeight: 600
     lineHeight: 0.9
-    letterSpacing: 0
+    letterSpacing: -0.02em
     textTransform: uppercase
   heading-xl:
     fontFamily: Helvetica Now Display Medium
@@ -260,14 +260,14 @@ components:
 
 ## Overview
 
-Sports's commerce system is built on a single, almost violently simple idea: photography speaks, the chrome doesn't. Every page reads as an athletic editorial — towering uppercase Futura display lockups (`{typography.display-campaign}`) burned into full-bleed campaign imagery, with everything else (nav, filters, buttons, cards, footer) reduced to neutral typography and pill geometry on `{colors.canvas}` and `{colors.soft-cloud}`. There is no decorative gradient, no soft shadow nostalgia, no accent color used for "tone" — the system saves all chromatic energy for product photography and the small handful of moments that actually need to signal (sale price `{colors.sale}`, success `{colors.success}`, swatch dots).
+Sports's commerce system is built on a single, almost violently simple idea: photography speaks, the chrome doesn't. Every page reads as an athletic editorial — towering uppercase Oswald display lockups (`{typography.display-campaign}`) burned into full-bleed campaign imagery, with everything else (nav, filters, buttons, cards, footer) reduced to neutral typography and pill geometry on `{colors.canvas}` and `{colors.soft-cloud}`. There is no decorative gradient, no soft shadow nostalgia, no accent color used for "tone" — the system saves all chromatic energy for product photography and the small handful of moments that actually need to signal (sale price `{colors.sale}`, success `{colors.success}`, swatch dots).
 
 The result is a layout that feels physical — campaign hero, product grid, sport tile, footer — stacked like a printed catalog rather than animated like a typical SaaS landing page. Density is high but never crowded, because the system relies on three relentless devices: square or near-square 1:1 product imagery on `{colors.soft-cloud}`, sharp black CTAs (`{rounded.lg}`) anchoring every actionable surface, and a tight 8px-base spacing scale that keeps cards and filters mathematically aligned across PLP, PDP, and editorial pages.
 
 Across `/men`, the trail-running listing, the Zegama PDP, `/membership`, and Jordan Golf, the same chrome appears in identical proportions — only the photography and copy change. That is the system's signature: maximum editorial expression in the imagery, maximum mechanical restraint everywhere else.
 
 **Key Characteristics:**
-- Editorial campaign hero with `{typography.display-campaign}` (Sports Futura ND, 96px, line-height 0.9, uppercase) burned directly into full-bleed photography
+- Editorial campaign hero with `{typography.display-campaign}` (Oswald, 96px, line-height 0.9, uppercase) burned directly into full-bleed photography
 - Pure black/white/single-gray UI palette: `{colors.ink}`, `{colors.canvas}`, and `{colors.soft-cloud}` carry ~95% of the chrome surface area
 - Sharp geometry: every CTA, search field, filter chip, and badge uses `{rounded.lg}` (6px) or `{rounded.md}` (4px) — there are no fully pill-shaped buttons in the system anymore, save for circular dots and icons
 - Product cards have zero radius, zero shadow, sit directly on `{colors.soft-cloud}` swatch backgrounds — the photograph is the card
@@ -315,20 +315,20 @@ These appear sparingly — almost exclusively as small chip backgrounds, swatch 
 ## Typography
 
 ### Font Family
-- **Sports Futura ND** (display campaign only) — proprietary geometric sans for the towering uppercase headlines burned into campaign hero photography. Falls back to Helvetica Now Text Medium → Helvetica → Arial.
+- **Oswald** (display campaign only) — condensed geometric sans loaded via Google Fonts. Used for towering uppercase headlines burned into campaign hero photography and team name display in the tournament UI.
 - **Helvetica Now Display Medium** (headings 16–32px) — modern Helvetica cut tuned for display sizes; carries every section title, PDP product name, and dialog headline.
 - **Helvetica Now Text Medium** (UI 12–16px) — buttons, captions, swatch labels, badge text. The system's UI workhorse.
 - **Helvetica Now Text** (body and links) — long-form body and underlined inline links.
 - **Neue Frutiger Arabic** — RTL pairing for Arabic locales at `{typography.heading-lg}` and caption sizes.
 - **Helvetica Neue 9px** — legal-fine-print utility row only (`{typography.utility-xs}`).
 
-When substituting on systems without proprietary Sports fonts: pair **Inter** (Display 700 for body chrome, Display 500 for buttons) with **Bebas Neue** or **Anton** at 96px/0.9 line-height for the campaign headline tier. Tighten letter-spacing slightly (-0.5%) on the substitute to approximate Futura ND's optical weight.
+Fallbacks for the display tier: **Bebas Neue** → **Anton** → sans-serif (all loaded via Google Fonts as well).
 
 ### Hierarchy
 
 | Token | Size | Weight | Line Height | Letter Spacing | Use |
 |---|---|---|---|---|---|
-| `{typography.display-campaign}` | 96px | 500 | 0.9 | 0 | Editorial campaign headline burned into hero photography (uppercase) |
+| `{typography.display-campaign}` | 96px | 600 | 0.9 | -0.02em | Editorial campaign headline burned into hero photography (uppercase) |
 | `{typography.heading-xl}` | 32px | 500 | 1.2 | 0 | Section headers — "FEATURED FOOTWEAR", "LATEST IN CLOTHING", PDP product title block |
 | `{typography.heading-lg}` | 24px | 500 | 1.2 | 0 | Subsection / member-benefit card title, large CTA label, PDP price |
 | `{typography.heading-md}` | 16px | 500 | 1.75 | 0 | Card title, FAQ row label, filter group header |
@@ -343,7 +343,7 @@ When substituting on systems without proprietary Sports fonts: pair **Inter** (D
 | `{typography.utility-xs}` | 9px | 500 | 1.75 | 0 | Legal copyright / fine-print row at the very bottom |
 
 ### Principles
-The system runs on extreme typographic contrast: a single 96px uppercase display tier reserved for editorial campaign moments, and a quiet 12–16px Helvetica Now Text/Medium tier carrying everything else. There is almost no middle ground — the jump from `{typography.heading-xl}` (32px) directly to `{typography.body-strong}` (16px) is intentional and creates the "billboard above, catalog below" effect across every page. Letter-spacing is left at 0 (Futura ND and Helvetica Now are both cut for tight optical fit at scale).
+The system runs on extreme typographic contrast: a single 96px uppercase display tier reserved for editorial campaign moments, and a quiet 12–16px Helvetica Now Text/Medium tier carrying everything else. There is almost no middle ground — the jump from `{typography.heading-xl}` (32px) directly to `{typography.body-strong}` (16px) is intentional and creates the "billboard above, catalog below" effect across every page. Oswald's condensed geometry tightens naturally at large scale; letter-spacing is set to -0.02em to match.
 
 ### Note on Font Substitutes
 The closest open-source path to Sports's display tier is **Bebas Neue** (free, geometric condensed) at 96px / 0.9 / uppercase / 500. For UI text, **Inter** is the safest substitute — match weights 400/500 and the system reads almost identically at button and caption sizes.
@@ -376,7 +376,7 @@ The system has no drop-shadow elevation in its retail chrome at all. Cards do no
 
 ### Decorative Depth
 Depth in Sports's system comes entirely from photography, not from CSS effects:
-- **Editorial campaign tiles** create depth via cinematic perspective — a runner on a trail, a model in a courtyard — with the Futura display headline overlaid in white or `{colors.ink}` directly on the image.
+- **Editorial campaign tiles** create depth via cinematic perspective — a runner on a trail, a model in a courtyard — with the Oswald display headline overlaid in white or `{colors.ink}` directly on the image.
 - **Product card photography** is shot on flat `{colors.soft-cloud}` to remove any background depth, so the product itself is the only thing with form on the page.
 - **Sport-category tiles** on the home page are full-bleed cinematic photography with a small `{component.button-outline-on-image}` pill anchored at the bottom-left, giving a moment of crisp white pill against atmospheric image.
 
@@ -394,7 +394,7 @@ Depth in Sports's system comes entirely from photography, not from CSS effects:
 
 ### Photography Geometry
 - **Product cards:** consistent 1:1 square or near-square (~4:5 portrait on tall product crops), full-bleed within the card with no padding, sitting on `{colors.soft-cloud}` backdrop.
-- **Editorial campaign hero:** ~16:9 or wider cinematic crop, full-bleed across the content max-width, with the Futura display headline burned into the lower-left or upper-left third.
+- **Editorial campaign hero:** ~16:9 or wider cinematic crop, full-bleed across the content max-width, with the Oswald display headline burned into the lower-left or upper-left third.
 - **Sport-category rail:** 4:5 portrait full-bleed thumbnails with a small CTA pill anchored bottom-left.
 - **PDP main image:** square primary image with vertical thumbnail rail to its left (~5–7 thumbnails stacked at small size), enabling rapid color/angle browsing without leaving the page.
 - **Avatar / category icon cards:** centered illustrated icon at ~80–96px on `{colors.canvas}` with `{typography.caption-md}` label below.
@@ -508,7 +508,7 @@ Depth in Sports's system comes entirely from photography, not from CSS effects:
 ## Do's and Don'ts
 
 ### Do
-- Reserve `{typography.display-campaign}` exclusively for editorial campaign hero lockups — never use 96px Futura for section headers or product titles.
+- Reserve `{typography.display-campaign}` exclusively for editorial campaign hero lockups and team name display — never use 96px Oswald for section headers or product titles.
 - Use `{component.button-primary}` (`{colors.ink}` pill) as the single primary action per viewport. Pair it at most with `{component.button-secondary}` (`{colors.soft-cloud}` pill) for a soft alternative.
 - Stage every product photograph on `{colors.soft-cloud}` — the gray is the system's "studio."
 - Keep all CTAs rounded at `{rounded.lg}` (6px). Never introduce a completely square or `{rounded.sm}` button.
@@ -538,7 +538,7 @@ Depth in Sports's system comes entirely from photography, not from CSS effects:
 | tablet | 1023–961px | 3-up PLP collapses to 2-up; "Hide Filters" becomes a default toggle |
 | tablet-narrow | 960–640px | Primary nav center cluster collapses to a hamburger drawer; search pill becomes icon-only |
 | mobile-landscape | 639–600px | 2-up PLP collapses to 1-up; product cards become full-width with image and metadata stacking |
-| mobile | 599–320px | Single-column everything; campaign tiles render at full screen width with shorter Futura sizes (~64px) |
+| mobile | 599–320px | Single-column everything; campaign tiles render at full screen width with shorter Oswald display sizes (~64px) |
 
 ### Touch Targets
 All interactive elements meet WCAG AAA (44×44px minimum). Pills (`{component.button-primary}`, `{component.button-secondary}`) sit at 48px height with 32px horizontal padding. Icon-circular buttons (`{component.button-icon-circular}`) sit at 40px — Sports's PDP carousel paddle and wishlist heart sit just under AAA but above AA at 40×40, with hit-target padding extending the tappable area to 48px+. Filter-chip pills are 40px height with 16px padding.

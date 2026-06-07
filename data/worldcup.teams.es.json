@@ -6,7 +6,8 @@
     "flag_unicode": "\\u{1F1F2}\\u{1F1FD}",
     "fifa_code": "MEX",
     "group": "A",
-    "confed": "CONCACAF"
+    "confed": "CONCACAF",
+    "iso_code": "mx"
   },
   {
     "name": "Sudáfrica",
@@ -15,7 +16,8 @@
     "flag_unicode": "\\u{1F1FF}\\u{1F1E6}",
     "fifa_code": "RSA",
     "group": "A",
-    "confed": "CAF"
+    "confed": "CAF",
+    "iso_code": "za"
   },
   {
     "name": "Corea del Sur",
@@ -25,7 +27,8 @@
     "flag_unicode": "\\u{1F1F0}\\u{1F1F7}",
     "fifa_code": "KOR",
     "group": "A",
-    "confed": "AFC"
+    "confed": "AFC",
+    "iso_code": "kr"
   },
   {
     "name": "República Checa",
@@ -35,7 +38,8 @@
     "flag_unicode": "\\u{1F1E8}\\u{1F1FF}",
     "fifa_code": "CZE",
     "group": "A",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "cz"
   },
   {
     "name": "Canadá",
@@ -44,7 +48,8 @@
     "flag_unicode": "\\u{1F1E8}\\u{1F1E6}",
     "fifa_code": "CAN",
     "group": "B",
-    "confed": "CONCACAF"
+    "confed": "CONCACAF",
+    "iso_code": "ca"
   },
   {
     "name": "Bosnia y Herzegovina",
@@ -53,7 +58,8 @@
     "flag_unicode": "\\u{1F1E7}\\u{1F1E6}",
     "fifa_code": "BIH",
     "group": "B",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "ba"
   },
   {
     "name": "Catar",
@@ -62,7 +68,8 @@
     "flag_unicode": "\\u{1F1F6}\\u{1F1E6}",
     "fifa_code": "QAT",
     "group": "B",
-    "confed": "AFC"
+    "confed": "AFC",
+    "iso_code": "qa"
   },
   {
     "name": "Suiza",
@@ -71,7 +78,8 @@
     "flag_unicode": "\\u{1F1E8}\\u{1F1ED}",
     "fifa_code": "SUI",
     "group": "B",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "ch"
   },
   {
     "name": "Brasil",
@@ -80,7 +88,8 @@
     "flag_unicode": "\\u{1F1E7}\\u{1F1F7}",
     "fifa_code": "BRA",
     "group": "C",
-    "confed": "CONMEBOL"
+    "confed": "CONMEBOL",
+    "iso_code": "br"
   },
   {
     "name": "Marruecos",
@@ -89,7 +98,8 @@
     "flag_unicode": "\\u{1F1F2}\\u{1F1E6}",
     "fifa_code": "MAR",
     "group": "C",
-    "confed": "CAF"
+    "confed": "CAF",
+    "iso_code": "ma"
   },
   {
     "name": "Haití",
@@ -98,7 +108,8 @@
     "flag_unicode": "\\u{1F1ED}\\u{1F1F9}",
     "fifa_code": "HAI",
     "group": "C",
-    "confed": "CONCACAF"
+    "confed": "CONCACAF",
+    "iso_code": "ht"
   },
   {
     "name": "Escocia",
@@ -107,7 +118,8 @@
     "flag_unicode": "\\u{1F3F4}\\u{E0067}\\u{E0062}\\u{E0073}\\u{E0063}\\u{E0074}\\u{E007F}",
     "fifa_code": "SCO",
     "group": "C",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "gb-sct"
   },
   {
     "name": "Estados Unidos",
@@ -117,7 +129,8 @@
     "flag_unicode": "\\u{1F1FA}\\u{1F1F8}",
     "fifa_code": "USA",
     "group": "D",
-    "confed": "CONCACAF"
+    "confed": "CONCACAF",
+    "iso_code": "us"
   },
   {
     "name": "Paraguay",
@@ -126,7 +139,8 @@
     "flag_unicode": "\\u{1F1F5}\\u{1F1FE}",
     "fifa_code": "PAR",
     "group": "D",
-    "confed": "CONMEBOL"
+    "confed": "CONMEBOL",
+    "iso_code": "py"
   },
   {
     "name": "Australia",
@@ -135,7 +149,8 @@
     "flag_unicode": "\\u{1F1E6}\\u{1F1FA}",
     "fifa_code": "AUS",
     "group": "D",
-    "confed": "AFC"
+    "confed": "AFC",
+    "iso_code": "au"
   },
   {
     "name": "Turquía",
@@ -145,7 +160,8 @@
     "flag_unicode": "\\u{1F1F9}\\u{1F1F7}",
     "fifa_code": "TUR",
     "group": "D",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "tr"
   },
   {
     "name": "Alemania",
@@ -154,7 +170,8 @@
     "flag_unicode": "\\u{1F1E9}\\u{1F1EA}",
     "fifa_code": "GER",
     "group": "E",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "de"
   },
   {
     "name": "Curazao",
@@ -163,7 +180,8 @@
     "flag_unicode": "\\u{1F1E8}\\u{1F1FC}",
     "fifa_code": "CUW",
     "group": "E",
-    "confed": "CONCACAF"
+    "confed": "CONCACAF",
+    "iso_code": "cw"
   },
   {
     "name": "Costa de Marfil",
@@ -173,7 +191,8 @@
     "flag_unicode": "\\u{1F1E8}\\u{1F1EE}",
     "fifa_code": "CIV",
     "group": "E",
-    "confed": "CAF"
+    "confed": "CAF",
+    "iso_code": "ci"
   },
   {
     "name": "Ecuador",
@@ -182,7 +201,8 @@
     "flag_unicode": "\\u{1F1EA}\\u{1F1E8}",
     "fifa_code": "ECU",
     "group": "E",
-    "confed": "CONMEBOL"
+    "confed": "CONMEBOL",
+    "iso_code": "ec"
   },
   {
     "name": "Países Bajos",
@@ -191,7 +211,8 @@
     "flag_unicode": "\\u{1F1F3}\\u{1F1F1}",
     "fifa_code": "NED",
     "group": "F",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "nl"
   },
   {
     "name": "Japón",
@@ -200,7 +221,8 @@
     "flag_unicode": "\\u{1F1EF}\\u{1F1F5}",
     "fifa_code": "JPN",
     "group": "F",
-    "confed": "AFC"
+    "confed": "AFC",
+    "iso_code": "jp"
   },
   {
     "name": "Suecia",
@@ -209,7 +231,8 @@
     "flag_unicode": "\\u{1F1F8}\\u{1F1EA}",
     "fifa_code": "SWE",
     "group": "F",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "se"
   },
   {
     "name": "Túnez",
@@ -218,7 +241,8 @@
     "flag_unicode": "\\u{1F1F9}\\u{1F1F3}",
     "fifa_code": "TUN",
     "group": "F",
-    "confed": "CAF"
+    "confed": "CAF",
+    "iso_code": "tn"
   },
   {
     "name": "Bélgica",
@@ -227,7 +251,8 @@
     "flag_unicode": "\\u{1F1E7}\\u{1F1EA}",
     "fifa_code": "BEL",
     "group": "G",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "be"
   },
   {
     "name": "Egipto",
@@ -236,7 +261,8 @@
     "flag_unicode": "\\u{1F1EA}\\u{1F1EC}",
     "fifa_code": "EGY",
     "group": "G",
-    "confed": "CAF"
+    "confed": "CAF",
+    "iso_code": "eg"
   },
   {
     "name": "Irán",
@@ -246,7 +272,8 @@
     "flag_unicode": "\\u{1F1EE}\\u{1F1F7}",
     "fifa_code": "IRN",
     "group": "G",
-    "confed": "AFC"
+    "confed": "AFC",
+    "iso_code": "ir"
   },
   {
     "name": "Nueva Zelanda",
@@ -255,7 +282,8 @@
     "flag_unicode": "\\u{1F1F3}\\u{1F1FF}",
     "fifa_code": "NZL",
     "group": "G",
-    "confed": "OFC"
+    "confed": "OFC",
+    "iso_code": "nz"
   },
   {
     "name": "España",
@@ -264,7 +292,8 @@
     "flag_unicode": "\\u{1F1EA}\\u{1F1F8}",
     "fifa_code": "ESP",
     "group": "H",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "es"
   },
   {
     "name": "Cabo Verde",
@@ -274,7 +303,8 @@
     "flag_unicode": "\\u{1F1E8}\\u{1F1FB}",
     "fifa_code": "CPV",
     "group": "H",
-    "confed": "CAF"
+    "confed": "CAF",
+    "iso_code": "cv"
   },
   {
     "name": "Arabia Saudita",
@@ -283,7 +313,8 @@
     "flag_unicode": "\\u{1F1F8}\\u{1F1E6}",
     "fifa_code": "KSA",
     "group": "H",
-    "confed": "AFC"
+    "confed": "AFC",
+    "iso_code": "sa"
   },
   {
     "name": "Uruguay",
@@ -292,7 +323,8 @@
     "flag_unicode": "\\u{1F1FA}\\u{1F1FE}",
     "fifa_code": "URU",
     "group": "H",
-    "confed": "CONMEBOL"
+    "confed": "CONMEBOL",
+    "iso_code": "uy"
   },
   {
     "name": "Francia",
@@ -301,7 +333,8 @@
     "flag_unicode": "\\u{1F1EB}\\u{1F1F7}",
     "fifa_code": "FRA",
     "group": "I",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "fr"
   },
   {
     "name": "Senegal",
@@ -310,7 +343,8 @@
     "flag_unicode": "\\u{1F1F8}\\u{1F1F3}",
     "fifa_code": "SEN",
     "group": "I",
-    "confed": "CAF"
+    "confed": "CAF",
+    "iso_code": "sn"
   },
   {
     "name": "Irak",
@@ -319,7 +353,8 @@
     "flag_unicode": "\\u{1F1EE}\\u{1F1F6}",
     "fifa_code": "IRQ",
     "group": "I",
-    "confed": "AFC"
+    "confed": "AFC",
+    "iso_code": "iq"
   },
   {
     "name": "Noruega",
@@ -328,7 +363,8 @@
     "flag_unicode": "\\u{1F1F3}\\u{1F1F4}",
     "fifa_code": "NOR",
     "group": "I",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "no"
   },
   {
     "name": "Argentina",
@@ -337,7 +373,8 @@
     "flag_unicode": "\\u{1F1E6}\\u{1F1F7}",
     "fifa_code": "ARG",
     "group": "J",
-    "confed": "CONMEBOL"
+    "confed": "CONMEBOL",
+    "iso_code": "ar"
   },
   {
     "name": "Argelia",
@@ -346,7 +383,8 @@
     "flag_unicode": "\\u{1F1E9}\\u{1F1FF}",
     "fifa_code": "ALG",
     "group": "J",
-    "confed": "CAF"
+    "confed": "CAF",
+    "iso_code": "dz"
   },
   {
     "name": "Austria",
@@ -355,7 +393,8 @@
     "flag_unicode": "\\u{1F1E6}\\u{1F1F9}",
     "fifa_code": "AUT",
     "group": "J",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "at"
   },
   {
     "name": "Jordania",
@@ -364,7 +403,8 @@
     "flag_unicode": "\\u{1F1EF}\\u{1F1F4}",
     "fifa_code": "JOR",
     "group": "J",
-    "confed": "AFC"
+    "confed": "AFC",
+    "iso_code": "jo"
   },
   {
     "name": "Portugal",
@@ -373,7 +413,8 @@
     "flag_unicode": "\\u{1F1F5}\\u{1F1F9}",
     "fifa_code": "POR",
     "group": "K",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "pt"
   },
   {
     "name": "Congo RD",
@@ -383,7 +424,8 @@
     "flag_unicode": "\\u{1F1E8}\\u{1F1E9}",
     "fifa_code": "COD",
     "group": "K",
-    "confed": "CAF"
+    "confed": "CAF",
+    "iso_code": "cd"
   },
   {
     "name": "Uzbekistán",
@@ -392,7 +434,8 @@
     "flag_unicode": "\\u{1F1FA}\\u{1F1FF}",
     "fifa_code": "UZB",
     "group": "K",
-    "confed": "AFC"
+    "confed": "AFC",
+    "iso_code": "uz"
   },
   {
     "name": "Colombia",
@@ -401,7 +444,8 @@
     "flag_unicode": "\\u{1F1E8}\\u{1F1F4}",
     "fifa_code": "COL",
     "group": "K",
-    "confed": "CONMEBOL"
+    "confed": "CONMEBOL",
+    "iso_code": "co"
   },
   {
     "name": "Inglaterra",
@@ -410,7 +454,8 @@
     "flag_unicode": "\\u{1F3F4}\\u{E0067}\\u{E0062}\\u{E0065}\\u{E006E}\\u{E0067}\\u{E007F}",
     "fifa_code": "ENG",
     "group": "L",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "gb-eng"
   },
   {
     "name": "Croacia",
@@ -419,7 +464,8 @@
     "flag_unicode": "\\u{1F1ED}\\u{1F1F7}",
     "fifa_code": "CRO",
     "group": "L",
-    "confed": "UEFA"
+    "confed": "UEFA",
+    "iso_code": "hr"
   },
   {
     "name": "Ghana",
@@ -428,7 +474,8 @@
     "flag_unicode": "\\u{1F1EC}\\u{1F1ED}",
     "fifa_code": "GHA",
     "group": "L",
-    "confed": "CAF"
+    "confed": "CAF",
+    "iso_code": "gh"
   },
   {
     "name": "Panamá",
@@ -437,6 +484,7 @@
     "flag_unicode": "\\u{1F1F5}\\u{1F1E6}",
     "fifa_code": "PAN",
     "group": "L",
-    "confed": "CONCACAF"
+    "confed": "CONCACAF",
+    "iso_code": "pa"
   }
 ]
