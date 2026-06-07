@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import type { Dispatch } from "react";
 import {
   getAllTeamsLookup,
@@ -155,7 +156,8 @@ function RoundSection({
   accent?: keyof typeof accentColors;
   readOnly?: boolean;
 }) {
-  const teamsLookup = getAllTeamsLookup();
+  const locale = useLocale();
+  const teamsLookup = getAllTeamsLookup(locale);
   const matchIds = KNOCKOUT_MATCH_IDS[round];
   const matchCount = matchIds.length;
 

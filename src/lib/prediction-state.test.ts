@@ -3,6 +3,7 @@ import combinationsData from "../../data/worldcup.combinations.json";
 import {
   computeR32Matches,
   createInitialState,
+  getAllTeamsLookup,
   getOrderedThirdPlaceTeams,
   predictionReducer,
 } from "./prediction-state";
@@ -483,13 +484,13 @@ describe("predictionReducer", () => {
 describe("getOrderedThirdPlaceTeams", () => {
   it("returns 12 teams", () => {
     const state = createInitialState(null);
-    const teams = getOrderedThirdPlaceTeams(state);
+    const teams = getOrderedThirdPlaceTeams(state, "en");
     expect(teams).toHaveLength(12);
   });
 
   it("each team id is the 3rd-place slot id (3rd-a format)", () => {
     const state = createInitialState(null);
-    const teams = getOrderedThirdPlaceTeams(state);
+    const teams = getOrderedThirdPlaceTeams(state, "en");
     for (const team of teams) {
       expect(team.id).toMatch(/^3rd-[a-l]$/);
     }
@@ -503,8 +504,27 @@ describe("getOrderedThirdPlaceTeams", () => {
       groupName: "A",
       orderedIds: [groupA[1], groupA[2], groupA[0], groupA[3]],
     });
-    const teams = getOrderedThirdPlaceTeams(movedLast);
+    const teams = getOrderedThirdPlaceTeams(movedLast, "en");
     const thirdA = teams.find((t) => t.id === "3rd-a");
     expect(thirdA?.originalId).toBe(groupA[0]);
+  });
+});
+
+describe("getAllTeamsLookup", () => {
+  it("returns the same Map instance on repeated calls with the same locale (module-level cache)", () => {
+    const first = getAllTeamsLookup("en");
+    const second = getAllTeamsLookup("en");
+    expect(first).toBe(second);
+  });
+
+  it("returns different Map instances for different locales", () => {
+    const en = getAllTeamsLookup("en");
+    const es = getAllTeamsLookup("es");
+    expect(en).not.toBe(es);
+  });
+
+  it("contains all 48 teams", () => {
+    const lookup = getAllTeamsLookup("en");
+    expect(lookup.size).toBe(48);
   });
 });

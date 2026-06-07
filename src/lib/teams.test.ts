@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { type GroupData, groups, type Team } from "./teams";
+import { type GroupData, getGroups, type Team } from "./teams";
 
-const groupA = groups[0];
-const groupD = groups[3];
+const enGroups = getGroups("en");
+const esGroups = getGroups("es");
+const groupA = enGroups[0];
+const groupD = enGroups[3];
 
-describe("groups", () => {
+describe("getGroups", () => {
   it("exports all 12 groups A–L in order", () => {
-    const letters = groups.map((g) => g.group);
+    const letters = enGroups.map((g) => g.group);
     expect(letters).toEqual([
       "A",
       "B",
@@ -24,7 +26,7 @@ describe("groups", () => {
   });
 
   it("each group contains exactly 4 teams", () => {
-    for (const g of groups) {
+    for (const g of enGroups) {
       expect(g.teams).toHaveLength(4);
     }
   });
@@ -58,8 +60,47 @@ describe("groups", () => {
   });
 
   it("GroupData shape has group and teams", () => {
-    const g: GroupData = groups[0];
+    const g: GroupData = enGroups[0];
     expect(g).toHaveProperty("group");
     expect(g).toHaveProperty("teams");
+  });
+});
+
+describe("getGroups Spanish locale", () => {
+  it("South Korea returns Corea del Sur in es", () => {
+    const kor = esGroups[0].teams.find((t) => t.id === "kor");
+    expect(kor?.name).toBe("Corea del Sur");
+  });
+
+  it("Germany returns Alemania in es", () => {
+    const ger = esGroups[4].teams.find((t) => t.id === "ger");
+    expect(ger?.name).toBe("Alemania");
+  });
+
+  it("Netherlands returns Países Bajos in es", () => {
+    const ned = esGroups[5].teams.find((t) => t.id === "ned");
+    expect(ned?.name).toBe("Países Bajos");
+  });
+
+  it("England returns Inglaterra in es", () => {
+    const eng = esGroups[11].teams.find((t) => t.id === "eng");
+    expect(eng?.name).toBe("Inglaterra");
+  });
+
+  it("Brazil returns Brasil in es", () => {
+    const bra = esGroups[2].teams.find((t) => t.id === "bra");
+    expect(bra?.name).toBe("Brasil");
+  });
+
+  it("Switzerland returns Suiza in es", () => {
+    const sui = esGroups[1].teams.find((t) => t.id === "sui");
+    expect(sui?.name).toBe("Suiza");
+  });
+
+  it("en locale preserves original English names", () => {
+    const kor = enGroups[0].teams.find((t) => t.id === "kor");
+    expect(kor?.name).toBe("Korea Republic");
+    const ger = enGroups[4].teams.find((t) => t.id === "ger");
+    expect(ger?.name).toBe("Germany");
   });
 });

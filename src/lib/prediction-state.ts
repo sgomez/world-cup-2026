@@ -1,5 +1,5 @@
 import combinationsData from "../../data/worldcup.combinations.json";
-import { groups } from "./teams";
+import { getGroups } from "./teams";
 
 export type GroupOrders = Record<string, string[]>;
 export type ThirdPlaceOrder = string[];
@@ -304,11 +304,15 @@ export function createInitialState(
   saved: PredictionState | null,
   knockoutWinners?: Record<string, string> | null,
 ): TournamentState {
+  const enGroups = getGroups("en");
   const groupOrders =
     saved?.groupOrders ??
-    Object.fromEntries(groups.map((g) => [g.group, g.teams.map((t) => t.id)]));
+    Object.fromEntries(
+      enGroups.map((g) => [g.group, g.teams.map((t) => t.id)]),
+    );
   const thirdPlaceOrder =
-    saved?.thirdPlaceOrder ?? groups.map((g) => `3rd-${g.group.toLowerCase()}`);
+    saved?.thirdPlaceOrder ??
+    enGroups.map((g) => `3rd-${g.group.toLowerCase()}`);
 
   const r32 = computeR32Matches(groupOrders, thirdPlaceOrder, combinationsData);
   let knockoutMatches = { ...createEmptyKnockoutMatches(), ...r32 };
@@ -405,8 +409,11 @@ export type ThirdPlaceTeam = {
   groupName: string;
 };
 
-export function getThirdPlaceTeams(state: TournamentState): ThirdPlaceTeam[] {
-  return groups.map((group) => {
+export function getThirdPlaceTeams(
+  state: TournamentState,
+  locale: string,
+): ThirdPlaceTeam[] {
+  return getGroups(locale).map((group) => {
     const orderedIds =
       state.groupOrders[group.group] ?? group.teams.map((t) => t.id);
     const thirdId = orderedIds[2];
@@ -423,32 +430,40 @@ export function getThirdPlaceTeams(state: TournamentState): ThirdPlaceTeam[] {
 
 export function getOrderedThirdPlaceTeams(
   state: TournamentState,
+  locale: string,
 ): ThirdPlaceTeam[] {
-  const all = getThirdPlaceTeams(state);
+  const all = getThirdPlaceTeams(state, locale);
   const byId = new Map(all.map((t) => [t.id, t]));
   const valid = state.thirdPlaceOrder.filter((id) => byId.has(id));
   const newEntries = all.filter((t) => !state.thirdPlaceOrder.includes(t.id));
   return [...valid.map((id) => byId.get(id) as ThirdPlaceTeam), ...newEntries];
 }
 
-export function getAllTeamsLookup(): Map<
+const teamLookupByLocale: Record<
   string,
-  { id: string; name: string; flag: string }
-> {
+  Map<string, { id: string; name: string; flag: string }>
+> = {};
+
+export function getAllTeamsLookup(
+  locale: string,
+): Map<string, { id: string; name: string; flag: string }> {
+  if (teamLookupByLocale[locale]) return teamLookupByLocale[locale];
   const lookup = new Map<string, { id: string; name: string; flag: string }>();
-  for (const group of groups) {
+  for (const group of getGroups(locale)) {
     for (const team of group.teams) {
       lookup.set(team.id, team);
     }
   }
+  teamLookupByLocale[locale] = lookup;
   return lookup;
 }
 
 export function getTeamsInRound(
   state: TournamentState,
   round: KnockoutRound,
+  locale: string,
 ): { id: string; name: string; flag: string }[] {
-  const lookup = getAllTeamsLookup();
+  const lookup = getAllTeamsLookup(locale);
   const ids = new Set<string>();
   for (const match of Object.values(state.knockoutMatches)) {
     if (match.round !== round) continue;
