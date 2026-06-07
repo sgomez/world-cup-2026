@@ -34,6 +34,9 @@ Maximum number of Bets a User may hold at once. Configurable via environment var
 ### Bet Copy
 Creating a new Bet in `draft` status pre-populated with all predictions and the label of an existing Bet. The new Bet's label is prefixed with `"Copy of "`. If the resulting label exceeds 200 characters, it is truncated to fit.
 
+### Bet Signature
+A deterministic fingerprint of a **closed** Bet's *scoreable content* — the only data that affects its score. Two Bets with identical scoreable content always have identical Signatures, regardless of group-stage arrangement; conversely, any change that would change the score changes the Signature. The scoreable content is the set of teams reaching each knockout round (Round of 32, Round of 16, Quarter-finals, Semi-finals, Final), plus the predicted **Champion** and the predicted **third-place winner**. Group standings and individual match-ups are *not* part of it — only which teams reach each round. The Signature is derived data: it is always computed from the prediction and never stored. It is shown only for `closed` Bets (a draft has none). The Signature serves as a public commitment: it can be shown before the Bet Deadline (alongside the Bet's label and owner) without revealing the prediction, and verified against the revealed Bet afterwards.
+
 ### Profile
 A User's public-facing identity: `name` and optional `image`. A User may edit their own Profile (name and image only; email is immutable). Admins and super_admins may view any User's Profile together with their Bet list.
 
@@ -44,7 +47,7 @@ A named group of Users created by one User (the **Community Owner**). Identified
 The User who created a Community. The Owner may invite new members (via an **Invite Link**), remove existing members, and delete the Community. Ownership is not transferable. The Owner cannot leave a Community — to exit, they must delete it.
 
 ### Community Member
-A User who has joined a Community. Within a Community, Members can see the **Member List** at any time. Members can see each other's Bets only **after the Bet Deadline** (2026-06-11 19:00 UTC). Before the deadline, Bets are invisible to other Members regardless of Bet status.
+A User who has joined a Community. Within a Community, Members can see the **Member List** at any time. Members can see each other's full Bet predictions only **after the Bet Deadline** (2026-06-11 19:00 UTC). Before the deadline, a Member's predictions are invisible to other Members; however, the label, owner, and **Bet Signature** of each *closed* Bet are visible to fellow Members before the deadline (a public commitment without revealing the prediction). Draft Bets remain fully hidden until the deadline.
 
 ### Member List
 The list of Users belonging to a Community. Visible to all Members of that Community at any time.
