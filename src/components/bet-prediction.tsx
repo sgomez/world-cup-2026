@@ -232,7 +232,7 @@ export function BetPrediction({
           type="button"
           onClick={isClosed ? handleReopenClick : handleCloseClick}
           disabled={isPending}
-          className="button-secondary whitespace-nowrap"
+          className="button-primary whitespace-nowrap"
         >
           {isClosed ? t("reopenBet") : t("closeBet")}
         </button>
