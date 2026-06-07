@@ -26,7 +26,10 @@ export function JoinCommunityForm({
   return (
     <div>
       <p className="text-body-md text-foreground">
-        {t("invitedToJoin", { name: communityName })}
+        {t.rich("invitedToJoin", {
+          name: communityName,
+          strong: (chunks) => <span className="font-medium">{chunks}</span>,
+        })}
       </p>
 
       {state?.error && (

@@ -53,10 +53,14 @@ export function BetList({
             </div>
             <div className="mt-2 flex gap-4 text-caption-sm text-muted-foreground">
               <span>
-                {t("createdLabel")} {bet.createdAt.toISOString().slice(0, 10)}
+                {t("createdLabel", {
+                  date: bet.createdAt.toISOString().slice(0, 10),
+                })}
               </span>
               <span>
-                {t("updatedLabel")} {bet.updatedAt.toISOString().slice(0, 10)}
+                {t("updatedLabel", {
+                  date: bet.updatedAt.toISOString().slice(0, 10),
+                })}
               </span>
             </div>
           </Link>
