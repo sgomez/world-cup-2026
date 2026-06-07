@@ -1,5 +1,8 @@
 {
   "app": {
     "title": "World Cup 2026 Sweepstake"
+  },
+  "nav": {
+    "switchLanguage": "Switch language"
   }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { LocaleToggle } from "@/components/locale-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -67,6 +68,8 @@ export function Navbar({ user }: NavbarProps) {
           >
             My Bets
           </Link>
+
+          <LocaleToggle />
 
           <DropdownMenu>
             <DropdownMenuTrigger className="rounded-sm outline-none transition-all">
