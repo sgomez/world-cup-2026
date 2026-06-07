@@ -1,12 +1,5 @@
-export function buildInviteUrl(
-  headersList: { get(name: string): string | null },
-  token: string,
-): string {
-  const host = headersList.get("host") ?? "";
-  const proto =
-    headersList.get("x-forwarded-proto") ??
-    (host.startsWith("localhost") || host.startsWith("127.")
-      ? "http"
-      : "https");
-  return `${proto}://${host}/communities/join/${token}`;
+export function buildInviteUrl(token: string): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const cleanAppUrl = appUrl.endsWith("/") ? appUrl.slice(0, -1) : appUrl;
+  return `${cleanAppUrl}/communities/join/${token}`;
 }

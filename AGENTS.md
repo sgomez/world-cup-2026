@@ -2,6 +2,7 @@
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+- Note: Next.js middleware is now named `proxy` (defined in `src/proxy.ts`), see [Next.js Middleware to Proxy](https://nextjs.org/docs/messages/middleware-to-proxy).
 <!-- END:nextjs-agent-rules -->
 
 ## Agent skills

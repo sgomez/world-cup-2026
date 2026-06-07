@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { getCommunity } from "@/app/actions/communities";
@@ -21,7 +20,7 @@ export default async function CommunityPage({
   const community = await getCommunity(slug);
   if (!community) notFound();
 
-  const inviteUrl = buildInviteUrl(await headers(), community.inviteToken);
+  const inviteUrl = buildInviteUrl(community.inviteToken);
 
   return (
     <div className="mx-auto max-w-5xl">

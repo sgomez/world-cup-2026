@@ -1,5 +1,4 @@
 import { ArrowLeft, Crown, Link2 } from "lucide-react";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getCommunity } from "@/app/actions/communities";
@@ -29,7 +28,7 @@ export default async function CommunitySettingsPage({
   const isOwner = community.ownerId === community.currentUserId;
   if (!isOwner) notFound();
 
-  const inviteUrl = buildInviteUrl(await headers(), community.inviteToken);
+  const inviteUrl = buildInviteUrl(community.inviteToken);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
