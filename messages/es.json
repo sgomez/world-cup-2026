@@ -75,7 +75,10 @@
     "groupChangeWarningTitle": "¿Restablecer pronósticos de la fase eliminatoria?",
     "groupChangeWarningDescription": "Cambiar la clasificación restablecerá los pronósticos en conflicto de tu fase eliminatoria.",
     "groupChangeWarningConfirm": "Confirmar",
-    "signature": "Sig"
+    "signature": "Sig",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "editBetAriaLabel": "Editar nombre de la apuesta"
   },
   "groupStage": {
     "group": "Grupo {letter}",

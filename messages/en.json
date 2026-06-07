@@ -75,7 +75,10 @@
     "groupChangeWarningTitle": "Reset knockout predictions?",
     "groupChangeWarningDescription": "Changing standings will reset conflicting predictions in your knockout stage bracket.",
     "groupChangeWarningConfirm": "Confirm",
-    "signature": "Sig"
+    "signature": "Sig",
+    "save": "Save",
+    "saving": "Saving…",
+    "editBetAriaLabel": "Edit bet label"
   },
   "groupStage": {
     "group": "Group {letter}",

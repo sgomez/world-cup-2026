@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { closeBet, reopenBet } from "@/app/actions/bets";
+import { closeBet, renameBet, reopenBet } from "@/app/actions/bets";
 import type { KnockoutMatch } from "@/lib/prediction-state";
 import { BetPrediction } from "./bet-prediction";
 
@@ -42,6 +42,7 @@ vi.mock("next-intl", () => ({
 vi.mock("@/app/actions/bets", () => ({
   closeBet: vi.fn(),
   reopenBet: vi.fn(),
+  renameBet: vi.fn(),
   updateBetPredictions: vi.fn(),
 }));
 
@@ -586,5 +587,164 @@ describe("BetPrediction", () => {
     expect(
       screen.queryByText("Reset knockout predictions?"),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("Inline label editing", () => {
+  const mockRenameBet = vi.mocked(renameBet);
+
+  beforeEach(() => {
+    mockRenameBet.mockReset();
+  });
+
+  it("does not show edit button if user is not the owner", () => {
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My Bet Label"
+        isOwner={false}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={null}
+      />,
+    );
+    expect(
+      screen.queryByLabelText(/editBetAriaLabel/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not show edit button if the bet is closed", () => {
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My Bet Label"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={true}
+        savedPredictions={null}
+        savedKnockoutWinners={null}
+      />,
+    );
+    expect(
+      screen.queryByLabelText(/editBetAriaLabel/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not show edit button if the deadline has passed", () => {
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My Bet Label"
+        isOwner={true}
+        isPastDeadline={true}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={null}
+      />,
+    );
+    expect(
+      screen.queryByLabelText(/editBetAriaLabel/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows edit button when editable and enters editing mode on click", async () => {
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My Bet Label"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={null}
+      />,
+    );
+
+    const editBtn = screen.getByLabelText(/editBetAriaLabel/i);
+    expect(editBtn).toBeInTheDocument();
+
+    await userEvent.click(editBtn);
+
+    const input = screen.getByRole("textbox");
+    expect(input).toHaveValue("My Bet Label");
+    expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
+  });
+
+  it("cancels editing and reverts text on Cancel click", async () => {
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My Bet Label"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={null}
+      />,
+    );
+
+    await userEvent.click(screen.getByLabelText(/editBetAriaLabel/i));
+    const input = screen.getByRole("textbox");
+    await userEvent.clear(input);
+    await userEvent.type(input, "Changed Label");
+
+    await userEvent.click(screen.getByRole("button", { name: /cancel/i }));
+
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByText("My Bet Label")).toBeInTheDocument();
+  });
+
+  it("submits changes and updates the label in the UI on Save click", async () => {
+    mockRenameBet.mockResolvedValue({ success: true });
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My Bet Label"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={null}
+      />,
+    );
+
+    await userEvent.click(screen.getByLabelText(/editBetAriaLabel/i));
+    const input = screen.getByRole("textbox");
+    await userEvent.clear(input);
+    await userEvent.type(input, "New Awesome Label");
+
+    await userEvent.click(screen.getByRole("button", { name: /save/i }));
+
+    expect(mockRenameBet).toHaveBeenCalledWith("bet-1", "New Awesome Label");
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByText("New Awesome Label")).toBeInTheDocument();
+  });
+
+  it("handles errors during save gracefully", async () => {
+    mockRenameBet.mockRejectedValue(new Error("Database error"));
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My Bet Label"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={null}
+      />,
+    );
+
+    await userEvent.click(screen.getByLabelText(/editBetAriaLabel/i));
+    const input = screen.getByRole("textbox");
+    await userEvent.clear(input);
+    await userEvent.type(input, "Failed Label");
+
+    await userEvent.click(screen.getByRole("button", { name: /save/i }));
+
+    expect(mockRenameBet).toHaveBeenCalledWith("bet-1", "Failed Label");
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    expect(screen.getByText("Database error")).toBeInTheDocument();
   });
 });
