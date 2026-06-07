@@ -72,6 +72,7 @@ export function MatchTeamRow({
         matched={isWinner}
         eliminated={isLoser}
         rightAddon={checkmark}
+        border={false}
       />
     </button>
   );

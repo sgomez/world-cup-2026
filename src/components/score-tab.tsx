@@ -44,6 +44,7 @@ function ScoreTeamChip({
       matched={isMatched}
       eliminated={!isMatched}
       size="compact"
+      border={false}
     />
   );
 }
@@ -160,6 +161,7 @@ function WinnerCard({
               team={team}
               matched={isMatched}
               eliminated={!isMatched}
+              border={false}
             />
           </div>
           <span
