@@ -69,6 +69,15 @@ export async function closeBet(betId: string): Promise<BetActionState> {
   if (BET_DEADLINE.getTime() < Date.now())
     return { error: "Deadline has passed" };
 
+  const knockoutWinners = result.bet.knockoutWinners as Record<
+    string,
+    string
+  > | null;
+  const count = knockoutWinners ? Object.keys(knockoutWinners).length : 0;
+  if (count < 32) {
+    return { error: "Predictions are incomplete" };
+  }
+
   await prisma.bet.update({ where: { id: betId }, data: { status: "closed" } });
   revalidatePath(`/bets/${betId}`);
   revalidatePath("/bets");

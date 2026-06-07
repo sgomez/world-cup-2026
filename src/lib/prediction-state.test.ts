@@ -321,6 +321,48 @@ describe("predictionReducer", () => {
     expect(next.knockoutMatches["R16-90"].team1Id).toBe(winner);
   });
 
+  it("SET_KNOCKOUT_WINNER clears downstream winners in cascade when winner changes", () => {
+    let state = createInitialState(null);
+    const [_a0, a1, a2] = state.groupOrders.A;
+    const [f0] = state.groupOrders.F;
+
+    // Set R32-73 winner to a1 (2A)
+    state = predictionReducer(state, {
+      type: "SET_KNOCKOUT_WINNER",
+      matchId: "R32-73",
+      winnerId: a1,
+    });
+    // Set R32-75 winner to f0
+    state = predictionReducer(state, {
+      type: "SET_KNOCKOUT_WINNER",
+      matchId: "R32-75",
+      winnerId: f0,
+    });
+    // Set R16-90 winner to a1
+    state = predictionReducer(state, {
+      type: "SET_KNOCKOUT_WINNER",
+      matchId: "R16-90",
+      winnerId: a1,
+    });
+    expect(state.knockoutMatches["QF-97"].team2Id).toBe(a1);
+
+    // Now, change the winner of R32-73 to a2
+    state = predictionReducer(state, {
+      type: "SET_KNOCKOUT_WINNER",
+      matchId: "R32-73",
+      winnerId: a2,
+    });
+
+    // R32-73 winner should be a2
+    expect(state.knockoutMatches["R32-73"].winnerId).toBe(a2);
+    // R16-90 team1Id should be a2
+    expect(state.knockoutMatches["R16-90"].team1Id).toBe(a2);
+    // R16-90 winnerId should be cleared (null) since a1 is no longer in R16-90!
+    expect(state.knockoutMatches["R16-90"].winnerId).toBeNull();
+    // QF-97 team2Id should be cleared (null)
+    expect(state.knockoutMatches["QF-97"].team2Id).toBeNull();
+  });
+
   it("SET_KNOCKOUT_WINNER for SF-101 sets loser in 3RD match slot 1", () => {
     // Build up state with teams in SF-101
     // SF-101: W97 vs W98 — need to trace back from R32

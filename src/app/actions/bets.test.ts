@@ -384,9 +384,20 @@ describe("closeBet", () => {
     vi.restoreAllMocks();
   });
 
+  it("returns error when predictions are incomplete", async () => {
+    mockSession();
+    mockBet({ knockoutWinners: { "R32-1": "mex" } });
+    const result = await closeBet(BET_ID);
+    expect(result).toEqual({ error: "Predictions are incomplete" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
   it("sets status to closed and returns success", async () => {
     mockSession();
-    mockBet();
+    const completeWinners = Object.fromEntries(
+      Array.from({ length: 32 }, (_, i) => [`M${i}`, `team-${i}`]),
+    );
+    mockBet({ knockoutWinners: completeWinners });
     mockUpdate.mockResolvedValue({} as Awaited<ReturnType<typeof mockUpdate>>);
     const result = await closeBet(BET_ID);
     expect(result).toEqual({ success: true });
