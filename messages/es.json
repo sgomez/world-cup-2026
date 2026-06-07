@@ -62,7 +62,10 @@
     "closeBet": "Cerrar apuesta",
     "groupStageTab": "Fase de Grupos",
     "knockoutStageTab": "Fase Eliminatoria",
-    "scoreTab": "Puntuación"
+    "scoreTab": "Puntuación",
+    "incompleteTitle": "Pronósticos incompletos",
+    "incompleteDescription": "Has pronosticado {predicted} de {total} partidos de la fase eliminatoria. Debes completarlos todos antes de cerrar tu apuesta.",
+    "ok": "Aceptar"
   },
   "groupStage": {
     "group": "Grupo {letter}",

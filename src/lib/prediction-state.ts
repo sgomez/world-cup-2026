@@ -180,10 +180,20 @@ function applyWinnerToMatches(
 ): Record<string, KnockoutMatch> {
   const match = matches[matchId];
   if (!match) return matches;
-  const loserId = match.team1Id === winnerId ? match.team2Id : match.team1Id;
+
+  let currentMatches = matches;
+  if (match.winnerId && match.winnerId !== winnerId) {
+    currentMatches = cascadeClearWinner(matches, matchId);
+  }
+
+  const updatedMatch = currentMatches[matchId] || match;
+  const loserId =
+    updatedMatch.team1Id === winnerId
+      ? updatedMatch.team2Id
+      : updatedMatch.team1Id;
   let newMatches = {
-    ...matches,
-    [matchId]: { ...match, winnerId, loserId },
+    ...currentMatches,
+    [matchId]: { ...updatedMatch, winnerId, loserId },
   };
   const prog = matchProgression[matchId];
   if (prog) {

@@ -1,7 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
 import { BetPrediction } from "@/components/bet-prediction";
-import { BetStatusToggle } from "@/components/bet-status-toggle";
-import { PageHeader } from "@/components/ui/page-header";
 import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
 import type { PredictionState } from "@/lib/prediction-state";
@@ -34,21 +32,14 @@ export default async function BetPage({
 
   return (
     <div>
-      <div className="mb-6">
-        <PageHeader
-          title={bet.label}
-          action={
-            isOwner && !isPastDeadline ? (
-              <BetStatusToggle betId={bet.id} isClosed={isClosed} />
-            ) : undefined
-          }
-        />
-      </div>
       <BetPrediction
         betId={bet.id}
+        betLabel={bet.label}
+        isOwner={isOwner}
+        isPastDeadline={isPastDeadline}
+        isClosed={isClosed}
         savedPredictions={savedPredictions}
         savedKnockoutWinners={savedKnockoutWinners}
-        readOnly={!isOwner || isClosed}
       />
     </div>
   );

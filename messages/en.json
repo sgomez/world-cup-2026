@@ -62,7 +62,10 @@
     "closeBet": "Close bet",
     "groupStageTab": "Group Stage",
     "knockoutStageTab": "Knockout Stage",
-    "scoreTab": "Score"
+    "scoreTab": "Score",
+    "incompleteTitle": "Incomplete Predictions",
+    "incompleteDescription": "You have predicted {predicted} of {total} knockout matches. You must complete all matches before closing your bet.",
+    "ok": "OK"
   },
   "groupStage": {
     "group": "Group {letter}",
