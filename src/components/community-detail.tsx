@@ -2,8 +2,6 @@
 
 import {
   ArrowLeft,
-  Check,
-  Copy,
   Crown,
   Link2,
   Settings,
@@ -11,7 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { CopyInviteLinkButton } from "@/components/copy-invite-link-button";
 import { LeaveCommunityForm } from "@/components/leave-community-form";
 import { Link } from "@/i18n/navigation";
 
@@ -56,15 +54,8 @@ export function CommunityDetail({
   inviteUrl,
 }: CommunityDetailProps) {
   const t = useTranslations("communities");
-  const [copied, setCopied] = useState(false);
 
   const isOwner = community.ownerId === community.currentUserId;
-
-  function handleCopy() {
-    navigator.clipboard?.writeText(inviteUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }
 
   return (
     <div className="space-y-8">
@@ -85,30 +76,21 @@ export function CommunityDetail({
         </div>
       </header>
 
-      {/* Enlace de invitación */}
-      <section className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-sm">
+      {/* Invite link */}
+      <section className="space-y-3 rounded-xl border bg-card p-5 shadow-sm">
         <div className="flex items-center gap-2">
           <Link2 className="size-4 text-primary" aria-hidden="true" />
           <h2 className="text-caption-md font-medium text-foreground">
             {t("inviteLink")}
           </h2>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <code className="flex-1 truncate rounded-lg border border-border bg-muted/40 px-3 py-2 font-mono text-xs text-muted-foreground">
+        <div className="flex flex-col gap-3">
+          <code className="block w-full truncate rounded-md border border-hairline bg-soft-cloud px-4 py-3 font-mono text-xs text-muted-foreground">
             {inviteUrl}
           </code>
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-          >
-            {copied ? (
-              <Check className="size-3.5 text-primary" aria-hidden="true" />
-            ) : (
-              <Copy className="size-3.5" aria-hidden="true" />
-            )}
-            {copied ? t("copied") : t("copyInviteLink")}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <CopyInviteLinkButton url={inviteUrl} />
+          </div>
         </div>
         {isOwner && (
           <div className="pt-1">
@@ -123,12 +105,12 @@ export function CommunityDetail({
         )}
       </section>
 
-      {/* Miembros */}
+      {/* Members */}
       <section className="space-y-3">
         <h2 className="text-caption-md font-medium text-foreground">
           {t("members", { count: community.members.length })}
         </h2>
-        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border bg-card">
           {community.members.map((m) => (
             <li
               key={m.user.id}
@@ -157,7 +139,7 @@ export function CommunityDetail({
         </ul>
       </section>
 
-      {/* Apuestas por miembro */}
+      {/* Bets per member */}
       <section className="space-y-3">
         <h2 className="text-caption-md font-medium text-foreground">
           {t("betsTitle")}
@@ -173,7 +155,7 @@ export function CommunityDetail({
                   {m.user.bets.map((b) => (
                     <div
                       key={b.id}
-                      className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
+                      className="flex flex-wrap items-center gap-3 rounded-xl border bg-card px-4 py-3"
                     >
                       <span className="text-sm font-medium text-card-foreground">
                         {b.label}
@@ -214,7 +196,7 @@ export function CommunityDetail({
                   ))}
                 </div>
               ) : (
-                <p className="rounded-xl border border-dashed border-border px-4 py-3 text-xs text-muted-foreground">
+                <p className="rounded-xl border border-dashed px-4 py-3 text-xs text-muted-foreground">
                   {t("noBets")}
                 </p>
               )}

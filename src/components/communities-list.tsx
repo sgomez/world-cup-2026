@@ -60,7 +60,7 @@ export function CommunitiesList({ communities }: CommunitiesListProps) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("searchPlaceholder")}
-          className="h-10 w-full rounded-lg border border-input bg-card pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
+          className="search-pill w-full pl-9"
         />
       </div>
 

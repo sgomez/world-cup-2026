@@ -42,8 +42,8 @@ export default async function CommunitySettingsPage({
         </p>
       </header>
 
-      {/* Enlace de invitación */}
-      <section className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-sm">
+      {/* Invite link */}
+      <section className="space-y-3 rounded-xl border bg-card p-5 shadow-sm">
         <div className="flex items-center gap-2">
           <Link2 className="size-4 text-primary" aria-hidden="true" />
           <h2 className="text-caption-md font-medium text-foreground">
@@ -55,7 +55,7 @@ export default async function CommunitySettingsPage({
             type="text"
             readOnly
             value={inviteUrl}
-            className="h-12 w-full rounded-xl border border-input bg-muted/40 px-4 font-mono text-sm text-muted-foreground outline-none"
+            className="h-12 w-full rounded-md border border-hairline bg-soft-cloud px-4 font-mono text-sm text-muted-foreground outline-none"
           />
           <div className="flex flex-wrap items-center gap-2">
             <CopyInviteLinkButton url={inviteUrl} />
@@ -64,12 +64,12 @@ export default async function CommunitySettingsPage({
         </div>
       </section>
 
-      {/* Miembros */}
+      {/* Members */}
       <section className="space-y-3">
         <h2 className="text-caption-md font-medium text-foreground">
           {t("members", { count: community.members.length })}
         </h2>
-        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border bg-card">
           {community.members.map(({ user, userId }) => (
             <li
               key={user.id}
@@ -100,7 +100,7 @@ export default async function CommunitySettingsPage({
         </ul>
       </section>
 
-      {/* Zona de peligro */}
+      {/* Danger zone */}
       <section className="space-y-3 rounded-xl border border-sale/30 bg-card p-5 shadow-sm">
         <h2 className="text-caption-md font-medium text-sale">
           {t("deleteCommunityTitle")}

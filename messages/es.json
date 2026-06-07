@@ -150,9 +150,7 @@
     "searchPlaceholder": "Buscar comunidad...",
     "noCommunitiesShow": "No hay comunidades que mostrar",
     "noCommunitiesShowDescription": "Crea una nueva comunidad o ajusta tu búsqueda.",
-    "memberCount": "{count, plural, one {# miembro} other {# miembros}}",
-    "copyInviteLink": "Copiar enlace de invitación",
-    "copied": "¡Copiado!"
+    "memberCount": "{count, plural, one {# miembro} other {# miembros}}"
   },
   "joinCommunity": {
     "invalidInviteTitle": "Invitación Inválida",

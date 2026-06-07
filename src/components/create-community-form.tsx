@@ -1,6 +1,5 @@
 "use client";
 
-import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useActionState, useState } from "react";
 import {
@@ -24,7 +23,7 @@ export function CreateCommunityForm() {
       <div className="space-y-2">
         <label
           htmlFor="name"
-          className="block text-sm font-semibold text-foreground"
+          className="block text-caption-sm uppercase tracking-wider text-muted-foreground"
         >
           {t("communityNameLabel")}
         </label>
@@ -38,7 +37,7 @@ export function CreateCommunityForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={t("communityNamePlaceholder")}
-          className="h-12 w-full rounded-xl border border-input bg-background px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
+          className="h-12 w-full rounded-md border border-hairline bg-soft-cloud px-4 text-foreground placeholder:text-muted-foreground text-body-md focus:border-ink focus:bg-canvas outline-none transition-colors dark:bg-charcoal dark:focus:bg-ink dark:focus:border-canvas"
         />
         <p className="text-xs text-muted-foreground">
           {t("communityNameHelp")}
@@ -50,9 +49,8 @@ export function CreateCommunityForm() {
       <button
         type="submit"
         disabled={pending || !name.trim()}
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="button-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <Plus className="size-4" aria-hidden="true" />
         {pending ? t("creating") : t("createCommunityButton")}
       </button>
     </form>

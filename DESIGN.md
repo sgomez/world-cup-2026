@@ -261,7 +261,7 @@ components:
 
 ## Overview
 
-Sports's commerce system is built on a single, almost violently simple idea: photography speaks, the chrome doesn't. Every page reads as an athletic editorial — towering uppercase Oswald display lockups (`{typography.display-campaign}`) burned into full-bleed campaign imagery, with everything else (nav, filters, buttons, cards, footer) reduced to neutral typography and pill geometry on `{colors.canvas}` and `{colors.soft-cloud}`. There is no decorative gradient, no soft shadow nostalgia, no accent color used for "tone" — the system saves all chromatic energy for product photography and the small handful of moments that actually need to signal (sale price `{colors.sale}`, success `{colors.success}`, swatch dots).
+Sports's commerce system is built on a single, almost violently simple idea: photography speaks, the chrome doesn't. Every page reads as an athletic editorial — towering uppercase Oswald display lockups (`{typography.display-campaign}`) burned into full-bleed campaign imagery, with everything else (nav, filters, buttons, cards, footer) reduced to neutral typography and pill geometry on `{colors.canvas}` and `{colors.soft-cloud}`. There is no decorative gradient, no soft shadow nostalgia (except for card-based components such as bets and communities, which accept shadows to match mockup examples), no accent color used for "tone" — the system saves all chromatic energy for product photography and the small handful of moments that actually need to signal (sale price `{colors.sale}`, success `{colors.success}`, swatch dots).
 
 The result is a layout that feels physical — campaign hero, product grid, sport tile, footer — stacked like a printed catalog rather than animated like a typical SaaS landing page. Density is high but never crowded, because the system relies on three relentless devices: square or near-square 1:1 product imagery on `{colors.soft-cloud}`, sharp black CTAs (`{rounded.lg}`) anchoring every actionable surface, and a tight 8px-base spacing scale that keeps cards and filters mathematically aligned across PLP, PDP, and editorial pages.
 
@@ -369,11 +369,13 @@ Whitespace is a tool for separation, not for breath. Sections butt directly agai
 
 | Level | Treatment | Use |
 |---|---|---|
-| 0 — Flat | No shadow, no border | Default for cards, buttons, sections — the dominant treatment |
+| 0 — Flat | No shadow, no border | Default for retail buttons, sections — the dominant treatment |
 | 1 — Hairline divider | 1px solid `{colors.hairline}` | Filter row separators, footer column borders, PDP disclosure-row separators |
 | 2 — Inset bottom-line | `box-shadow: inset 0 -1px 0 {colors.hairline-soft}` | Sticky utility/sub-nav bar bottom edge, tab strip underline |
+| 3 — Soft Shadow | `shadow-sm` / `box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05)` | Default for card-based modules (communities, bets, creation forms) |
+| 4 — Hover Shadow | `hover:shadow-md` / `box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1)` | Interactive lift state for cards |
 
-The system has no drop-shadow elevation in its retail chrome at all. Cards do not lift on the page. The only depth cue is the 1px inset hairline on sticky strips and the contrast between full-bleed photography and `{colors.soft-cloud}` product backdrops.
+While primary product grids stay flat with zero shadows, the system accepts shadows for card-based UI modules (such as bet cards, community list cards, and detail sections) as demonstrated by the redesign mockup examples.
 
 ### Decorative Depth
 Depth in Sports's system comes entirely from photography, not from CSS effects:
@@ -391,7 +393,7 @@ Depth in Sports's system comes entirely from photography, not from CSS effects:
 | `{rounded.sm}` | 2px | Avatar / icon container in member-benefit lockups |
 | `{rounded.md}` | 4px | Search pill, search submit, filter input |
 | `{rounded.lg}` | 6px | Every CTA — primary, secondary, on-image, filter chip, geo-selector, "Notify Me" |
-| `{rounded.xl}` | 12px | Bet list cards, CreateBetForm input & button (as specified in Issue #83) |
+| `{rounded.xl}` | 12px | Bet list cards, Community card modules, and creation forms (as specified in Issues #83 & #84) |
 | `{rounded.full}` | 9999px | Color swatch dots and circular icon buttons (back, share, favorite, carousel paddle) |
 
 ### Photography Geometry
@@ -519,7 +521,7 @@ Depth in Sports's system comes entirely from photography, not from CSS effects:
 - Anchor on-image CTAs with `{component.button-outline-on-image}` (white pill) at bottom-left — the system's universal "shop this image" position.
 
 ### Don't
-- Don't introduce drop shadows or card elevation. Cards sit flat on the page; the only depth cue is the 1px inset hairline on sticky bars.
+- Don't introduce drop shadows or card elevation on core product cards or campaign tiles. (Note: Card-based features like bets and communities are exempt from this rule and utilize `shadow-sm` and `hover:shadow-md` transitions).
 - Don't use any of the category accent colors (`{colors.accent-pink}`, `{colors.accent-purple-soft}`, `{colors.accent-teal}`) for primary chrome — they belong to swatch dots, soft tile fills, and editorial moments only.
 - Don't replace `{colors.ink}` with a near-black gray like `{colors.charcoal}` for a CTA — Sports's primary pill is true `#111111`.
 - Don't pad inside product cards. The image is full-bleed; metadata sits directly below with `{spacing.sm}` (8px) between rows.
