@@ -89,6 +89,51 @@ vi.mock("@/components/group-stage", () => {
   };
 });
 
+vi.mock("@/components/knockout-stage", () => {
+  const React = require("react");
+  return {
+    KnockoutStage: ({
+      dispatch,
+    }: {
+      state: unknown;
+      dispatch: (action: {
+        type: string;
+        matchId?: string;
+        winnerId?: string;
+      }) => void;
+      readOnly?: boolean;
+    }) =>
+      React.createElement(
+        "div",
+        { "data-testid": "mock-knockout-stage" },
+        React.createElement(
+          "button",
+          {
+            type: "button",
+            "data-testid": "set-knockout-winner-btn",
+            onClick: () =>
+              dispatch({
+                type: "SET_KNOCKOUT_WINNER",
+                matchId: "R32-73",
+                winnerId: "team-1",
+              }),
+          },
+          "Set Knockout Winner",
+        ),
+        React.createElement(
+          "button",
+          {
+            type: "button",
+            "data-testid": "clear-knockout-winner-btn",
+            onClick: () =>
+              dispatch({ type: "CLEAR_KNOCKOUT_WINNER", matchId: "R32-73" }),
+          },
+          "Clear Knockout Winner",
+        ),
+      ),
+  };
+});
+
 vi.mock("@/lib/prediction-state", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/lib/prediction-state")>();
@@ -96,14 +141,14 @@ vi.mock("@/lib/prediction-state", async (importOriginal) => {
     ...actual,
     createInitialState: vi.fn((saved, knockoutWinners) => {
       const state = actual.createInitialState(saved, knockoutWinners);
-      if (knockoutWinners && Object.keys(knockoutWinners).length === 32) {
+      if (knockoutWinners && Object.keys(knockoutWinners).length > 0) {
         const mockedMatches = { ...state.knockoutMatches };
         for (const [matchId, winnerId] of Object.entries(knockoutWinners)) {
           mockedMatches[matchId] = {
             id: matchId,
             round: "R32",
-            team1Id: "a",
-            team2Id: "b",
+            team1Id: "team-a",
+            team2Id: "team-b",
             winnerId,
             loserId: null,
           } as unknown as KnockoutMatch;
@@ -121,6 +166,7 @@ vi.mock("@/lib/prediction-state", async (importOriginal) => {
 describe("BetPrediction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   it("renders tabs and page header with close action", () => {
@@ -392,5 +438,153 @@ describe("BetPrediction", () => {
 
     // Status should still be "dirty" because it did NOT remount (reorder was applied, key did not change)
     expect(screen.getByTestId("group-stage-status")).toHaveTextContent("dirty");
+  });
+
+  it("warning does NOT appear when localStorage flag is false, even with knockout predictions", async () => {
+    localStorage.setItem("knockout-warning-bet-1", "false");
+
+    const completeWinners = Object.fromEntries(
+      Array.from({ length: 32 }, (_, i) => [`M${i}`, `team-${i}`]),
+    );
+
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My test bet"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={completeWinners}
+      />,
+    );
+
+    const reorderBtn = screen.getByTestId("reorder-group-btn");
+    await userEvent.click(reorderBtn);
+
+    expect(
+      screen.queryByText("Reset knockout predictions?"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("dispatching SET_KNOCKOUT_WINNER sets flag to true; subsequent group reorder shows warning", async () => {
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My test bet"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={null}
+      />,
+    );
+
+    // No knockout winners initially — reorder should NOT trigger warning
+    const reorderBtn = screen.getByTestId("reorder-group-btn");
+    await userEvent.click(reorderBtn);
+    expect(
+      screen.queryByText("Reset knockout predictions?"),
+    ).not.toBeInTheDocument();
+
+    // Switch to knockout tab to dispatch SET_KNOCKOUT_WINNER
+    await userEvent.click(screen.getByRole("tab", { name: "Knockout Stage" }));
+    const setWinnerBtn = screen.getByTestId("set-knockout-winner-btn");
+    await userEvent.click(setWinnerBtn);
+
+    // Switch back to groups tab — reorder should now show warning
+    await userEvent.click(screen.getByRole("tab", { name: "Group Stage" }));
+    await userEvent.click(screen.getByTestId("reorder-group-btn"));
+    expect(screen.getByText("Reset knockout predictions?")).toBeInTheDocument();
+  });
+
+  it("CLEAR_KNOCKOUT_WINNER when predictedCount drops to 0 sets flag to false; subsequent reorder shows no warning", async () => {
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My test bet"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={{ "R32-73": "team-x" }}
+      />,
+    );
+
+    // Initially has 1 winner — reorder should show warning
+    await userEvent.click(screen.getByTestId("reorder-group-btn"));
+    expect(screen.getByText("Reset knockout predictions?")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    // Switch to knockout tab and clear the winner
+    await userEvent.click(screen.getByRole("tab", { name: "Knockout Stage" }));
+    await userEvent.click(screen.getByTestId("clear-knockout-winner-btn"));
+
+    // Switch back to groups tab — reorder should NOT show warning now
+    await userEvent.click(screen.getByRole("tab", { name: "Group Stage" }));
+    await userEvent.click(screen.getByTestId("reorder-group-btn"));
+    expect(
+      screen.queryByText("Reset knockout predictions?"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("confirming warning sets flag to false; subsequent group reorder shows no warning", async () => {
+    const completeWinners = Object.fromEntries(
+      Array.from({ length: 32 }, (_, i) => [`M${i}`, `team-${i}`]),
+    );
+
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="My test bet"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={completeWinners}
+      />,
+    );
+
+    // First reorder — warning appears
+    const reorderBtn = screen.getByTestId("reorder-group-btn");
+    await userEvent.click(reorderBtn);
+    expect(screen.getByText("Reset knockout predictions?")).toBeInTheDocument();
+
+    // Confirm
+    const confirmBtn = screen.getByRole("button", { name: "Confirm" });
+    await userEvent.click(confirmBtn);
+    expect(
+      screen.queryByText("Reset knockout predictions?"),
+    ).not.toBeInTheDocument();
+
+    // Second reorder — warning should NOT appear again
+    await userEvent.click(screen.getByTestId("reorder-group-btn"));
+    expect(
+      screen.queryByText("Reset knockout predictions?"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("flag is scoped to betId — unrelated bet's localStorage does not affect this bet", async () => {
+    localStorage.setItem("knockout-warning-bet-1", "true");
+
+    // Render bet-2 with no knockout winners
+    render(
+      <BetPrediction
+        betId="bet-2"
+        betLabel="Another bet"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={null}
+      />,
+    );
+
+    // bet-2 has no winners, so flag initialises to false regardless of bet-1's localStorage
+    const reorderBtn = screen.getByTestId("reorder-group-btn");
+    await userEvent.click(reorderBtn);
+    expect(
+      screen.queryByText("Reset knockout predictions?"),
+    ).not.toBeInTheDocument();
   });
 });
