@@ -2,7 +2,6 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
 import { TeamBadge } from "@/components/team-badge";
 import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
@@ -47,29 +46,19 @@ export function TeamRow({
       {...attributes}
       {...(disabled ? {} : listeners)}
       className={cn(
-        "flex items-center gap-2 list-none w-full select-none",
-        !disabled &&
-          "cursor-grab active:cursor-grabbing hover:bg-slate-50 dark:hover:bg-slate-900/40 rounded-md transition-colors",
+        "list-none w-full select-none",
+        !disabled && "cursor-grab active:cursor-grabbing",
         disabled && "cursor-default",
         isDragging && "opacity-50 z-50",
       )}
     >
-      <div className="flex-1 min-w-0">
-        <TeamBadge
-          team={team}
-          eliminated={eliminated}
-          matched={matched}
-          size={size}
-        />
-      </div>
-      <div className="flex items-center justify-center shrink-0 w-6 h-6">
-        <GripVertical
-          className={cn(
-            "h-4 w-4 text-mute dark:text-stone transition-opacity",
-            disabled ? "opacity-20" : "opacity-70 group-hover:opacity-100",
-          )}
-        />
-      </div>
+      <TeamBadge
+        team={team}
+        eliminated={eliminated}
+        matched={matched}
+        size={size}
+        showGrip={!disabled}
+      />
     </li>
   );
 }

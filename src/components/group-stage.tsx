@@ -44,12 +44,7 @@ export function GroupStage({
   return (
     <div className="flex flex-col gap-4 min-[640px]:flex-row">
       <div className="order-1 min-w-0 flex-1 min-[640px]:order-none">
-        <div
-          className="grid gap-4"
-          style={{
-            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          }}
-        >
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {getGroups(locale).map((group) => {
             const orderedTeams = getGroupTeamsOrdered(
               state,

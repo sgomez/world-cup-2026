@@ -1,5 +1,6 @@
 "use client";
 
+import { GripVertical } from "lucide-react";
 import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +9,7 @@ export type TeamBadgeProps = {
   eliminated?: boolean;
   matched?: boolean;
   size?: "default" | "compact";
+  showGrip?: boolean;
 };
 
 export function TeamBadge({
@@ -15,6 +17,7 @@ export function TeamBadge({
   eliminated = false,
   matched = false,
   size = "default",
+  showGrip = false,
 }: TeamBadgeProps) {
   const flagUrl = `https://flagcdn.com/w320/${team.code.toLowerCase()}.png`;
 
@@ -48,7 +51,7 @@ export function TeamBadge({
       />
 
       {/* Content */}
-      <div className="relative z-10 flex items-center gap-2">
+      <div className="relative z-10 flex items-center justify-between w-full gap-2">
         <span
           className={cn(
             "font-[family-name:var(--font-oswald)] uppercase tracking-wider font-semibold truncate",
@@ -57,6 +60,9 @@ export function TeamBadge({
         >
           {team.name}
         </span>
+        {showGrip && (
+          <GripVertical className="h-4 w-4 shrink-0 text-mute dark:text-stone opacity-70" />
+        )}
       </div>
     </div>
   );
