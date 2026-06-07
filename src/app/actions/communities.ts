@@ -3,7 +3,8 @@
 import { randomBytes } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -73,8 +74,9 @@ export async function createCommunity(
     throw e;
   }
 
+  const locale = await getLocale();
   revalidatePath("/communities");
-  redirect(`/communities/${community.slug}`);
+  redirect({ href: `/communities/${community.slug}`, locale });
 }
 
 export async function getCommunity(slug: string) {
@@ -153,8 +155,9 @@ export async function leaveCommunity(
     },
   });
 
+  const locale = await getLocale();
   revalidatePath("/communities");
-  redirect("/communities");
+  redirect({ href: "/communities", locale });
 }
 
 export async function removeMember(
@@ -208,8 +211,9 @@ export async function deleteCommunity(
 
   await prisma.community.delete({ where: { id: community.id } });
 
+  const locale = await getLocale();
   revalidatePath("/communities");
-  redirect("/communities");
+  redirect({ href: "/communities", locale });
 }
 
 export async function regenerateInviteToken(
@@ -262,6 +266,7 @@ export async function joinCommunity(
     update: {},
   });
 
+  const locale = await getLocale();
   revalidatePath("/communities");
-  redirect(`/communities/${community.slug}`);
+  redirect({ href: `/communities/${community.slug}`, locale });
 }

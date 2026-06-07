@@ -1,7 +1,9 @@
 overrides:
   kysely: "0.28.1"
 allowBuilds:
+  '@parcel/watcher': false
   '@prisma/engines': true
+  '@swc/core': false
   lefthook: true
   msw: false
   prisma: true
