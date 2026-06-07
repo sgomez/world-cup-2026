@@ -22,6 +22,12 @@ describe("TeamBadge", () => {
     expect(badgeDiv.className).toContain("grayscale");
   });
 
+  it("does not render a border when border prop is false", () => {
+    const { container } = render(<TeamBadge team={mockTeam} border={false} />);
+    const badgeDiv = container.firstChild as HTMLElement;
+    expect(badgeDiv.className).not.toContain("border");
+  });
+
   it("renders background image with correct URL containing team.code", () => {
     const { container } = render(<TeamBadge team={mockTeam} />);
     const flagBgDiv = container.querySelector(

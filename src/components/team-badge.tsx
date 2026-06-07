@@ -11,6 +11,7 @@ export type TeamBadgeProps = {
   size?: "default" | "compact";
   showGrip?: boolean;
   rightAddon?: React.ReactNode;
+  border?: boolean;
 };
 
 export function TeamBadge({
@@ -20,19 +21,27 @@ export function TeamBadge({
   size = "default",
   showGrip = false,
   rightAddon,
+  border = true,
 }: TeamBadgeProps) {
   const flagUrl = `https://flagcdn.com/w320/${team.code.toLowerCase()}.png`;
 
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-md border transition-all duration-200 flex items-center select-none w-full",
+        "relative overflow-hidden rounded-md transition-all duration-200 flex items-center select-none w-full",
+        border && "border",
         // Sizes
         size === "default" ? "h-11 px-4 py-2" : "h-8 px-3 py-1",
         // Matched state (green tint)
         matched
-          ? "border-success/30 bg-success/10 text-success dark:border-success-bright/30 dark:bg-success-bright/10 dark:text-success-bright"
-          : "border-hairline bg-canvas/80 text-ink dark:border-ash dark:bg-ink/80 dark:text-canvas",
+          ? cn(
+              "bg-success/10 text-success dark:bg-success-bright/10 dark:text-success-bright",
+              border && "border-success/30 dark:border-success-bright/30",
+            )
+          : cn(
+              "bg-canvas/80 text-ink dark:bg-ink/80 dark:text-canvas",
+              border && "border-hairline dark:border-ash",
+            ),
         // Grayscale / Eliminated state
         eliminated && "grayscale opacity-50",
       )}

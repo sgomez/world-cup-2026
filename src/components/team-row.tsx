@@ -58,6 +58,7 @@ export function TeamRow({
         matched={matched}
         size={size}
         showGrip={!disabled}
+        border={false}
       />
     </div>
   );
