@@ -21,7 +21,7 @@ A named tournament bracket prediction created by a User. A User may hold many Be
 ### Bet Status
 The user-intent state of a Bet. One of two values:
 - `draft` — the Bet is being worked on. Predictions can be edited.
-- `closed` — the User has explicitly locked the Bet. Predictions cannot be edited. Can be re-opened to `draft` before the Bet Deadline.
+- `closed` — the User has explicitly locked the Bet. A Bet can only transition to `closed` once predictions for all matches (including all group standings and all 32 knockout matches) are complete. Once closed, predictions cannot be edited. Can be re-opened to `draft` before the Bet Deadline.
 
 Status reflects user intent, not time. After the **Bet Deadline**, all write operations on any Bet are blocked regardless of status.
 
