@@ -72,7 +72,7 @@ export function GroupStage({
         </div>
       </div>
 
-      <div className="order-2 w-full min-[640px]:order-none min-[640px]:w-[200px] min-[640px]:shrink-0">
+      <div className="order-2 w-full min-[640px]:order-none min-[640px]:w-[240px] min-[640px]:shrink-0">
         <GroupCard
           id="third-place"
           key={orderedThirdPlaceTeams.map((t) => t.originalId).join(",")}
