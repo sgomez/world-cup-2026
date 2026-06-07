@@ -29,7 +29,7 @@ export function TeamBadge({
         size === "default" ? "h-11 px-4 py-2" : "h-8 px-3 py-1",
         // Matched state (green tint)
         matched
-          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300"
+          ? "border-success/30 bg-success/10 text-success dark:border-success-bright/30 dark:bg-success-bright/10 dark:text-success-bright"
           : "border-hairline bg-canvas/80 text-ink dark:border-ash dark:bg-ink/80 dark:text-canvas",
         // Grayscale / Eliminated state
         eliminated && "grayscale opacity-50",

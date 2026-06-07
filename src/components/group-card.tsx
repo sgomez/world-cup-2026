@@ -48,11 +48,11 @@ export function GroupCard({
   const [localTeams, setLocalTeams] = useState<Team[]>(teams);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [prevTeamsKey, setPrevTeamsKey] = useState<string>(() =>
-    teams.map((t) => t.id).join(","),
+    teams.map((t) => `${t.id}:${t.code}`).join(","),
   );
 
   // Keep local state in sync when external teams prop changes
-  const currentTeamsKey = teams.map((t) => t.id).join(",");
+  const currentTeamsKey = teams.map((t) => `${t.id}:${t.code}`).join(",");
   if (currentTeamsKey !== prevTeamsKey) {
     setPrevTeamsKey(currentTeamsKey);
     setLocalTeams(teams);
@@ -116,7 +116,7 @@ export function GroupCard({
           items={localTeams}
           strategy={verticalListSortingStrategy}
         >
-          <ul className="flex flex-col gap-1.5 p-0 m-0">
+          <div className="flex flex-col gap-1.5 p-0 m-0">
             {localTeams.map((team, index) => {
               const isEliminated = index >= qualify;
               return (
@@ -138,7 +138,7 @@ export function GroupCard({
                 </div>
               );
             })}
-          </ul>
+          </div>
         </SortableContext>
         <DragOverlay
           dropAnimation={{

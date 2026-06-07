@@ -75,7 +75,7 @@ export function GroupStage({
       <div className="order-2 w-full min-[640px]:order-none min-[640px]:w-[240px] min-[640px]:shrink-0">
         <GroupCard
           id="third-place"
-          key={orderedThirdPlaceTeams.map((t) => t.originalId).join(",")}
+          key="third-place"
           title={t("bestThirdPlace")}
           teams={orderedThirdPlaceTeams as Team[]}
           qualify={8}

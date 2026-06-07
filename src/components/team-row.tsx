@@ -40,7 +40,7 @@ export function TeamRow({
   };
 
   return (
-    <li
+    <div
       ref={setNodeRef}
       style={style}
       {...attributes}
@@ -59,6 +59,6 @@ export function TeamRow({
         size={size}
         showGrip={!disabled}
       />
-    </li>
+    </div>
   );
 }
