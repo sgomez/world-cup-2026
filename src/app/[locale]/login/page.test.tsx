@@ -129,4 +129,44 @@ describe("LoginPage", () => {
       callbackURL: "/es/communities/join/token123",
     });
   });
+
+  it("sanitises external 'from' parameter and falls back to default English path", async () => {
+    mockUseParams.mockReturnValue({ locale: "en" });
+    mockUseSearchParams.mockReturnValue(
+      new URLSearchParams(
+        "from=https://external.com/malicious",
+      ) as unknown as ReadonlyURLSearchParams,
+    );
+    mockSocialSignIn.mockResolvedValue(undefined as never);
+
+    render(<LoginPage />);
+
+    const button = screen.getByRole("button", { name: /signInWithGoogle/i });
+    await userEvent.click(button);
+
+    expect(mockSocialSignIn).toHaveBeenCalledWith({
+      provider: "google",
+      callbackURL: "/bets",
+    });
+  });
+
+  it("sanitises external 'from' parameter and falls back to default Spanish path", async () => {
+    mockUseParams.mockReturnValue({ locale: "es" });
+    mockUseSearchParams.mockReturnValue(
+      new URLSearchParams(
+        "from=//external.com/malicious",
+      ) as unknown as ReadonlyURLSearchParams,
+    );
+    mockSocialSignIn.mockResolvedValue(undefined as never);
+
+    render(<LoginPage />);
+
+    const button = screen.getByRole("button", { name: /signInWithGoogle/i });
+    await userEvent.click(button);
+
+    expect(mockSocialSignIn).toHaveBeenCalledWith({
+      provider: "google",
+      callbackURL: "/es/bets",
+    });
+  });
 });

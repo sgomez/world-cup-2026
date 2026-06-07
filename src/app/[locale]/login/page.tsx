@@ -19,8 +19,15 @@ function LoginContent() {
     const from = searchParams.get("from");
     const locale = params?.locale as string | undefined;
 
+    // Prevent open redirect vulnerabilities by checking if the 'from' parameter targets an external domain.
+    const isExternal =
+      from &&
+      (from.startsWith("http://") ||
+        from.startsWith("https://") ||
+        from.startsWith("//"));
+
     let callbackURL = "/bets";
-    if (from) {
+    if (from && !isExternal) {
       const path = from.startsWith("/") ? from : `/${from}`;
       if (locale === "es") {
         callbackURL =
