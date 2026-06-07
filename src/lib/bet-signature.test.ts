@@ -148,15 +148,37 @@ describe("computeBetSignature", () => {
     expect(sig1).toBe(sig2);
   });
 
-  it("uses FIFA codes not locale-specific names (locale-independent)", () => {
+  it("returns valid hex for default prediction", () => {
     const stateEn = createInitialState(null);
     const preds: PredictionState = {
       groupOrders: stateEn.groupOrders,
       thirdPlaceOrder: stateEn.thirdPlaceOrder,
     };
     const winners = buildTeam1WinsWinners(preds);
-    // computeBetSignature has no locale param — always locale-independent
     const sig = computeBetSignature(preds, winners);
     expect(sig).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("changing the 3rd-place winner produces a different signature", () => {
+    const state = createInitialState(null);
+    const preds: PredictionState = {
+      groupOrders: state.groupOrders,
+      thirdPlaceOrder: state.thirdPlaceOrder,
+    };
+    const winners = buildTeam1WinsWinners(preds);
+
+    const sigA = computeBetSignature(preds, winners);
+
+    const fullState = createInitialState(preds, winners);
+    const thirdMatch = fullState.knockoutMatches["3RD"];
+    const alt3rd =
+      thirdMatch.winnerId === thirdMatch.team1Id
+        ? thirdMatch.team2Id!
+        : thirdMatch.team1Id!;
+
+    const altWinners = { ...winners, "3RD": alt3rd };
+    const sigB = computeBetSignature(preds, altWinners);
+
+    expect(sigA).not.toBe(sigB);
   });
 });
