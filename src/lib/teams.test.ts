@@ -72,7 +72,7 @@ describe("getGroups", () => {
   });
 
   it("England code is gb-eng (sub-national, not derivable from emoji)", () => {
-    const groupL = enGroups[11];
+    const groupL = enGroups.find((g) => g.group === "L")!;
     const eng = groupL.teams.find((t) => t.id === "eng");
     expect(eng?.code).toBe("gb-eng");
   });

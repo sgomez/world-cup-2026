@@ -85,7 +85,6 @@
   --radius-full: 9999px;
 
   /* Fonts */
-  --font-oswald: var(--font-oswald);
   --font-display-campaign:
     var(--font-oswald), var(--font-bebas-neue), var(--font-anton), sans-serif;
   --font-heading-display:
