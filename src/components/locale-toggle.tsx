@@ -11,7 +11,8 @@ const locales = {
 type Locale = keyof typeof locales;
 
 export function LocaleToggle() {
-  const locale = useLocale() as Locale;
+  const rawLocale = useLocale();
+  const locale: Locale = rawLocale in locales ? (rawLocale as Locale) : "en";
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations("nav");
