@@ -50,8 +50,7 @@ export function BetPrediction({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  // Count predicted knockout matches — computed before knockoutWarning so the
-  // lazy initialiser can seed the flag from predictedCount when localStorage is empty.
+  // Must precede knockoutWarning — lazy initialiser captures this value to seed the flag when localStorage is absent.
   const predictedCount = Object.values(state.knockoutMatches).filter(
     (m) => m.winnerId !== null,
   ).length;
