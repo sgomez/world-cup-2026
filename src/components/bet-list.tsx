@@ -1,11 +1,11 @@
 "use client";
 
 import type { Bet } from "@prisma/client";
+import { ShieldCheck, Ticket } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CopyBetButton } from "@/components/copy-bet-button";
 import { RemoveBetButton } from "@/components/remove-bet-button";
-import { Banner } from "@/components/ui/banner";
 import { Link } from "@/i18n/navigation";
 
 type BetWithSignature = Bet & { signature?: string };
@@ -29,7 +29,14 @@ export function BetList({
   }
 
   if (bets.length === 0) {
-    return <Banner>{t("noBets")}</Banner>;
+    return (
+      <div className="flex flex-col items-center gap-3 border border-dashed border-hairline bg-canvas py-16 text-center dark:bg-ink">
+        <div className="flex size-12 items-center justify-center bg-soft-cloud dark:bg-charcoal">
+          <Ticket className="size-6 text-muted-foreground" aria-hidden="true" />
+        </div>
+        <p className="text-body-md text-muted-foreground">{t("noBets")}</p>
+      </div>
+    );
   }
 
   return (
@@ -38,17 +45,17 @@ export function BetList({
         <div key={bet.id} className="relative">
           <Link
             href={`/bets/${bet.id}`}
-            className="block rounded-none border border-hairline bg-canvas px-5 py-4 transition-all hover:bg-soft-cloud dark:bg-ink dark:hover:bg-charcoal"
+            className="block border border-hairline bg-canvas px-5 py-4 transition-colors hover:bg-soft-cloud dark:bg-ink dark:hover:bg-charcoal"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 pr-24">
               <p className="text-body-strong text-foreground">{bet.label}</p>
               {bet.status === "draft" && (
-                <span className="rounded-lg border border-info/30 bg-info/5 px-2 py-0.5 text-caption-sm font-medium text-info">
+                <span className="border border-info/30 bg-info/5 px-2 py-0.5 text-caption-sm font-medium text-info">
                   {t("draft")}
                 </span>
               )}
               {bet.status === "closed" && (
-                <span className="rounded-lg border border-success/30 bg-success/5 px-2 py-0.5 text-caption-sm font-medium text-success dark:text-success-bright">
+                <span className="border border-success/30 bg-success/5 px-2 py-0.5 text-caption-sm font-medium text-success dark:text-success-bright">
                   {t("closed")}
                 </span>
               )}
@@ -64,15 +71,24 @@ export function BetList({
                   date: bet.updatedAt.toISOString().slice(0, 10),
                 })}
               </span>
-              {bet.status === "closed" && bet.signature && (
-                <span className="font-mono" title={bet.signature}>
-                  {t("signature")}: {bet.signature.slice(0, 8)}
-                </span>
-              )}
             </div>
+            {bet.status === "closed" && bet.signature && (
+              <div className="mt-3 flex items-center gap-2 border border-hairline bg-soft-cloud px-3 py-2 dark:bg-charcoal">
+                <ShieldCheck
+                  className="size-4 shrink-0 text-success dark:text-success-bright"
+                  aria-hidden="true"
+                />
+                <span className="text-caption-sm font-medium text-muted-foreground">
+                  {t("signature")}
+                </span>
+                <code className="font-mono text-caption-sm text-foreground">
+                  {bet.signature.slice(0, 8)}
+                </code>
+              </div>
+            )}
           </Link>
           {!deadlinePassed && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            <div className="absolute right-3 top-4 flex items-center gap-2">
               {showCopyButtons && <CopyBetButton betId={bet.id} />}
               <RemoveBetButton
                 betId={bet.id}
