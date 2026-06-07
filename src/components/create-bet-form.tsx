@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { type BetActionState, createBet } from "@/app/actions/bets";
@@ -13,19 +14,20 @@ export function CreateBetForm() {
 
   return (
     <form action={action} className="flex flex-col gap-2">
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <input
           name="label"
           type="text"
           required
           placeholder={t("addBetPlaceholder")}
-          className="flex-1 rounded-md border border-hairline bg-soft-cloud px-4 py-3 text-foreground placeholder:text-muted-foreground text-body-md focus:border-ink focus:bg-canvas outline-none transition-colors dark:bg-charcoal dark:focus:bg-ink dark:focus:border-canvas"
+          className="h-12 w-full sm:flex-1 rounded-xl border border-hairline bg-canvas px-4 text-foreground placeholder:text-muted-foreground text-body-md focus:border-ink outline-none transition-colors dark:bg-ink dark:focus:border-canvas"
         />
         <button
           type="submit"
           disabled={pending}
-          className="button-primary whitespace-nowrap"
+          className="button-primary rounded-xl flex items-center gap-2 whitespace-nowrap"
         >
+          <Plus className="size-4" aria-hidden="true" />
           {pending ? t("adding") : t("addBet")}
         </button>
       </div>

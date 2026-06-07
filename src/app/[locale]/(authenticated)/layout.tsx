@@ -25,7 +25,7 @@ export default async function AuthenticatedLayout({
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-soft-cloud text-foreground dark:bg-background">
       <Navbar
         user={{
           name: user.name,

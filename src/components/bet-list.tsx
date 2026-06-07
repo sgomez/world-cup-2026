@@ -1,6 +1,7 @@
 "use client";
 
 import type { Bet } from "@prisma/client";
+import { ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CopyBetButton } from "@/components/copy-bet-button";
@@ -35,52 +36,86 @@ export function BetList({
   return (
     <div className="space-y-3">
       {bets.map((bet) => (
-        <div key={bet.id} className="relative">
-          <Link
-            href={`/bets/${bet.id}`}
-            className="block rounded-none border border-hairline bg-canvas px-5 py-4 transition-all hover:bg-soft-cloud dark:bg-ink dark:hover:bg-charcoal"
-          >
-            <div className="flex items-center gap-3">
-              <p className="text-body-strong text-foreground">{bet.label}</p>
-              {bet.status === "draft" && (
-                <span className="rounded-lg border border-info/30 bg-info/5 px-2 py-0.5 text-caption-sm font-medium text-info">
-                  {t("draft")}
+        <article
+          key={bet.id}
+          className="group relative rounded-xl border border-hairline bg-canvas p-5 shadow-sm transition-all hover:shadow-md dark:bg-ink"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h3 className="truncate text-base font-semibold text-foreground">
+                  <Link
+                    href={`/bets/${bet.id}`}
+                    className="group-hover:underline transition-colors after:absolute after:inset-0 after:content-['']"
+                  >
+                    {bet.label}
+                  </Link>
+                </h3>
+                {bet.status === "draft" && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-info/30 bg-info/5 px-2.5 py-0.5 text-xs font-medium text-info">
+                    <span
+                      className="size-1.5 rounded-full bg-info"
+                      aria-hidden="true"
+                    />
+                    {t("draft")}
+                  </span>
+                )}
+                {bet.status === "closed" && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/5 px-2.5 py-0.5 text-xs font-medium text-success dark:text-success-bright">
+                    <span
+                      className="size-1.5 rounded-full bg-success dark:bg-success-bright"
+                      aria-hidden="true"
+                    />
+                    {t("closed")}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <span>
+                  {t("createdLabel", {
+                    date: bet.createdAt.toISOString().slice(0, 10),
+                  })}
                 </span>
-              )}
-              {bet.status === "closed" && (
-                <span className="rounded-lg border border-success/30 bg-success/5 px-2 py-0.5 text-caption-sm font-medium text-success dark:text-success-bright">
-                  {t("closed")}
+                <span>
+                  {t("updatedLabel", {
+                    date: bet.updatedAt.toISOString().slice(0, 10),
+                  })}
                 </span>
-              )}
+              </div>
             </div>
-            <div className="mt-2 flex gap-4 text-caption-sm text-muted-foreground">
-              <span>
-                {t("createdLabel", {
-                  date: bet.createdAt.toISOString().slice(0, 10),
-                })}
-              </span>
-              <span>
-                {t("updatedLabel", {
-                  date: bet.updatedAt.toISOString().slice(0, 10),
-                })}
-              </span>
-              {bet.status === "closed" && bet.signature && (
-                <span className="font-mono" title={bet.signature}>
-                  {t("signature")}: {bet.signature.slice(0, 8)}
-                </span>
-              )}
-            </div>
-          </Link>
-          {!deadlinePassed && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              {showCopyButtons && <CopyBetButton betId={bet.id} />}
-              <RemoveBetButton
-                betId={bet.id}
-                onRemoved={() => handleRemoved(bet.id)}
+
+            {!deadlinePassed && (
+              <div className="relative z-10 flex shrink-0 items-center gap-1.5">
+                {showCopyButtons && <CopyBetButton betId={bet.id} />}
+                <RemoveBetButton
+                  betId={bet.id}
+                  onRemoved={() => handleRemoved(bet.id)}
+                />
+              </div>
+            )}
+          </div>
+
+          {bet.status === "closed" && bet.signature && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-hairline bg-soft-cloud/50 px-3 py-2 dark:bg-charcoal/30">
+              <ShieldCheck
+                className="size-4 shrink-0 text-success dark:text-success-bright"
+                aria-hidden="true"
               />
+              <span className="text-xs font-medium text-muted-foreground">
+                {t("signatureLabel")}
+              </span>
+              <code
+                className="truncate font-mono text-xs text-foreground"
+                title={bet.signature}
+              >
+                {bet.signature.slice(0, 8)}
+              </code>
+              <span className="rounded bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-success dark:text-success-bright">
+                {t("verified")}
+              </span>
             </div>
           )}
-        </div>
+        </article>
       ))}
     </div>
   );

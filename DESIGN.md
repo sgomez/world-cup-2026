@@ -116,6 +116,7 @@ rounded:
   sm: 2px
   md: 4px
   lg: 6px
+  xl: 12px
   full: 9999px
 
 spacing:
@@ -390,6 +391,7 @@ Depth in Sports's system comes entirely from photography, not from CSS effects:
 | `{rounded.sm}` | 2px | Avatar / icon container in member-benefit lockups |
 | `{rounded.md}` | 4px | Search pill, search submit, filter input |
 | `{rounded.lg}` | 6px | Every CTA — primary, secondary, on-image, filter chip, geo-selector, "Notify Me" |
+| `{rounded.xl}` | 12px | Bet list cards, CreateBetForm input & button (as specified in Issue #83) |
 | `{rounded.full}` | 9999px | Color swatch dots and circular icon buttons (back, share, favorite, carousel paddle) |
 
 ### Photography Geometry
