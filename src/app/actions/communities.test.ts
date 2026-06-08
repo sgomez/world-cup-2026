@@ -726,7 +726,7 @@ describe("deleteCommunity", () => {
     mockCommunity();
     const result = await deleteCommunity(COMMUNITY_SLUG, null, new FormData());
     expect(result).toEqual({
-      error: "Only the owner can delete the community",
+      error: "You are not authorized to modify this community.",
     });
     expect(mockCommunityDelete).not.toHaveBeenCalled();
   });
@@ -770,7 +770,7 @@ describe("regenerateInviteToken", () => {
       new FormData(),
     );
     expect(result).toEqual({ error: "Community not found" });
-    expect(mockCommunityUpdate).not.toHaveBeenCalled();
+    expect(mockCommunityUpsert).not.toHaveBeenCalled();
   });
 
   it("returns error for non-owner caller", async () => {
@@ -782,17 +782,16 @@ describe("regenerateInviteToken", () => {
       new FormData(),
     );
     expect(result).toEqual({
-      error: "Only the owner can regenerate the invite link",
+      error: "You are not authorized to modify this community.",
     });
-    expect(mockCommunityUpdate).not.toHaveBeenCalled();
+    expect(mockCommunityUpsert).not.toHaveBeenCalled();
   });
 
   it("updates invite token and returns success for owner", async () => {
     mockSession(OWNER_ID);
     mockCommunity();
-    mockCommunityUpdate.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof mockCommunityUpdate>>,
-    );
+    mockCommunityUpsert.mockResolvedValue({} as never);
+    mockCommunityMemberFindMany.mockResolvedValue([]);
 
     const result = await regenerateInviteToken(
       COMMUNITY_SLUG,
@@ -800,8 +799,8 @@ describe("regenerateInviteToken", () => {
       new FormData(),
     );
 
-    const call = mockCommunityUpdate.mock.calls[0][0];
-    const token = call.data.inviteToken as string;
+    const call = mockCommunityUpsert.mock.calls[0][0];
+    const token = call.update.inviteToken as string;
     expect(call.where).toEqual({ id: COMMUNITY_ID });
     expect(token).toBeTruthy();
     expect(typeof token).toBe("string");
