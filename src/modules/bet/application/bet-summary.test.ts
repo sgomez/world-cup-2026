@@ -38,7 +38,7 @@ describe("toSummary", () => {
     const summary = toSummary(bet);
     expect(summary.status).toBe("closed");
     expect(typeof summary.signature).toBe("string");
-    expect(summary.signature!.length).toBeGreaterThan(0);
+    expect(summary.signature?.length).toBeGreaterThan(0);
   });
 
   it("passes timestamps through unchanged", () => {

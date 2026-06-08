@@ -24,9 +24,9 @@ export function toSummary(bet: Bet): BetSummary {
     id: bet.id,
     label: bet.label,
     status: bet.status,
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // biome-ignore lint/style/noNonNullAssertion: persisted Bets always have DB-managed timestamps
     createdAt: bet.createdAt!,
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // biome-ignore lint/style/noNonNullAssertion: persisted Bets always have DB-managed timestamps
     updatedAt: bet.updatedAt!,
     signature: bet.signature,
   };
