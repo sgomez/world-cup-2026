@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { setUserRole } from "@/app/actions/admin";
-import { redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { requireSession } from "@/lib/session";
 import { listSummaries } from "@/modules/bet/application/list-summaries";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
@@ -16,13 +15,8 @@ export default async function AdminUserPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("admin");
 
-  const session = await getSession();
-  if (!session) redirect({ href: "/login", locale });
-
-  const actor = session.user as { id: string; role?: string };
-  if (actor.role !== "admin" && actor.role !== "super_admin") {
-    redirect({ href: "/", locale });
-  }
+  const session = await requireSession();
+  const actor = session.user;
 
   const targetRaw = await prisma.user.findUnique({ where: { id } });
   if (!targetRaw) notFound();

@@ -1,7 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Link, redirect } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
 
 export default async function AdminPage({
   params,
@@ -11,14 +10,6 @@ export default async function AdminPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("admin");
-
-  const session = await getSession();
-  if (!session) redirect({ href: "/login", locale });
-
-  const actor = session.user as { role?: string };
-  if (actor.role !== "admin" && actor.role !== "super_admin") {
-    redirect({ href: "/", locale });
-  }
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },

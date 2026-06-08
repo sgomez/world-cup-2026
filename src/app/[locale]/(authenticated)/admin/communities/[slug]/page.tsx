@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Link, redirect } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+
 import { summariesByOwners } from "@/modules/bet/application/summaries-by-owners";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
@@ -14,14 +14,6 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("admin");
-
-  const session = await getSession();
-  if (!session) redirect({ href: "/login", locale });
-
-  const actor = session.user as { role?: string };
-  if (actor.role !== "admin" && actor.role !== "super_admin") {
-    redirect({ href: "/", locale });
-  }
 
   const communityRaw = await prisma.community.findUnique({
     where: { slug },
