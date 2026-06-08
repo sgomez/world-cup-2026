@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { err, ok, type Result } from "neverthrow";
 import { computeBetSignature } from "@/lib/bet-signature";
 import { BetLabel } from "./bet-label";
@@ -48,6 +49,49 @@ export class Bet {
 
   static fromState(state: BetState): Bet {
     return new Bet({ ...state });
+  }
+
+  static create(
+    label: string,
+    ownerId: string,
+    window: BettingWindow,
+    now: Date,
+  ): Result<Bet, DomainError> {
+    if (!window.isOpen(now)) {
+      return err(domainError("PAST_DEADLINE"));
+    }
+    return BetLabel.create(label).map((betLabel) =>
+      Bet.fromState({
+        id: randomUUID(),
+        userId: ownerId,
+        status: "draft",
+        label: betLabel.value,
+        groupPredictions: null,
+        knockoutWinners: {},
+      }),
+    );
+  }
+
+  static copyFrom(
+    source: Bet,
+    ownerId: string,
+    window: BettingWindow,
+    now: Date,
+  ): Result<Bet, DomainError> {
+    if (!window.isOpen(now)) {
+      return err(domainError("PAST_DEADLINE"));
+    }
+    const copyLabel = `Copy of ${source.label}`.slice(0, 200);
+    return BetLabel.create(copyLabel).map((betLabel) =>
+      Bet.fromState({
+        id: randomUUID(),
+        userId: ownerId,
+        status: "draft",
+        label: betLabel.value,
+        groupPredictions: source.groupPredictions,
+        knockoutWinners: source.knockoutWinners,
+      }),
+    );
   }
 
   get id(): string {

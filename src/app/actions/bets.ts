@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE, MAX_BETS_PER_USER } from "@/lib/bet-constants";
-import type { PredictionState, TournamentState } from "@/lib/prediction-state";
+import type { TournamentState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { closeBet as closeBetUseCase } from "@/modules/bet/application/close-bet";
+import { copyBet as copyBetUseCase } from "@/modules/bet/application/copy-bet";
+import { createBet as createBetUseCase } from "@/modules/bet/application/create-bet";
 import { removeBet as removeBetUseCase } from "@/modules/bet/application/remove-bet";
 import { renameBet as renameBetUseCase } from "@/modules/bet/application/rename-bet";
 import { reopenBet as reopenBetUseCase } from "@/modules/bet/application/reopen-bet";
@@ -31,21 +33,23 @@ export async function createBet(
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  if (new Date() > BET_DEADLINE) return { error: "Deadline passed" };
-
   const label = formData.get("label")?.toString().trim();
   if (!label) return { error: "Label is required" };
-  if (label.length > 200) return { error: "Label too long (max 200 chars)" };
 
-  const betCount = await prisma.bet.count({
-    where: { userId: session.user.id },
+  const repo = new PrismaBetRepository(prisma);
+  const result = await createBetUseCase(repo, {
+    userId: session.user.id,
+    label,
+    limit: MAX_BETS_PER_USER,
+    window: new BettingWindow(BET_DEADLINE),
+    now: new Date(),
   });
-  if (betCount >= MAX_BETS_PER_USER) return { error: "Bet limit reached" };
 
-  const bet = await prisma.bet.create({
-    data: { label, userId: session.user.id },
-  });
+  if (result.isErr()) {
+    return { error: await betErrorMessage(result.error.code) };
+  }
 
+  const bet = result.value;
   const locale = await getLocale();
   revalidatePath("/bets");
   redirect({ href: `/bets/${bet.id}`, locale });
@@ -117,29 +121,20 @@ export async function copyBet(betId: string): Promise<BetActionState> {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  const source = await prisma.bet.findUnique({ where: { id: betId } });
-  if (!source) return { error: "Bet not found" };
-  if (source.userId !== session.user.id) return { error: "Not authorized" };
-
-  if (Date.now() >= BET_DEADLINE.getTime())
-    return { error: "Bet deadline has passed" };
-
-  const count = await prisma.bet.count({ where: { userId: session.user.id } });
-  if (count >= MAX_BETS_PER_USER) return { error: "Bet limit reached" };
-
-  const rawLabel = `Copy of ${source.label}`;
-  const label = rawLabel.slice(0, 200);
-
-  const newBet = await prisma.bet.create({
-    data: {
-      label,
-      userId: session.user.id,
-      status: "draft",
-      groupPredictions: source.groupPredictions ?? undefined,
-      knockoutWinners: source.knockoutWinners ?? undefined,
-    },
+  const repo = new PrismaBetRepository(prisma);
+  const result = await copyBetUseCase(repo, {
+    betId,
+    userId: session.user.id,
+    limit: MAX_BETS_PER_USER,
+    window: new BettingWindow(BET_DEADLINE),
+    now: new Date(),
   });
 
+  if (result.isErr()) {
+    return { error: await betErrorMessage(result.error.code) };
+  }
+
+  const newBet = result.value;
   const locale = await getLocale();
   revalidatePath("/bets");
   redirect({ href: `/bets/${newBet.id}`, locale });

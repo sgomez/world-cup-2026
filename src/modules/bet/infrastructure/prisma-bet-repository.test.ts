@@ -19,7 +19,7 @@ function fakePrisma() {
       findUnique: vi.fn(),
       findMany: vi.fn(),
       count: vi.fn(),
-      update: vi.fn().mockResolvedValue({}),
+      upsert: vi.fn().mockResolvedValue({}),
     },
   };
 }
@@ -126,7 +126,7 @@ describe("PrismaBetRepository.countByOwner", () => {
 });
 
 describe("PrismaBetRepository.save", () => {
-  it("round-trips an aggregate back to its row columns", async () => {
+  it("round-trips an aggregate back to its row columns via upsert", async () => {
     const prisma = fakePrisma();
     const repo = new PrismaBetRepository(prisma as never);
     const bet = Bet.fromState({
@@ -141,9 +141,17 @@ describe("PrismaBetRepository.save", () => {
     const result = await repo.save(bet);
 
     expect(result.isOk()).toBe(true);
-    expect(prisma.bet.update).toHaveBeenCalledWith({
+    expect(prisma.bet.upsert).toHaveBeenCalledWith({
       where: { id: "bet-1" },
-      data: {
+      create: {
+        id: "bet-1",
+        userId: "user-1",
+        label: "My bet",
+        status: "closed",
+        groupPredictions: ROW.groupPredictions,
+        knockoutWinners: ROW.knockoutWinners,
+      },
+      update: {
         label: "My bet",
         status: "closed",
         groupPredictions: ROW.groupPredictions,
@@ -163,20 +171,9 @@ describe("PrismaBetRepository.save", () => {
     });
   }
 
-  it("maps a Prisma P2025 (record not found) to NOT_FOUND", async () => {
+  it("maps any persistence failure to SAVE_FAILED", async () => {
     const prisma = fakePrisma();
-    prisma.bet.update.mockRejectedValue({ code: "P2025" });
-    const repo = new PrismaBetRepository(prisma as never);
-
-    const result = await repo.save(bet());
-
-    expect(result.isErr()).toBe(true);
-    expect(result._unsafeUnwrapErr().code).toBe("NOT_FOUND");
-  });
-
-  it("maps any other persistence failure to SAVE_FAILED", async () => {
-    const prisma = fakePrisma();
-    prisma.bet.update.mockRejectedValue(new Error("connection reset"));
+    prisma.bet.upsert.mockRejectedValue(new Error("connection reset"));
     const repo = new PrismaBetRepository(prisma as never);
 
     const result = await repo.save(bet());

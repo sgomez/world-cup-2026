@@ -13,6 +13,7 @@ export type DomainErrorCode =
   | "NOT_FOUND"
   | "SAVE_FAILED"
   | "INVALID_LABEL"
+  | "LIMIT_EXCEEDED"
   | "BET_CLOSED";
 
 export type DomainError = {
