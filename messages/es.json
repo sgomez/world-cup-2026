@@ -91,7 +91,7 @@
     "notAuthorized": "No autorizado",
     "betClosed": "La apuesta está cerrada",
     "gatePageTitle": "Predicción de Apuesta",
-    "gateMessage": "Esta predicción está bloqueada y se revelará una vez que pase la fecha límite de apuestas el {date}."
+    "gateMessage": "Esta predicción está bloqueada y se revelará una vez que pase la fecha límite de apuestas el <date></date>."
   },
   "groupStage": {
     "group": "Grupo {letter}",
