@@ -6,6 +6,7 @@
     "switchLanguage": "Cambiar idioma",
     "communities": "Comunidades",
     "myBets": "Mis Apuestas",
+    "leaderboard": "Clasificación",
     "editProfile": "Editar Perfil",
     "createCommunity": "Crear Comunidad",
     "adminPanel": "Panel de Administración",
@@ -245,5 +246,19 @@
   "actionErrors": {
     "NOT_AUTHENTICATED": "No autenticado",
     "NAME_REQUIRED": "El nombre es obligatorio"
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "description": "Ranking por puntos de tus predicciones.",
+    "rank": "#",
+    "participant": "Participante",
+    "points": "Puntos",
+    "you": "Tú",
+    "pts": "pts",
+    "noCommunities": "Todavía no perteneces a ninguna comunidad.",
+    "joinOrCreate": "¡Únete o crea una comunidad para empezar a competir!",
+    "joinOrCreateButton": "Ir a Comunidades",
+    "noBets": "Ningún participante tiene apuestas cerradas en esta comunidad.",
+    "betsCount": "{count, plural, one {# apuesta} other {# apuestas}}"
   }
 }

@@ -6,6 +6,7 @@
     "switchLanguage": "Switch language",
     "communities": "Communities",
     "myBets": "My Bets",
+    "leaderboard": "Leaderboard",
     "editProfile": "Edit Profile",
     "createCommunity": "Create Community",
     "adminPanel": "Admin Panel",
@@ -245,5 +246,19 @@
   "actionErrors": {
     "NOT_AUTHENTICATED": "Not authenticated",
     "NAME_REQUIRED": "Name is required"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "description": "Points ranking of your predictions.",
+    "rank": "#",
+    "participant": "Participant",
+    "points": "Points",
+    "you": "You",
+    "pts": "pts",
+    "noCommunities": "You don't belong to any communities yet.",
+    "joinOrCreate": "Join or create a community to start competing!",
+    "joinOrCreateButton": "Go to Communities",
+    "noBets": "No participants have closed bets yet in this community.",
+    "betsCount": "{count, plural, one {# Bet} other {# Bets}}"
   }
 }
