@@ -45,12 +45,31 @@ export class PrismaBetRepository implements BetRepository {
           data: {
             label: state.label,
             status: state.status,
+            // `groupPredictions` is nullable in the aggregate, so we skip the
+            // column when null. `knockoutWinners` is never null in aggregate
+            // state (it rehydrates as `{}`), so it always writes a value.
             groupPredictions: state.groupPredictions ?? undefined,
             knockoutWinners: state.knockoutWinners,
           },
         })
         .then(() => undefined),
-      () => domainError("NOT_FOUND"),
+      // Only Prisma's "record to update not found" (P2025) means the aggregate
+      // is gone; any other failure (connection drop, constraint, timeout) is a
+      // persistence error, not a missing Bet.
+      (error) =>
+        isRecordNotFound(error)
+          ? domainError("NOT_FOUND")
+          : domainError("SAVE_FAILED"),
     );
   }
+}
+
+/** Narrows an unknown rejection to Prisma's P2025 (record-to-update-not-found). */
+function isRecordNotFound(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code: unknown }).code === "P2025"
+  );
 }

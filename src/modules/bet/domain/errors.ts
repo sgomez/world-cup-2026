@@ -9,11 +9,9 @@
 export type DomainErrorCode =
   | "PAST_DEADLINE"
   | "INCOMPLETE_PREDICTIONS"
-  | "BET_CLOSED"
-  | "INVALID_LABEL"
-  | "LIMIT_REACHED"
   | "FORBIDDEN"
-  | "NOT_FOUND";
+  | "NOT_FOUND"
+  | "SAVE_FAILED";
 
 export type DomainError = {
   readonly code: DomainErrorCode;

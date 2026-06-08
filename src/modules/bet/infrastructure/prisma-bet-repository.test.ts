@@ -90,4 +90,37 @@ describe("PrismaBetRepository.save", () => {
       },
     });
   });
+
+  function bet() {
+    return Bet.fromState({
+      id: "bet-1",
+      userId: "user-1",
+      label: "My bet",
+      status: "closed",
+      groupPredictions: ROW.groupPredictions,
+      knockoutWinners: ROW.knockoutWinners,
+    });
+  }
+
+  it("maps a Prisma P2025 (record not found) to NOT_FOUND", async () => {
+    const prisma = fakePrisma();
+    prisma.bet.update.mockRejectedValue({ code: "P2025" });
+    const repo = new PrismaBetRepository(prisma as never);
+
+    const result = await repo.save(bet());
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("NOT_FOUND");
+  });
+
+  it("maps any other persistence failure to SAVE_FAILED", async () => {
+    const prisma = fakePrisma();
+    prisma.bet.update.mockRejectedValue(new Error("connection reset"));
+    const repo = new PrismaBetRepository(prisma as never);
+
+    const result = await repo.save(bet());
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("SAVE_FAILED");
+  });
 });
