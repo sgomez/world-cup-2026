@@ -225,7 +225,19 @@
     "cannotChangeSuperAdminRole": "El rol de super admin no se puede cambiar.",
     "joinedLabel": "Unido {date}",
     "backToCommunities": "Volver a Comunidades",
-    "betsCount": "{count, plural, one {# apuesta} other {# apuestas}}"
+    "betsCount": "{count, plural, one {# apuesta} other {# apuestas}}",
+    "resultsLink": "Resultados del Torneo",
+    "resultsTitle": "Resultados del Torneo",
+    "resultsDescription": "Registra los órdenes de clasificación oficiales de la fase de grupos.",
+    "resultsSaved": "Resultados guardados correctamente."
+  },
+  "tournamentErrors": {
+    "FORBIDDEN": "No tienes autorización para modificar los resultados del torneo.",
+    "NOT_FOUND": "Torneo no encontrado.",
+    "INVALID_ORDER": "Clasificación de grupo inválida.",
+    "INVALID_REF": "Referencia de posición inválida.",
+    "SAVE_FAILED": "No se pudieron guardar los resultados del torneo. Inténtalo de nuevo.",
+    "INVALID_MATCH": "Partido inválido."
   },
   "betErrors": {
     "NOT_FOUND": "Apuesta no encontrada",

@@ -112,3 +112,14 @@ model Verification {
 
   @@map("verification")
 }
+
+model Tournament {
+  id          String   @id @default("singleton")
+  result      Json?
+  advancement Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("tournament")
+}
+
