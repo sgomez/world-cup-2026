@@ -12,13 +12,6 @@ export type BetSummary = {
   signature: string | undefined;
 };
 
-/**
- * Pure projection from the Bet aggregate to the read view.
- *
- * Timestamps are non-null asserted: persisted Bets always have DB-managed
- * createdAt/updatedAt; the aggregate types them optional only for the
- * not-yet-persisted create path.
- */
 export function toSummary(bet: Bet): BetSummary {
   return {
     id: bet.id,
