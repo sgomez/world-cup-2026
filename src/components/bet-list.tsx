@@ -1,6 +1,5 @@
 "use client";
 
-import type { Bet } from "@prisma/client";
 import { ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -10,10 +9,17 @@ import { RenameBetButton } from "@/components/rename-bet-button";
 import { Banner } from "@/components/ui/banner";
 import { Link } from "@/i18n/navigation";
 
-type BetWithSignature = Bet & { signature?: string };
+interface BetItem {
+  id: string;
+  label: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+  signature?: string;
+}
 
 interface BetListProps {
-  bets: BetWithSignature[];
+  bets: BetItem[];
   deadlinePassed: boolean;
   showCopyButtons?: boolean;
 }

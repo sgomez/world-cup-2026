@@ -7,6 +7,7 @@ import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE, MAX_BETS_PER_USER } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { listSummaries } from "@/modules/bet/application/list-summaries";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
 export default async function BetsPage({
@@ -22,26 +23,11 @@ export default async function BetsPage({
   if (!session) redirect({ href: "/login", locale });
 
   const repo = new PrismaBetRepository(prisma);
-  const bets = await repo.listByOwner(session.user.id);
+  const enrichedBets = await listSummaries(repo, session.user.id);
 
   const isPastDeadline = new Date() > BET_DEADLINE;
-  const isAtLimit = bets.length >= MAX_BETS_PER_USER;
+  const isAtLimit = enrichedBets.length >= MAX_BETS_PER_USER;
   const showCopyButtons = !isPastDeadline && !isAtLimit;
-
-  const enrichedBets = bets.map((bet) => {
-    const state = bet.toState();
-    return {
-      id: state.id,
-      userId: state.userId,
-      label: state.label,
-      status: state.status,
-      groupPredictions: state.groupPredictions,
-      knockoutWinners: state.knockoutWinners,
-      createdAt: state.createdAt ?? new Date(),
-      updatedAt: state.updatedAt ?? new Date(),
-      signature: bet.signature,
-    };
-  });
 
   return (
     <div className="max-w-5xl">
