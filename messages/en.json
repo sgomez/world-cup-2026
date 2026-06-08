@@ -222,5 +222,11 @@
     "joinedLabel": "Joined {date}",
     "backToCommunities": "Back to Communities",
     "betsCount": "{count, plural, one {# bet} other {# bets}}"
+  },
+  "betErrors": {
+    "NOT_FOUND": "Bet not found",
+    "FORBIDDEN": "You are not authorized to modify this bet.",
+    "PAST_DEADLINE": "The bet deadline has passed. No further changes can be made.",
+    "INCOMPLETE_PREDICTIONS": "You must complete all knockout matches before closing your bet."
   }
 }

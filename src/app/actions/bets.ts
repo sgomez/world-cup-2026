@@ -1,12 +1,21 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE, MAX_BETS_PER_USER } from "@/lib/bet-constants";
 import type { PredictionState, TournamentState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { closeBet as closeBetUseCase } from "@/modules/bet/application/close-bet";
+import { BettingWindow } from "@/modules/bet/domain/betting-window";
+import type { DomainErrorCode } from "@/modules/bet/domain/errors";
+import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
+
+async function betErrorMessage(code: DomainErrorCode): Promise<string> {
+  const t = await getTranslations("betErrors");
+  return t(code);
+}
 
 export type { PredictionState } from "@/lib/prediction-state";
 export type BetActionState = { error?: string; success?: boolean } | null;
@@ -63,22 +72,18 @@ export async function closeBet(betId: string): Promise<BetActionState> {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  const result = await getBetForOwner(betId, session.user.id);
-  if ("error" in result) return { error: result.error };
+  const repo = new PrismaBetRepository(prisma);
+  const result = await closeBetUseCase(repo, {
+    betId,
+    userId: session.user.id,
+    window: new BettingWindow(BET_DEADLINE),
+    now: new Date(),
+  });
 
-  if (BET_DEADLINE.getTime() < Date.now())
-    return { error: "Deadline has passed" };
-
-  const knockoutWinners = result.bet.knockoutWinners as Record<
-    string,
-    string
-  > | null;
-  const count = knockoutWinners ? Object.keys(knockoutWinners).length : 0;
-  if (count < 32) {
-    return { error: "Predictions are incomplete" };
+  if (result.isErr()) {
+    return { error: await betErrorMessage(result.error.code) };
   }
 
-  await prisma.bet.update({ where: { id: betId }, data: { status: "closed" } });
   revalidatePath(`/bets/${betId}`);
   revalidatePath("/bets");
   return { success: true };
