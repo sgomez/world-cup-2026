@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { BetPrediction } from "@/components/bet-prediction";
 import { redirect } from "@/i18n/navigation";
@@ -21,9 +22,11 @@ export default async function BetPage({
   const repo = new PrismaBetRepository(prisma);
   const bet = await repo.findById(id);
 
-  if (!bet) redirect({ href: "/bets", locale });
+  if (!bet || !bet.isOwnedBy(session.user.id)) {
+    notFound();
+  }
 
-  const isOwner = bet.isOwnedBy(session.user.id);
+  const isOwner = true; // since it is gated to the owner only
   const savedPredictions = bet.groupPredictions;
   const savedKnockoutWinners = bet.knockoutWinners;
   const isClosed = bet.status === "closed";
