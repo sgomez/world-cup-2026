@@ -95,6 +95,18 @@ describe("renameBet use-case", () => {
     expect(result._unsafeUnwrapErr().code).toBe("INVALID_LABEL");
   });
 
+  it("returns INVALID_LABEL for a label exceeding 200 characters", async () => {
+    const repo = new InMemoryBetRepository([bet()]);
+    const result = await renameBet(repo, {
+      betId: "bet-1",
+      userId: OWNER,
+      label: "a".repeat(201),
+      window: WINDOW,
+      now: BEFORE,
+    });
+    expect(result._unsafeUnwrapErr().code).toBe("INVALID_LABEL");
+  });
+
   it("renames the bet and persists the new label", async () => {
     const repo = new InMemoryBetRepository([bet()]);
     const result = await renameBet(repo, {
