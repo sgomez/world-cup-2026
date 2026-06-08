@@ -17,6 +17,7 @@ vi.mock("next-intl/server", () => ({
             INVALID_LABEL: "Label is invalid",
             BET_CLOSED: "Bet is closed",
             LIMIT_EXCEEDED: "Bet limit reached",
+            NOT_AUTHENTICATED: "Not authenticated",
           }) as Record<string, string>
         )[key] ?? key,
   ),
@@ -125,7 +126,7 @@ describe("createBet", () => {
       >);
       const fd = new FormData();
       const result = await createBet(null, fd);
-      expect(result).toEqual({ error: "Label is required" });
+      expect(result).toEqual({ error: "Label is invalid" });
       expect(mockUpsert).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();

@@ -10,7 +10,6 @@ import { getSession } from "@/lib/session";
 import { peerSummariesByOwners } from "@/modules/bet/application/peer-summaries-by-owners";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
-
 import { createCommunity as createCommunityUseCase } from "@/modules/community/application/create-community";
 import { deleteCommunity as deleteCommunityUseCase } from "@/modules/community/application/delete-community";
 import { joinCommunity as joinCommunityUseCase } from "@/modules/community/application/join-community";
@@ -19,6 +18,7 @@ import { regenerateInviteToken as regenerateInviteTokenUseCase } from "@/modules
 import { removeMember as removeMemberUseCase } from "@/modules/community/application/remove-member";
 import type { DomainErrorCode } from "@/modules/community/domain/errors";
 import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
+import { withAuthenticatedAction } from "./authenticated-action";
 
 async function communityErrorMessage(code: DomainErrorCode): Promise<string> {
   const t = await getTranslations("communityErrors");
@@ -32,32 +32,30 @@ export async function createCommunity(
   _prev: CommunityActionState,
   formData: FormData,
 ): Promise<CommunityActionState> {
-  const session = await getSession();
-  if (!session) return { error: "Not authenticated" };
+  return withAuthenticatedAction(async (session) => {
+    const name = formData.get("name")?.toString().trim() ?? "";
 
-  const name = formData.get("name")?.toString().trim();
-  if (!name) return { error: "Name is required" };
+    const repo = new PrismaCommunityRepository(prisma);
+    const inviteToken = randomBytes(32).toString("hex");
 
-  const repo = new PrismaCommunityRepository(prisma);
-  const inviteToken = randomBytes(32).toString("hex");
+    const result = await createCommunityUseCase(repo, {
+      ownerId: session.user.id,
+      name,
+      inviteToken,
+    });
 
-  const result = await createCommunityUseCase(repo, {
-    ownerId: session.user.id,
-    name,
-    inviteToken,
-  });
-
-  if (result.isErr()) {
-    if (result.error.code === "SLUG_ALREADY_EXISTS") {
-      return createCommunity(_prev, formData);
+    if (result.isErr()) {
+      if (result.error.code === "SLUG_ALREADY_EXISTS") {
+        return createCommunity(_prev, formData);
+      }
+      return { error: await communityErrorMessage(result.error.code) };
     }
-    return { error: await communityErrorMessage(result.error.code) };
-  }
 
-  const community = result.value;
-  const locale = await getLocale();
-  revalidatePath("/communities");
-  redirect({ href: `/communities/${community.slug}`, locale });
+    const community = result.value;
+    const locale = await getLocale();
+    revalidatePath("/communities");
+    redirect({ href: `/communities/${community.slug}`, locale });
+  });
 }
 
 export async function getCommunity(slug: string) {
@@ -110,22 +108,21 @@ export async function leaveCommunity(
   _prev: CommunityActionState,
   _formData: FormData,
 ): Promise<CommunityActionState> {
-  const session = await getSession();
-  if (!session) return { error: "Not authenticated" };
+  return withAuthenticatedAction(async (session) => {
+    const repo = new PrismaCommunityRepository(prisma);
+    const result = await leaveCommunityUseCase(repo, {
+      userId: session.user.id,
+      slug,
+    });
 
-  const repo = new PrismaCommunityRepository(prisma);
-  const result = await leaveCommunityUseCase(repo, {
-    userId: session.user.id,
-    slug,
+    if (result.isErr()) {
+      return { error: await communityErrorMessage(result.error.code) };
+    }
+
+    const locale = await getLocale();
+    revalidatePath("/communities");
+    redirect({ href: "/communities", locale });
   });
-
-  if (result.isErr()) {
-    return { error: await communityErrorMessage(result.error.code) };
-  }
-
-  const locale = await getLocale();
-  revalidatePath("/communities");
-  redirect({ href: "/communities", locale });
 }
 
 export async function removeMember(
@@ -134,23 +131,22 @@ export async function removeMember(
   _prev: CommunityActionState,
   _formData: FormData,
 ): Promise<CommunityActionState> {
-  const session = await getSession();
-  if (!session) return { error: "Not authenticated" };
+  return withAuthenticatedAction(async (session) => {
+    const repo = new PrismaCommunityRepository(prisma);
+    const result = await removeMemberUseCase(repo, {
+      actorId: session.user.id,
+      targetUserId,
+      slug,
+    });
 
-  const repo = new PrismaCommunityRepository(prisma);
-  const result = await removeMemberUseCase(repo, {
-    actorId: session.user.id,
-    targetUserId,
-    slug,
+    if (result.isErr()) {
+      return { error: await communityErrorMessage(result.error.code) };
+    }
+
+    revalidatePath(`/communities/${slug}/settings`);
+    revalidatePath(`/communities/${slug}`);
+    return { success: true };
   });
-
-  if (result.isErr()) {
-    return { error: await communityErrorMessage(result.error.code) };
-  }
-
-  revalidatePath(`/communities/${slug}/settings`);
-  revalidatePath(`/communities/${slug}`);
-  return { success: true };
 }
 
 export async function deleteCommunity(
@@ -158,22 +154,21 @@ export async function deleteCommunity(
   _prev: CommunityActionState,
   _formData: FormData,
 ): Promise<CommunityActionState> {
-  const session = await getSession();
-  if (!session) return { error: "Not authenticated" };
+  return withAuthenticatedAction(async (session) => {
+    const repo = new PrismaCommunityRepository(prisma);
+    const result = await deleteCommunityUseCase(repo, {
+      actorId: session.user.id,
+      slug,
+    });
 
-  const repo = new PrismaCommunityRepository(prisma);
-  const result = await deleteCommunityUseCase(repo, {
-    actorId: session.user.id,
-    slug,
+    if (result.isErr()) {
+      return { error: await communityErrorMessage(result.error.code) };
+    }
+
+    const locale = await getLocale();
+    revalidatePath("/communities");
+    redirect({ href: "/communities", locale });
   });
-
-  if (result.isErr()) {
-    return { error: await communityErrorMessage(result.error.code) };
-  }
-
-  const locale = await getLocale();
-  revalidatePath("/communities");
-  redirect({ href: "/communities", locale });
 }
 
 export async function regenerateInviteToken(
@@ -181,23 +176,22 @@ export async function regenerateInviteToken(
   _prev: CommunityActionState,
   _formData: FormData,
 ): Promise<CommunityActionState> {
-  const session = await getSession();
-  if (!session) return { error: "Not authenticated" };
+  return withAuthenticatedAction(async (session) => {
+    const repo = new PrismaCommunityRepository(prisma);
+    const newToken = randomBytes(32).toString("hex");
+    const result = await regenerateInviteTokenUseCase(repo, {
+      actorId: session.user.id,
+      slug,
+      newToken,
+    });
 
-  const repo = new PrismaCommunityRepository(prisma);
-  const newToken = randomBytes(32).toString("hex");
-  const result = await regenerateInviteTokenUseCase(repo, {
-    actorId: session.user.id,
-    slug,
-    newToken,
+    if (result.isErr()) {
+      return { error: await communityErrorMessage(result.error.code) };
+    }
+
+    revalidatePath(`/communities/${slug}/settings`);
+    return { success: true };
   });
-
-  if (result.isErr()) {
-    return { error: await communityErrorMessage(result.error.code) };
-  }
-
-  revalidatePath(`/communities/${slug}/settings`);
-  return { success: true };
 }
 
 export async function joinCommunity(
@@ -205,20 +199,19 @@ export async function joinCommunity(
   _prev: JoinCommunityState,
   _formData: FormData,
 ): Promise<JoinCommunityState> {
-  const session = await getSession();
-  if (!session) return { error: "Not authenticated" };
+  return withAuthenticatedAction(async (session) => {
+    const repo = new PrismaCommunityRepository(prisma);
+    const result = await joinCommunityUseCase(repo, {
+      userId: session.user.id,
+      inviteToken: token,
+    });
 
-  const repo = new PrismaCommunityRepository(prisma);
-  const result = await joinCommunityUseCase(repo, {
-    userId: session.user.id,
-    inviteToken: token,
+    if (result.isErr()) {
+      return { error: await communityErrorMessage(result.error.code) };
+    }
+
+    const locale = await getLocale();
+    revalidatePath("/communities");
+    redirect({ href: `/communities/${result.value.slug}`, locale });
   });
-
-  if (result.isErr()) {
-    return { error: await communityErrorMessage(result.error.code) };
-  }
-
-  const locale = await getLocale();
-  revalidatePath("/communities");
-  redirect({ href: `/communities/${result.value.slug}`, locale });
 }

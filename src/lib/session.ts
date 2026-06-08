@@ -1,9 +1,12 @@
 import { headers } from "next/headers";
 import { cache } from "react";
-import { auth } from "./auth";
+import { auth, type Session } from "./auth";
 
-export const getSession = cache(async () =>
-  auth.api.getSession({ headers: await headers() }),
+export const getSession = cache(
+  async () =>
+    auth.api.getSession({
+      headers: await headers(),
+    }) as Promise<Session | null>,
 );
 
 export async function requireSession() {
@@ -18,7 +21,7 @@ export async function requireSession() {
 
 export async function requireAdmin() {
   const session = await requireSession();
-  const role = (session.user as { role?: string }).role;
+  const role = session.user.role;
   if (role !== "admin" && role !== "super_admin") {
     const { redirect } = await import("next/navigation");
     redirect("/");
