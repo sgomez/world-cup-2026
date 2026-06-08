@@ -75,8 +75,28 @@ beforeEach(() => {
 
   mockBetFindMany.mockImplementation((async (args: unknown) => {
     const commResult = mockCommunityFindUnique.mock.results.at(-1)?.value;
-    const comm = commResult instanceof Promise ? await commResult : commResult;
-    if (!comm) return [];
+    const comm = (
+      commResult instanceof Promise ? await commResult : commResult
+    ) as
+      | {
+          members?: {
+            userId: string;
+            user: {
+              bets: {
+                id: string;
+                label: string;
+                status: string;
+                groupPredictions: unknown;
+                knockoutWinners: unknown;
+                createdAt: Date;
+                updatedAt: Date;
+              }[];
+            };
+          }[];
+        }
+      | null
+      | undefined;
+    if (!comm?.members) return [];
     const typedArgs = args as {
       where?: { userId?: { in?: string[] } | string };
     };
@@ -97,21 +117,9 @@ beforeEach(() => {
       updatedAt: Date;
       userId: string;
     }[] = [];
-    for (const member of (comm as any).members) {
-      if (userIds && userIds.includes(member.userId)) {
-        for (const b of (
-          member.user as {
-            bets: {
-              id: string;
-              label: string;
-              status: string;
-              groupPredictions: unknown;
-              knockoutWinners: unknown;
-              createdAt: Date;
-              updatedAt: Date;
-            }[];
-          }
-        ).bets) {
+    for (const member of comm.members) {
+      if (userIds?.includes(member.userId)) {
+        for (const b of member.user.bets) {
           bets.push({
             id: b.id,
             userId: member.userId,
