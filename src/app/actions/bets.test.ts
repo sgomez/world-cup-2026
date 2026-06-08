@@ -326,6 +326,17 @@ describe("updateBetPredictions", () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
+  it("returns error when deadline has passed (regression: post-deadline edit bug)", async () => {
+    const { BET_DEADLINE } = await import("@/lib/bet-constants");
+    vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
+    mockSession();
+    mockBet();
+    const result = await updateBetPredictions(BET_ID, VALID_STATE);
+    expect(result).toEqual({ error: "Deadline has passed" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
   it("persists only group predictions (strips knockout matches) and returns success", async () => {
     mockSession();
     mockBet();
