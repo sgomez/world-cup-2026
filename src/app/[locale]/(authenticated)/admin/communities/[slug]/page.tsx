@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireSession } from "@/lib/session";
+
 import { summariesByOwners } from "@/modules/bet/application/summaries-by-owners";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
@@ -14,8 +14,6 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("admin");
-
-  await requireSession();
 
   const communityRaw = await prisma.community.findUnique({
     where: { slug },

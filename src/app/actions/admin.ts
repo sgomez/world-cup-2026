@@ -13,7 +13,7 @@ export async function setUserRole(
   const session = await getSession();
   if (!session) return;
 
-  const actor = session.user as { id: string; role?: string };
+  const actor = session.user;
   const actorRole = actor.role;
 
   if (actorRole !== "admin" && actorRole !== "super_admin") return;

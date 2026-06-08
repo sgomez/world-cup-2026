@@ -1,7 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireSession } from "@/lib/session";
 
 export default async function AdminCommunitiesPage({
   params,
@@ -11,8 +10,6 @@ export default async function AdminCommunitiesPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("admin");
-
-  await requireSession();
 
   const communities = await prisma.community.findMany({
     orderBy: { createdAt: "asc" },
