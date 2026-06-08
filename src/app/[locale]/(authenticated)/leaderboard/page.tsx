@@ -1,7 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { Leaderboard } from "@/components/leaderboard";
 import { redirect } from "@/i18n/navigation";
-import { BET_DEADLINE } from "@/lib/bet-constants";
+import { BET_DEADLINE, TOURNAMENT_ENDED } from "@/lib/bet-constants";
 import { scopeMapper } from "@/lib/leaderboard";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -62,7 +62,11 @@ export default async function LeaderboardPage({
 
   return (
     <div className="max-w-5xl">
-      <Leaderboard scopes={scopes} currentUserId={session.user.id} />
+      <Leaderboard
+        scopes={scopes}
+        currentUserId={session.user.id}
+        tournamentEnded={TOURNAMENT_ENDED}
+      />
     </div>
   );
 }
