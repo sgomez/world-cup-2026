@@ -13,4 +13,8 @@ export class BettingWindow {
   isOpen(now: Date): boolean {
     return now.getTime() <= this.deadline.getTime();
   }
+
+  isClosed(now: Date): boolean {
+    return !this.isOpen(now);
+  }
 }

@@ -6,6 +6,7 @@ import type { BettingWindow } from "./betting-window";
 import { type DomainError, domainError } from "./errors";
 
 export type BetStatus = "draft" | "closed";
+export type PeerVisibility = "full" | "summary" | "hidden";
 
 /** ADR 0006: the two inputs that drive the entire R32 bracket. */
 export type GroupPredictions = {
@@ -190,6 +191,16 @@ export class Bet {
     return BetLabel.create(rawLabel).map(
       (label) => new Bet({ ...this.state, label: label.value }),
     );
+  }
+
+  peerVisibility(window: BettingWindow, now: Date): PeerVisibility {
+    if (window.isClosed(now)) {
+      return "full";
+    }
+    if (this.state.status === "closed") {
+      return "summary";
+    }
+    return "hidden";
   }
 
   toState(): BetState {

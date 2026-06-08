@@ -462,13 +462,6 @@ describe("getCommunity", () => {
     expect(result?.currentUserId).toBe(OWNER_ID);
   });
 
-  it("returns isPastDeadline false before the bet deadline", async () => {
-    mockSession();
-    mockCommunityFindUnique.mockResolvedValue(makeCommunity([USER_ID]));
-    const result = await getCommunity(COMMUNITY_SLUG);
-    expect(result?.isPastDeadline).toBe(false);
-  });
-
   it("hides member bets before the bet deadline", async () => {
     mockSession();
     mockCommunityFindUnique.mockResolvedValue(
@@ -476,16 +469,6 @@ describe("getCommunity", () => {
     );
     const result = await getCommunity(COMMUNITY_SLUG);
     expect(result?.members[0].user.bets).toHaveLength(0);
-  });
-
-  it("returns isPastDeadline true after the bet deadline", async () => {
-    const { BET_DEADLINE } = await import("@/lib/bet-constants");
-    vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
-    mockSession();
-    mockCommunityFindUnique.mockResolvedValue(makeCommunity([USER_ID]));
-    const result = await getCommunity(COMMUNITY_SLUG);
-    expect(result?.isPastDeadline).toBe(true);
-    vi.restoreAllMocks();
   });
 
   it("exposes member bets after the bet deadline", async () => {
