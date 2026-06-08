@@ -11,9 +11,14 @@ import { cn } from "@/lib/utils";
 interface LeaderboardProps {
   scopes: LeaderboardScope[];
   currentUserId?: string;
+  tournamentEnded?: boolean;
 }
 
-export function Leaderboard({ scopes, currentUserId }: LeaderboardProps) {
+export function Leaderboard({
+  scopes,
+  currentUserId,
+  tournamentEnded,
+}: LeaderboardProps) {
   const t = useTranslations("leaderboard");
   const [activeId, setActiveId] = useState(scopes[0]?.id);
   const active = scopes.find((s) => s.id === activeId) ?? scopes[0];
@@ -89,6 +94,7 @@ export function Leaderboard({ scopes, currentUserId }: LeaderboardProps) {
         <LeaderboardTable
           entries={active.entries}
           currentUserId={currentUserId}
+          tournamentEnded={tournamentEnded}
         />
       )}
     </section>

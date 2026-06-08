@@ -47,3 +47,15 @@ describe("MAX_BETS_PER_USER", () => {
     expect(typeof MAX_BETS_PER_USER).toBe("number");
   });
 });
+
+describe("TOURNAMENT_ENDED", () => {
+  it("defaults to false", async () => {
+    const { TOURNAMENT_ENDED } = await import("./bet-constants");
+    expect(TOURNAMENT_ENDED).toBe(false);
+  });
+
+  it("is a boolean", async () => {
+    const { TOURNAMENT_ENDED } = await import("./bet-constants");
+    expect(typeof TOURNAMENT_ENDED).toBe("boolean");
+  });
+});

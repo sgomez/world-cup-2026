@@ -122,6 +122,54 @@ describe("LeaderboardTable Component", () => {
     expect(aliceContainer).toHaveTextContent("Alice");
     expect(aliceContainer).not.toHaveTextContent("Bob");
   });
+
+  it("renders plain numbers for all ranks when tournamentEnded is false", () => {
+    render(
+      <LeaderboardTable
+        entries={sampleEntries}
+        currentUserId="user-1"
+        tournamentEnded={false}
+      />,
+    );
+
+    // Rank 1 displays as plain number "1"
+    const rankOnes = screen.getAllByText("1");
+    expect(rankOnes).toHaveLength(2);
+
+    // No emoji "🏆"
+    expect(screen.queryByText("🏆")).not.toBeInTheDocument();
+  });
+
+  it("renders the 🏆 emoji for rank 1 and plain numbers for other ranks when tournamentEnded is true", () => {
+    render(
+      <LeaderboardTable
+        entries={sampleEntries}
+        currentUserId="user-1"
+        tournamentEnded={true}
+      />,
+    );
+
+    // Rank 1 should NOT display as plain number "1"
+    expect(screen.queryByText("1")).not.toBeInTheDocument();
+
+    // Instead, there should be multiple 🏆 emojis (one for Bob, one for Alice)
+    const cups = screen.getAllByText("🏆");
+    expect(cups).toHaveLength(2);
+
+    // Bob is tied for 1st, so Bob's row has 🏆
+    const bobRow = cups[0].closest("li");
+    expect(bobRow).toHaveTextContent("Bob");
+
+    // Alice is tied for 1st, so Alice's row has 🏆
+    const aliceRow = cups[1].closest("li");
+    expect(aliceRow).toHaveTextContent("Alice");
+
+    // Charlie has rank 3, so Charlie's row should still display plain number "3"
+    const rankThree = screen.getByText("3");
+    expect(rankThree).toBeInTheDocument();
+    const charlieRow = rankThree.closest("li");
+    expect(charlieRow).toHaveTextContent("Charlie");
+  });
 });
 
 describe("Leaderboard Component (Tabs)", () => {
@@ -188,5 +236,12 @@ describe("Leaderboard Component (Tabs)", () => {
     // Now Bob is visible, Alice is not
     expect(screen.getByText("Bob")).toBeInTheDocument();
     expect(screen.queryByText("Alice")).not.toBeInTheDocument();
+  });
+
+  it("passes tournamentEnded prop to LeaderboardTable", () => {
+    render(<Leaderboard scopes={sampleScopes} tournamentEnded={true} />);
+    // Alice is 1st in Community A (default active tab), so she should have 🏆
+    expect(screen.getByText("🏆")).toBeInTheDocument();
+    expect(screen.queryByText("1")).not.toBeInTheDocument();
   });
 });

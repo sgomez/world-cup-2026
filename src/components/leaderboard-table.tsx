@@ -7,12 +7,14 @@ import { cn } from "@/lib/utils";
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[];
   currentUserId?: string;
+  tournamentEnded?: boolean;
   className?: string;
 }
 
 export function LeaderboardTable({
   entries,
   currentUserId,
+  tournamentEnded = false,
   className,
 }: LeaderboardTableProps) {
   const t = useTranslations("leaderboard");
@@ -58,9 +60,9 @@ export function LeaderboardTable({
                   "bg-info/5 hover:bg-info/10 dark:bg-info-deep/10 dark:hover:bg-info-deep/15",
               )}
             >
-              {/* Rank Position (Plain Number in this slice) */}
+              {/* Rank Position (Plain Number, or Cup if tournament ended and 1st) */}
               <span className="flex justify-center text-body-strong font-semibold tabular-nums text-foreground">
-                {entry.rank}
+                {tournamentEnded && entry.rank === 1 ? "🏆" : entry.rank}
               </span>
 
               {/* Participant & Bet Info */}
