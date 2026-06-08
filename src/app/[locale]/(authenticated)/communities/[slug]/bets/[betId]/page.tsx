@@ -91,7 +91,7 @@ export default async function PeerBetPage({
             </h2>
             <p className="text-body-md text-muted-foreground">
               {t.rich("gateMessage", {
-                date: (chunks) => <LocalDate date={BET_DEADLINE} />,
+                date: () => <LocalDate date={BET_DEADLINE} />,
               })}
             </p>
           </div>

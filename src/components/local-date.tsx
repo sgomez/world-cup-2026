@@ -16,14 +16,12 @@ export function LocalDate({ date }: { date: Date }) {
       minute: "2-digit",
       timeZoneName: "short",
     });
-    const utcStr =
-      date.toISOString().replace("T", " ").substring(0, 16) + " UTC";
+    const utcStr = `${date.toISOString().replace("T", " ").substring(0, 16)} UTC`;
     setFormatted(`${localStr} (${utcStr})`);
   }, [date, locale]);
 
   if (!formatted) {
-    const utcStr =
-      date.toISOString().replace("T", " ").substring(0, 16) + " UTC";
+    const utcStr = `${date.toISOString().replace("T", " ").substring(0, 16)} UTC`;
     return <span>{utcStr}</span>;
   }
 

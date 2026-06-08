@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { redirect } from "@/i18n/navigation";
 import { getSession } from "@/lib/session";
-import { getPeerBet } from "@/modules/bet/application/get-peer-bet";
 import { domainError } from "@/modules/bet/domain/errors";
 import PeerBetPage from "./page";
 
@@ -85,8 +84,7 @@ vi.mock("next-intl/server", () => {
 
 vi.mock("@/components/local-date", () => ({
   LocalDate: ({ date }: { date: Date }) => {
-    const utcStr =
-      date.toISOString().replace("T", " ").substring(0, 16) + " UTC";
+    const utcStr = `${date.toISOString().replace("T", " ").substring(0, 16)} UTC`;
     return <>{utcStr}</>;
   },
 }));
