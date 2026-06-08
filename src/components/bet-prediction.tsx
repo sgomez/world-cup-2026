@@ -2,7 +2,14 @@
 
 import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { useTranslations } from "next-intl";
-import { useEffect, useReducer, useRef, useState, useTransition } from "react";
+import {
+  type ReactNode,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { closeBet, reopenBet, updateBetPredictions } from "@/app/actions/bets";
 import { GroupStage } from "@/components/group-stage";
 import { KnockoutStage } from "@/components/knockout-stage";
@@ -25,6 +32,7 @@ export function BetPrediction({
   isClosed,
   savedPredictions,
   savedKnockoutWinners,
+  headerDescription,
 }: {
   betId: string;
   betLabel: string;
@@ -33,6 +41,7 @@ export function BetPrediction({
   isClosed: boolean;
   savedPredictions: PredictionState | null;
   savedKnockoutWinners?: Record<string, string> | null;
+  headerDescription?: ReactNode;
 }) {
   const t = useTranslations("bets");
   const [state, dispatch] = useReducer(tournamentReducer, null, () =>
@@ -177,6 +186,7 @@ export function BetPrediction({
               )}
             </span>
           }
+          description={headerDescription}
           action={actionContent}
         />
       </div>
