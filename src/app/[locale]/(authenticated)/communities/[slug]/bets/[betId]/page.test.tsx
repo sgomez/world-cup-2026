@@ -1,24 +1,23 @@
 import { render, screen } from "@testing-library/react";
+import { err, ok } from "neverthrow";
 import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { redirect } from "@/i18n/navigation";
-import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { getPeerBet } from "@/modules/bet/application/get-peer-bet";
+import { domainError } from "@/modules/bet/domain/errors";
 import PeerBetPage from "./page";
 
-const { mockPrisma, mockIsClosed } = vi.hoisted(() => {
+const { mockGetPeerBet, mockIsClosed } = vi.hoisted(() => {
   return {
-    mockPrisma: {
-      community: {
-        findUnique: vi.fn(),
-      },
-      bet: {
-        findUnique: vi.fn(),
-      },
-    },
+    mockGetPeerBet: vi.fn(),
     mockIsClosed: vi.fn(),
   };
 });
+
+vi.mock("@/modules/bet/application/get-peer-bet", () => ({
+  getPeerBet: mockGetPeerBet,
+}));
 
 vi.mock("@/modules/bet/domain/betting-window", () => {
   return {
@@ -33,7 +32,11 @@ vi.mock("@/lib/session", () => ({
 }));
 
 vi.mock("@/lib/prisma", () => ({
-  prisma: mockPrisma,
+  prisma: {
+    user: {
+      findUnique: vi.fn(),
+    },
+  },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -55,7 +58,7 @@ vi.mock("@/i18n/navigation", () => ({
 
 vi.mock("next-intl/server", () => ({
   setRequestLocale: vi.fn(),
-  getTranslations: vi.fn().mockImplementation((namespace) => {
+  getTranslations: vi.fn().mockImplementation(() => {
     return Promise.resolve((key: string, values?: any) => {
       if (values?.name) return `${key} ${values.name}`;
       if (values?.date) return `${key} ${values.date}`;
@@ -96,6 +99,14 @@ describe("PeerBetPage", () => {
     betId: "bet-1",
   });
 
+  const mockBet = {
+    id: "bet-1",
+    label: "My Great Bet",
+    signature: "signature123",
+    groupPredictions: null,
+    knockoutWinners: {},
+  } as any;
+
   it("redirects to login if not authenticated", async () => {
     vi.mocked(getSession).mockResolvedValue(null);
 
@@ -109,7 +120,7 @@ describe("PeerBetPage", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: "viewer-1" },
     } as any);
-    vi.mocked(prisma.community.findUnique).mockResolvedValue(null);
+    mockGetPeerBet.mockResolvedValue(err(domainError("NOT_FOUND")));
 
     await expect(PeerBetPage({ params: mockParams })).rejects.toThrow(
       "NOT_FOUND_TRIGGERED",
@@ -121,13 +132,7 @@ describe("PeerBetPage", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: "viewer-1" },
     } as any);
-    vi.mocked(prisma.community.findUnique).mockResolvedValue({
-      id: "comm-1",
-      slug: "our-community",
-      members: [
-        { userId: "other-user", user: { id: "other-user", name: "Other" } },
-      ],
-    } as any);
+    mockGetPeerBet.mockResolvedValue(err(domainError("FORBIDDEN")));
 
     await expect(PeerBetPage({ params: mockParams })).rejects.toThrow(
       "NOT_FOUND_TRIGGERED",
@@ -139,14 +144,7 @@ describe("PeerBetPage", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: "viewer-1" },
     } as any);
-    vi.mocked(prisma.community.findUnique).mockResolvedValue({
-      id: "comm-1",
-      slug: "our-community",
-      members: [
-        { userId: "viewer-1", user: { id: "viewer-1", name: "Viewer" } },
-      ],
-    } as any);
-    vi.mocked(prisma.bet.findUnique).mockResolvedValue(null);
+    mockGetPeerBet.mockResolvedValue(err(domainError("NOT_FOUND")));
 
     await expect(PeerBetPage({ params: mockParams })).rejects.toThrow(
       "NOT_FOUND_TRIGGERED",
@@ -158,22 +156,7 @@ describe("PeerBetPage", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: "viewer-1" },
     } as any);
-    vi.mocked(prisma.community.findUnique).mockResolvedValue({
-      id: "comm-1",
-      slug: "our-community",
-      members: [
-        { userId: "viewer-1", user: { id: "viewer-1", name: "Viewer" } },
-        { userId: "owner-1", user: { id: "owner-1", name: "Owner" } },
-      ],
-    } as any);
-    vi.mocked(prisma.bet.findUnique).mockResolvedValue({
-      id: "bet-1",
-      userId: "owner-1",
-      label: "Draft Bet",
-      status: "draft",
-      groupPredictions: null,
-      knockoutWinners: {},
-    } as any);
+    mockGetPeerBet.mockResolvedValue(err(domainError("FORBIDDEN")));
 
     await expect(PeerBetPage({ params: mockParams })).rejects.toThrow(
       "NOT_FOUND_TRIGGERED",
@@ -185,21 +168,7 @@ describe("PeerBetPage", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: "viewer-1" },
     } as any);
-    vi.mocked(prisma.community.findUnique).mockResolvedValue({
-      id: "comm-1",
-      slug: "our-community",
-      members: [
-        { userId: "viewer-1", user: { id: "viewer-1", name: "Viewer" } },
-      ],
-    } as any);
-    vi.mocked(prisma.bet.findUnique).mockResolvedValue({
-      id: "bet-1",
-      userId: "owner-1",
-      label: "Closed Bet",
-      status: "closed",
-      groupPredictions: null,
-      knockoutWinners: {},
-    } as any);
+    mockGetPeerBet.mockResolvedValue(err(domainError("FORBIDDEN")));
 
     await expect(PeerBetPage({ params: mockParams })).rejects.toThrow(
       "NOT_FOUND_TRIGGERED",
@@ -211,25 +180,14 @@ describe("PeerBetPage", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: "viewer-1" },
     } as any);
-    vi.mocked(prisma.community.findUnique).mockResolvedValue({
-      id: "comm-1",
-      slug: "our-community",
-      name: "Our Community",
-      members: [
-        { userId: "viewer-1", user: { id: "viewer-1", name: "Viewer" } },
-        { userId: "owner-1", user: { id: "owner-1", name: "Owner" } },
-      ],
-    } as any);
-    vi.mocked(prisma.bet.findUnique).mockResolvedValue({
-      id: "bet-1",
-      userId: "owner-1",
-      label: "My Great Bet",
-      status: "closed",
-      groupPredictions: null,
-      knockoutWinners: {},
-    } as any);
-
-    mockIsClosed.mockReturnValue(false); // before deadline
+    mockGetPeerBet.mockResolvedValue(
+      ok({
+        bet: mockBet,
+        ownerName: "Owner",
+        communityName: "Our Community",
+        visibility: "summary",
+      }),
+    );
 
     const result = await PeerBetPage({ params: mockParams });
     render(result);
@@ -254,25 +212,15 @@ describe("PeerBetPage", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: "viewer-1" },
     } as any);
-    vi.mocked(prisma.community.findUnique).mockResolvedValue({
-      id: "comm-1",
-      slug: "our-community",
-      name: "Our Community",
-      members: [
-        { userId: "viewer-1", user: { id: "viewer-1", name: "Viewer" } },
-        { userId: "owner-1", user: { id: "owner-1", name: "Owner" } },
-      ],
-    } as any);
-    vi.mocked(prisma.bet.findUnique).mockResolvedValue({
-      id: "bet-1",
-      userId: "owner-1",
-      label: "My Great Bet",
-      status: "closed",
-      groupPredictions: null,
-      knockoutWinners: {},
-    } as any);
-
-    mockIsClosed.mockReturnValue(true); // after deadline
+    mockGetPeerBet.mockResolvedValue(
+      ok({
+        bet: mockBet,
+        ownerName: "Owner",
+        communityName: "Our Community",
+        visibility: "full",
+      }),
+    );
+    mockIsClosed.mockReturnValue(true);
 
     const result = await PeerBetPage({ params: mockParams });
     render(result);

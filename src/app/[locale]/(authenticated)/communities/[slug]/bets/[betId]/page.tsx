@@ -7,8 +7,10 @@ import { Link, redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { getPeerBet } from "@/modules/bet/application/get-peer-bet";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
+import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
 
 export default async function PeerBetPage({
   params,
@@ -21,51 +23,32 @@ export default async function PeerBetPage({
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
 
-  // Get the community to check memberships
-  const community = await prisma.community.findUnique({
-    where: { slug },
-    include: {
-      members: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      },
-    },
+  const betRepo = new PrismaBetRepository(prisma);
+  const communityRepo = new PrismaCommunityRepository(prisma);
+  const window = new BettingWindow(BET_DEADLINE);
+  const now = new Date();
+
+  const getUserName = async (userId: string) => {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+    return user?.name ?? null;
+  };
+
+  const result = await getPeerBet(betRepo, communityRepo, getUserName, {
+    viewerId: session.user.id,
+    communitySlug: slug,
+    betId,
+    window,
+    now,
   });
 
-  if (!community) {
+  if (result.isErr()) {
     notFound();
   }
 
-  // Verify that the viewer is a member of the community
-  const viewerMember = community.members.find(
-    (m) => m.userId === session.user.id,
-  );
-  if (!viewerMember) {
-    notFound();
-  }
-
-  // Get the bet
-  const repo = new PrismaBetRepository(prisma);
-  const bet = await repo.findById(betId);
-
-  if (!bet || bet.status === "draft") {
-    notFound();
-  }
-
-  // Verify that the bet owner is a member of the community
-  const ownerMember = community.members.find((m) => m.userId === bet.userId);
-  if (!ownerMember) {
-    notFound();
-  }
-
-  const window = new BettingWindow(BET_DEADLINE);
-  const isPastDeadline = window.isClosed(new Date());
+  const { bet, ownerName, communityName, visibility } = result.value;
 
   const t = await getTranslations("bets");
   const tCommunities = await getTranslations("communities");
@@ -73,7 +56,7 @@ export default async function PeerBetPage({
   // Construct a consistent subtitle header
   const subtitle = (
     <div className="flex flex-wrap items-center gap-1.5 text-caption-md text-muted-foreground mt-1">
-      <span>{ownerMember.user.name}</span>
+      <span>{ownerName}</span>
       {bet.signature && (
         <>
           <span className="text-muted-foreground/40">•</span>
@@ -92,7 +75,7 @@ export default async function PeerBetPage({
   );
 
   // If the bet is closed but before the deadline, render the "hidden until deadline" gate page
-  if (!isPastDeadline) {
+  if (visibility === "summary") {
     return (
       <div className="space-y-6 max-w-5xl">
         <PageHeader title={bet.label} description={subtitle} />
@@ -119,12 +102,14 @@ export default async function PeerBetPage({
             className="inline-flex items-center gap-1.5 text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
-            {tCommunities("backTo", { name: community.name })}
+            {tCommunities("backTo", { name: communityName })}
           </Link>
         </div>
       </div>
     );
   }
+
+  const isPastDeadline = window.isClosed(now);
 
   // Otherwise, render the read-only prediction stage
   return (
@@ -146,7 +131,7 @@ export default async function PeerBetPage({
           className="inline-flex items-center gap-1.5 text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
-          {tCommunities("backTo", { name: community.name })}
+          {tCommunities("backTo", { name: communityName })}
         </Link>
       </div>
     </div>
