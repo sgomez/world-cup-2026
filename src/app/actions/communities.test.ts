@@ -478,7 +478,7 @@ describe("getCommunity", () => {
     const { BET_DEADLINE } = await import("@/lib/bet-constants");
     vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
     mockSession();
-    const bet = makeBet();
+    const bet = makeBet({ status: "closed" });
     mockCommunityFindUnique.mockResolvedValue(makeCommunity([USER_ID], [bet]));
     const result = await getCommunity(COMMUNITY_SLUG);
     expect(result?.members[0].user.bets).toHaveLength(1);
@@ -529,16 +529,14 @@ describe("getCommunity", () => {
     vi.restoreAllMocks();
   });
 
-  it("exposes draft bets after deadline without signature", async () => {
+  it("hides draft bets after deadline", async () => {
     const { BET_DEADLINE } = await import("@/lib/bet-constants");
     vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
     mockSession();
     const bet = makeBet({ status: "draft" });
     mockCommunityFindUnique.mockResolvedValue(makeCommunity([USER_ID], [bet]));
     const result = await getCommunity(COMMUNITY_SLUG);
-    const b = result?.members[0].user.bets[0];
-    expect(b).toBeDefined();
-    expect((b as Record<string, unknown>).signature).toBeUndefined();
+    expect(result?.members[0].user.bets).toHaveLength(0);
     vi.restoreAllMocks();
   });
 });

@@ -296,11 +296,11 @@ describe("Bet.copyFrom", () => {
 });
 
 describe("Bet.peerVisibility", () => {
-  it("returns 'full' past the deadline for both draft and closed bets", () => {
+  it("returns 'full' past the deadline for closed bets, but 'hidden' for draft bets", () => {
     const window = new BettingWindow(DEADLINE);
     const draftBet = Bet.fromState(betState({ status: "draft" }));
     const closedBet = Bet.fromState(betState({ status: "closed" }));
-    expect(draftBet.peerVisibility(window, AFTER)).toBe("full");
+    expect(draftBet.peerVisibility(window, AFTER)).toBe("hidden");
     expect(closedBet.peerVisibility(window, AFTER)).toBe("full");
   });
 

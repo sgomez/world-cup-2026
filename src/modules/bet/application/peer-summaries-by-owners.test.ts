@@ -57,7 +57,7 @@ describe("peerSummariesByOwners", () => {
     expect(result.has(USER_B)).toBe(false);
   });
 
-  it("returns all summaries past the deadline", async () => {
+  it("returns only closed summaries past the deadline", async () => {
     const window = new BettingWindow(DEADLINE);
     const repo = new InMemoryBetRepository([
       bet({ id: "bet-draft", userId: USER_A, status: "draft" }),
@@ -72,11 +72,12 @@ describe("peerSummariesByOwners", () => {
       AFTER,
     );
 
+    // USER_A has one closed bet (visible) and one draft (hidden).
     expect(result.has(USER_A)).toBe(true);
-    expect(result.get(USER_A)).toHaveLength(2);
+    expect(result.get(USER_A)).toHaveLength(1);
+    expect(result.get(USER_A)?.[0].id).toBe("bet-closed");
 
-    expect(result.has(USER_B)).toBe(true);
-    expect(result.get(USER_B)).toHaveLength(1);
-    expect(result.get(USER_B)?.[0].id).toBe("bet-b-draft");
+    // USER_B only has a draft bet, so they should be omitted.
+    expect(result.has(USER_B)).toBe(false);
   });
 });

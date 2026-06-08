@@ -50,7 +50,7 @@ A named group of Users created by one User (the **Community Owner**). Identified
 The User who created a Community. The Owner may invite new members (via an **Invite Link**), remove existing members, and delete the Community. Ownership is not transferable. The Owner cannot leave a Community — to exit, they must delete it.
 
 ### Community Member
-A User who has joined a Community. Within a Community, Members can see the **Member List** at any time. Members can see each other's full Bet predictions only **after the Bet Deadline** (2026-06-11 19:00 UTC). Before the deadline, a Member's predictions are invisible to other Members; however, the label, owner, and **Bet Signature** of each *closed* Bet are visible to fellow Members before the deadline (a public commitment without revealing the prediction). Draft Bets remain fully hidden until the deadline.
+A User who has joined a Community. Within a Community, Members can see the **Member List** at any time. Members can see each other's full Bet predictions only for **closed** Bets and only **after the Bet Deadline** (2026-06-11 19:00 UTC). Before the deadline, a Member's predictions are invisible to other Members; however, the label, owner, and **Bet Signature** of each *closed* Bet are visible to fellow Members before the deadline (a public commitment without revealing the prediction). Draft Bets are **always hidden** from other Members — before *and* after the deadline. A Bet that is still in `draft` when the deadline passes (see ADR 0001) stays frozen and never becomes visible to peers; only the owner ever sees it.
 
 ### Member List
 The list of Users belonging to a Community. Visible to all Members of that Community at any time.

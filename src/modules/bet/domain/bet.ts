@@ -194,6 +194,9 @@ export class Bet {
   }
 
   peerVisibility(window: BettingWindow, now: Date): PeerVisibility {
+    if (this.state.status === "draft") {
+      return "hidden";
+    }
     if (window.isClosed(now)) {
       return "full";
     }
