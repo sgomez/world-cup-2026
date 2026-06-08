@@ -177,15 +177,6 @@ export function CommunityDetail({
                             >
                               {b.label}
                             </Link>
-                            {b.status === "draft" && (
-                              <span className="inline-flex items-center gap-1.5 rounded-full border border-info/30 bg-info/5 px-2.5 py-0.5 text-xs font-medium text-info shrink-0">
-                                <span
-                                  className="size-1.5 rounded-full bg-info"
-                                  aria-hidden="true"
-                                />
-                                {t("draft")}
-                              </span>
-                            )}
                             {b.status === "closed" && (
                               <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/5 px-2.5 py-0.5 text-xs font-medium text-success dark:text-success-bright shrink-0">
                                 <span

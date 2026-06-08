@@ -56,15 +56,39 @@ vi.mock("@/i18n/navigation", () => ({
   ),
 }));
 
-vi.mock("next-intl/server", () => ({
-  setRequestLocale: vi.fn(),
-  getTranslations: vi.fn().mockImplementation(() => {
-    return Promise.resolve((key: string, values?: any) => {
+vi.mock("next-intl/server", () => {
+  const getTranslationsMock = vi.fn().mockImplementation(() => {
+    const fn = (key: string, values?: any) => {
       if (values?.name) return `${key} ${values.name}`;
       if (values?.date) return `${key} ${values.date}`;
       return key;
-    });
-  }),
+    };
+    fn.rich = (key: string, values?: any) => {
+      if (values?.date) {
+        const dateElement =
+          typeof values.date === "function" ? values.date() : values.date;
+        return (
+          <>
+            {key} {dateElement}
+          </>
+        );
+      }
+      return fn(key, values);
+    };
+    return Promise.resolve(fn);
+  });
+  return {
+    setRequestLocale: vi.fn(),
+    getTranslations: getTranslationsMock,
+  };
+});
+
+vi.mock("@/components/local-date", () => ({
+  LocalDate: ({ date }: { date: Date }) => {
+    const utcStr =
+      date.toISOString().replace("T", " ").substring(0, 16) + " UTC";
+    return <>{utcStr}</>;
+  },
 }));
 
 vi.mock("@/components/bet-prediction", () => ({
