@@ -36,12 +36,20 @@ export default async function AdminPage({
         <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
           {t("usersTitle")}
         </h1>
-        <Link
-          href="/admin/communities"
-          className="text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
-        >
-          {t("communitiesLink")}
-        </Link>
+        <div className="flex gap-4">
+          <Link
+            href="/admin/result"
+            className="text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
+          >
+            {t("resultsLink")}
+          </Link>
+          <Link
+            href="/admin/communities"
+            className="text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
+          >
+            {t("communitiesLink")}
+          </Link>
+        </div>
       </div>
       <p className="mt-1 text-caption-md text-muted-foreground">
         {t("participantsCount", { count: users.length })}

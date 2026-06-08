@@ -74,6 +74,8 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
+import { ToastProvider } from "@/components/ui/toast";
+
 export default async function LocaleLayout({
   children,
   params,
@@ -97,7 +99,9 @@ export default async function LocaleLayout({
           enableSystem={false}
           forcedTheme="light"
         >
-          <NextIntlClientProvider>{children}</NextIntlClientProvider>
+          <NextIntlClientProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </NextIntlClientProvider>
         </ThemeProvider>
       </body>
     </html>

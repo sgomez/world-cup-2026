@@ -225,7 +225,19 @@
     "cannotChangeSuperAdminRole": "The super admin role cannot be changed.",
     "joinedLabel": "Joined {date}",
     "backToCommunities": "Back to Communities",
-    "betsCount": "{count, plural, one {# bet} other {# bets}}"
+    "betsCount": "{count, plural, one {# bet} other {# bets}}",
+    "resultsLink": "Tournament Results",
+    "resultsTitle": "Tournament Results",
+    "resultsDescription": "Record the official finishing orders of the group stage.",
+    "resultsSaved": "Results saved successfully."
+  },
+  "tournamentErrors": {
+    "FORBIDDEN": "You are not authorized to modify the tournament results.",
+    "NOT_FOUND": "Tournament not found.",
+    "INVALID_ORDER": "Invalid group ordering.",
+    "INVALID_REF": "Invalid slot reference.",
+    "SAVE_FAILED": "Failed to save the tournament results. Please try again.",
+    "INVALID_MATCH": "Invalid match."
   },
   "betErrors": {
     "NOT_FOUND": "Bet not found",
