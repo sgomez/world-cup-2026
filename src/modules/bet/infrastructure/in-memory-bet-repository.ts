@@ -20,6 +20,32 @@ export class InMemoryBetRepository implements BetRepository {
     return this.store.get(id) ?? null;
   }
 
+  async listByOwner(userId: string): Promise<Bet[]> {
+    return Array.from(this.store.values())
+      .filter((bet) => bet.userId === userId)
+      .sort((a, b) => {
+        const aTime = a.createdAt?.getTime() ?? 0;
+        const bTime = b.createdAt?.getTime() ?? 0;
+        return bTime - aTime;
+      });
+  }
+
+  async listByOwners(userIds: string[]): Promise<Bet[]> {
+    return Array.from(this.store.values())
+      .filter((bet) => userIds.includes(bet.userId))
+      .sort((a, b) => {
+        const aTime = a.createdAt?.getTime() ?? 0;
+        const bTime = b.createdAt?.getTime() ?? 0;
+        return bTime - aTime;
+      });
+  }
+
+  async countByOwner(userId: string): Promise<number> {
+    return Array.from(this.store.values()).filter(
+      (bet) => bet.userId === userId,
+    ).length;
+  }
+
   save(bet: Bet): ResultAsync<void, DomainError> {
     this.store.set(bet.id, bet);
     return okAsync(undefined);

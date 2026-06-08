@@ -5,10 +5,9 @@ import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
 import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE, MAX_BETS_PER_USER } from "@/lib/bet-constants";
-import { computeBetSignature } from "@/lib/bet-signature";
-import type { PredictionState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
 export default async function BetsPage({
   params,
@@ -22,25 +21,27 @@ export default async function BetsPage({
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
 
-  const bets = await prisma.bet.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-  });
+  const repo = new PrismaBetRepository(prisma);
+  const bets = await repo.listByOwner(session.user.id);
 
   const isPastDeadline = new Date() > BET_DEADLINE;
   const isAtLimit = bets.length >= MAX_BETS_PER_USER;
   const showCopyButtons = !isPastDeadline && !isAtLimit;
 
-  const enrichedBets = bets.map((bet) => ({
-    ...bet,
-    signature:
-      bet.status === "closed"
-        ? computeBetSignature(
-            bet.groupPredictions as PredictionState | null,
-            bet.knockoutWinners as Record<string, string> | null,
-          )
-        : undefined,
-  }));
+  const enrichedBets = bets.map((bet) => {
+    const state = bet.toState();
+    return {
+      id: state.id,
+      userId: state.userId,
+      label: state.label,
+      status: state.status,
+      groupPredictions: state.groupPredictions,
+      knockoutWinners: state.knockoutWinners,
+      createdAt: state.createdAt ?? new Date(),
+      updatedAt: state.updatedAt ?? new Date(),
+      signature: bet.signature,
+    };
+  });
 
   return (
     <div className="max-w-5xl">

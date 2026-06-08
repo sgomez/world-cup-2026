@@ -2,9 +2,9 @@ import { setRequestLocale } from "next-intl/server";
 import { BetPrediction } from "@/components/bet-prediction";
 import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
-import type { PredictionState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
 export default async function BetPage({
   params,
@@ -17,16 +17,14 @@ export default async function BetPage({
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
 
-  const bet = await prisma.bet.findUnique({ where: { id } });
+  const repo = new PrismaBetRepository(prisma);
+  const bet = await repo.findById(id);
 
   if (!bet) redirect({ href: "/bets", locale });
 
-  const isOwner = bet.userId === session.user.id;
-  const savedPredictions = bet.groupPredictions as PredictionState | null;
-  const savedKnockoutWinners = bet.knockoutWinners as Record<
-    string,
-    string
-  > | null;
+  const isOwner = bet.isOwnedBy(session.user.id);
+  const savedPredictions = bet.groupPredictions;
+  const savedKnockoutWinners = bet.knockoutWinners;
   const isClosed = bet.status === "closed";
   const isPastDeadline = BET_DEADLINE.getTime() < Date.now();
 

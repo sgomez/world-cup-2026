@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { computeBetSignature, mapBetWithSignature } from "./bet-signature";
+import { Bet } from "@/modules/bet/domain/bet";
+import { computeBetSignature } from "./bet-signature";
 import {
   createInitialState,
   KNOCKOUT_MATCH_IDS,
@@ -183,39 +184,34 @@ describe("computeBetSignature", () => {
   });
 });
 
-describe("mapBetWithSignature", () => {
-  it("strips groupPredictions and knockoutWinners from closed bet and adds signature", () => {
+describe("Bet aggregate signature equivalence", () => {
+  it("produces a signature byte-identical to computeBetSignature for closed bets", () => {
     const state = createInitialState(null);
     const preds = {
       groupOrders: state.groupOrders,
       thirdPlaceOrder: state.thirdPlaceOrder,
     };
     const winners = buildTeam1WinsWinners(preds);
-    const bet = {
+    const bet = Bet.fromState({
       id: "1",
+      userId: "user-1",
       label: "test",
-      status: "closed" as const,
+      status: "closed",
       groupPredictions: preds,
       knockoutWinners: winners,
-    };
-    const mapped = mapBetWithSignature(bet);
-    expect("groupPredictions" in mapped).toBe(false);
-    expect("knockoutWinners" in mapped).toBe(false);
-    expect(mapped.signature).toMatch(/^[0-9a-f]{64}$/);
-    expect(mapped.signature).toBe(computeBetSignature(preds, winners));
+    });
+    expect(bet.signature).toBe(computeBetSignature(preds, winners));
   });
 
-  it("strips groupPredictions and knockoutWinners from non-closed bet, no signature", () => {
-    const bet = {
+  it("returns undefined signature for non-closed bets", () => {
+    const bet = Bet.fromState({
       id: "2",
+      userId: "user-1",
       label: "draft",
-      status: "draft" as const,
+      status: "draft",
       groupPredictions: null,
-      knockoutWinners: null,
-    };
-    const mapped = mapBetWithSignature(bet);
-    expect("groupPredictions" in mapped).toBe(false);
-    expect("knockoutWinners" in mapped).toBe(false);
-    expect(mapped.signature).toBeUndefined();
+      knockoutWinners: {},
+    });
+    expect(bet.signature).toBeUndefined();
   });
 });

@@ -33,6 +33,54 @@ export class PrismaBetRepository implements BetRepository {
       groupPredictions:
         (row.groupPredictions as GroupPredictions | null) ?? null,
       knockoutWinners: (row.knockoutWinners as KnockoutWinners | null) ?? {},
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    });
+  }
+
+  async listByOwner(userId: string): Promise<Bet[]> {
+    const rows = await this.client.bet.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+    return rows.map((row) =>
+      Bet.fromState({
+        id: row.id,
+        userId: row.userId,
+        label: row.label,
+        status: row.status as BetStatus,
+        groupPredictions:
+          (row.groupPredictions as GroupPredictions | null) ?? null,
+        knockoutWinners: (row.knockoutWinners as KnockoutWinners | null) ?? {},
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }),
+    );
+  }
+
+  async listByOwners(userIds: string[]): Promise<Bet[]> {
+    const rows = await this.client.bet.findMany({
+      where: { userId: { in: userIds } },
+      orderBy: { createdAt: "desc" },
+    });
+    return rows.map((row) =>
+      Bet.fromState({
+        id: row.id,
+        userId: row.userId,
+        label: row.label,
+        status: row.status as BetStatus,
+        groupPredictions:
+          (row.groupPredictions as GroupPredictions | null) ?? null,
+        knockoutWinners: (row.knockoutWinners as KnockoutWinners | null) ?? {},
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }),
+    );
+  }
+
+  async countByOwner(userId: string): Promise<number> {
+    return this.client.bet.count({
+      where: { userId },
     });
   }
 

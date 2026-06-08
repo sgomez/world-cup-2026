@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
-import { mapBetWithSignature } from "@/lib/bet-signature";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
 interface Props {
   params: Promise<{ locale: string; slug: string }>;
@@ -33,18 +33,6 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
           user: {
             select: {
               name: true,
-              bets: {
-                select: {
-                  id: true,
-                  label: true,
-                  status: true,
-                  groupPredictions: true,
-                  knockoutWinners: true,
-                  createdAt: true,
-                  updatedAt: true,
-                },
-                orderBy: { createdAt: "desc" },
-              },
             },
           },
           joinedAt: true,
@@ -56,15 +44,40 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
 
   if (!communityRaw) notFound();
 
+  const userIds = communityRaw.members.map((m) => m.userId);
+  const repo = new PrismaBetRepository(prisma);
+  const allBets = await repo.listByOwners(userIds);
+
+  const betsByUserId = new Map<string, typeof allBets>();
+  for (const bet of allBets) {
+    const list = betsByUserId.get(bet.userId) ?? [];
+    list.push(bet);
+    betsByUserId.set(bet.userId, list);
+  }
+
   const community = {
     ...communityRaw,
-    members: communityRaw.members.map((m) => ({
-      ...m,
-      user: {
-        ...m.user,
-        bets: m.user.bets.map(mapBetWithSignature),
-      },
-    })),
+    members: communityRaw.members.map((m) => {
+      const userBets = betsByUserId.get(m.userId) ?? [];
+      const bets = userBets.map((b) => {
+        const state = b.toState();
+        return {
+          id: state.id,
+          label: state.label,
+          status: state.status,
+          createdAt: state.createdAt ?? new Date(),
+          updatedAt: state.updatedAt ?? new Date(),
+          signature: b.signature,
+        };
+      });
+      return {
+        ...m,
+        user: {
+          ...m.user,
+          bets,
+        },
+      };
+    }),
   };
 
   return (
