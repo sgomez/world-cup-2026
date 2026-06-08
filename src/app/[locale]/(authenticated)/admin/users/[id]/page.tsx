@@ -4,6 +4,7 @@ import { setUserRole } from "@/app/actions/admin";
 import { redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { listSummaries } from "@/modules/bet/application/list-summaries";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
 interface Props {
@@ -27,19 +28,7 @@ export default async function AdminUserPage({ params }: Props) {
   if (!targetRaw) notFound();
 
   const repo = new PrismaBetRepository(prisma);
-  const userBets = await repo.listByOwner(id);
-
-  const bets = userBets.map((b) => {
-    const state = b.toState();
-    return {
-      id: state.id,
-      label: state.label,
-      status: state.status,
-      createdAt: state.createdAt ?? new Date(),
-      updatedAt: state.updatedAt ?? new Date(),
-      signature: b.signature,
-    };
-  });
+  const bets = await listSummaries(repo, id);
 
   const target = {
     ...targetRaw,
