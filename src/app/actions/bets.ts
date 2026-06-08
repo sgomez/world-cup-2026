@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { closeBet as closeBetUseCase } from "@/modules/bet/application/close-bet";
 import { removeBet as removeBetUseCase } from "@/modules/bet/application/remove-bet";
+import { renameBet as renameBetUseCase } from "@/modules/bet/application/rename-bet";
 import { reopenBet as reopenBetUseCase } from "@/modules/bet/application/reopen-bet";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import type { DomainErrorCode } from "@/modules/bet/domain/errors";
@@ -178,42 +179,22 @@ export async function renameBet(
   label: string,
 ): Promise<BetActionState> {
   const session = await getSession();
-  if (!session) {
-    return { error: "Not authenticated" };
-  }
+  if (!session) return { error: "Not authenticated" };
 
-  const trimmedLabel = label?.trim();
-  if (!trimmedLabel) {
-    return { error: "Label is required" };
-  }
-  if (trimmedLabel.length > 200) {
-    return { error: "Label too long (max 200 chars)" };
-  }
-
-  const bet = await prisma.bet.findUnique({ where: { id: betId } });
-  if (!bet) {
-    return { error: "Bet not found" };
-  }
-
-  if (bet.userId !== session.user.id) {
-    return { error: "Not authorized" };
-  }
-
-  if (bet.status !== "draft") {
-    return { error: "Bet is closed" };
-  }
-
-  if (Date.now() >= BET_DEADLINE.getTime()) {
-    return { error: "Deadline passed" };
-  }
-
-  await prisma.bet.update({
-    where: { id: betId },
-    data: { label: trimmedLabel },
+  const repo = new PrismaBetRepository(prisma);
+  const result = await renameBetUseCase(repo, {
+    betId,
+    userId: session.user.id,
+    label,
+    window: new BettingWindow(BET_DEADLINE),
+    now: new Date(),
   });
+
+  if (result.isErr()) {
+    return { error: await betErrorMessage(result.error.code) };
+  }
 
   revalidatePath(`/bets/${betId}`);
   revalidatePath("/bets");
-
   return { success: true };
 }

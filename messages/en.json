@@ -228,6 +228,8 @@
     "FORBIDDEN": "You are not authorized to modify this bet.",
     "PAST_DEADLINE": "The bet deadline has passed. No further changes can be made.",
     "INCOMPLETE_PREDICTIONS": "You must complete all knockout matches before closing your bet.",
-    "SAVE_FAILED": "Your bet could not be saved. Please try again."
+    "SAVE_FAILED": "Your bet could not be saved. Please try again.",
+    "INVALID_LABEL": "Label must be between 1 and 200 characters.",
+    "BET_CLOSED": "This bet is closed. Reopen it before making changes."
   }
 }

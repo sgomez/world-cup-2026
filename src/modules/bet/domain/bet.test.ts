@@ -113,3 +113,59 @@ describe("Bet.reopen", () => {
     expect(reopened.toState()).toEqual({ ...state, status: "draft" });
   });
 });
+
+describe("Bet.rename", () => {
+  it("rejects PAST_DEADLINE when the window is closed", () => {
+    const result = Bet.fromState(betState()).rename("New label", OPEN, AFTER);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("PAST_DEADLINE");
+  });
+
+  it("rejects BET_CLOSED when the bet is not a draft", () => {
+    const result = Bet.fromState(betState({ status: "closed" })).rename(
+      "New label",
+      OPEN,
+      BEFORE,
+    );
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("BET_CLOSED");
+  });
+
+  it("rejects INVALID_LABEL for an empty label", () => {
+    const result = Bet.fromState(betState()).rename("", OPEN, BEFORE);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("INVALID_LABEL");
+  });
+
+  it("rejects INVALID_LABEL for a label over 200 chars", () => {
+    const result = Bet.fromState(betState()).rename(
+      "a".repeat(201),
+      OPEN,
+      BEFORE,
+    );
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("INVALID_LABEL");
+  });
+
+  it("renames a draft bet before the deadline with a valid label", () => {
+    const result = Bet.fromState(betState()).rename("New label", OPEN, BEFORE);
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap().toState().label).toBe("New label");
+  });
+
+  it("trims whitespace in the new label", () => {
+    const result = Bet.fromState(betState()).rename(
+      "  Trimmed  ",
+      OPEN,
+      BEFORE,
+    );
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap().toState().label).toBe("Trimmed");
+  });
+
+  it("does not mutate the original aggregate", () => {
+    const bet = Bet.fromState(betState({ label: "Old label" }));
+    bet.rename("New label", OPEN, BEFORE);
+    expect(bet.toState().label).toBe("Old label");
+  });
+});
