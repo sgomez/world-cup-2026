@@ -82,7 +82,7 @@ export function RenameBetButton({
           e.preventDefault();
           e.stopPropagation();
         }}
-        className="inline-flex size-8 items-center justify-center rounded-lg border border-hairline bg-canvas text-muted-foreground transition-colors hover:border-foreground/40 hover:bg-soft-cloud hover:text-foreground dark:bg-ink dark:hover:bg-charcoal"
+        className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-hairline bg-canvas text-muted-foreground transition-colors hover:border-foreground/40 hover:bg-soft-cloud hover:text-foreground dark:bg-ink dark:hover:bg-charcoal"
         aria-label={t("renameBetAriaLabel")}
       >
         <Pencil className="size-4" />
