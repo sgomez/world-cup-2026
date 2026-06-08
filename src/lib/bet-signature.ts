@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import {
   createInitialState,
   KNOCKOUT_MATCH_IDS,
@@ -28,7 +28,7 @@ export function computeBetSignature(
     parts.push(`${round}:${[...teamIds].sort().join(",")}`);
   }
 
-  const champion = knockoutMatches["F"]?.winnerId;
+  const champion = knockoutMatches.F?.winnerId;
   parts.push(`C:${champion ? champion.toUpperCase() : ""}`);
 
   const thirdWinner = knockoutMatches["3RD"]?.winnerId;

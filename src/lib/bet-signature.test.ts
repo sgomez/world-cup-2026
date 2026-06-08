@@ -90,7 +90,7 @@ describe("computeBetSignature", () => {
 
     // Change the champion: find both finalists and swap the winner
     const finalState = createInitialState(preds, winners);
-    const finalMatch = finalState.knockoutMatches["F"];
+    const finalMatch = finalState.knockoutMatches.F;
     const altChampion =
       finalMatch.winnerId === finalMatch.team1Id
         ? finalMatch.team2Id!

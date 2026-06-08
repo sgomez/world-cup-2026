@@ -2,6 +2,7 @@ import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { BetPrediction } from "@/components/bet-prediction";
+import { LocalDate } from "@/components/local-date";
 import { PageHeader } from "@/components/ui/page-header";
 import { Link, redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
@@ -89,8 +90,8 @@ export default async function PeerBetPage({
               {t("gatePageTitle")}
             </h2>
             <p className="text-body-md text-muted-foreground">
-              {t("gateMessage", {
-                date: "2026-06-11 19:00 UTC",
+              {t.rich("gateMessage", {
+                date: () => <LocalDate date={BET_DEADLINE} />,
               })}
             </p>
           </div>

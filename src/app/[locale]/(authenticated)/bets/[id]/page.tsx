@@ -22,7 +22,7 @@ export default async function BetPage({
   const repo = new PrismaBetRepository(prisma);
   const bet = await repo.findById(id);
 
-  if (!bet || !bet.isOwnedBy(session.user.id)) {
+  if (!bet?.isOwnedBy(session.user.id)) {
     notFound();
   }
 

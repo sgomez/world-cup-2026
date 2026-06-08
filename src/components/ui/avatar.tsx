@@ -35,6 +35,7 @@ function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
         const { src, alt, width, height, ...rest } = imgProps;
         if (!src || typeof src !== "string")
           return (
+            // biome-ignore lint/performance/noImgElement: fallback to standard img for non-string/blob sources
             <img
               src={src instanceof Blob ? undefined : src}
               alt={alt}

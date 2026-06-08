@@ -144,75 +144,83 @@ export function CommunityDetail({
           {t("betsTitle")}
         </h2>
         <div className="space-y-5">
-          {community.members.map((m) => (
-            <div key={m.user.id} className="space-y-2">
-              <p className="text-caption-sm font-medium uppercase tracking-wide text-muted-foreground">
-                {m.user.name}
-              </p>
-              {m.user.bets.length > 0 ? (
-                <div className="space-y-2">
-                  {m.user.bets.map((b) => (
-                    <div
-                      key={b.id}
-                      className="flex flex-wrap items-center gap-3 rounded-xl border bg-card px-4 py-3"
-                    >
-                      {m.userId === community.currentUserId ? (
-                        <Link
-                          href={`/bets/${b.id}`}
-                          className="text-sm font-medium text-card-foreground hover:underline transition-colors"
-                        >
-                          {b.label}
-                        </Link>
-                      ) : (
-                        <Link
-                          href={`/communities/${community.slug}/bets/${b.id}`}
-                          className="text-sm font-medium text-card-foreground hover:underline transition-colors"
-                        >
-                          {b.label}
-                        </Link>
-                      )}
-                      {b.status === "draft" && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-info/30 bg-info/5 px-2.5 py-0.5 text-xs font-medium text-info">
-                          <span
-                            className="size-1.5 rounded-full bg-info"
-                            aria-hidden="true"
-                          />
-                          {t("draft")}
-                        </span>
-                      )}
-                      {b.status === "closed" && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/5 px-2.5 py-0.5 text-xs font-medium text-success dark:text-success-bright">
-                          <span
-                            className="size-1.5 rounded-full bg-success dark:bg-success-bright"
-                            aria-hidden="true"
-                          />
-                          {t("closed")}
-                        </span>
-                      )}
-                      {b.status === "closed" && b.signature && (
-                        <span
-                          className="ml-auto inline-flex items-center gap-1.5 text-xs text-muted-foreground"
-                          title={b.signature}
-                        >
-                          <ShieldCheck
-                            className="size-3.5 text-success"
-                            aria-hidden="true"
-                          />
-                          <code className="font-mono text-xs">
-                            {b.signature.slice(0, 8)}
-                          </code>
-                        </span>
-                      )}
-                    </div>
-                  ))}
+          {community.members.map((m) => {
+            const visibleBets = m.user.bets.filter((b) => b.status !== "draft");
+            return (
+              <div key={m.user.id} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <p className="text-caption-sm font-medium uppercase tracking-wide text-muted-foreground">
+                    {m.user.name}
+                  </p>
+                  {m.userId === community.currentUserId && (
+                    <span className="inline-flex items-center rounded-full border border-info/30 bg-info/10 px-2 py-0.5 text-utility-xs uppercase tracking-wide text-info dark:border-info-deep/50 dark:bg-info-deep/20 dark:text-info">
+                      {t("you")}
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <p className="rounded-xl border border-dashed px-4 py-3 text-xs text-muted-foreground">
-                  {t("noBets")}
-                </p>
-              )}
-            </div>
-          ))}
+                {visibleBets.length > 0 ? (
+                  <div className="space-y-2">
+                    {visibleBets.map((b) => {
+                      const href =
+                        m.userId === community.currentUserId
+                          ? `/bets/${b.id}`
+                          : `/communities/${community.slug}/bets/${b.id}`;
+                      return (
+                        <div
+                          key={b.id}
+                          className="flex items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <Link
+                              href={href}
+                              className="text-sm font-medium text-card-foreground hover:underline transition-colors truncate"
+                            >
+                              {b.label}
+                            </Link>
+                            {b.status === "closed" && (
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/5 px-2.5 py-0.5 text-xs font-medium text-success dark:text-success-bright shrink-0">
+                                <span
+                                  className="size-1.5 rounded-full bg-success dark:bg-success-bright"
+                                  aria-hidden="true"
+                                />
+                                {t("closed")}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            {b.status === "closed" && b.signature && (
+                              <span
+                                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+                                title={b.signature}
+                              >
+                                <ShieldCheck
+                                  className="size-3.5 text-success"
+                                  aria-hidden="true"
+                                />
+                                <code className="font-mono text-xs">
+                                  {b.signature.slice(0, 8)}
+                                </code>
+                              </span>
+                            )}
+                            <Link
+                              href={href}
+                              className="button-secondary text-button-sm !h-9 !py-1 !px-4"
+                            >
+                              {t("view")}
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="rounded-xl border border-dashed px-4 py-3 text-xs text-muted-foreground">
+                    {t("noBets")}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 

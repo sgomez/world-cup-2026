@@ -91,7 +91,7 @@
     "notAuthorized": "Not authorized",
     "betClosed": "Bet is closed",
     "gatePageTitle": "Bet Prediction",
-    "gateMessage": "This prediction is locked and will be revealed once the bet deadline passes on {date}."
+    "gateMessage": "This prediction is locked and will be revealed once the bet deadline passes on <date></date>."
   },
   "groupStage": {
     "group": "Group {letter}",
@@ -166,7 +166,9 @@
     "searchPlaceholder": "Search community...",
     "noCommunitiesShow": "No communities to show",
     "noCommunitiesShowDescription": "Create a new community or adjust your search.",
-    "memberCount": "{count, plural, one {# member} other {# members}}"
+    "memberCount": "{count, plural, one {# member} other {# members}}",
+    "you": "You",
+    "view": "View"
   },
   "joinCommunity": {
     "invalidInviteTitle": "Invalid Invite",

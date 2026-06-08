@@ -11,7 +11,9 @@ const BEFORE = new Date("2026-06-10T00:00:00Z");
 const AFTER = new Date("2026-06-12T00:00:00Z");
 const WINDOW = new BettingWindow(DEADLINE);
 
-function createTestCommunity(overrides: Partial<any> = {}): Community {
+function createTestCommunity(
+  overrides: Partial<Parameters<typeof Community.fromState>[0]> = {},
+): Community {
   return Community.fromState({
     id: "comm-1",
     name: "Our Community",
@@ -23,7 +25,9 @@ function createTestCommunity(overrides: Partial<any> = {}): Community {
   });
 }
 
-function createTestBet(overrides: Partial<any> = {}): Bet {
+function createTestBet(
+  overrides: Partial<Parameters<typeof Bet.fromState>[0]> = {},
+): Bet {
   return Bet.fromState({
     id: "bet-1",
     userId: "owner-1",
