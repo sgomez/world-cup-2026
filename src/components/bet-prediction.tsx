@@ -1,17 +1,12 @@
 "use client";
 
 import { AlertDialog } from "@base-ui/react/alert-dialog";
-import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useReducer, useRef, useState, useTransition } from "react";
-import {
-  closeBet,
-  renameBet,
-  reopenBet,
-  updateBetPredictions,
-} from "@/app/actions/bets";
+import { closeBet, reopenBet, updateBetPredictions } from "@/app/actions/bets";
 import { GroupStage } from "@/components/group-stage";
 import { KnockoutStage } from "@/components/knockout-stage";
+import { RenameBetButton } from "@/components/rename-bet-button";
 import { ScoreTab } from "@/components/score-tab";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -57,88 +52,10 @@ export function BetPrediction({
   const [error, setError] = useState<string | null>(null);
 
   const [currentLabel, setCurrentLabel] = useState(betLabel);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(betLabel);
-  const [isSaving, setIsSaving] = useState(false);
-  const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
     setCurrentLabel(betLabel);
-    setEditValue(betLabel);
   }, [betLabel]);
-
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isEditing) {
-      inputRef.current?.focus();
-    }
-  }, [isEditing]);
-
-  const handleEditClick = () => {
-    setEditValue(currentLabel);
-    setEditError(null);
-    setIsEditing(true);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditError(null);
-  };
-
-  const handleSave = async () => {
-    const trimmed = editValue.trim();
-    if (!trimmed) {
-      setEditError(t("labelRequired"));
-      return;
-    }
-    if (trimmed.length > 200) {
-      setEditError(t("labelTooLong"));
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-      setEditError(null);
-      const res = await renameBet(betId, trimmed);
-      if (res?.error) {
-        if (res.error === "Not authenticated") {
-          setEditError(t("notAuthenticated"));
-        } else if (res.error === "Label is required") {
-          setEditError(t("labelRequired"));
-        } else if (res.error === "Label too long (max 200 chars)") {
-          setEditError(t("labelTooLong"));
-        } else if (res.error === "Bet not found") {
-          setEditError(t("betNotFound"));
-        } else if (res.error === "Not authorized") {
-          setEditError(t("notAuthorized"));
-        } else if (res.error === "Bet is closed") {
-          setEditError(t("betClosed"));
-        } else if (res.error === "Deadline passed") {
-          setEditError(t("deadlinePassed"));
-        } else {
-          setEditError(res.error);
-        }
-      } else {
-        setCurrentLabel(trimmed);
-        setIsEditing(false);
-      }
-    } catch {
-      setEditError(t("genericError"));
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSave();
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      handleCancel();
-    }
-  };
 
   // Must precede knockoutWarning — lazy initialiser captures this value to seed the flag when localStorage is absent.
   const predictedCount = Object.values(state.knockoutMatches).filter(
@@ -247,65 +164,21 @@ export function BetPrediction({
   return (
     <div>
       <div className="mb-6">
-        {isEditing ? (
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex flex-col gap-2 normal-case">
-              <div className="flex items-center gap-2">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="h-10 w-full sm:w-80 rounded-lg border border-hairline bg-canvas px-3 text-foreground placeholder:text-muted-foreground text-body-md focus:border-ink outline-none transition-colors dark:bg-ink dark:focus:border-canvas normal-case"
-                  maxLength={200}
-                  disabled={isSaving}
+        <PageHeader
+          title={
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="truncate">{currentLabel}</span>
+              {isOwner && !isClosed && !isPastDeadline && (
+                <RenameBetButton
+                  betId={betId}
+                  currentLabel={currentLabel}
+                  onRenamed={setCurrentLabel}
                 />
-                <button
-                  type="button"
-                  onClick={() => handleSave()}
-                  disabled={isSaving}
-                  className="button-primary text-button-sm !h-10 !py-1 !px-4"
-                >
-                  {isSaving ? t("saving") : t("save")}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  disabled={isSaving}
-                  className="button-secondary text-button-sm !h-10 !py-1 !px-4"
-                >
-                  {t("cancel")}
-                </button>
-              </div>
-              {editError && (
-                <p className="text-caption-sm text-sale normal-case font-normal">
-                  {editError}
-                </p>
               )}
-            </div>
-            {actionContent && <div className="shrink-0">{actionContent}</div>}
-          </div>
-        ) : (
-          <PageHeader
-            title={
-              <span className="inline-flex items-center gap-2">
-                <span>{currentLabel}</span>
-                {isOwner && !isClosed && !isPastDeadline && (
-                  <button
-                    type="button"
-                    onClick={handleEditClick}
-                    className="inline-flex size-8 items-center justify-center rounded-lg border border-hairline bg-canvas text-muted-foreground transition-colors hover:border-ink/40 hover:bg-ink/10 hover:text-ink dark:bg-ink dark:hover:bg-canvas/20 dark:hover:text-canvas"
-                    aria-label={t("editBetAriaLabel")}
-                  >
-                    <Pencil className="size-4" />
-                  </button>
-                )}
-              </span>
-            }
-            action={actionContent}
-          />
-        )}
+            </span>
+          }
+          action={actionContent}
+        />
       </div>
 
       <Tabs defaultValue="groups" className="w-full">

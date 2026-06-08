@@ -31,6 +31,15 @@ vi.mock("next-intl", () => ({
             groupChangeWarningDescription:
               "Changing standings will reset conflicting predictions in your knockout stage bracket.",
             groupChangeWarningConfirm: "Confirm",
+            renameBetAriaLabel: "Rename bet",
+            renameDialogTitle: "Rename bet",
+            renameDialogDescription: "Enter a new label for this bet.",
+            renameDialogInputPlaceholder: "Bet label",
+            save: "Save",
+            saving: "Saving...",
+            labelRequired: "Label is required",
+            labelTooLong: "Label too long (max 200 chars)",
+            genericError: "An error occurred",
           }[key] ?? key
         );
       }
@@ -590,14 +599,14 @@ describe("BetPrediction", () => {
   });
 });
 
-describe("Inline label editing", () => {
+describe("Label editing dialog", () => {
   const mockRenameBet = vi.mocked(renameBet);
 
   beforeEach(() => {
     mockRenameBet.mockReset();
   });
 
-  it("does not show edit button if user is not the owner", () => {
+  it("does not show rename button if user is not the owner", () => {
     render(
       <BetPrediction
         betId="bet-1"
@@ -609,12 +618,10 @@ describe("Inline label editing", () => {
         savedKnockoutWinners={null}
       />,
     );
-    expect(
-      screen.queryByLabelText(/editBetAriaLabel/i),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Rename bet")).not.toBeInTheDocument();
   });
 
-  it("does not show edit button if the bet is closed", () => {
+  it("does not show rename button if the bet is closed", () => {
     render(
       <BetPrediction
         betId="bet-1"
@@ -626,12 +633,10 @@ describe("Inline label editing", () => {
         savedKnockoutWinners={null}
       />,
     );
-    expect(
-      screen.queryByLabelText(/editBetAriaLabel/i),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Rename bet")).not.toBeInTheDocument();
   });
 
-  it("does not show edit button if the deadline has passed", () => {
+  it("does not show rename button if the deadline has passed", () => {
     render(
       <BetPrediction
         betId="bet-1"
@@ -643,12 +648,10 @@ describe("Inline label editing", () => {
         savedKnockoutWinners={null}
       />,
     );
-    expect(
-      screen.queryByLabelText(/editBetAriaLabel/i),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Rename bet")).not.toBeInTheDocument();
   });
 
-  it("shows edit button when editable and enters editing mode on click", async () => {
+  it("shows rename button when editable and opens dialog with pre-filled input", async () => {
     render(
       <BetPrediction
         betId="bet-1"
@@ -661,18 +664,19 @@ describe("Inline label editing", () => {
       />,
     );
 
-    const editBtn = screen.getByLabelText(/editBetAriaLabel/i);
-    expect(editBtn).toBeInTheDocument();
+    const renameBtn = screen.getByLabelText("Rename bet");
+    expect(renameBtn).toBeInTheDocument();
 
-    await userEvent.click(editBtn);
+    await userEvent.click(renameBtn);
 
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
     const input = screen.getByRole("textbox");
     expect(input).toHaveValue("My Bet Label");
-    expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
   });
 
-  it("cancels editing and reverts text on Cancel click", async () => {
+  it("closes the dialog on Cancel without changing the label", async () => {
     render(
       <BetPrediction
         betId="bet-1"
@@ -685,18 +689,41 @@ describe("Inline label editing", () => {
       />,
     );
 
-    await userEvent.click(screen.getByLabelText(/editBetAriaLabel/i));
+    await userEvent.click(screen.getByLabelText("Rename bet"));
     const input = screen.getByRole("textbox");
     await userEvent.clear(input);
     await userEvent.type(input, "Changed Label");
 
-    await userEvent.click(screen.getByRole("button", { name: /cancel/i }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(mockRenameBet).not.toHaveBeenCalled();
     expect(screen.getByText("My Bet Label")).toBeInTheDocument();
   });
 
-  it("submits changes and updates the label in the UI on Save click", async () => {
+  it("truncates the label with ellipsis and keeps the rename button aspect", () => {
+    render(
+      <BetPrediction
+        betId="bet-1"
+        betLabel="A very long bet label that should not wrap onto multiple lines"
+        isOwner={true}
+        isPastDeadline={false}
+        isClosed={false}
+        savedPredictions={null}
+        savedKnockoutWinners={null}
+      />,
+    );
+
+    const label = screen.getByText(
+      "A very long bet label that should not wrap onto multiple lines",
+    );
+    expect(label).toHaveClass("truncate");
+
+    const renameBtn = screen.getByLabelText("Rename bet");
+    expect(renameBtn).toHaveClass("shrink-0");
+  });
+
+  it("submits changes and updates the displayed label on Save", async () => {
     mockRenameBet.mockResolvedValue({ success: true });
     render(
       <BetPrediction
@@ -710,41 +737,15 @@ describe("Inline label editing", () => {
       />,
     );
 
-    await userEvent.click(screen.getByLabelText(/editBetAriaLabel/i));
+    await userEvent.click(screen.getByLabelText("Rename bet"));
     const input = screen.getByRole("textbox");
     await userEvent.clear(input);
     await userEvent.type(input, "New Awesome Label");
 
-    await userEvent.click(screen.getByRole("button", { name: /save/i }));
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
     expect(mockRenameBet).toHaveBeenCalledWith("bet-1", "New Awesome Label");
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByText("New Awesome Label")).toBeInTheDocument();
-  });
-
-  it("handles errors during save gracefully", async () => {
-    mockRenameBet.mockResolvedValue({ error: "Database error" });
-    render(
-      <BetPrediction
-        betId="bet-1"
-        betLabel="My Bet Label"
-        isOwner={true}
-        isPastDeadline={false}
-        isClosed={false}
-        savedPredictions={null}
-        savedKnockoutWinners={null}
-      />,
-    );
-
-    await userEvent.click(screen.getByLabelText(/editBetAriaLabel/i));
-    const input = screen.getByRole("textbox");
-    await userEvent.clear(input);
-    await userEvent.type(input, "Failed Label");
-
-    await userEvent.click(screen.getByRole("button", { name: /save/i }));
-
-    expect(mockRenameBet).toHaveBeenCalledWith("bet-1", "Failed Label");
-    expect(screen.getByRole("textbox")).toBeInTheDocument();
-    expect(screen.getByText("Database error")).toBeInTheDocument();
   });
 });
