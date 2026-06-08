@@ -232,5 +232,15 @@
     "INVALID_LABEL": "Label must be between 1 and 200 characters.",
     "BET_CLOSED": "This bet is closed. Reopen it before making changes.",
     "LIMIT_EXCEEDED": "Bet limit reached"
+  },
+  "communityErrors": {
+    "NOT_FOUND": "Community not found",
+    "FORBIDDEN": "You are not authorized to modify this community.",
+    "INVALID_NAME": "Name must contain at least one letter or digit",
+    "INVALID_SLUG": "Community slug is invalid.",
+    "SLUG_ALREADY_EXISTS": "Community slug already exists.",
+    "OWNER_CANNOT_LEAVE": "Owner cannot leave the community. Delete it instead.",
+    "NOT_A_MEMBER": "You are not a member of this community.",
+    "SAVE_FAILED": "Failed to save the community. Please try again."
   }
 }
