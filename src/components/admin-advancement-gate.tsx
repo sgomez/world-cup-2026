@@ -12,23 +12,25 @@ import {
 } from "@/modules/tournament/domain/tournament";
 import combinationsData from "../../data/worldcup.combinations.json";
 
-function getSlotLabel(refCode: string, locale: string): string {
+function getSlotLabel(
+  refCode: string,
+  t: (key: string, values?: Record<string, string>) => string,
+): string {
   if (refCode.startsWith("3rd-")) {
     const vs = refCode.slice(4); // e.g. "1E"
-    return locale === "es" ? `Mejor 3º vs ${vs}` : `Best 3rd vs ${vs}`;
+    return t("slotBestThird", { vs });
   }
   const pos = refCode[0]; // "1" or "2"
   const group = refCode[1]; // "A", "B", etc.
   if (pos === "1") {
-    return locale === "es" ? `Ganador Grupo ${group}` : `Winner Group ${group}`;
+    return t("slotWinner", { group });
   } else {
-    return locale === "es"
-      ? `Segundo Grupo ${group}`
-      : `Runner-up Group ${group}`;
+    return t("slotRunnerUp", { group });
   }
 }
 
 function EmptySlot({ label, refCode }: { label: string; refCode: string }) {
+  const t = useTranslations("admin");
   return (
     <div className="flex flex-col rounded-lg border border-dashed border-slate-300 bg-slate-100/50 p-3 dark:border-slate-600 dark:bg-slate-800/50">
       <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
@@ -37,7 +39,7 @@ function EmptySlot({ label, refCode }: { label: string; refCode: string }) {
       <div className="flex items-center gap-2 mt-2 py-1.5 h-11">
         <div className="h-4 w-4 rounded-sm bg-slate-200 dark:bg-slate-700" />
         <span className="text-sm font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-          TBD
+          {t("tbd")}
         </span>
       </div>
     </div>
@@ -78,6 +80,7 @@ function SlotRow({
 
   return (
     <button
+      id={`slot-${refCode}`}
       onClick={onToggle}
       disabled={!canToggle}
       type="button"
@@ -134,7 +137,7 @@ export function AdminAdvancementGate({
   const thirds = refs.filter((ref) => ref.startsWith("3rd-"));
 
   const renderSlot = (refCode: string) => {
-    const label = getSlotLabel(refCode, locale);
+    const label = getSlotLabel(refCode, t);
     const teamId = occupants[refCode];
     const team = teamId ? teamsLookup.get(teamId) : null;
     const isAdvanced = advancement.includes(refCode);

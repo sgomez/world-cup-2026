@@ -239,7 +239,11 @@
     "toggledSuccess": "Clasificación actualizada.",
     "groupWinners": "Ganadores de Grupo",
     "groupRunnersUp": "Segundos de Grupo",
-    "bestThirds": "Mejores Terceros"
+    "bestThirds": "Mejores Terceros",
+    "slotWinner": "Ganador Grupo {group}",
+    "slotRunnerUp": "Segundo Grupo {group}",
+    "slotBestThird": "Mejor 3º vs {vs}",
+    "tbd": "TBD"
   },
   "tournamentErrors": {
     "FORBIDDEN": "No tienes autorización para modificar los resultados del torneo.",

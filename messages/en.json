@@ -239,7 +239,11 @@
     "toggledSuccess": "Advancement updated.",
     "groupWinners": "Group Winners",
     "groupRunnersUp": "Group Runners-up",
-    "bestThirds": "Best Third-place Teams"
+    "bestThirds": "Best Third-place Teams",
+    "slotWinner": "Winner Group {group}",
+    "slotRunnerUp": "Runner-up Group {group}",
+    "slotBestThird": "Best 3rd vs {vs}",
+    "tbd": "TBD"
   },
   "tournamentErrors": {
     "FORBIDDEN": "You are not authorized to modify the tournament results.",
