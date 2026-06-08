@@ -232,5 +232,15 @@
     "INVALID_LABEL": "La etiqueta debe tener entre 1 y 200 caracteres.",
     "BET_CLOSED": "Esta apuesta está cerrada. Vuelve a abrirla antes de hacer cambios.",
     "LIMIT_EXCEEDED": "Límite de apuestas alcanzado."
+  },
+  "communityErrors": {
+    "NOT_FOUND": "Comunidad no encontrada",
+    "FORBIDDEN": "No tienes autorización para modificar esta comunidad.",
+    "INVALID_NAME": "El nombre debe contener al menos una letra o dígito",
+    "INVALID_SLUG": "El slug de la comunidad no es válido.",
+    "SLUG_ALREADY_EXISTS": "El slug de la comunidad ya existe.",
+    "OWNER_CANNOT_LEAVE": "El propietario no puede abandonar la comunidad. Elimínala en su lugar.",
+    "NOT_A_MEMBER": "No eres miembro de esta comunidad.",
+    "SAVE_FAILED": "No se pudo guardar la comunidad. Inténtalo de nuevo."
   }
 }

@@ -1,40 +1,24 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
-import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
+import { createCommunity as createCommunityUseCase } from "@/modules/community/application/create-community";
+import type { DomainErrorCode } from "@/modules/community/domain/errors";
+import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
+
+async function communityErrorMessage(code: DomainErrorCode): Promise<string> {
+  const t = await getTranslations("communityErrors");
+  return t(code);
+}
 
 export type CommunityActionState = { error?: string; success?: boolean } | null;
 export type JoinCommunityState = { error?: string } | null;
-
-function deriveSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-async function uniqueSlug(base: string): Promise<string> {
-  const existing = await prisma.community.findUnique({ where: { slug: base } });
-  if (!existing) return base;
-
-  let counter = 2;
-  while (true) {
-    const candidate = `${base}-${counter}`;
-    const taken = await prisma.community.findUnique({
-      where: { slug: candidate },
-    });
-    if (!taken) return candidate;
-    counter++;
-  }
-}
 
 export async function createCommunity(
   _prev: CommunityActionState,
@@ -46,35 +30,23 @@ export async function createCommunity(
   const name = formData.get("name")?.toString().trim();
   if (!name) return { error: "Name is required" };
 
-  const base = deriveSlug(name);
-  if (!base) return { error: "Name must contain at least one letter or digit" };
-
-  const slug = await uniqueSlug(base);
+  const repo = new PrismaCommunityRepository(prisma);
   const inviteToken = randomBytes(32).toString("hex");
 
-  let community: { id: string; slug: string };
-  try {
-    community = await prisma.community.create({
-      data: {
-        name,
-        slug,
-        ownerId: session.user.id,
-        inviteToken,
-        members: {
-          create: { userId: session.user.id },
-        },
-      },
-    });
-  } catch (e) {
-    if (
-      e instanceof Prisma.PrismaClientKnownRequestError &&
-      e.code === "P2002"
-    ) {
+  const result = await createCommunityUseCase(repo, {
+    ownerId: session.user.id,
+    name,
+    inviteToken,
+  });
+
+  if (result.isErr()) {
+    if (result.error.code === "SLUG_ALREADY_EXISTS") {
       return createCommunity(_prev, formData);
     }
-    throw e;
+    return { error: await communityErrorMessage(result.error.code) };
   }
 
+  const community = result.value;
   const locale = await getLocale();
   revalidatePath("/communities");
   redirect({ href: `/communities/${community.slug}`, locale });
