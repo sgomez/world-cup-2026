@@ -41,7 +41,6 @@ interface Community {
   inviteToken: string;
   members: Member[];
   currentUserId: string;
-  isPastDeadline: boolean;
 }
 
 interface CommunityDetailProps {

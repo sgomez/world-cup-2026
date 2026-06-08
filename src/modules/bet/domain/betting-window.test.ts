@@ -28,4 +28,19 @@ describe("BettingWindow", () => {
     expect(window.isOpen(now)).toBe(false);
     spy.mockRestore();
   });
+
+  it("is not closed before the deadline", () => {
+    const window = new BettingWindow(DEADLINE);
+    expect(window.isClosed(new Date("2026-06-10T00:00:00Z"))).toBe(false);
+  });
+
+  it("is not closed exactly at the deadline", () => {
+    const window = new BettingWindow(DEADLINE);
+    expect(window.isClosed(DEADLINE)).toBe(false);
+  });
+
+  it("is closed after the deadline", () => {
+    const window = new BettingWindow(DEADLINE);
+    expect(window.isClosed(new Date("2026-06-12T00:00:00Z"))).toBe(true);
+  });
 });

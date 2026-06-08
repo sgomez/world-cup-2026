@@ -294,3 +294,37 @@ describe("Bet.copyFrom", () => {
     expect(copied.label).toBe(`Copy of ${"A".repeat(197)}`.slice(0, 200));
   });
 });
+
+describe("Bet.peerVisibility", () => {
+  it("returns 'full' past the deadline for both draft and closed bets", () => {
+    const window = new BettingWindow(DEADLINE);
+    const draftBet = Bet.fromState(betState({ status: "draft" }));
+    const closedBet = Bet.fromState(betState({ status: "closed" }));
+    expect(draftBet.peerVisibility(window, AFTER)).toBe("full");
+    expect(closedBet.peerVisibility(window, AFTER)).toBe("full");
+  });
+
+  it("returns 'summary' for closed bets before the deadline", () => {
+    const window = new BettingWindow(DEADLINE);
+    const closedBet = Bet.fromState(betState({ status: "closed" }));
+    expect(closedBet.peerVisibility(window, BEFORE)).toBe("summary");
+  });
+
+  it("returns 'hidden' for draft bets before the deadline", () => {
+    const window = new BettingWindow(DEADLINE);
+    const draftBet = Bet.fromState(betState({ status: "draft" }));
+    expect(draftBet.peerVisibility(window, BEFORE)).toBe("hidden");
+  });
+
+  it("returns 'summary' for closed bets exactly at the deadline", () => {
+    const window = new BettingWindow(DEADLINE);
+    const closedBet = Bet.fromState(betState({ status: "closed" }));
+    expect(closedBet.peerVisibility(window, DEADLINE)).toBe("summary");
+  });
+
+  it("returns 'hidden' for draft bets exactly at the deadline", () => {
+    const window = new BettingWindow(DEADLINE);
+    const draftBet = Bet.fromState(betState({ status: "draft" }));
+    expect(draftBet.peerVisibility(window, DEADLINE)).toBe("hidden");
+  });
+});

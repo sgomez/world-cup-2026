@@ -7,8 +7,10 @@ import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { summariesByOwners } from "@/modules/bet/application/summaries-by-owners";
+import { peerSummariesByOwners } from "@/modules/bet/application/peer-summaries-by-owners";
+import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
+
 import { createCommunity as createCommunityUseCase } from "@/modules/community/application/create-community";
 import { deleteCommunity as deleteCommunityUseCase } from "@/modules/community/application/delete-community";
 import { joinCommunity as joinCommunityUseCase } from "@/modules/community/application/join-community";
@@ -62,7 +64,8 @@ export async function getCommunity(slug: string) {
   const session = await getSession();
   if (!session) return null;
 
-  const isPastDeadline = BET_DEADLINE.getTime() < Date.now();
+  const now = new Date();
+  const window = new BettingWindow(BET_DEADLINE);
 
   const community = await prisma.community.findUnique({
     where: { slug },
@@ -88,13 +91,10 @@ export async function getCommunity(slug: string) {
 
   const userIds = community.members.map((m) => m.user.id);
   const repo = new PrismaBetRepository(prisma);
-  const betSummaries = await summariesByOwners(repo, userIds);
+  const betSummaries = await peerSummariesByOwners(repo, userIds, window, now);
 
   const members = community.members.map((m) => {
-    const allUserBets = betSummaries.get(m.user.id) ?? [];
-    const bets = allUserBets.filter(
-      (b) => isPastDeadline || b.status === "closed",
-    );
+    const bets = betSummaries.get(m.user.id) ?? [];
     return { ...m, user: { ...m.user, bets } };
   });
 
@@ -102,7 +102,6 @@ export async function getCommunity(slug: string) {
     ...community,
     members,
     currentUserId: session.user.id,
-    isPastDeadline,
   };
 }
 
