@@ -114,6 +114,68 @@ describe("Bet.reopen", () => {
   });
 });
 
+describe("Bet.updatePredictions", () => {
+  const newGroupPredictions = {
+    groupOrders: { A: ["mex", "rsa"] },
+    thirdPlaceOrder: ["3rd-a"],
+  };
+  const newKnockoutWinners = { M0: "mex", M1: "rsa" };
+
+  it("rejects PAST_DEADLINE when the window is closed", () => {
+    const result = Bet.fromState(betState()).updatePredictions(
+      newGroupPredictions,
+      newKnockoutWinners,
+      OPEN,
+      AFTER,
+    );
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("PAST_DEADLINE");
+  });
+
+  it("rejects BET_CLOSED when the bet is closed", () => {
+    const result = Bet.fromState(
+      betState({ status: "closed" }),
+    ).updatePredictions(newGroupPredictions, newKnockoutWinners, OPEN, BEFORE);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("BET_CLOSED");
+  });
+
+  it("replaces groupPredictions and knockoutWinners on a draft within the window", () => {
+    const result = Bet.fromState(betState()).updatePredictions(
+      newGroupPredictions,
+      newKnockoutWinners,
+      OPEN,
+      BEFORE,
+    );
+    expect(result.isOk()).toBe(true);
+    const state = result._unsafeUnwrap().toState();
+    expect(state.groupPredictions).toEqual(newGroupPredictions);
+    expect(state.knockoutWinners).toEqual(newKnockoutWinners);
+  });
+
+  it("accepts null groupPredictions", () => {
+    const result = Bet.fromState(betState()).updatePredictions(
+      null,
+      newKnockoutWinners,
+      OPEN,
+      BEFORE,
+    );
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap().toState().groupPredictions).toBeNull();
+  });
+
+  it("does not mutate the original aggregate", () => {
+    const bet = Bet.fromState(betState({ groupPredictions: null }));
+    bet.updatePredictions(
+      newGroupPredictions,
+      newKnockoutWinners,
+      OPEN,
+      BEFORE,
+    );
+    expect(bet.toState().groupPredictions).toBeNull();
+  });
+});
+
 describe("Bet.rename", () => {
   it("rejects PAST_DEADLINE when the window is closed", () => {
     const result = Bet.fromState(betState()).rename("New label", OPEN, AFTER);

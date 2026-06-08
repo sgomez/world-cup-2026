@@ -11,6 +11,7 @@ import { closeBet as closeBetUseCase } from "@/modules/bet/application/close-bet
 import { removeBet as removeBetUseCase } from "@/modules/bet/application/remove-bet";
 import { renameBet as renameBetUseCase } from "@/modules/bet/application/rename-bet";
 import { reopenBet as reopenBetUseCase } from "@/modules/bet/application/reopen-bet";
+import { updateBetPredictions as updateBetPredictionsUseCase } from "@/modules/bet/application/update-bet-predictions";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import type { DomainErrorCode } from "@/modules/bet/domain/errors";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
@@ -151,12 +152,7 @@ export async function updateBetPredictions(
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  const bet = await prisma.bet.findUnique({ where: { id: betId } });
-  if (!bet) return { error: "Bet not found" };
-  if (bet.userId !== session.user.id) return { error: "Not authorized" };
-  if (bet.status === "closed") return { error: "Bet is closed" };
-
-  const groupPredictions: PredictionState = {
+  const groupPredictions = {
     groupOrders: state.groupOrders,
     thirdPlaceOrder: state.thirdPlaceOrder,
   };
@@ -166,10 +162,19 @@ export async function updateBetPredictions(
     if (match.winnerId) knockoutWinners[matchId] = match.winnerId;
   }
 
-  await prisma.bet.update({
-    where: { id: betId },
-    data: { groupPredictions, knockoutWinners },
+  const repo = new PrismaBetRepository(prisma);
+  const result = await updateBetPredictionsUseCase(repo, {
+    betId,
+    userId: session.user.id,
+    groupPredictions,
+    knockoutWinners,
+    window: new BettingWindow(BET_DEADLINE),
+    now: new Date(),
   });
+
+  if (result.isErr()) {
+    return { error: await betErrorMessage(result.error.code) };
+  }
 
   return { success: true };
 }

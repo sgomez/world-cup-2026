@@ -82,6 +82,21 @@ export class Bet {
     return ok(new Bet({ ...this.state, status: "draft" }));
   }
 
+  updatePredictions(
+    groupPredictions: GroupPredictions | null,
+    knockoutWinners: KnockoutWinners,
+    window: BettingWindow,
+    now: Date,
+  ): Result<Bet, DomainError> {
+    if (!window.isOpen(now)) {
+      return err(domainError("PAST_DEADLINE"));
+    }
+    if (this.state.status === "closed") {
+      return err(domainError("BET_CLOSED"));
+    }
+    return ok(new Bet({ ...this.state, groupPredictions, knockoutWinners }));
+  }
+
   rename(
     rawLabel: string,
     window: BettingWindow,
