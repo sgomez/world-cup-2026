@@ -76,11 +76,8 @@ import {
 const mockGetSession = vi.mocked(getSession);
 const mockRedirect = vi.mocked(redirect);
 const mockCommunityFindUnique = vi.mocked(prisma.community.findUnique);
-const mockCommunityUpdate = vi.mocked(prisma.community.update);
 const mockCommunityDelete = vi.mocked(prisma.community.delete);
 const mockCommunityUpsert = vi.mocked(prisma.community.upsert);
-const mockCommunityMemberUpsert = vi.mocked(prisma.communityMember.upsert);
-const mockCommunityMemberDelete = vi.mocked(prisma.communityMember.delete);
 const mockCommunityMemberFindMany = vi.mocked(prisma.communityMember.findMany);
 const mockCommunityMemberCreateMany = vi.mocked(
   prisma.communityMember.createMany,

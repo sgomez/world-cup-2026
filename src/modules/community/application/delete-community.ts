@@ -1,4 +1,4 @@
-import { errAsync, okAsync, ResultAsync } from "neverthrow";
+import { errAsync, ResultAsync } from "neverthrow";
 import type { CommunityRepository } from "../domain/community-repository";
 import { type DomainError, domainError } from "../domain/errors";
 
