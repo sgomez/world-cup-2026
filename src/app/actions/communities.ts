@@ -7,6 +7,7 @@ import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { summariesByOwners } from "@/modules/bet/application/summaries-by-owners";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 import { createCommunity as createCommunityUseCase } from "@/modules/community/application/create-community";
 import { deleteCommunity as deleteCommunityUseCase } from "@/modules/community/application/delete-community";
@@ -87,30 +88,13 @@ export async function getCommunity(slug: string) {
 
   const userIds = community.members.map((m) => m.user.id);
   const repo = new PrismaBetRepository(prisma);
-  const allBets = await repo.listByOwners(userIds);
-
-  const betsByUserId = new Map<string, typeof allBets>();
-  for (const bet of allBets) {
-    const list = betsByUserId.get(bet.userId) ?? [];
-    list.push(bet);
-    betsByUserId.set(bet.userId, list);
-  }
+  const betSummaries = await summariesByOwners(repo, userIds);
 
   const members = community.members.map((m) => {
-    const userBets = betsByUserId.get(m.user.id) ?? [];
-    const bets = userBets
-      .filter((b) => isPastDeadline || b.status === "closed")
-      .map((b) => {
-        const state = b.toState();
-        return {
-          id: state.id,
-          label: state.label,
-          status: state.status,
-          createdAt: state.createdAt ?? new Date(),
-          updatedAt: state.updatedAt ?? new Date(),
-          signature: b.signature,
-        };
-      });
+    const allUserBets = betSummaries.get(m.user.id) ?? [];
+    const bets = allUserBets.filter(
+      (b) => isPastDeadline || b.status === "closed",
+    );
     return { ...m, user: { ...m.user, bets } };
   });
 

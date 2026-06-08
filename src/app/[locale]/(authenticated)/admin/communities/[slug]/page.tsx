@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { summariesByOwners } from "@/modules/bet/application/summaries-by-owners";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
 interface Props {
@@ -46,38 +47,17 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
 
   const userIds = communityRaw.members.map((m) => m.userId);
   const repo = new PrismaBetRepository(prisma);
-  const allBets = await repo.listByOwners(userIds);
-
-  const betsByUserId = new Map<string, typeof allBets>();
-  for (const bet of allBets) {
-    const list = betsByUserId.get(bet.userId) ?? [];
-    list.push(bet);
-    betsByUserId.set(bet.userId, list);
-  }
+  const betSummaries = await summariesByOwners(repo, userIds);
 
   const community = {
     ...communityRaw,
-    members: communityRaw.members.map((m) => {
-      const userBets = betsByUserId.get(m.userId) ?? [];
-      const bets = userBets.map((b) => {
-        const state = b.toState();
-        return {
-          id: state.id,
-          label: state.label,
-          status: state.status,
-          createdAt: state.createdAt ?? new Date(),
-          updatedAt: state.updatedAt ?? new Date(),
-          signature: b.signature,
-        };
-      });
-      return {
-        ...m,
-        user: {
-          ...m.user,
-          bets,
-        },
-      };
-    }),
+    members: communityRaw.members.map((m) => ({
+      ...m,
+      user: {
+        ...m.user,
+        bets: betSummaries.get(m.userId) ?? [],
+      },
+    })),
   };
 
   return (
