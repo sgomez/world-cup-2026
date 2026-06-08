@@ -11,7 +11,9 @@ export type DomainErrorCode =
   | "INCOMPLETE_PREDICTIONS"
   | "FORBIDDEN"
   | "NOT_FOUND"
-  | "SAVE_FAILED";
+  | "SAVE_FAILED"
+  | "INVALID_LABEL"
+  | "BET_CLOSED";
 
 export type DomainError = {
   readonly code: DomainErrorCode;

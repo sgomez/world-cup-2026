@@ -1,4 +1,5 @@
 import { err, ok, type Result } from "neverthrow";
+import { BetLabel } from "./bet-label";
 import type { BettingWindow } from "./betting-window";
 import { type DomainError, domainError } from "./errors";
 
@@ -79,6 +80,22 @@ export class Bet {
       return err(domainError("PAST_DEADLINE"));
     }
     return ok(new Bet({ ...this.state, status: "draft" }));
+  }
+
+  rename(
+    rawLabel: string,
+    window: BettingWindow,
+    now: Date,
+  ): Result<Bet, DomainError> {
+    if (!window.isOpen(now)) {
+      return err(domainError("PAST_DEADLINE"));
+    }
+    if (this.state.status !== "draft") {
+      return err(domainError("BET_CLOSED"));
+    }
+    return BetLabel.create(rawLabel).map(
+      (label) => new Bet({ ...this.state, label: label.value }),
+    );
   }
 
   toState(): BetState {

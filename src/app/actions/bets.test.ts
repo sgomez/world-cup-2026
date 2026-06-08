@@ -14,6 +14,8 @@ vi.mock("next-intl/server", () => ({
             FORBIDDEN: "Not authorized",
             PAST_DEADLINE: "Deadline has passed",
             INCOMPLETE_PREDICTIONS: "Predictions are incomplete",
+            INVALID_LABEL: "Label is invalid",
+            BET_CLOSED: "Bet is closed",
           }) as Record<string, string>
         )[key] ?? key,
   ),
@@ -649,17 +651,19 @@ describe("renameBet", () => {
 
   it("returns error when label is empty or only whitespace", async () => {
     mockSession();
+    mockBet();
     const result1 = await renameBet(BET_ID, "");
-    expect(result1).toEqual({ error: "Label is required" });
+    expect(result1).toEqual({ error: "Label is invalid" });
 
     const result2 = await renameBet(BET_ID, "   ");
-    expect(result2).toEqual({ error: "Label is required" });
+    expect(result2).toEqual({ error: "Label is invalid" });
   });
 
   it("returns error when label is too long (> 200 characters)", async () => {
     mockSession();
+    mockBet();
     const result = await renameBet(BET_ID, "a".repeat(201));
-    expect(result).toEqual({ error: "Label too long (max 200 chars)" });
+    expect(result).toEqual({ error: "Label is invalid" });
   });
 
   it("returns error when bet not found", async () => {
@@ -690,7 +694,7 @@ describe("renameBet", () => {
     vi.spyOn(BET_DEADLINE, "getTime").mockReturnValue(Date.now() - 1000);
     try {
       const result = await renameBet(BET_ID, "New label");
-      expect(result).toEqual({ error: "Deadline passed" });
+      expect(result).toEqual({ error: "Deadline has passed" });
     } finally {
       vi.restoreAllMocks();
     }
@@ -708,7 +712,12 @@ describe("renameBet", () => {
     expect(result).toEqual({ success: true });
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: BET_ID },
-      data: { label: "New label" },
+      data: {
+        label: "New label",
+        status: "draft",
+        groupPredictions: undefined,
+        knockoutWinners: {},
+      },
     });
     expect(mockRevalidate).toHaveBeenCalledWith(`/bets/${BET_ID}`);
     expect(mockRevalidate).toHaveBeenCalledWith("/bets");

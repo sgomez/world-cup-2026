@@ -228,6 +228,8 @@
     "FORBIDDEN": "No tienes autorización para modificar esta apuesta.",
     "PAST_DEADLINE": "El plazo de la apuesta ha vencido. No se pueden realizar más cambios.",
     "INCOMPLETE_PREDICTIONS": "Debes completar todos los partidos de eliminatorias antes de cerrar tu apuesta.",
-    "SAVE_FAILED": "No se pudo guardar tu apuesta. Inténtalo de nuevo."
+    "SAVE_FAILED": "No se pudo guardar tu apuesta. Inténtalo de nuevo.",
+    "INVALID_LABEL": "La etiqueta debe tener entre 1 y 200 caracteres.",
+    "BET_CLOSED": "Esta apuesta está cerrada. Vuelve a abrirla antes de hacer cambios."
   }
 }
