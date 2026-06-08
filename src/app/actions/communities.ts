@@ -9,8 +9,10 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 import { createCommunity as createCommunityUseCase } from "@/modules/community/application/create-community";
+import { deleteCommunity as deleteCommunityUseCase } from "@/modules/community/application/delete-community";
 import { joinCommunity as joinCommunityUseCase } from "@/modules/community/application/join-community";
 import { leaveCommunity as leaveCommunityUseCase } from "@/modules/community/application/leave-community";
+import { regenerateInviteToken as regenerateInviteTokenUseCase } from "@/modules/community/application/regenerate-invite-token";
 import { removeMember as removeMemberUseCase } from "@/modules/community/application/remove-member";
 import type { DomainErrorCode } from "@/modules/community/domain/errors";
 import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
@@ -176,14 +178,15 @@ export async function deleteCommunity(
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  const community = await prisma.community.findUnique({ where: { slug } });
-  if (!community) return { error: "Community not found" };
+  const repo = new PrismaCommunityRepository(prisma);
+  const result = await deleteCommunityUseCase(repo, {
+    actorId: session.user.id,
+    slug,
+  });
 
-  if (community.ownerId !== session.user.id) {
-    return { error: "Only the owner can delete the community" };
+  if (result.isErr()) {
+    return { error: await communityErrorMessage(result.error.code) };
   }
-
-  await prisma.community.delete({ where: { id: community.id } });
 
   const locale = await getLocale();
   revalidatePath("/communities");
@@ -198,18 +201,17 @@ export async function regenerateInviteToken(
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  const community = await prisma.community.findUnique({ where: { slug } });
-  if (!community) return { error: "Community not found" };
-
-  if (community.ownerId !== session.user.id) {
-    return { error: "Only the owner can regenerate the invite link" };
-  }
-
+  const repo = new PrismaCommunityRepository(prisma);
   const newToken = randomBytes(32).toString("hex");
-  await prisma.community.update({
-    where: { id: community.id },
-    data: { inviteToken: newToken },
+  const result = await regenerateInviteTokenUseCase(repo, {
+    actorId: session.user.id,
+    slug,
+    newToken,
   });
+
+  if (result.isErr()) {
+    return { error: await communityErrorMessage(result.error.code) };
+  }
 
   revalidatePath(`/communities/${slug}/settings`);
   return { success: true };
