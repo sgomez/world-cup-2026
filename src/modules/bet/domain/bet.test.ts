@@ -75,3 +75,41 @@ describe("Bet.close", () => {
     expect(closed.toState()).toEqual({ ...state, status: "closed" });
   });
 });
+
+describe("Bet.reopen", () => {
+  it("rejects PAST_DEADLINE when the window is closed", () => {
+    const result = Bet.fromState(betState({ status: "closed" })).reopen(
+      OPEN,
+      AFTER,
+    );
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("PAST_DEADLINE");
+  });
+
+  it("reopens a closed bet to draft within the window", () => {
+    const result = Bet.fromState(betState({ status: "closed" })).reopen(
+      OPEN,
+      BEFORE,
+    );
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap().status).toBe("draft");
+  });
+
+  it("does not mutate the original aggregate", () => {
+    const bet = Bet.fromState(betState({ status: "closed" }));
+    bet.reopen(OPEN, BEFORE);
+    expect(bet.status).toBe("closed");
+  });
+
+  it("preserves predictions and label so the signature is unchanged", () => {
+    const state = betState({
+      status: "closed",
+      groupPredictions: {
+        groupOrders: { A: ["mex"] },
+        thirdPlaceOrder: ["3rd-a"],
+      },
+    });
+    const reopened = Bet.fromState(state).reopen(OPEN, BEFORE)._unsafeUnwrap();
+    expect(reopened.toState()).toEqual({ ...state, status: "draft" });
+  });
+});

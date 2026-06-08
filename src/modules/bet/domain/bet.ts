@@ -70,6 +70,17 @@ export class Bet {
     return ok(new Bet({ ...this.state, status: "closed" }));
   }
 
+  /**
+   * Reopens a Bet to `draft` so its owner can keep editing. Guarded only by the
+   * Betting Window: once the Bet Deadline has passed no Bet may change status.
+   */
+  reopen(window: BettingWindow, now: Date): Result<Bet, DomainError> {
+    if (!window.isOpen(now)) {
+      return err(domainError("PAST_DEADLINE"));
+    }
+    return ok(new Bet({ ...this.state, status: "draft" }));
+  }
+
   toState(): BetState {
     return { ...this.state };
   }

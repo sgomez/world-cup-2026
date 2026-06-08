@@ -24,4 +24,9 @@ export class InMemoryBetRepository implements BetRepository {
     this.store.set(bet.id, bet);
     return okAsync(undefined);
   }
+
+  delete(id: string): ResultAsync<void, DomainError> {
+    this.store.delete(id);
+    return okAsync(undefined);
+  }
 }
