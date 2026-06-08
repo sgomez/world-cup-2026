@@ -229,7 +229,17 @@
     "resultsLink": "Tournament Results",
     "resultsTitle": "Tournament Results",
     "resultsDescription": "Record the official finishing orders of the group stage.",
-    "resultsSaved": "Results saved successfully."
+    "resultsSaved": "Results saved successfully.",
+    "advancementGateTab": "Advancement Gate",
+    "advancementGateTitle": "Advancement Gate",
+    "advancementGateDescription": "Confirm which teams have officially advanced to the Round of 32.",
+    "groupStageTab": "Group Stage",
+    "knockoutStageTab": "Knockout Stage",
+    "slotsLabel": "Slots",
+    "toggledSuccess": "Advancement updated.",
+    "groupWinners": "Group Winners",
+    "groupRunnersUp": "Group Runners-up",
+    "bestThirds": "Best Third-place Teams"
   },
   "tournamentErrors": {
     "FORBIDDEN": "You are not authorized to modify the tournament results.",

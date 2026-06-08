@@ -229,7 +229,17 @@
     "resultsLink": "Resultados del Torneo",
     "resultsTitle": "Resultados del Torneo",
     "resultsDescription": "Registra los órdenes de clasificación oficiales de la fase de grupos.",
-    "resultsSaved": "Resultados guardados correctamente."
+    "resultsSaved": "Resultados guardados correctamente.",
+    "advancementGateTab": "Puerta de Clasificación",
+    "advancementGateTitle": "Puerta de Clasificación",
+    "advancementGateDescription": "Confirma qué equipos han clasificado oficialmente a dieciseisavos de final.",
+    "groupStageTab": "Fase de Grupos",
+    "knockoutStageTab": "Eliminatorias",
+    "slotsLabel": "Posiciones",
+    "toggledSuccess": "Clasificación actualizada.",
+    "groupWinners": "Ganadores de Grupo",
+    "groupRunnersUp": "Segundos de Grupo",
+    "bestThirds": "Mejores Terceros"
   },
   "tournamentErrors": {
     "FORBIDDEN": "No tienes autorización para modificar los resultados del torneo.",
