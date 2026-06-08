@@ -231,3 +231,66 @@ describe("Bet.rename", () => {
     expect(bet.toState().label).toBe("Old label");
   });
 });
+
+describe("Bet.create", () => {
+  it("rejects PAST_DEADLINE when the window is closed", () => {
+    const result = Bet.create("New label", "user-1", OPEN, AFTER);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("PAST_DEADLINE");
+  });
+
+  it("rejects INVALID_LABEL for empty or too long labels", () => {
+    const result1 = Bet.create("", "user-1", OPEN, BEFORE);
+    expect(result1.isErr()).toBe(true);
+    expect(result1._unsafeUnwrapErr().code).toBe("INVALID_LABEL");
+
+    const result2 = Bet.create("a".repeat(201), "user-1", OPEN, BEFORE);
+    expect(result2.isErr()).toBe(true);
+    expect(result2._unsafeUnwrapErr().code).toBe("INVALID_LABEL");
+  });
+
+  it("creates a new draft bet when window is open and label is valid", () => {
+    const result = Bet.create("  Valid Label  ", "user-1", OPEN, BEFORE);
+    expect(result.isOk()).toBe(true);
+    const bet = result._unsafeUnwrap();
+    expect(bet.userId).toBe("user-1");
+    expect(bet.status).toBe("draft");
+    expect(bet.label).toBe("Valid Label");
+    expect(bet.groupPredictions).toBeNull();
+    expect(bet.knockoutWinners).toEqual({});
+    expect(bet.id).toBeDefined();
+  });
+});
+
+describe("Bet.copyFrom", () => {
+  it("rejects PAST_DEADLINE when the window is closed", () => {
+    const source = Bet.fromState(betState({ label: "Source" }));
+    const result = Bet.copyFrom(source, "user-2", OPEN, AFTER);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("PAST_DEADLINE");
+  });
+
+  it("copies predictions, prefixes 'Copy of ', and truncates to 200 characters", () => {
+    const groupPredictions = {
+      groupOrders: { A: ["mex"] },
+      thirdPlaceOrder: ["3rd-a"],
+    };
+    const knockoutWinners = { "R32-73": "mex" };
+    const source = Bet.fromState(
+      betState({
+        label: "A".repeat(197),
+        groupPredictions,
+        knockoutWinners,
+      }),
+    );
+    const result = Bet.copyFrom(source, "user-2", OPEN, BEFORE);
+    expect(result.isOk()).toBe(true);
+    const copied = result._unsafeUnwrap();
+    expect(copied.userId).toBe("user-2");
+    expect(copied.status).toBe("draft");
+    expect(copied.groupPredictions).toEqual(groupPredictions);
+    expect(copied.knockoutWinners).toEqual(knockoutWinners);
+    expect(copied.label.length).toBe(200);
+    expect(copied.label).toBe(`Copy of ${"A".repeat(197)}`.slice(0, 200));
+  });
+});

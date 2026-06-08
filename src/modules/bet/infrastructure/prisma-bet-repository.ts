@@ -88,26 +88,25 @@ export class PrismaBetRepository implements BetRepository {
     const state = bet.toState();
     return ResultAsync.fromPromise(
       this.client.bet
-        .update({
+        .upsert({
           where: { id: state.id },
-          data: {
+          create: {
+            id: state.id,
+            userId: state.userId,
             label: state.label,
             status: state.status,
-            // `groupPredictions` is nullable in the aggregate, so we skip the
-            // column when null. `knockoutWinners` is never null in aggregate
-            // state (it rehydrates as `{}`), so it always writes a value.
+            groupPredictions: state.groupPredictions ?? undefined,
+            knockoutWinners: state.knockoutWinners,
+          },
+          update: {
+            label: state.label,
+            status: state.status,
             groupPredictions: state.groupPredictions ?? undefined,
             knockoutWinners: state.knockoutWinners,
           },
         })
         .then(() => undefined),
-      // Only Prisma's "record to update not found" (P2025) means the aggregate
-      // is gone; any other failure (connection drop, constraint, timeout) is a
-      // persistence error, not a missing Bet.
-      (error) =>
-        isRecordNotFound(error)
-          ? domainError("NOT_FOUND")
-          : domainError("SAVE_FAILED"),
+      () => domainError("SAVE_FAILED"),
     );
   }
 
