@@ -1,4 +1,5 @@
 import { err, ok, type Result } from "neverthrow";
+import { computeBetSignature } from "@/lib/bet-signature";
 import { BetLabel } from "./bet-label";
 import type { BettingWindow } from "./betting-window";
 import { type DomainError, domainError } from "./errors";
@@ -25,6 +26,8 @@ export type BetState = {
   label: string;
   groupPredictions: GroupPredictions | null;
   knockoutWinners: KnockoutWinners;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 const REQUIRED_KNOCKOUT_WINNERS = 32;
@@ -51,8 +54,40 @@ export class Bet {
     return this.state.id;
   }
 
+  get userId(): string {
+    return this.state.userId;
+  }
+
   get status(): BetStatus {
     return this.state.status;
+  }
+
+  get label(): string {
+    return this.state.label;
+  }
+
+  get groupPredictions(): GroupPredictions | null {
+    return this.state.groupPredictions;
+  }
+
+  get knockoutWinners(): KnockoutWinners {
+    return this.state.knockoutWinners;
+  }
+
+  get createdAt(): Date | undefined {
+    return this.state.createdAt;
+  }
+
+  get updatedAt(): Date | undefined {
+    return this.state.updatedAt;
+  }
+
+  get signature(): string | undefined {
+    if (this.state.status !== "closed") return undefined;
+    return computeBetSignature(
+      this.state.groupPredictions,
+      this.state.knockoutWinners,
+    );
   }
 
   isOwnedBy(userId: string): boolean {

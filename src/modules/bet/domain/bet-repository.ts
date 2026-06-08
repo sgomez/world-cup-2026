@@ -14,6 +14,9 @@ import type { DomainError } from "./errors";
  */
 export interface BetRepository {
   findById(id: string): Promise<Bet | null>;
+  listByOwner(userId: string): Promise<Bet[]>;
+  listByOwners(userIds: string[]): Promise<Bet[]>;
+  countByOwner(userId: string): Promise<number>;
   save(bet: Bet): ResultAsync<void, DomainError>;
   delete(id: string): ResultAsync<void, DomainError>;
 }

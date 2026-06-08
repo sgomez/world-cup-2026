@@ -17,6 +17,8 @@ function fakePrisma() {
   return {
     bet: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
+      count: vi.fn(),
       update: vi.fn().mockResolvedValue({}),
     },
   };
@@ -37,6 +39,8 @@ describe("PrismaBetRepository.findById", () => {
       status: "draft",
       groupPredictions: ROW.groupPredictions,
       knockoutWinners: ROW.knockoutWinners,
+      createdAt: ROW.createdAt,
+      updatedAt: ROW.updatedAt,
     });
   });
 
@@ -61,6 +65,63 @@ describe("PrismaBetRepository.findById", () => {
     const repo = new PrismaBetRepository(prisma as never);
 
     expect(await repo.findById("missing")).toBeNull();
+  });
+});
+
+describe("PrismaBetRepository.listByOwner", () => {
+  it("maps database rows into Bet aggregates", async () => {
+    const prisma = fakePrisma();
+    prisma.bet.findMany.mockResolvedValue([ROW]);
+    const repo = new PrismaBetRepository(prisma as never);
+
+    const bets = await repo.listByOwner("user-1");
+
+    expect(bets).toHaveLength(1);
+    expect(bets[0].toState()).toEqual({
+      id: "bet-1",
+      userId: "user-1",
+      label: "My bet",
+      status: "draft",
+      groupPredictions: ROW.groupPredictions,
+      knockoutWinners: ROW.knockoutWinners,
+      createdAt: ROW.createdAt,
+      updatedAt: ROW.updatedAt,
+    });
+    expect(prisma.bet.findMany).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+      orderBy: { createdAt: "desc" },
+    });
+  });
+});
+
+describe("PrismaBetRepository.listByOwners", () => {
+  it("maps database rows for multiple owners", async () => {
+    const prisma = fakePrisma();
+    prisma.bet.findMany.mockResolvedValue([ROW]);
+    const repo = new PrismaBetRepository(prisma as never);
+
+    const bets = await repo.listByOwners(["user-1", "user-2"]);
+
+    expect(bets).toHaveLength(1);
+    expect(prisma.bet.findMany).toHaveBeenCalledWith({
+      where: { userId: { in: ["user-1", "user-2"] } },
+      orderBy: { createdAt: "desc" },
+    });
+  });
+});
+
+describe("PrismaBetRepository.countByOwner", () => {
+  it("returns the number of bets for a user", async () => {
+    const prisma = fakePrisma();
+    prisma.bet.count.mockResolvedValue(5);
+    const repo = new PrismaBetRepository(prisma as never);
+
+    const count = await repo.countByOwner("user-1");
+
+    expect(count).toBe(5);
+    expect(prisma.bet.count).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+    });
   });
 });
 

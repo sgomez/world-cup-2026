@@ -26,6 +26,13 @@ vi.mock("@/lib/prisma", () => ({
       upsert: vi.fn(),
       delete: vi.fn(),
     },
+    bet: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      count: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
   },
 }));
 vi.mock("@/lib/session", () => ({ getSession: vi.fn() }));
@@ -51,6 +58,7 @@ const mockCommunityUpdate = vi.mocked(prisma.community.update);
 const mockCommunityDelete = vi.mocked(prisma.community.delete);
 const mockCommunityMemberUpsert = vi.mocked(prisma.communityMember.upsert);
 const mockCommunityMemberDelete = vi.mocked(prisma.communityMember.delete);
+const mockBetFindMany = vi.mocked(prisma.bet.findMany);
 
 const USER_ID = "user-1";
 const COMMUNITY_ID = "community-1";
@@ -64,6 +72,69 @@ function mockSession(userId = USER_ID) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+
+  mockBetFindMany.mockImplementation((async (args: unknown) => {
+    const commResult = mockCommunityFindUnique.mock.results.at(-1)?.value;
+    const comm = (
+      commResult instanceof Promise ? await commResult : commResult
+    ) as
+      | {
+          members?: {
+            userId: string;
+            user: {
+              bets: {
+                id: string;
+                label: string;
+                status: string;
+                groupPredictions: unknown;
+                knockoutWinners: unknown;
+                createdAt: Date;
+                updatedAt: Date;
+              }[];
+            };
+          }[];
+        }
+      | null
+      | undefined;
+    if (!comm?.members) return [];
+    const typedArgs = args as {
+      where?: { userId?: { in?: string[] } | string };
+    };
+    const userIds =
+      typedArgs?.where?.userId instanceof Object &&
+      "in" in typedArgs.where.userId
+        ? typedArgs.where.userId.in
+        : typedArgs?.where?.userId
+          ? [typedArgs.where.userId as string]
+          : [];
+    const bets: {
+      id: string;
+      label: string;
+      status: string;
+      groupPredictions: unknown;
+      knockoutWinners: unknown;
+      createdAt: Date;
+      updatedAt: Date;
+      userId: string;
+    }[] = [];
+    for (const member of comm.members) {
+      if (userIds?.includes(member.userId)) {
+        for (const b of member.user.bets) {
+          bets.push({
+            id: b.id,
+            userId: member.userId,
+            label: b.label,
+            status: b.status,
+            groupPredictions: b.groupPredictions,
+            knockoutWinners: b.knockoutWinners,
+            createdAt: b.createdAt,
+            updatedAt: b.updatedAt,
+          });
+        }
+      }
+    }
+    return bets;
+  }) as unknown as typeof prisma.bet.findMany);
 });
 
 describe("createCommunity", () => {

@@ -2,9 +2,9 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { setUserRole } from "@/app/actions/admin";
 import { redirect } from "@/i18n/navigation";
-import { mapBetWithSignature } from "@/lib/bet-signature";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
 interface Props {
   params: Promise<{ locale: string; id: string }>;
@@ -23,31 +23,28 @@ export default async function AdminUserPage({ params }: Props) {
     redirect({ href: "/", locale });
   }
 
-  const targetRaw = await prisma.user.findUnique({
-    where: { id },
-    include: {
-      bets: {
-        select: {
-          id: true,
-          label: true,
-          status: true,
-          groupPredictions: true,
-          knockoutWinners: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-        orderBy: { createdAt: "desc" },
-      },
-    },
-  });
-  const target = targetRaw
-    ? {
-        ...targetRaw,
-        bets: targetRaw.bets.map(mapBetWithSignature),
-      }
-    : null;
+  const targetRaw = await prisma.user.findUnique({ where: { id } });
+  if (!targetRaw) notFound();
 
-  if (!target) notFound();
+  const repo = new PrismaBetRepository(prisma);
+  const userBets = await repo.listByOwner(id);
+
+  const bets = userBets.map((b) => {
+    const state = b.toState();
+    return {
+      id: state.id,
+      label: state.label,
+      status: state.status,
+      createdAt: state.createdAt ?? new Date(),
+      updatedAt: state.updatedAt ?? new Date(),
+      signature: b.signature,
+    };
+  });
+
+  const target = {
+    ...targetRaw,
+    bets,
+  };
 
   const isSelf = actor.id === target.id;
   const isSuperAdmin = target.role === "super_admin";
