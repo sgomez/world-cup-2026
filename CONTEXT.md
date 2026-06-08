@@ -66,3 +66,15 @@ The mark of victory shown against every Bet sharing first position on a Communit
 
 ### Competition End
 The point after which the tournament is over and final scores stand, gating the award of the **Cup**. Distinct from the **Bet Deadline** (which only closes Bet mutations). Currently controlled by a manual flag pending an automated source of actual results.
+
+### Result
+The official outcome of the competition, maintained by Admins — the *answer key* against which Bets are scored. It records the actual finishing **order** of each of the 12 groups, the actual ranking of the eight advancing third-place teams, and the actual winner of each knockout match. It mirrors the structure of a Bet's prediction (group order + third-place order + knockout winners) but represents reality, not a guess. Exactly one Result exists for the tournament. Admins enter it progressively as real matches are played. Standings are recorded directly as final orders; the system does not derive order from match scores (the tie-break rules are entered by the Admin's own judgement). The Result is the single source of truth the **Leaderboard** scores against.
+
+### Advanced
+The state of a team officially confirmed by an Admin to have reached the knockout stage (Round of 32). During the group phase a team's provisional standing can still change, so a team appears in the knockout bracket only once an Admin marks it Advanced; until then its bracket slot shows **TBD**. Marking a team Advanced is the official statement that its qualification is mathematically settled. (English football term; the same concept the user calls "classified".)
+
+### Advancement Gate
+The Admin step at the boundary between the group phase and the knockout phase. It lists all 32 qualifying slots of the Round of 32 — the 12 group winners, 12 runners-up, and the eight best third-placed teams — each pre-filled with the team derived from the current **Result** standings. The Admin marks each slot **Advanced** (the same act as choosing a knockout match winner); unmarked slots show **TBD** downstream. The Gate exists only at this group→knockout boundary. Within the knockout phase there is no Gate: a later-round slot is filled directly by recording the feeding match's winner.
+
+### TBD
+The placeholder shown in any bracket slot whose occupant is not yet officially settled — a Round-of-32 slot whose team an Admin has not marked **Advanced**, or a later-round slot whose feeding match has no recorded winner yet.
