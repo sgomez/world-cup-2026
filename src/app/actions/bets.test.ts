@@ -220,7 +220,7 @@ describe("removeBet", () => {
     >);
     mockFindUnique.mockResolvedValue(null);
     const result = await removeBet(BET_ID);
-    expect(result).toEqual({ error: "Not found" });
+    expect(result).toEqual({ error: "Bet not found" });
     expect(mockDelete).not.toHaveBeenCalled();
   });
 
@@ -262,7 +262,7 @@ describe("removeBet", () => {
       userId: OWNER_ID,
     } as Awaited<ReturnType<typeof mockFindUnique>>);
     const result = await removeBet(BET_ID);
-    expect(result).toEqual({ error: "Deadline passed" });
+    expect(result).toEqual({ error: "Deadline has passed" });
     expect(mockDelete).not.toHaveBeenCalled();
   });
 
@@ -275,6 +275,7 @@ describe("removeBet", () => {
       id: BET_ID,
       userId: OWNER_ID,
     } as Awaited<ReturnType<typeof mockFindUnique>>);
+    mockDelete.mockResolvedValue({} as Awaited<ReturnType<typeof mockDelete>>);
     const result = await removeBet(BET_ID);
     expect(result).toEqual({ success: true });
     expect(mockDelete).toHaveBeenCalledWith({ where: { id: BET_ID } });
@@ -476,9 +477,11 @@ describe("reopenBet", () => {
     mockUpdate.mockResolvedValue({} as Awaited<ReturnType<typeof mockUpdate>>);
     const result = await reopenBet(BET_ID);
     expect(result).toEqual({ success: true });
+    // Persistence now flows through PrismaBetRepository.save, which writes the
+    // full aggregate; the reopen path is observable via status: "draft".
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: BET_ID },
-      data: { status: "draft" },
+      data: expect.objectContaining({ status: "draft" }),
     });
   });
 });

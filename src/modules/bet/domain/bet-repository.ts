@@ -9,9 +9,11 @@ import type { DomainError } from "./errors";
  *
  * `findById` models absence as a plain `null` (not an error); the application
  * service converts `null` into `NOT_FOUND`. Writes return `ResultAsync`
- * (ADR 0009).
+ * (ADR 0009). Later slices widen the port further (`listByOwner`,
+ * `countByOwner`).
  */
 export interface BetRepository {
   findById(id: string): Promise<Bet | null>;
   save(bet: Bet): ResultAsync<void, DomainError>;
+  delete(id: string): ResultAsync<void, DomainError>;
 }

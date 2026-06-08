@@ -8,6 +8,8 @@ import type { PredictionState, TournamentState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { closeBet as closeBetUseCase } from "@/modules/bet/application/close-bet";
+import { removeBet as removeBetUseCase } from "@/modules/bet/application/remove-bet";
+import { reopenBet as reopenBetUseCase } from "@/modules/bet/application/reopen-bet";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import type { DomainErrorCode } from "@/modules/bet/domain/errors";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
@@ -19,13 +21,6 @@ async function betErrorMessage(code: DomainErrorCode): Promise<string> {
 
 export type { PredictionState } from "@/lib/prediction-state";
 export type BetActionState = { error?: string; success?: boolean } | null;
-
-async function getBetForOwner(betId: string, userId: string) {
-  const bet = await prisma.bet.findUnique({ where: { id: betId } });
-  if (!bet) return { error: "Bet not found" as const };
-  if (bet.userId !== userId) return { error: "Not authorized" as const };
-  return { bet };
-}
 
 export async function createBet(
   _prev: BetActionState,
@@ -58,12 +53,18 @@ export async function removeBet(betId: string): Promise<BetActionState> {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  const bet = await prisma.bet.findUnique({ where: { id: betId } });
-  if (!bet) return { error: "Not found" };
-  if (bet.userId !== session.user.id) return { error: "Not authorized" };
-  if (Date.now() >= BET_DEADLINE.getTime()) return { error: "Deadline passed" };
+  const repo = new PrismaBetRepository(prisma);
+  const result = await removeBetUseCase(repo, {
+    betId,
+    userId: session.user.id,
+    window: new BettingWindow(BET_DEADLINE),
+    now: new Date(),
+  });
 
-  await prisma.bet.delete({ where: { id: betId } });
+  if (result.isErr()) {
+    return { error: await betErrorMessage(result.error.code) };
+  }
+
   revalidatePath("/bets");
   return { success: true };
 }
@@ -93,13 +94,18 @@ export async function reopenBet(betId: string): Promise<BetActionState> {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  const result = await getBetForOwner(betId, session.user.id);
-  if ("error" in result) return { error: result.error };
+  const repo = new PrismaBetRepository(prisma);
+  const result = await reopenBetUseCase(repo, {
+    betId,
+    userId: session.user.id,
+    window: new BettingWindow(BET_DEADLINE),
+    now: new Date(),
+  });
 
-  if (BET_DEADLINE.getTime() < Date.now())
-    return { error: "Deadline has passed" };
+  if (result.isErr()) {
+    return { error: await betErrorMessage(result.error.code) };
+  }
 
-  await prisma.bet.update({ where: { id: betId }, data: { status: "draft" } });
   revalidatePath(`/bets/${betId}`);
   revalidatePath("/bets");
   return { success: true };

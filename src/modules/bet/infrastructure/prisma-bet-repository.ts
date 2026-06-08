@@ -62,6 +62,18 @@ export class PrismaBetRepository implements BetRepository {
           : domainError("SAVE_FAILED"),
     );
   }
+
+  delete(id: string): ResultAsync<void, DomainError> {
+    return ResultAsync.fromPromise(
+      this.client.bet.delete({ where: { id } }).then(() => undefined),
+      // P2025 ("record to delete does not exist") means the Bet is already
+      // gone; any other rejection is a persistence failure.
+      (error) =>
+        isRecordNotFound(error)
+          ? domainError("NOT_FOUND")
+          : domainError("SAVE_FAILED"),
+    );
+  }
 }
 
 /** Narrows an unknown rejection to Prisma's P2025 (record-to-update-not-found). */
