@@ -19,6 +19,7 @@ vi.mock("next-intl/server", () => ({
               "Owner cannot leave the community. Delete it instead.",
             NOT_A_MEMBER: "You are not a member of this community.",
             SAVE_FAILED: "Failed to save the community. Please try again.",
+            NOT_AUTHENTICATED: "Not authenticated",
           }) as Record<string, string>
         )[key] ?? key,
   ),
@@ -178,7 +179,9 @@ describe("createCommunity", () => {
     mockSession();
     const fd = new FormData();
     const result = await createCommunity(null, fd);
-    expect(result).toEqual({ error: "Name is required" });
+    expect(result).toEqual({
+      error: "Name must contain at least one letter or digit",
+    });
     expect(mockCommunityUpsert).not.toHaveBeenCalled();
   });
 

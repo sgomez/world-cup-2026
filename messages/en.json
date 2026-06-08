@@ -242,5 +242,9 @@
     "OWNER_CANNOT_LEAVE": "Owner cannot leave the community. Delete it instead.",
     "NOT_A_MEMBER": "You are not a member of this community.",
     "SAVE_FAILED": "Failed to save the community. Please try again."
+  },
+  "actionErrors": {
+    "NOT_AUTHENTICATED": "Not authenticated",
+    "NAME_REQUIRED": "Name is required"
   }
 }
