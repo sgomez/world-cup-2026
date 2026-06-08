@@ -21,12 +21,14 @@ export default async function AdminResultPage({
       }
     : null;
   const savedKnockoutWinners = tournament?.result?.knockoutWinners ?? null;
+  const savedAdvancement = tournament?.advancement ?? [];
 
   return (
     <div className="container mx-auto py-6">
       <AdminResultEditor
         savedPredictions={savedPredictions}
         savedKnockoutWinners={savedKnockoutWinners}
+        savedAdvancement={savedAdvancement}
       />
     </div>
   );
