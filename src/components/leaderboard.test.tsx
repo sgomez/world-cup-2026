@@ -22,6 +22,7 @@ vi.mock("next-intl", () => ({
           joinOrCreateButton: "Go to Communities",
           noBets: "No participants have closed bets yet in this community.",
           betsCount: `${values?.count ?? 0} Bets`,
+          view: "View",
         };
         return translations[key] ?? key;
       }
@@ -169,6 +170,51 @@ describe("LeaderboardTable Component", () => {
     expect(rankThree).toBeInTheDocument();
     const charlieRow = rankThree.closest("li");
     expect(charlieRow).toHaveTextContent("Charlie");
+  });
+
+  it("implements row swap, view buttons, and signatures", () => {
+    // Add signatures to the sample entries
+    const entriesWithSigs: LeaderboardEntry[] = sampleEntries.map((e) => ({
+      ...e,
+      signature: `signature-for-${e.id}`,
+    }));
+
+    render(
+      <LeaderboardTable
+        entries={entriesWithSigs}
+        currentUserId="user-1"
+        communitySlug="my-community"
+      />,
+    );
+
+    // 1. Bet label is main title, owner name is below it.
+    // They should both be in the same row.
+    const aliceRow = screen.getByText("Alice Bet").closest("li");
+    expect(aliceRow).toHaveTextContent("Alice");
+    expect(aliceRow).toHaveTextContent("Alice Bet");
+
+    // 2. (YOU) chip renders for the current user's rows
+    const youChip = screen.getByText("You");
+    expect(youChip).toBeInTheDocument();
+    expect(youChip.closest("li")).toBe(aliceRow);
+
+    // 3. Truncated signature renders on each row
+    expect(screen.getAllByText("signatur")).toHaveLength(3); // slice(0, 8) of "signature-for-bet-X"
+
+    // 4. View button links:
+    // Sorted order: Bob (points 10, earlier), Alice (points 10), Charlie (points 5)
+    const viewLinks = screen.getAllByRole("link", { name: "View" });
+    expect(viewLinks).toHaveLength(3);
+
+    expect(viewLinks[0]).toHaveAttribute(
+      "href",
+      "/communities/my-community/bets/bet-2",
+    );
+    expect(viewLinks[1]).toHaveAttribute("href", "/bets/bet-1");
+    expect(viewLinks[2]).toHaveAttribute(
+      "href",
+      "/communities/my-community/bets/bet-3",
+    );
   });
 });
 
