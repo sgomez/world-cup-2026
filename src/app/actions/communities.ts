@@ -9,6 +9,9 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 import { createCommunity as createCommunityUseCase } from "@/modules/community/application/create-community";
+import { joinCommunity as joinCommunityUseCase } from "@/modules/community/application/join-community";
+import { leaveCommunity as leaveCommunityUseCase } from "@/modules/community/application/leave-community";
+import { removeMember as removeMemberUseCase } from "@/modules/community/application/remove-member";
 import type { DomainErrorCode } from "@/modules/community/domain/errors";
 import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
 
@@ -125,21 +128,15 @@ export async function leaveCommunity(
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  const community = await prisma.community.findUnique({ where: { slug } });
-  if (!community) return { error: "Community not found" };
-
-  if (community.ownerId === session.user.id) {
-    return { error: "Owner cannot leave. Delete the community instead." };
-  }
-
-  await prisma.communityMember.delete({
-    where: {
-      communityId_userId: {
-        communityId: community.id,
-        userId: session.user.id,
-      },
-    },
+  const repo = new PrismaCommunityRepository(prisma);
+  const result = await leaveCommunityUseCase(repo, {
+    userId: session.user.id,
+    slug,
   });
+
+  if (result.isErr()) {
+    return { error: await communityErrorMessage(result.error.code) };
+  }
 
   const locale = await getLocale();
   revalidatePath("/communities");
@@ -155,25 +152,16 @@ export async function removeMember(
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  const community = await prisma.community.findUnique({ where: { slug } });
-  if (!community) return { error: "Community not found" };
-
-  if (community.ownerId !== session.user.id) {
-    return { error: "Only the owner can remove members" };
-  }
-
-  if (targetUserId === session.user.id) {
-    return { error: "Owner cannot remove themselves" };
-  }
-
-  await prisma.communityMember.delete({
-    where: {
-      communityId_userId: {
-        communityId: community.id,
-        userId: targetUserId,
-      },
-    },
+  const repo = new PrismaCommunityRepository(prisma);
+  const result = await removeMemberUseCase(repo, {
+    actorId: session.user.id,
+    targetUserId,
+    slug,
   });
+
+  if (result.isErr()) {
+    return { error: await communityErrorMessage(result.error.code) };
+  }
 
   revalidatePath(`/communities/${slug}/settings`);
   revalidatePath(`/communities/${slug}`);
@@ -235,24 +223,17 @@ export async function joinCommunity(
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  const community = await prisma.community.findUnique({
-    where: { inviteToken: token },
+  const repo = new PrismaCommunityRepository(prisma);
+  const result = await joinCommunityUseCase(repo, {
+    userId: session.user.id,
+    inviteToken: token,
   });
 
-  if (!community) return { error: "Invalid or expired invite link" };
-
-  await prisma.communityMember.upsert({
-    where: {
-      communityId_userId: {
-        communityId: community.id,
-        userId: session.user.id,
-      },
-    },
-    create: { communityId: community.id, userId: session.user.id },
-    update: {},
-  });
+  if (result.isErr()) {
+    return { error: await communityErrorMessage(result.error.code) };
+  }
 
   const locale = await getLocale();
   revalidatePath("/communities");
-  redirect({ href: `/communities/${community.slug}`, locale });
+  redirect({ href: `/communities/${result.value.slug}`, locale });
 }
