@@ -166,7 +166,9 @@
     "searchPlaceholder": "Search community...",
     "noCommunitiesShow": "No communities to show",
     "noCommunitiesShowDescription": "Create a new community or adjust your search.",
-    "memberCount": "{count, plural, one {# member} other {# members}}"
+    "memberCount": "{count, plural, one {# member} other {# members}}",
+    "you": "You",
+    "view": "View"
   },
   "joinCommunity": {
     "invalidInviteTitle": "Invalid Invite",
