@@ -28,6 +28,9 @@ Status reflects user intent, not time. After the **Bet Deadline**, all write ope
 ### Bet Deadline
 The hard cut-off after which no Bet mutations are permitted: **2026-06-11 19:00 UTC**. Enforced on both client and server. Applies to: create, remove, copy, and edit (predictions + label).
 
+### Betting Window
+The open period during which Bets may be created and mutated. It is open until the **Bet Deadline** and closed from then on. While open, a write is permitted subject to the Bet's **Bet Status**; once closed, every Bet mutation is blocked regardless of status. The Window is a tournament-wide policy — the same for all Users and all Bets — not a property of any individual Bet.
+
 ### Bet Limit
 Maximum number of Bets a User may hold at once. Configurable via environment variable (`MAX_BETS_PER_USER`), default **3**. Enforced on both client and server at create and copy time.
 
