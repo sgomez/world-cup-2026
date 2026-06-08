@@ -76,7 +76,7 @@ export class PrismaBetRepository implements BetRepository {
   }
 }
 
-/** Narrows an unknown rejection to Prisma's P2025 (record-to-update-not-found). */
+/** Narrows an unknown rejection to Prisma's P2025 (record not found). */
 function isRecordNotFound(error: unknown): boolean {
   return (
     typeof error === "object" &&
