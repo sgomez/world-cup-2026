@@ -4,6 +4,7 @@ import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
 export default async function BetPage({
@@ -26,7 +27,8 @@ export default async function BetPage({
   const savedPredictions = bet.groupPredictions;
   const savedKnockoutWinners = bet.knockoutWinners;
   const isClosed = bet.status === "closed";
-  const isPastDeadline = BET_DEADLINE.getTime() < Date.now();
+  const window = new BettingWindow(BET_DEADLINE);
+  const isPastDeadline = window.isClosed(new Date());
 
   return (
     <div>

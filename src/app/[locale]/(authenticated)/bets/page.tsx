@@ -8,6 +8,7 @@ import { BET_DEADLINE, MAX_BETS_PER_USER } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { listSummaries } from "@/modules/bet/application/list-summaries";
+import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
 export default async function BetsPage({
@@ -25,7 +26,8 @@ export default async function BetsPage({
   const repo = new PrismaBetRepository(prisma);
   const enrichedBets = await listSummaries(repo, session.user.id);
 
-  const isPastDeadline = new Date() > BET_DEADLINE;
+  const window = new BettingWindow(BET_DEADLINE);
+  const isPastDeadline = window.isClosed(new Date());
   const isAtLimit = enrichedBets.length >= MAX_BETS_PER_USER;
   const showCopyButtons = !isPastDeadline && !isAtLimit;
 
