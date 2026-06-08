@@ -1,5 +1,7 @@
 import { headers } from "next/headers";
+import { getLocale } from "next-intl/server";
 import { cache } from "react";
+import { redirect } from "@/i18n/navigation";
 import { auth, type Session } from "./auth";
 
 export const getSession = cache(
@@ -9,22 +11,21 @@ export const getSession = cache(
     }) as Promise<Session | null>,
 );
 
-export async function requireSession() {
+export async function requireSession(): Promise<Session> {
   const session = await getSession();
   if (!session) {
-    const { redirect } = await import("next/navigation");
-    redirect("/login");
+    const locale = await getLocale();
+    redirect({ href: "/login", locale });
   }
-  // biome-ignore lint/style/noNonNullAssertion: redirect() throws, so session is defined
-  return session!;
+  return session;
 }
 
-export async function requireAdmin() {
+export async function requireAdmin(): Promise<Session> {
   const session = await requireSession();
   const role = session.user.role;
   if (role !== "admin" && role !== "super_admin") {
-    const { redirect } = await import("next/navigation");
-    redirect("/");
+    const locale = await getLocale();
+    redirect({ href: "/", locale });
   }
   return session;
 }
