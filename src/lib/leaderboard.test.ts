@@ -170,12 +170,14 @@ describe("scopeMapper", () => {
     expect(aliceEntry?.betName).toBe("Alice Bet 1 (Closed)");
     expect(aliceEntry?.points).toBe(0);
     expect(aliceEntry?.userId).toBe("user-1");
+    expect(aliceEntry?.signature).toBe("sig1");
 
     const bobEntry = result[0].entries.find((e) => e.userName === "Bob");
     expect(bobEntry).toBeDefined();
     expect(bobEntry?.betName).toBe("Bob Bet 1 (Closed)");
     expect(bobEntry?.points).toBe(0);
     expect(bobEntry?.userId).toBe("user-2");
+    expect(bobEntry?.signature).toBe("sig3");
   });
 
   it("should handle users with no bets or no closed bets", () => {

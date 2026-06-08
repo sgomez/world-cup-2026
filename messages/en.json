@@ -263,6 +263,7 @@
     "joinOrCreate": "Join or create a community to start competing!",
     "joinOrCreateButton": "Go to Communities",
     "noBets": "No participants have closed bets yet in this community.",
-    "betsCount": "{count, plural, one {# Bet} other {# Bets}}"
+    "betsCount": "{count, plural, one {# Bet} other {# Bets}}",
+    "view": "View"
   }
 }

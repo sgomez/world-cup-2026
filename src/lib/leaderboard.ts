@@ -7,6 +7,7 @@ export type LeaderboardEntry = {
   betName: string; // Bet's label
   points: number; // The score/points (stubbed to 0 for now)
   createdAt: Date; // For stable tiebreaking
+  signature?: string;
 };
 
 export type LeaderboardScope = {
@@ -71,6 +72,7 @@ export function scopeMapper(
             betName: bet.label,
             points: scoreBet(bet),
             createdAt: bet.createdAt,
+            signature: bet.signature,
           });
         }
       }

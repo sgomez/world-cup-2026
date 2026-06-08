@@ -1,5 +1,6 @@
 "use client";
 
+import { ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { type LeaderboardEntry, rankEntries } from "@/lib/leaderboard";
@@ -44,9 +45,10 @@ export function LeaderboardTable({
       )}
     >
       {/* Table Header */}
-      <div className="grid grid-cols-[3.5rem_1fr_6rem] items-center gap-4 border-b border-hairline bg-soft-cloud/50 px-6 py-3.5 text-caption-sm uppercase tracking-wider text-muted-foreground dark:border-ash dark:bg-charcoal/30">
+      <div className="grid grid-cols-[3.5rem_1fr_auto_6rem] items-center gap-4 border-b border-hairline bg-soft-cloud/50 px-6 py-3.5 text-caption-sm uppercase tracking-wider text-muted-foreground dark:border-ash dark:bg-charcoal/30">
         <span className="text-center">{t("rank")}</span>
         <span>{t("participant")}</span>
+        <span />
         <span className="text-right">{t("points")}</span>
       </div>
 
@@ -54,11 +56,16 @@ export function LeaderboardTable({
       <ul className="divide-y divide-hairline dark:divide-ash">
         {ranked.map((entry) => {
           const isCurrentUser = currentUserId && entry.userId === currentUserId;
+          const href = isCurrentUser
+            ? `/bets/${entry.id}`
+            : communitySlug
+              ? `/communities/${communitySlug}/bets/${entry.id}`
+              : `/bets/${entry.id}`;
           return (
             <li
               key={entry.id}
               className={cn(
-                "grid grid-cols-[3.5rem_1fr_6rem] items-center gap-4 px-6 py-4 transition-all duration-200 hover:bg-soft-cloud/30 dark:hover:bg-charcoal/20",
+                "grid grid-cols-[3.5rem_1fr_auto_6rem] items-center gap-4 px-6 py-4 transition-all duration-200 hover:bg-soft-cloud/30 dark:hover:bg-charcoal/20",
                 isCurrentUser &&
                   "bg-info/5 hover:bg-info/10 dark:bg-info-deep/10 dark:hover:bg-info-deep/15",
               )}
@@ -74,34 +81,58 @@ export function LeaderboardTable({
                   {entry.userName.charAt(0).toUpperCase()}
                 </span>
                 <div className="min-w-0 space-y-1">
-                  <p className="flex items-center gap-2 truncate text-body-strong text-foreground">
-                    <span className="truncate">{entry.userName}</span>
-                    {isCurrentUser && (
-                      <span className="inline-flex items-center rounded-full border border-info/30 bg-info/10 px-2 py-0.5 text-utility-xs uppercase tracking-wide text-info dark:border-info-deep/50 dark:bg-info-deep/20 dark:text-info">
-                        {t("you")}
-                      </span>
-                    )}
-                  </p>
-                  <p className="truncate text-caption-sm text-muted-foreground">
+                  <p className="truncate text-body-strong text-foreground">
                     {isCurrentUser ? (
                       <Link
                         href={`/bets/${entry.id}`}
-                        className="hover:underline transition-colors"
+                        className="hover:underline transition-colors font-medium"
                       >
                         {entry.betName}
                       </Link>
                     ) : communitySlug ? (
                       <Link
                         href={`/communities/${communitySlug}/bets/${entry.id}`}
-                        className="hover:underline transition-colors"
+                        className="hover:underline transition-colors font-medium"
                       >
                         {entry.betName}
                       </Link>
                     ) : (
-                      entry.betName
+                      <span className="font-medium">{entry.betName}</span>
                     )}
                   </p>
+                  <div className="flex flex-wrap items-center gap-2 text-caption-sm text-muted-foreground">
+                    <span className="font-normal">{entry.userName}</span>
+                    {isCurrentUser && (
+                      <span className="inline-flex items-center rounded-full border border-info/30 bg-info/10 px-2 py-0.5 text-utility-xs uppercase tracking-wide text-info dark:border-info-deep/50 dark:bg-info-deep/20 dark:text-info">
+                        {t("you")}
+                      </span>
+                    )}
+                    {entry.signature && (
+                      <span
+                        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+                        title={entry.signature}
+                      >
+                        <ShieldCheck
+                          className="size-3.5 text-success"
+                          aria-hidden="true"
+                        />
+                        <code className="font-mono text-xs">
+                          {entry.signature.slice(0, 8)}
+                        </code>
+                      </span>
+                    )}
+                  </div>
                 </div>
+              </div>
+
+              {/* View Button */}
+              <div className="flex justify-end">
+                <Link
+                  href={href}
+                  className="button-secondary text-button-sm !h-9 !py-1 !px-4 flex items-center justify-center shrink-0"
+                >
+                  {t("view")}
+                </Link>
               </div>
 
               {/* Points Value */}
