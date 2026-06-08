@@ -70,6 +70,12 @@ export function Navbar({ user }: NavbarProps) {
           >
             {t("myBets")}
           </Link>
+          <Link
+            href="/leaderboard"
+            className="hidden sm:block text-caption-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {t("leaderboard")}
+          </Link>
 
           <LocaleToggle />
 
@@ -105,6 +111,9 @@ export function Navbar({ user }: NavbarProps) {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/communities")}>
                 {t("communities")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/leaderboard")}>
+                {t("leaderboard")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/communities/new")}>
                 {t("createCommunity")}
