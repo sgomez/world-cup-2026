@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { type LeaderboardEntry, rankEntries } from "@/lib/leaderboard";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +10,7 @@ interface LeaderboardTableProps {
   currentUserId?: string;
   tournamentEnded?: boolean;
   className?: string;
+  communitySlug?: string;
 }
 
 export function LeaderboardTable({
@@ -16,6 +18,7 @@ export function LeaderboardTable({
   currentUserId,
   tournamentEnded = false,
   className,
+  communitySlug,
 }: LeaderboardTableProps) {
   const t = useTranslations("leaderboard");
   const ranked = rankEntries(entries);
@@ -80,7 +83,23 @@ export function LeaderboardTable({
                     )}
                   </p>
                   <p className="truncate text-caption-sm text-muted-foreground">
-                    {entry.betName}
+                    {isCurrentUser ? (
+                      <Link
+                        href={`/bets/${entry.id}`}
+                        className="hover:underline transition-colors"
+                      >
+                        {entry.betName}
+                      </Link>
+                    ) : communitySlug ? (
+                      <Link
+                        href={`/communities/${communitySlug}/bets/${entry.id}`}
+                        className="hover:underline transition-colors"
+                      >
+                        {entry.betName}
+                      </Link>
+                    ) : (
+                      entry.betName
+                    )}
                   </p>
                 </div>
               </div>

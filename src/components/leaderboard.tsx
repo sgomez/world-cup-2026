@@ -95,6 +95,7 @@ export function Leaderboard({
           entries={active.entries}
           currentUserId={currentUserId}
           tournamentEnded={tournamentEnded}
+          communitySlug={active.id}
         />
       )}
     </section>

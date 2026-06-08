@@ -89,7 +89,9 @@
     "notAuthenticated": "Not authenticated",
     "betNotFound": "Bet not found",
     "notAuthorized": "Not authorized",
-    "betClosed": "Bet is closed"
+    "betClosed": "Bet is closed",
+    "gatePageTitle": "Bet Prediction",
+    "gateMessage": "This prediction is locked and will be revealed once the bet deadline passes on {date}."
   },
   "groupStage": {
     "group": "Group {letter}",

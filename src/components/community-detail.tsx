@@ -156,9 +156,21 @@ export function CommunityDetail({
                       key={b.id}
                       className="flex flex-wrap items-center gap-3 rounded-xl border bg-card px-4 py-3"
                     >
-                      <span className="text-sm font-medium text-card-foreground">
-                        {b.label}
-                      </span>
+                      {m.userId === community.currentUserId ? (
+                        <Link
+                          href={`/bets/${b.id}`}
+                          className="text-sm font-medium text-card-foreground hover:underline transition-colors"
+                        >
+                          {b.label}
+                        </Link>
+                      ) : (
+                        <Link
+                          href={`/communities/${community.slug}/bets/${b.id}`}
+                          className="text-sm font-medium text-card-foreground hover:underline transition-colors"
+                        >
+                          {b.label}
+                        </Link>
+                      )}
                       {b.status === "draft" && (
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-info/30 bg-info/5 px-2.5 py-0.5 text-xs font-medium text-info">
                           <span
