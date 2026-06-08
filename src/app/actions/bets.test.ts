@@ -3,6 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next-intl/server", () => ({
   getLocale: vi.fn().mockResolvedValue("en"),
+  // Mirrors messages/en.json "betErrors": maps stable codes to the legacy
+  // English strings so the migrated closeBet contract stays observable here.
+  getTranslations: vi.fn(
+    async () =>
+      (key: string): string =>
+        (
+          ({
+            NOT_FOUND: "Bet not found",
+            FORBIDDEN: "Not authorized",
+            PAST_DEADLINE: "Deadline has passed",
+            INCOMPLETE_PREDICTIONS: "Predictions are incomplete",
+          }) as Record<string, string>
+        )[key] ?? key,
+  ),
 }));
 vi.mock("@/i18n/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("@/lib/bet-constants", () => ({
@@ -402,9 +416,11 @@ describe("closeBet", () => {
     mockUpdate.mockResolvedValue({} as Awaited<ReturnType<typeof mockUpdate>>);
     const result = await closeBet(BET_ID);
     expect(result).toEqual({ success: true });
+    // Persistence now flows through PrismaBetRepository.save, which writes the
+    // full aggregate; the close path is observable via status: "closed".
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: BET_ID },
-      data: { status: "closed" },
+      data: expect.objectContaining({ status: "closed" }),
     });
   });
 });

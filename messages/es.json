@@ -222,5 +222,12 @@
     "joinedLabel": "Unido {date}",
     "backToCommunities": "Volver a Comunidades",
     "betsCount": "{count, plural, one {# apuesta} other {# apuestas}}"
+  },
+  "betErrors": {
+    "NOT_FOUND": "Apuesta no encontrada",
+    "FORBIDDEN": "No tienes autorización para modificar esta apuesta.",
+    "PAST_DEADLINE": "El plazo de la apuesta ha vencido. No se pueden realizar más cambios.",
+    "INCOMPLETE_PREDICTIONS": "Debes completar todos los partidos de eliminatorias antes de cerrar tu apuesta.",
+    "SAVE_FAILED": "No se pudo guardar tu apuesta. Inténtalo de nuevo."
   }
 }
