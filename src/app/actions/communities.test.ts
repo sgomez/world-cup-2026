@@ -86,6 +86,9 @@ const mockCommunityMemberCreateMany = vi.mocked(
   prisma.communityMember.createMany,
 );
 const mockBetFindMany = vi.mocked(prisma.bet.findMany);
+const mockCommunityMemberDeleteMany = vi.mocked(
+  prisma.communityMember.deleteMany,
+);
 
 const USER_ID = "user-1";
 const COMMUNITY_ID = "community-1";
@@ -319,19 +322,15 @@ describe("joinCommunity", () => {
     mockGetSession.mockResolvedValue(null);
     const result = await joinCommunity("some-token", null, new FormData());
     expect(result).toEqual({ error: "Not authenticated" });
-    expect(mockCommunityFindUnique).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ inviteToken: expect.anything() }),
-      }),
-    );
+    expect(mockCommunityFindUnique).not.toHaveBeenCalled();
   });
 
   it("returns error for invalid or unknown token", async () => {
     mockSession();
     mockCommunityFindUnique.mockResolvedValue(null);
     const result = await joinCommunity("bad-token", null, new FormData());
-    expect(result).toEqual({ error: "Invalid or expired invite link" });
-    expect(mockCommunityMemberUpsert).not.toHaveBeenCalled();
+    expect(result).toEqual({ error: "Community not found" });
+    expect(mockCommunityMemberCreateMany).not.toHaveBeenCalled();
   });
 
   it("adds member and redirects to community slug on valid token", async () => {
@@ -339,25 +338,20 @@ describe("joinCommunity", () => {
     mockCommunityFindUnique.mockResolvedValue({
       id: COMMUNITY_ID,
       slug: COMMUNITY_SLUG,
-    } as Awaited<ReturnType<typeof mockCommunityFindUnique>>);
-    mockCommunityMemberUpsert.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof mockCommunityMemberUpsert>>,
-    );
+      ownerId: OWNER_ID,
+      inviteToken: "valid-token",
+      members: [{ userId: OWNER_ID }],
+    } as any);
+    mockCommunityMemberFindMany.mockResolvedValue([
+      { userId: OWNER_ID },
+    ] as any);
+    mockCommunityMemberCreateMany.mockResolvedValue({} as any);
 
     await joinCommunity("valid-token", null, new FormData());
 
-    expect(mockCommunityMemberUpsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          communityId_userId: {
-            communityId: COMMUNITY_ID,
-            userId: USER_ID,
-          },
-        },
-        create: { communityId: COMMUNITY_ID, userId: USER_ID },
-        update: {},
-      }),
-    );
+    expect(mockCommunityMemberCreateMany).toHaveBeenCalledWith({
+      data: [{ communityId: COMMUNITY_ID, userId: USER_ID }],
+    });
     expect(mockRedirect).toHaveBeenCalledWith({
       href: `/communities/${COMMUNITY_SLUG}`,
       locale: "en",
@@ -369,14 +363,18 @@ describe("joinCommunity", () => {
     mockCommunityFindUnique.mockResolvedValue({
       id: COMMUNITY_ID,
       slug: COMMUNITY_SLUG,
-    } as Awaited<ReturnType<typeof mockCommunityFindUnique>>);
-    mockCommunityMemberUpsert.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof mockCommunityMemberUpsert>>,
-    );
+      ownerId: OWNER_ID,
+      inviteToken: "valid-token",
+      members: [{ userId: OWNER_ID }, { userId: USER_ID }],
+    } as any);
+    mockCommunityMemberFindMany.mockResolvedValue([
+      { userId: OWNER_ID },
+      { userId: USER_ID },
+    ] as any);
 
     await joinCommunity("valid-token", null, new FormData());
 
-    expect(mockCommunityMemberUpsert).toHaveBeenCalledTimes(1);
+    expect(mockCommunityMemberCreateMany).not.toHaveBeenCalled();
     expect(mockRedirect).toHaveBeenCalledWith({
       href: `/communities/${COMMUNITY_SLUG}`,
       locale: "en",
@@ -562,11 +560,19 @@ describe("getCommunity", () => {
   });
 });
 
-function mockCommunity(ownerId = OWNER_ID) {
+function mockCommunity(
+  ownerId = OWNER_ID,
+  memberUserIds: string[] = [ownerId],
+) {
   mockCommunityFindUnique.mockResolvedValue({
     id: COMMUNITY_ID,
     slug: COMMUNITY_SLUG,
+    name: "My Friends",
     ownerId,
+    inviteToken: "tok",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    members: memberUserIds.map((uid) => ({ userId: uid })),
   } as Awaited<ReturnType<typeof mockCommunityFindUnique>>);
 }
 
@@ -582,31 +588,34 @@ describe("leaveCommunity", () => {
     mockCommunityFindUnique.mockResolvedValue(null);
     const result = await leaveCommunity(COMMUNITY_SLUG, null, new FormData());
     expect(result).toEqual({ error: "Community not found" });
-    expect(mockCommunityMemberDelete).not.toHaveBeenCalled();
+    expect(mockCommunityMemberDeleteMany).not.toHaveBeenCalled();
   });
 
   it("returns error when owner tries to leave", async () => {
     mockSession(OWNER_ID);
-    mockCommunity();
+    mockCommunity(OWNER_ID, [OWNER_ID]);
     const result = await leaveCommunity(COMMUNITY_SLUG, null, new FormData());
     expect(result).toEqual({
-      error: "Owner cannot leave. Delete the community instead.",
+      error: "Owner cannot leave the community. Delete it instead.",
     });
-    expect(mockCommunityMemberDelete).not.toHaveBeenCalled();
+    expect(mockCommunityMemberDeleteMany).not.toHaveBeenCalled();
   });
 
   it("removes membership and redirects for a regular member", async () => {
     mockSession(USER_ID);
-    mockCommunity();
-    mockCommunityMemberDelete.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof mockCommunityMemberDelete>>,
-    );
+    mockCommunity(OWNER_ID, [OWNER_ID, USER_ID]);
+    mockCommunityMemberFindMany.mockResolvedValue([
+      { userId: OWNER_ID },
+      { userId: USER_ID },
+    ] as any);
+    mockCommunityMemberDeleteMany.mockResolvedValue({} as any);
 
     await leaveCommunity(COMMUNITY_SLUG, null, new FormData());
 
-    expect(mockCommunityMemberDelete).toHaveBeenCalledWith({
+    expect(mockCommunityMemberDeleteMany).toHaveBeenCalledWith({
       where: {
-        communityId_userId: { communityId: COMMUNITY_ID, userId: USER_ID },
+        communityId: COMMUNITY_ID,
+        userId: { in: [USER_ID] },
       },
     });
     expect(mockRedirect).toHaveBeenCalledWith({
@@ -638,41 +647,47 @@ describe("removeMember", () => {
       new FormData(),
     );
     expect(result).toEqual({ error: "Community not found" });
-    expect(mockCommunityMemberDelete).not.toHaveBeenCalled();
+    expect(mockCommunityMemberDeleteMany).not.toHaveBeenCalled();
   });
 
   it("returns error for non-owner caller", async () => {
     mockSession(USER_ID);
-    mockCommunity();
+    mockCommunity(OWNER_ID, [OWNER_ID, USER_ID, "another-user"]);
     const result = await removeMember(
       COMMUNITY_SLUG,
       "another-user",
       null,
       new FormData(),
     );
-    expect(result).toEqual({ error: "Only the owner can remove members" });
-    expect(mockCommunityMemberDelete).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      error: "You are not authorized to modify this community.",
+    });
+    expect(mockCommunityMemberDeleteMany).not.toHaveBeenCalled();
   });
 
   it("returns error when owner tries to remove themselves", async () => {
     mockSession(OWNER_ID);
-    mockCommunity();
+    mockCommunity(OWNER_ID, [OWNER_ID, USER_ID]);
     const result = await removeMember(
       COMMUNITY_SLUG,
       OWNER_ID,
       null,
       new FormData(),
     );
-    expect(result).toEqual({ error: "Owner cannot remove themselves" });
-    expect(mockCommunityMemberDelete).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      error: "You are not authorized to modify this community.",
+    });
+    expect(mockCommunityMemberDeleteMany).not.toHaveBeenCalled();
   });
 
   it("removes the target member and returns success", async () => {
     mockSession(OWNER_ID);
-    mockCommunity();
-    mockCommunityMemberDelete.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof mockCommunityMemberDelete>>,
-    );
+    mockCommunity(OWNER_ID, [OWNER_ID, USER_ID]);
+    mockCommunityMemberFindMany.mockResolvedValue([
+      { userId: OWNER_ID },
+      { userId: USER_ID },
+    ] as any);
+    mockCommunityMemberDeleteMany.mockResolvedValue({} as any);
 
     const result = await removeMember(
       COMMUNITY_SLUG,
@@ -681,9 +696,10 @@ describe("removeMember", () => {
       new FormData(),
     );
 
-    expect(mockCommunityMemberDelete).toHaveBeenCalledWith({
+    expect(mockCommunityMemberDeleteMany).toHaveBeenCalledWith({
       where: {
-        communityId_userId: { communityId: COMMUNITY_ID, userId: USER_ID },
+        communityId: COMMUNITY_ID,
+        userId: { in: [USER_ID] },
       },
     });
     expect(result).toEqual({ success: true });

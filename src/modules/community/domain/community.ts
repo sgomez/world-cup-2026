@@ -108,10 +108,10 @@ export class Community {
   }
 
   removeMember(
-    ownerId: string,
     targetUserId: string,
+    actorId: string,
   ): Result<Community, DomainError> {
-    if (ownerId !== this.state.ownerId) {
+    if (actorId !== this.state.ownerId) {
       return err(domainError("FORBIDDEN"));
     }
     if (targetUserId === this.state.ownerId) {

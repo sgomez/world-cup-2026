@@ -62,7 +62,7 @@ describe("Community Aggregate Root", () => {
       const community = Community.create(name, slug, ownerId, inviteToken);
       const withMember = community.join("user-456")._unsafeUnwrap();
       const removed = withMember
-        .removeMember(ownerId, "user-456")
+        .removeMember("user-456", ownerId)
         ._unsafeUnwrap();
       expect(removed.memberIds).toEqual([ownerId]);
     });
@@ -84,7 +84,7 @@ describe("Community Aggregate Root", () => {
 
     it("fails if target user is not a member", () => {
       const community = Community.create(name, slug, ownerId, inviteToken);
-      const result = community.removeMember(ownerId, "stranger");
+      const result = community.removeMember("stranger", ownerId);
       expect(result.isErr()).toBe(true);
       expect(result._unsafeUnwrapErr().code).toBe("NOT_A_MEMBER");
     });
