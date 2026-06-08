@@ -136,7 +136,7 @@ export class PrismaCommunityRepository implements CommunityRepository {
         })
         .then(() => undefined),
       (error) =>
-        isUniqueConstraintViolation(error)
+        isUniqueConstraintViolationForField(error, "slug")
           ? domainError("SLUG_ALREADY_EXISTS")
           : domainError("SAVE_FAILED"),
     );
@@ -162,11 +162,30 @@ function isRecordNotFound(error: unknown): boolean {
   );
 }
 
-function isUniqueConstraintViolation(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code: unknown }).code === "P2002"
-  );
+function isUniqueConstraintViolationForField(
+  error: unknown,
+  field: string,
+): boolean {
+  if (
+    typeof error !== "object" ||
+    error === null ||
+    !("code" in error) ||
+    (error as { code: unknown }).code !== "P2002"
+  ) {
+    return false;
+  }
+
+  const errWithMeta = error as { meta?: { target?: unknown } };
+  if (errWithMeta.meta && typeof errWithMeta.meta === "object") {
+    const target = errWithMeta.meta.target;
+    if (Array.isArray(target)) {
+      return target.includes(field);
+    }
+    if (typeof target === "string") {
+      return target === field;
+    }
+  }
+
+  // Fallback if no target info exists
+  return true;
 }

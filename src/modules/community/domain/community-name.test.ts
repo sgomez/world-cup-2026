@@ -26,4 +26,10 @@ describe("CommunityName Value Object", () => {
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().code).toBe("INVALID_NAME");
   });
+
+  it("fails if name contains only non-alphanumeric characters", () => {
+    const result = CommunityName.create("!!!");
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("INVALID_NAME");
+  });
 });
