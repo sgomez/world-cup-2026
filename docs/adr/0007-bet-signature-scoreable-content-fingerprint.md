@@ -1,6 +1,6 @@
 # ADR 0007: Bet Signature is a Fingerprint of Scoreable Content
 
-**Status:** Accepted  
+**Status:** Accepted (the "No salt" decision is **amended by ADR 0014**)  
 **Date:** 2026-06-07
 
 ## Context
