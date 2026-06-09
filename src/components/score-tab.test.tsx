@@ -83,4 +83,50 @@ describe("ScoreTab", () => {
 
     expect(within(thirdPlaceCard).getByText("Brazil")).toBeInTheDocument();
   });
+
+  it("renders non-zero points in per-round points and breakdown rows when teams match a real answer key", () => {
+    const state = createInitialState(null);
+    state.knockoutMatches["R32-73"] = {
+      id: "R32-73",
+      round: "R32",
+      team1Id: "mex",
+      team2Id: "usa",
+      winnerId: "mex",
+      loserId: "usa",
+    };
+
+    const actualResults = {
+      R32: ["MEX", "USA"],
+      R16: [],
+      QF: [],
+      SF: [],
+      F: [],
+      champion: null,
+      thirdPlace: null,
+    };
+
+    render(<ScoreTab state={state} actualResults={actualResults} />);
+
+    // Since MEX and USA match in R32 (3 points per team), total should be 6
+    const sixElements = screen.getAllByText("6");
+    expect(sixElements.length).toBeGreaterThanOrEqual(2);
+
+    // Verify round subtotal shows non-zero (since matchedTeams.length > 0)
+    const r32Title = screen.getByText("roundOf32");
+    const r32HeaderParent = r32Title.parentElement;
+    if (!r32HeaderParent) throw new Error("R32 Header parent not found");
+    const r32HeaderRow = r32HeaderParent.parentElement;
+    if (!r32HeaderRow) throw new Error("R32 Header row parent not found");
+    const r32Card = r32HeaderRow.parentElement;
+    if (!r32Card) throw new Error("R32 card parent not found");
+
+    expect(within(r32Card).getByText(/Subtotal/)).toBeInTheDocument();
+    expect(within(r32Card).getByText("6 pts")).toBeInTheDocument();
+
+    // The breakdown row for Round of 32 should show 6 points
+    const breakdownRow = screen.getByText("roundOf32Label");
+    const rowParent = breakdownRow.parentElement;
+    if (!rowParent) throw new Error("Breakdown row parent not found");
+    expect(within(rowParent).getByText("6")).toBeInTheDocument();
+  });
 });

@@ -113,43 +113,85 @@ export function toScoreableContent(
   };
 }
 
+export interface RoundBreakdown {
+  matched: number;
+  points: number;
+}
+
+export interface WinnerBreakdown {
+  matched: boolean;
+  points: number;
+}
+
+export interface ScoreBreakdown {
+  R32: RoundBreakdown;
+  R16: RoundBreakdown;
+  QF: RoundBreakdown;
+  SF: RoundBreakdown;
+  F: RoundBreakdown;
+  champion: WinnerBreakdown;
+  thirdPlace: WinnerBreakdown;
+  total: number;
+}
+
+export function scoreBetBreakdown(
+  betContent: ScoreableContent,
+  answerKey: ScoreableContent,
+): ScoreBreakdown {
+  const breakdown: Partial<ScoreBreakdown> = {};
+  let total = 0;
+
+  for (const round of ["R32", "R16", "QF", "SF", "F"] as const) {
+    const pointsPerTeam = ROUND_POINTS[round] || 0;
+    const betRound = betContent[round];
+    const answerRound = answerKey[round];
+
+    let matchedCount = 0;
+    for (const teamId of betRound) {
+      if (answerRound.has(teamId)) {
+        matchedCount++;
+      }
+    }
+    const points = matchedCount * pointsPerTeam;
+    breakdown[round] = {
+      matched: matchedCount,
+      points,
+    };
+    total += points;
+  }
+
+  const championMatched = !!(
+    betContent.champion &&
+    answerKey.champion &&
+    betContent.champion === answerKey.champion
+  );
+  const championPoints = championMatched ? CHAMPION_POINTS : 0;
+  breakdown.champion = {
+    matched: championMatched,
+    points: championPoints,
+  };
+  total += championPoints;
+
+  const thirdPlaceMatched = !!(
+    betContent.thirdPlace &&
+    answerKey.thirdPlace &&
+    betContent.thirdPlace === answerKey.thirdPlace
+  );
+  const thirdPlacePoints = thirdPlaceMatched ? THIRD_PLACE_POINTS : 0;
+  breakdown.thirdPlace = {
+    matched: thirdPlaceMatched,
+    points: thirdPlacePoints,
+  };
+  total += thirdPlacePoints;
+
+  breakdown.total = total;
+
+  return breakdown as ScoreBreakdown;
+}
+
 export function scoreBet(
   betContent: ScoreableContent,
   answerKey: ScoreableContent,
 ): number {
-  let score = 0;
-
-  for (const round of ["R32", "R16", "QF", "SF", "F"] as const) {
-    const points = ROUND_POINTS[round];
-    if (points !== undefined) {
-      const betRound = betContent[round];
-      const answerRound = answerKey[round];
-
-      let matchedCount = 0;
-      for (const teamId of betRound) {
-        if (answerRound.has(teamId)) {
-          matchedCount++;
-        }
-      }
-      score += matchedCount * points;
-    }
-  }
-
-  if (
-    betContent.champion &&
-    answerKey.champion &&
-    betContent.champion === answerKey.champion
-  ) {
-    score += CHAMPION_POINTS;
-  }
-
-  if (
-    betContent.thirdPlace &&
-    answerKey.thirdPlace &&
-    betContent.thirdPlace === answerKey.thirdPlace
-  ) {
-    score += THIRD_PLACE_POINTS;
-  }
-
-  return score;
+  return scoreBetBreakdown(betContent, answerKey).total;
 }

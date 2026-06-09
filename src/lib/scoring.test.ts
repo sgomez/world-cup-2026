@@ -4,6 +4,7 @@ import {
   extractScoreableContent,
   type ScoreableContent,
   scoreBet,
+  scoreBetBreakdown,
 } from "./scoring";
 
 describe("extractScoreableContent", () => {
@@ -170,5 +171,113 @@ describe("scoreBet", () => {
     key.thirdPlace = "BRA";
 
     expect(scoreBet(bet, key)).toBe(3 + 4 + 5 + 6 + 8 + 10 + 5);
+  });
+});
+
+describe("scoreBetBreakdown", () => {
+  const emptyKey = (): ScoreableContent => ({
+    R32: new Set<string>(),
+    R16: new Set<string>(),
+    QF: new Set<string>(),
+    SF: new Set<string>(),
+    F: new Set<string>(),
+    champion: null,
+    thirdPlace: null,
+  });
+
+  it("handles empty keys and empty predictions correctly", () => {
+    const bet = emptyKey();
+    const key = emptyKey();
+    const res = scoreBetBreakdown(bet, key);
+
+    expect(res.R32).toEqual({ matched: 0, points: 0 });
+    expect(res.R16).toEqual({ matched: 0, points: 0 });
+    expect(res.QF).toEqual({ matched: 0, points: 0 });
+    expect(res.SF).toEqual({ matched: 0, points: 0 });
+    expect(res.F).toEqual({ matched: 0, points: 0 });
+    expect(res.champion).toEqual({ matched: false, points: 0 });
+    expect(res.thirdPlace).toEqual({ matched: false, points: 0 });
+    expect(res.total).toBe(0);
+  });
+
+  it("computes per-round matched and points correctly including phase-membership rule", () => {
+    const bet = emptyKey();
+    bet.R32.add("USA");
+    bet.R32.add("MEX");
+    bet.R16.add("FRA");
+    bet.R16.add("GER");
+
+    const key = emptyKey();
+    key.R32.add("USA"); // Right team, wrong opponent, scores!
+    key.R32.add("CAN"); // Wrong team
+    key.R16.add("FRA");
+    key.R16.add("GER");
+
+    const res = scoreBetBreakdown(bet, key);
+    expect(res.R32).toEqual({ matched: 1, points: 3 });
+    expect(res.R16).toEqual({ matched: 2, points: 8 });
+    expect(res.total).toBe(11);
+  });
+
+  it("computes champion and third place points correctly", () => {
+    const bet = emptyKey();
+    bet.champion = "BRA";
+    bet.thirdPlace = "ARG";
+
+    const key = emptyKey();
+    key.champion = "BRA";
+    key.thirdPlace = "ARG";
+
+    const res = scoreBetBreakdown(bet, key);
+    expect(res.champion).toEqual({ matched: true, points: 10 });
+    expect(res.thirdPlace).toEqual({ matched: true, points: 5 });
+    expect(res.total).toBe(15);
+  });
+
+  it("computes partial keys correctly where some matches are not completed", () => {
+    const bet = emptyKey();
+    bet.R32.add("USA");
+    bet.R32.add("MEX");
+    bet.champion = "BRA";
+
+    const key = emptyKey();
+    key.R32.add("USA");
+    // rest is empty / not yet set
+
+    const res = scoreBetBreakdown(bet, key);
+    expect(res.R32).toEqual({ matched: 1, points: 3 });
+    expect(res.champion).toEqual({ matched: false, points: 0 });
+    expect(res.total).toBe(3);
+  });
+
+  it("total always equals the sum of breakdown points", () => {
+    const bet = emptyKey();
+    bet.R32.add("USA");
+    bet.R16.add("FRA");
+    bet.QF.add("ARG");
+    bet.SF.add("BRA");
+    bet.F.add("GER");
+    bet.champion = "GER";
+    bet.thirdPlace = "BRA";
+
+    const key = emptyKey();
+    key.R32.add("USA");
+    key.R16.add("FRA");
+    key.QF.add("ARG");
+    key.SF.add("BRA");
+    key.F.add("GER");
+    key.champion = "GER";
+    key.thirdPlace = "BRA";
+
+    const res = scoreBetBreakdown(bet, key);
+    const sum =
+      res.R32.points +
+      res.R16.points +
+      res.QF.points +
+      res.SF.points +
+      res.F.points +
+      res.champion.points +
+      res.thirdPlace.points;
+    expect(res.total).toBe(sum);
   });
 });

@@ -14,7 +14,7 @@ import {
   extractScoreableContent,
   ROUND_POINTS,
   type ScoreableContentArrays,
-  scoreBet,
+  scoreBetBreakdown,
   THIRD_PLACE_POINTS,
   toScoreableContent,
 } from "@/lib/scoring";
@@ -54,7 +54,9 @@ function RoundCard({
   accent: string;
 }) {
   const t = useTranslations("score");
-  const matchedTeams = teams.filter((team) => actualTeamIds.has(team.id));
+  const matchedTeams = teams.filter((team) =>
+    actualTeamIds.has(team.id.toUpperCase()),
+  );
   const totalPoints = matchedTeams.length * points;
   const noTeamsYet = t("noTeamsYet");
   const subtotal = t("subtotal");
@@ -81,7 +83,7 @@ function RoundCard({
       {teams.length > 0 ? (
         <div className="grid grid-cols-2 gap-1 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
           {teams.map((team) => {
-            const isMatched = actualTeamIds.has(team.id);
+            const isMatched = actualTeamIds.has(team.id.toUpperCase());
             return (
               <ScoreTeamChip key={team.id} team={team} isMatched={isMatched} />
             );
@@ -128,7 +130,9 @@ function WinnerCard({
 }) {
   const t = useTranslations("score");
   const isMatched =
-    team !== null && actualWinnerId !== null && team.id === actualWinnerId;
+    team !== null &&
+    actualWinnerId !== null &&
+    team.id.toUpperCase() === actualWinnerId.toUpperCase();
   const earnedPoints = isMatched ? points : 0;
 
   return (
@@ -217,36 +221,22 @@ export function ScoreTab({
     ? (teamsLookup.get(thirdMatch.winnerId) ?? null)
     : null;
 
-  const r32Correct = r32Teams.filter((team) =>
-    actualResults.R32.has(team.id),
-  ).length;
-  const r16Correct = r16Teams.filter((team) =>
-    actualResults.R16.has(team.id),
-  ).length;
-  const qfCorrect = qfTeams.filter((team) =>
-    actualResults.QF.has(team.id),
-  ).length;
-  const sfCorrect = sfTeams.filter((team) =>
-    actualResults.SF.has(team.id),
-  ).length;
-  const finalCorrect = finalTeams.filter((team) =>
-    actualResults.F.has(team.id),
-  ).length;
-
-  const r32Points = r32Correct * ROUND_POINTS.R32;
-  const r16Points = r16Correct * ROUND_POINTS.R16;
-  const qfPoints = qfCorrect * ROUND_POINTS.QF;
-  const sfPoints = sfCorrect * ROUND_POINTS.SF;
-  const finalPoints = finalCorrect * ROUND_POINTS.F;
-  const championPoints =
-    predictedChampion?.id === actualResults.champion ? CHAMPION_POINTS : 0;
-  const thirdPlacePoints =
-    predictedThirdPlace?.id === actualResults.thirdPlace
-      ? THIRD_PLACE_POINTS
-      : 0;
-
   const betContent = extractScoreableContent(state.knockoutMatches);
-  const totalPoints = scoreBet(betContent, actualResultsSet);
+  const breakdown = scoreBetBreakdown(betContent, actualResultsSet);
+  const totalPoints = breakdown.total;
+
+  const r32Correct = breakdown.R32.matched;
+  const r32Points = breakdown.R32.points;
+  const r16Correct = breakdown.R16.matched;
+  const r16Points = breakdown.R16.points;
+  const qfCorrect = breakdown.QF.matched;
+  const qfPoints = breakdown.QF.points;
+  const sfCorrect = breakdown.SF.matched;
+  const sfPoints = breakdown.SF.points;
+  const finalCorrect = breakdown.F.matched;
+  const finalPoints = breakdown.F.points;
+  const championPoints = breakdown.champion.points;
+  const thirdPlacePoints = breakdown.thirdPlace.points;
 
   const trophyIcon = (
     <svg
