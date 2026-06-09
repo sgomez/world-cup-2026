@@ -4,13 +4,14 @@ import {
   cascadeClearWinner,
   computeR32Matches,
   createEmptyKnockoutMatches,
+  extractWinners,
   type GroupOrders,
   KNOCKOUT_MATCH_IDS,
   type KnockoutMatch,
   type KnockoutRound,
-  mergeR32WithCascade,
   type PredictionState,
   ROUND_ORDER,
+  rebuildKnockoutMatches,
   type ThirdPlaceOrder,
   type TournamentState,
 } from "./bracket-core";
@@ -30,9 +31,10 @@ export {
   cascadeClearWinner,
   computeR32Matches,
   createEmptyKnockoutMatches,
+  extractWinners,
   KNOCKOUT_MATCH_IDS,
-  mergeR32WithCascade,
   ROUND_ORDER,
+  rebuildKnockoutMatches,
 };
 
 export type TournamentAction =
@@ -57,26 +59,12 @@ export function createInitialState(
     saved?.thirdPlaceOrder ??
     enGroups.map((g) => `3rd-${g.group.toLowerCase()}`);
 
-  const r32 = computeR32Matches(groupOrders, thirdPlaceOrder, combinationsData);
-  let knockoutMatches = { ...createEmptyKnockoutMatches(), ...r32 };
-
-  if (knockoutWinners) {
-    const sorted = Object.entries(knockoutWinners).sort(([aId], [bId]) => {
-      const aRound = aId.replace(/-\d+$/, "") as KnockoutRound;
-      const bRound = bId.replace(/-\d+$/, "") as KnockoutRound;
-      return ROUND_ORDER.indexOf(aRound) - ROUND_ORDER.indexOf(bRound);
-    });
-    for (const [matchId, winnerId] of sorted) {
-      const match = knockoutMatches[matchId];
-      if (match && (match.team1Id === winnerId || match.team2Id === winnerId)) {
-        knockoutMatches = applyWinnerToMatches(
-          knockoutMatches,
-          matchId,
-          winnerId,
-        );
-      }
-    }
-  }
+  const knockoutMatches = rebuildKnockoutMatches(
+    groupOrders,
+    thirdPlaceOrder,
+    knockoutWinners ?? {},
+    combinationsData,
+  );
 
   return { groupOrders, thirdPlaceOrder, knockoutMatches };
 }
@@ -91,50 +79,67 @@ export function tournamentReducer(
         ...state.groupOrders,
         [action.groupName]: action.orderedIds,
       };
-      const newR32 = computeR32Matches(
+      const winners = extractWinners(state.knockoutMatches);
+      const knockoutMatches = rebuildKnockoutMatches(
         newGroupOrders,
         state.thirdPlaceOrder,
+        winners,
         combinationsData,
       );
       return {
         ...state,
         groupOrders: newGroupOrders,
-        knockoutMatches: mergeR32WithCascade(state.knockoutMatches, newR32),
+        knockoutMatches,
       };
     }
     case "SET_THIRD_PLACE_ORDER": {
-      const newR32 = computeR32Matches(
+      const winners = extractWinners(state.knockoutMatches);
+      const knockoutMatches = rebuildKnockoutMatches(
         state.groupOrders,
         action.orderedIds,
+        winners,
         combinationsData,
       );
       return {
         ...state,
         thirdPlaceOrder: action.orderedIds,
-        knockoutMatches: mergeR32WithCascade(state.knockoutMatches, newR32),
+        knockoutMatches,
       };
     }
     case "SET_KNOCKOUT_WINNER": {
       const match = state.knockoutMatches[action.matchId];
       if (!match) return state;
+      const winners = extractWinners(state.knockoutMatches);
+      const newWinners = {
+        ...winners,
+        [action.matchId]: action.winnerId,
+      };
+      const knockoutMatches = rebuildKnockoutMatches(
+        state.groupOrders,
+        state.thirdPlaceOrder,
+        newWinners,
+        combinationsData,
+      );
       return {
         ...state,
-        knockoutMatches: applyWinnerToMatches(
-          state.knockoutMatches,
-          action.matchId,
-          action.winnerId,
-        ),
+        knockoutMatches,
       };
     }
     case "CLEAR_KNOCKOUT_WINNER": {
       const match = state.knockoutMatches[action.matchId];
       if (!match) return state;
+      const winners = extractWinners(state.knockoutMatches);
+      const newWinners = { ...winners };
+      delete newWinners[action.matchId];
+      const knockoutMatches = rebuildKnockoutMatches(
+        state.groupOrders,
+        state.thirdPlaceOrder,
+        newWinners,
+        combinationsData,
+      );
       return {
         ...state,
-        knockoutMatches: cascadeClearWinner(
-          state.knockoutMatches,
-          action.matchId,
-        ),
+        knockoutMatches,
       };
     }
     default:

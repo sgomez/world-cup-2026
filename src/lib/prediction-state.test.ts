@@ -6,6 +6,7 @@ import {
   getAllTeamsLookup,
   getOrderedThirdPlaceTeams,
   predictionReducer,
+  type TournamentState,
 } from "./prediction-state";
 
 describe("createInitialState", () => {
@@ -152,6 +153,74 @@ describe("computeR32Matches", () => {
     }
   });
 });
+
+function createStateWithSF(state: TournamentState) {
+  const team2A = state.groupOrders.A[1];
+  const team1E = state.groupOrders.E[0];
+  const team1F = state.groupOrders.F[0];
+  const team1I = state.groupOrders.I[0];
+  const team2K = state.groupOrders.K[1];
+  const team1H = state.groupOrders.H[0];
+  const team1D = state.groupOrders.D[0];
+  const team1G = state.groupOrders.G[0];
+
+  const winners = {
+    "R32-73": team2A,
+    "R32-74": team1E,
+    "R32-75": team1F,
+    "R32-77": team1I,
+    "R16-89": team1E,
+    "R16-90": team2A,
+    "QF-97": team2A,
+
+    "R32-83": team2K,
+    "R32-84": team1H,
+    "R16-93": team2K,
+    "R32-81": team1D,
+    "R32-82": team1G,
+    "R16-94": team1D,
+    "QF-98": team1D,
+  };
+
+  return createInitialState(
+    { groupOrders: state.groupOrders, thirdPlaceOrder: state.thirdPlaceOrder },
+    winners,
+  );
+}
+
+function createStateWithSF102(state: TournamentState) {
+  const team1C = state.groupOrders.C[0];
+  const team2E = state.groupOrders.E[1];
+  const team1A = state.groupOrders.A[0];
+  const team1L = state.groupOrders.L[0];
+  const team1J = state.groupOrders.J[0];
+  const team2D = state.groupOrders.D[1];
+  const team1B = state.groupOrders.B[0];
+  const team1K = state.groupOrders.K[0];
+
+  const winners = {
+    "R32-76": team1C,
+    "R32-78": team2E,
+    "R16-91": team1C,
+    "R32-79": team1A,
+    "R32-80": team1L,
+    "R16-92": team1A,
+    "QF-99": team1A,
+
+    "R32-86": team1J,
+    "R32-88": team2D,
+    "R16-95": team1J,
+    "R32-85": team1B,
+    "R32-87": team1K,
+    "R16-96": team1B,
+    "QF-100": team1B,
+  };
+
+  return createInitialState(
+    { groupOrders: state.groupOrders, thirdPlaceOrder: state.thirdPlaceOrder },
+    winners,
+  );
+}
 
 describe("predictionReducer", () => {
   it("SET_GROUP_ORDER updates the specified group", () => {
@@ -323,7 +392,8 @@ describe("predictionReducer", () => {
 
   it("SET_KNOCKOUT_WINNER clears downstream winners in cascade when winner changes", () => {
     let state = createInitialState(null);
-    const [_a0, a1, a2] = state.groupOrders.A;
+    const [_a0, a1] = state.groupOrders.A;
+    const b1 = state.groupOrders.B[1];
     const [f0] = state.groupOrders.F;
 
     // Set R32-73 winner to a1 (2A)
@@ -346,17 +416,17 @@ describe("predictionReducer", () => {
     });
     expect(state.knockoutMatches["QF-97"].team2Id).toBe(a1);
 
-    // Now, change the winner of R32-73 to a2
+    // Now, change the winner of R32-73 to b1 (the other valid participant)
     state = predictionReducer(state, {
       type: "SET_KNOCKOUT_WINNER",
       matchId: "R32-73",
-      winnerId: a2,
+      winnerId: b1,
     });
 
-    // R32-73 winner should be a2
-    expect(state.knockoutMatches["R32-73"].winnerId).toBe(a2);
-    // R16-90 team1Id should be a2
-    expect(state.knockoutMatches["R16-90"].team1Id).toBe(a2);
+    // R32-73 winner should be b1
+    expect(state.knockoutMatches["R32-73"].winnerId).toBe(b1);
+    // R16-90 team1Id should be b1
+    expect(state.knockoutMatches["R16-90"].team1Id).toBe(b1);
     // R16-90 winnerId should be cleared (null) since a1 is no longer in R16-90!
     expect(state.knockoutMatches["R16-90"].winnerId).toBeNull();
     // QF-97 team2Id should be cleared (null)
@@ -364,94 +434,35 @@ describe("predictionReducer", () => {
   });
 
   it("SET_KNOCKOUT_WINNER for SF-101 sets loser in 3RD match slot 1", () => {
-    // Build up state with teams in SF-101
-    // SF-101: W97 vs W98 — need to trace back from R32
-    // This is complex to build. Let's directly craft a state with SF-101 having teams.
-    const state = createInitialState(null);
-    // Manually pick teams by setting SF-101 via progression
-    // Easiest path: QF-97 winner → SF-101 slot1, QF-98 winner → SF-101 slot2
-    // We need QF-97 to have teams: R16-89 winner + R16-90 winner → QF-97
-    // This chain is long; let's just check that when we set SF-101 winner, loser goes to 3RD
-    const stateWithSF = {
-      ...state,
-      knockoutMatches: {
-        ...state.knockoutMatches,
-        "SF-101": {
-          id: "SF-101",
-          round: "SF" as const,
-          team1Id: "team-x",
-          team2Id: "team-y",
-          winnerId: null,
-          loserId: null,
-        },
-        "3RD": {
-          id: "3RD",
-          round: "3RD" as const,
-          team1Id: null,
-          team2Id: null,
-          winnerId: null,
-          loserId: null,
-        },
-        F: {
-          id: "F",
-          round: "F" as const,
-          team1Id: null,
-          team2Id: null,
-          winnerId: null,
-          loserId: null,
-        },
-      },
-    };
+    const initialState = createInitialState(null);
+    const stateWithSF = createStateWithSF(initialState);
+    const team1 = stateWithSF.knockoutMatches["SF-101"].team1Id as string;
+    const team2 = stateWithSF.knockoutMatches["SF-101"].team2Id as string;
+
     const next = predictionReducer(stateWithSF, {
       type: "SET_KNOCKOUT_WINNER",
       matchId: "SF-101",
-      winnerId: "team-x",
+      winnerId: team1,
     });
-    expect(next.knockoutMatches["SF-101"].winnerId).toBe("team-x");
-    expect(next.knockoutMatches["SF-101"].loserId).toBe("team-y");
-    expect(next.knockoutMatches["3RD"].team1Id).toBe("team-y"); // loser goes to 3RD slot 1
-    expect(next.knockoutMatches.F.team1Id).toBe("team-x"); // winner goes to Final slot 1
+    expect(next.knockoutMatches["SF-101"].winnerId).toBe(team1);
+    expect(next.knockoutMatches["SF-101"].loserId).toBe(team2);
+    expect(next.knockoutMatches["3RD"].team1Id).toBe(team2); // loser goes to 3RD slot 1
+    expect(next.knockoutMatches.F.team1Id).toBe(team1); // winner goes to Final slot 1
   });
 
   it("SET_KNOCKOUT_WINNER for SF-102 sets loser in 3RD match slot 2 and winner in Final slot 2", () => {
-    const state = createInitialState(null);
-    const stateWithSF = {
-      ...state,
-      knockoutMatches: {
-        ...state.knockoutMatches,
-        "SF-102": {
-          id: "SF-102",
-          round: "SF" as const,
-          team1Id: "team-a",
-          team2Id: "team-b",
-          winnerId: null,
-          loserId: null,
-        },
-        "3RD": {
-          id: "3RD",
-          round: "3RD" as const,
-          team1Id: null,
-          team2Id: null,
-          winnerId: null,
-          loserId: null,
-        },
-        F: {
-          id: "F",
-          round: "F" as const,
-          team1Id: null,
-          team2Id: null,
-          winnerId: null,
-          loserId: null,
-        },
-      },
-    };
+    const initialState = createInitialState(null);
+    const stateWithSF = createStateWithSF102(initialState);
+    const team1 = stateWithSF.knockoutMatches["SF-102"].team1Id as string;
+    const team2 = stateWithSF.knockoutMatches["SF-102"].team2Id as string;
+
     const next = predictionReducer(stateWithSF, {
       type: "SET_KNOCKOUT_WINNER",
       matchId: "SF-102",
-      winnerId: "team-b",
+      winnerId: team2,
     });
-    expect(next.knockoutMatches["3RD"].team2Id).toBe("team-a"); // loser → 3RD slot 2
-    expect(next.knockoutMatches.F.team2Id).toBe("team-b"); // winner → Final slot 2
+    expect(next.knockoutMatches["3RD"].team2Id).toBe(team1); // loser → 3RD slot 2
+    expect(next.knockoutMatches.F.team2Id).toBe(team2); // winner → Final slot 2
   });
 
   it("CLEAR_KNOCKOUT_WINNER clears winner and removes team from downstream slot", () => {
@@ -520,6 +531,255 @@ describe("predictionReducer", () => {
       matchId: "R32-73",
     });
     expect(cleared.knockoutMatches["R32-73"].winnerId).toBeNull();
+  });
+
+  it("TDD: failing test first — fill a full bracket, then via a group reorder eliminate a semifinal loser; assert the 3rd-place match is cleared", () => {
+    let state = createInitialState(null);
+
+    // Group D's original teams. 1D is groupOrders.D[0], which is 1D.
+    const team1D = state.groupOrders.D[0];
+
+    const team2A = state.groupOrders.A[1];
+    const team1F = state.groupOrders.F[0];
+    const team1E = state.groupOrders.E[0];
+    const team1I = state.groupOrders.I[0];
+    const team2K = state.groupOrders.K[1];
+    const team1H = state.groupOrders.H[0];
+    const team1G = state.groupOrders.G[0];
+
+    const actions = [
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-73",
+        winnerId: team2A,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-74",
+        winnerId: team1E,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-75",
+        winnerId: team1F,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-77",
+        winnerId: team1I,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R16-89",
+        winnerId: team1E,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R16-90",
+        winnerId: team2A,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "QF-97",
+        winnerId: team2A,
+      },
+
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-83",
+        winnerId: team2K,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-84",
+        winnerId: team1H,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R16-93",
+        winnerId: team2K,
+      },
+
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-81",
+        winnerId: team1D,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-82",
+        winnerId: team1G,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R16-94",
+        winnerId: team1D,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "QF-98",
+        winnerId: team1D,
+      },
+    ];
+
+    for (const action of actions) {
+      state = predictionReducer(state, action);
+    }
+
+    expect(state.knockoutMatches["SF-101"].team1Id).toBe(team2A);
+    expect(state.knockoutMatches["SF-101"].team2Id).toBe(team1D);
+
+    state = predictionReducer(state, {
+      type: "SET_KNOCKOUT_WINNER",
+      matchId: "SF-101",
+      winnerId: team2A,
+    });
+
+    expect(state.knockoutMatches["SF-101"].winnerId).toBe(team2A);
+    expect(state.knockoutMatches["SF-101"].loserId).toBe(team1D);
+    expect(state.knockoutMatches["3RD"].team1Id).toBe(team1D);
+
+    state = predictionReducer(state, {
+      type: "SET_KNOCKOUT_WINNER",
+      matchId: "3RD",
+      winnerId: team1D,
+    });
+    expect(state.knockoutMatches["3RD"].winnerId).toBe(team1D);
+
+    const newGroupD = [...state.groupOrders.D];
+    const temp = newGroupD[0];
+    newGroupD[0] = newGroupD[3];
+    newGroupD[3] = temp;
+
+    state = predictionReducer(state, {
+      type: "SET_GROUP_ORDER",
+      groupName: "D",
+      orderedIds: newGroupD,
+    });
+
+    expect(state.knockoutMatches["3RD"].team1Id).toBeNull();
+    expect(state.knockoutMatches["3RD"].winnerId).toBeNull();
+
+    expect(state.knockoutMatches["SF-101"].team2Id).toBeNull();
+    expect(state.knockoutMatches["SF-101"].loserId).toBeNull();
+  });
+
+  it("TDD: failing test first — clear a quarter-final winner who was a semifinal loser; assert the 3rd-place match is cleared", () => {
+    let state = createInitialState(null);
+
+    const team2A = state.groupOrders.A[1];
+    const team1D = state.groupOrders.D[0];
+    const team1E = state.groupOrders.E[0];
+    const team1F = state.groupOrders.F[0];
+    const team1I = state.groupOrders.I[0];
+    const team2K = state.groupOrders.K[1];
+    const team1H = state.groupOrders.H[0];
+    const team1G = state.groupOrders.G[0];
+
+    const actions = [
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-73",
+        winnerId: team2A,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-74",
+        winnerId: team1E,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-75",
+        winnerId: team1F,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-77",
+        winnerId: team1I,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R16-89",
+        winnerId: team1E,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R16-90",
+        winnerId: team2A,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "QF-97",
+        winnerId: team2A,
+      },
+
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-83",
+        winnerId: team2K,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-84",
+        winnerId: team1H,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R16-93",
+        winnerId: team2K,
+      },
+
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-81",
+        winnerId: team1D,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R32-82",
+        winnerId: team1G,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "R16-94",
+        winnerId: team1D,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "QF-98",
+        winnerId: team1D,
+      },
+
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "SF-101",
+        winnerId: team2A,
+      },
+      {
+        type: "SET_KNOCKOUT_WINNER" as const,
+        matchId: "3RD",
+        winnerId: team1D,
+      },
+    ];
+
+    for (const action of actions) {
+      state = predictionReducer(state, action);
+    }
+
+    expect(state.knockoutMatches["SF-101"].loserId).toBe(team1D);
+    expect(state.knockoutMatches["3RD"].team1Id).toBe(team1D);
+    expect(state.knockoutMatches["3RD"].winnerId).toBe(team1D);
+
+    state = predictionReducer(state, {
+      type: "CLEAR_KNOCKOUT_WINNER",
+      matchId: "QF-98",
+    });
+
+    expect(state.knockoutMatches["3RD"].team1Id).toBeNull();
+    expect(state.knockoutMatches["3RD"].winnerId).toBeNull();
+
+    expect(state.knockoutMatches["SF-101"].team2Id).toBeNull();
+    expect(state.knockoutMatches["SF-101"].loserId).toBeNull();
   });
 });
 
