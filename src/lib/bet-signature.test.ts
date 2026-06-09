@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Bet } from "@/modules/bet/domain/bet";
 import { computeBetSignature } from "./bet-signature";
 import {
@@ -181,6 +181,81 @@ describe("computeBetSignature", () => {
     const sigB = computeBetSignature(preds, altWinners);
 
     expect(sigA).not.toBe(sigB);
+  });
+
+  describe("with secret salt", () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      process.env = { ...originalEnv };
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+    });
+
+    it("uses the salt from environment variable and is stable", () => {
+      process.env.BET_SIGNATURE_SALT = "secret-salt-123";
+
+      const state = createInitialState(null);
+      const preds: PredictionState = {
+        groupOrders: state.groupOrders,
+        thirdPlaceOrder: state.thirdPlaceOrder,
+      };
+      const winners = buildTeam1WinsWinners(preds);
+
+      const sig1 = computeBetSignature(preds, winners);
+      const sig2 = computeBetSignature(preds, winners);
+
+      expect(sig1).toMatch(/^[0-9a-f]{64}$/);
+      expect(sig1).toBe(sig2);
+    });
+
+    it("produces different signatures with different salts", () => {
+      const state = createInitialState(null);
+      const preds: PredictionState = {
+        groupOrders: state.groupOrders,
+        thirdPlaceOrder: state.thirdPlaceOrder,
+      };
+      const winners = buildTeam1WinsWinners(preds);
+
+      process.env.BET_SIGNATURE_SALT = "salt-a";
+      const sigA = computeBetSignature(preds, winners);
+
+      process.env.BET_SIGNATURE_SALT = "salt-b";
+      const sigB = computeBetSignature(preds, winners);
+
+      process.env.BET_SIGNATURE_SALT = "";
+      const sigNoSalt = computeBetSignature(preds, winners);
+
+      expect(sigA).not.toBe(sigB);
+      expect(sigA).not.toBe(sigNoSalt);
+      expect(sigB).not.toBe(sigNoSalt);
+    });
+
+    it("preserves copy detection (identical content yields identical signature under same salt)", () => {
+      process.env.BET_SIGNATURE_SALT = "secret-salt-123";
+
+      const state = createInitialState(null);
+      const [a0, a1, a2, a3] = state.groupOrders.A;
+
+      const predsA: PredictionState = {
+        groupOrders: state.groupOrders,
+        thirdPlaceOrder: state.thirdPlaceOrder,
+      };
+      const winnersA = buildTeam1WinsWinners(predsA);
+      const sigA = computeBetSignature(predsA, winnersA);
+
+      // Swap 1A and 2A — same 32 teams qualify, just different match slots
+      const predsB: PredictionState = {
+        groupOrders: { ...state.groupOrders, A: [a1, a0, a2, a3] },
+        thirdPlaceOrder: state.thirdPlaceOrder,
+      };
+      const winnersB = buildTeam1WinsWinners(predsB);
+      const sigB = computeBetSignature(predsB, winnersB);
+
+      expect(sigA).toBe(sigB);
+    });
   });
 });
 
