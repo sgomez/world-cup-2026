@@ -12,6 +12,8 @@ import { getPeerBet } from "@/modules/bet/application/get-peer-bet";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
+import { getActualScoreableContent } from "@/modules/tournament/application/get-actual-scoreable-content";
+import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
 
 export default async function PeerBetPage({
   params,
@@ -112,6 +114,9 @@ export default async function PeerBetPage({
 
   const isPastDeadline = window.isClosed(now);
 
+  const tournamentRepo = new PrismaTournamentRepository(prisma);
+  const actualResults = await getActualScoreableContent(tournamentRepo);
+
   // Otherwise, render the read-only prediction stage
   return (
     <div className="space-y-6 max-w-5xl">
@@ -124,6 +129,7 @@ export default async function PeerBetPage({
         savedPredictions={bet.groupPredictions}
         savedKnockoutWinners={bet.knockoutWinners}
         headerDescription={subtitle}
+        actualResults={actualResults}
       />
 
       <div className="pt-4">

@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
+import { getActualScoreableContent } from "@/modules/tournament/application/get-actual-scoreable-content";
+import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
 
 export default async function BetPage({
   params,
@@ -33,6 +35,9 @@ export default async function BetPage({
   const window = new BettingWindow(BET_DEADLINE);
   const isPastDeadline = window.isClosed(new Date());
 
+  const tournamentRepo = new PrismaTournamentRepository(prisma);
+  const actualResults = await getActualScoreableContent(tournamentRepo);
+
   return (
     <div>
       <BetPrediction
@@ -43,6 +48,7 @@ export default async function BetPage({
         isClosed={isClosed}
         savedPredictions={savedPredictions}
         savedKnockoutWinners={savedKnockoutWinners}
+        actualResults={actualResults}
       />
     </div>
   );

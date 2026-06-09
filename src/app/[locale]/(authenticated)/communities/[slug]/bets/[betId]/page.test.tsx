@@ -30,6 +30,32 @@ vi.mock("@/lib/session", () => ({
   getSession: vi.fn(),
 }));
 
+vi.mock(
+  "@/modules/tournament/infrastructure/prisma-tournament-repository",
+  () => {
+    return {
+      PrismaTournamentRepository: class {
+        get = vi.fn().mockResolvedValue(null);
+      },
+    };
+  },
+);
+
+vi.mock(
+  "@/modules/tournament/application/get-actual-scoreable-content",
+  () => ({
+    getActualScoreableContent: vi.fn().mockResolvedValue({
+      R32: [],
+      R16: [],
+      QF: [],
+      SF: [],
+      F: [],
+      champion: null,
+      thirdPlace: null,
+    }),
+  }),
+);
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
