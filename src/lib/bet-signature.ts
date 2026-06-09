@@ -1,11 +1,6 @@
 import { createHash } from "node:crypto";
-import {
-  createInitialState,
-  KNOCKOUT_MATCH_IDS,
-  type PredictionState,
-} from "./prediction-state";
-
-const SCOREABLE_ROUNDS = ["R32", "R16", "QF", "SF", "F"] as const;
+import { createInitialState, type PredictionState } from "./prediction-state";
+import { extractScoreableContent } from "./scoring";
 
 export function computeBetSignature(
   groupPredictions: PredictionState | null,
@@ -16,23 +11,17 @@ export function computeBetSignature(
     knockoutWinners,
   );
 
-  const parts: string[] = [];
+  const content = extractScoreableContent(knockoutMatches);
 
-  for (const round of SCOREABLE_ROUNDS) {
-    const teamIds = new Set<string>();
-    for (const matchId of KNOCKOUT_MATCH_IDS[round]) {
-      const match = knockoutMatches[matchId];
-      if (match?.team1Id) teamIds.add(match.team1Id.toUpperCase());
-      if (match?.team2Id) teamIds.add(match.team2Id.toUpperCase());
-    }
-    parts.push(`${round}:${[...teamIds].sort().join(",")}`);
+  const parts: string[] = [];
+  const rounds = ["R32", "R16", "QF", "SF", "F"] as const;
+  for (const round of rounds) {
+    const sortedTeams = [...content[round]].sort();
+    parts.push(`${round}:${sortedTeams.join(",")}`);
   }
 
-  const champion = knockoutMatches.F?.winnerId;
-  parts.push(`C:${champion ? champion.toUpperCase() : ""}`);
-
-  const thirdWinner = knockoutMatches["3RD"]?.winnerId;
-  parts.push(`3RD:${thirdWinner ? thirdWinner.toUpperCase() : ""}`);
+  parts.push(`C:${content.champion || ""}`);
+  parts.push(`3RD:${content.thirdPlace || ""}`);
 
   return createHash("sha256").update(parts.join("|")).digest("hex");
 }
