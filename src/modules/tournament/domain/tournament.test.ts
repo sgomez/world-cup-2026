@@ -250,5 +250,110 @@ describe("Tournament aggregate", () => {
       });
       expect(t.isCompetitionEnded()).toBe(false);
     });
+
+    it("flows isCompetitionEnded correctly using setKnockoutWinner and clearKnockoutWinner", async () => {
+      const { createEmptyKnockoutMatches, applyWinnerToMatches } = await import(
+        "@/lib/bracket-core"
+      );
+      const { VALID_ADVANCEMENT_REFS, computeR32MatchesForTournament } =
+        await import("./tournament");
+      const { default: combinationsData } = await import(
+        "../../../../data/worldcup.combinations.json"
+      );
+
+      let t = Tournament.createDefault();
+      t = Tournament.fromState({
+        ...t.toState(),
+        advancement: Array.from(VALID_ADVANCEMENT_REFS),
+      });
+
+      const currentResult = t["getEffectiveResult"]();
+      const r32 = computeR32MatchesForTournament(
+        currentResult.groupOrders,
+        currentResult.thirdPlaceOrder,
+        combinationsData,
+        t.advancement,
+      );
+      let knockoutMatches = { ...createEmptyKnockoutMatches(), ...r32 };
+
+      const roundsToSettle = ["R32", "R16", "QF"] as const;
+      for (const round of roundsToSettle) {
+        const matchIds = Object.keys(knockoutMatches).filter((id) =>
+          id.startsWith(round),
+        );
+        for (const matchId of matchIds) {
+          const match = (knockoutMatches as Record<string, any>)[matchId];
+          const winnerId = match.team1Id;
+          if (winnerId) {
+            knockoutMatches = applyWinnerToMatches(
+              knockoutMatches,
+              matchId,
+              winnerId,
+            );
+          }
+        }
+      }
+
+      const winners: Record<string, string> = {};
+      for (const [matchId, match] of Object.entries(knockoutMatches) as [
+        string,
+        any,
+      ][]) {
+        if (match.winnerId) {
+          winners[matchId] = match.winnerId;
+        }
+      }
+
+      // Initialize the tournament result with our settled bracket up to QF
+      t = Tournament.fromState({
+        id: "singleton",
+        result: {
+          groupOrders: currentResult.groupOrders,
+          thirdPlaceOrder: currentResult.thirdPlaceOrder,
+          knockoutWinners: winners,
+        },
+        advancement: Array.from(VALID_ADVANCEMENT_REFS),
+      });
+
+      // Verify that SF-101 and SF-102 have their participants resolved
+      const bracket = t.bracketView();
+      const sf1 = bracket["SF-101"];
+      const sf2 = bracket["SF-102"];
+      expect(sf1.team1Id).not.toBeNull();
+      expect(sf1.team2Id).not.toBeNull();
+      expect(sf2.team1Id).not.toBeNull();
+      expect(sf2.team2Id).not.toBeNull();
+
+      expect(t.isCompetitionEnded()).toBe(false);
+
+      // Play SF-101
+      t = t.setKnockoutWinner("SF-101", sf1.team1Id!)._unsafeUnwrap();
+      expect(t.isCompetitionEnded()).toBe(false);
+
+      // Play SF-102
+      t = t.setKnockoutWinner("SF-102", sf2.team1Id!)._unsafeUnwrap();
+      expect(t.isCompetitionEnded()).toBe(false);
+
+      // Now final and third place should be populated
+      const updatedBracket = t.bracketView();
+      const finalMatch = updatedBracket["F"];
+      const thirdMatch = updatedBracket["3RD"];
+      expect(finalMatch.team1Id).not.toBeNull();
+      expect(finalMatch.team2Id).not.toBeNull();
+      expect(thirdMatch.team1Id).not.toBeNull();
+      expect(thirdMatch.team2Id).not.toBeNull();
+
+      // Set final winner
+      t = t.setKnockoutWinner("F", finalMatch.team1Id!)._unsafeUnwrap();
+      expect(t.isCompetitionEnded()).toBe(false);
+
+      // Set third place winner
+      t = t.setKnockoutWinner("3RD", thirdMatch.team1Id!)._unsafeUnwrap();
+      expect(t.isCompetitionEnded()).toBe(true);
+
+      // Clear final winner
+      t = t.clearKnockoutWinner("F")._unsafeUnwrap();
+      expect(t.isCompetitionEnded()).toBe(false);
+    });
   });
 });
