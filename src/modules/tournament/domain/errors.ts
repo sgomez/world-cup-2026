@@ -4,6 +4,7 @@ export type DomainErrorCode =
   | "INVALID_ORDER"
   | "INVALID_REF"
   | "SAVE_FAILED"
+  | "PARTICIPANTS_NOT_ADVANCED"
   | "INVALID_MATCH";
 
 export type DomainError = {

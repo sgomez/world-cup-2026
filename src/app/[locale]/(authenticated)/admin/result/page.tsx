@@ -1,6 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { AdminResultEditor } from "@/components/admin-result-editor";
 import { prisma } from "@/lib/prisma";
+import { Tournament } from "@/modules/tournament/domain/tournament";
 import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
 
 export default async function AdminResultPage({
@@ -13,6 +14,9 @@ export default async function AdminResultPage({
 
   const repo = new PrismaTournamentRepository(prisma);
   const tournament = await repo.get();
+
+  const activeTournament = tournament ?? Tournament.createDefault();
+  const savedBracketView = activeTournament.bracketView();
 
   const savedPredictions = tournament?.result
     ? {
@@ -29,6 +33,7 @@ export default async function AdminResultPage({
         savedPredictions={savedPredictions}
         savedKnockoutWinners={savedKnockoutWinners}
         savedAdvancement={savedAdvancement}
+        savedBracketView={savedBracketView}
       />
     </div>
   );

@@ -388,6 +388,35 @@ export class Tournament {
     matchId: string,
     winnerId: string,
   ): Result<Tournament, DomainError> {
+    const bracket = this.bracketView();
+    const match = bracket[matchId];
+    if (!match) {
+      return err(domainError("INVALID_MATCH"));
+    }
+
+    if (!match.team1Id || !match.team2Id) {
+      if (matchId.startsWith("R32-")) {
+        const matchNum = parseInt(matchId.replace("R32-", ""), 10);
+        const matchup = R32_MATCHUPS.find((m) => m.num === matchNum);
+        if (matchup) {
+          const ref1 = matchup.team1;
+          const ref2 =
+            matchup.team2 === null ? `3rd-${matchup.team1}` : matchup.team2;
+          if (
+            !this.state.advancement.includes(ref1) ||
+            !this.state.advancement.includes(ref2)
+          ) {
+            return err(domainError("PARTICIPANTS_NOT_ADVANCED"));
+          }
+        }
+      }
+      return err(domainError("INVALID_MATCH"));
+    }
+
+    if (winnerId !== match.team1Id && winnerId !== match.team2Id) {
+      return err(domainError("INVALID_MATCH"));
+    }
+
     const currentResult = this.getEffectiveResult();
 
     // Use prediction-style logic to set knockout winner and cascade
@@ -405,24 +434,19 @@ export class Tournament {
       },
     );
     for (const [mid, wid] of sorted) {
-      const match = knockoutMatches[mid];
-      if (match && (match.team1Id === wid || match.team2Id === wid)) {
+      const m = knockoutMatches[mid];
+      if (m && (m.team1Id === wid || m.team2Id === wid)) {
         knockoutMatches = applyWinnerToMatches(knockoutMatches, mid, wid);
       }
-    }
-
-    // Make sure matchId is valid
-    if (!knockoutMatches[matchId]) {
-      return err(domainError("INVALID_MATCH"));
     }
 
     // Apply the new winner
     knockoutMatches = applyWinnerToMatches(knockoutMatches, matchId, winnerId);
 
     const newKnockoutWinners: Record<string, string> = {};
-    for (const [mid, match] of Object.entries(knockoutMatches)) {
-      if (match.winnerId) {
-        newKnockoutWinners[mid] = match.winnerId;
+    for (const [mid, m] of Object.entries(knockoutMatches)) {
+      if (m.winnerId) {
+        newKnockoutWinners[mid] = m.winnerId;
       }
     }
 
@@ -438,6 +462,11 @@ export class Tournament {
   }
 
   clearKnockoutWinner(matchId: string): Result<Tournament, DomainError> {
+    const bracket = this.bracketView();
+    if (!bracket[matchId]) {
+      return err(domainError("INVALID_MATCH"));
+    }
+
     const currentResult = this.getEffectiveResult();
 
     // Build the matches
@@ -455,8 +484,8 @@ export class Tournament {
       },
     );
     for (const [mid, wid] of sorted) {
-      const match = knockoutMatches[mid];
-      if (match && (match.team1Id === wid || match.team2Id === wid)) {
+      const m = knockoutMatches[mid];
+      if (m && (m.team1Id === wid || m.team2Id === wid)) {
         // If we are clearing this match, skip applying it here
         if (mid === matchId) continue;
         knockoutMatches = applyWinnerToMatches(knockoutMatches, mid, wid);
@@ -464,9 +493,9 @@ export class Tournament {
     }
 
     const newKnockoutWinners: Record<string, string> = {};
-    for (const [mid, match] of Object.entries(knockoutMatches)) {
-      if (match.winnerId) {
-        newKnockoutWinners[mid] = match.winnerId;
+    for (const [mid, m] of Object.entries(knockoutMatches)) {
+      if (m.winnerId) {
+        newKnockoutWinners[mid] = m.winnerId;
       }
     }
 
