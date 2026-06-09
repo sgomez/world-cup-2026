@@ -48,4 +48,8 @@ RUN pnpm add --global @dotenvx/dotenvx@1.61.1
     ENV PORT=3000
     ENV HOSTNAME="0.0.0.0"
 
+    # Liveness probe — hits the /api/health route (busybox wget ships in alpine).
+    HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+      CMD wget -q --spider http://127.0.0.1:3000/api/health || exit 1
+
     CMD ["dotenvx", "run", "-f", ".env.production", "--", "node", "server.js"]

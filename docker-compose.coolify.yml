@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile.migrations
     restart: no
+    exclude_from_hc: true
     environment:
       - 'DOTENV_PRIVATE_KEY_PRODUCTION=${DOTENV_PRIVATE_KEY_PRODUCTION}'
       - 'BETTER_AUTH_URL=${BETTER_AUTH_URL}'
