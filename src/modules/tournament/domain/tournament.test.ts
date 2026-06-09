@@ -208,4 +208,47 @@ describe("Tournament aggregate", () => {
       expect(t.result?.knockoutWinners["R16-90"]).toBeUndefined();
     });
   });
+
+  describe("isCompetitionEnded", () => {
+    it("is true only when both Final and third-place winners are recorded", () => {
+      let t = Tournament.createDefault();
+      expect(t.isCompetitionEnded()).toBe(false);
+
+      // Add a final winner
+      t = Tournament.fromState({
+        id: "singleton",
+        result: {
+          groupOrders: {},
+          thirdPlaceOrder: [],
+          knockoutWinners: { F: "TEAM_A" },
+        },
+        advancement: [],
+      });
+      expect(t.isCompetitionEnded()).toBe(false);
+
+      // Add a third-place winner too
+      t = Tournament.fromState({
+        id: "singleton",
+        result: {
+          groupOrders: {},
+          thirdPlaceOrder: [],
+          knockoutWinners: { F: "TEAM_A", "3RD": "TEAM_B" },
+        },
+        advancement: [],
+      });
+      expect(t.isCompetitionEnded()).toBe(true);
+
+      // Clear one winner
+      t = Tournament.fromState({
+        id: "singleton",
+        result: {
+          groupOrders: {},
+          thirdPlaceOrder: [],
+          knockoutWinners: { "3RD": "TEAM_B" },
+        },
+        advancement: [],
+      });
+      expect(t.isCompetitionEnded()).toBe(false);
+    });
+  });
 });

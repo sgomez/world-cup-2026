@@ -540,6 +540,14 @@ export class Tournament {
     );
   }
 
+  isCompetitionEnded(): boolean {
+    if (!this.state.result) return false;
+    return (
+      !!this.state.result.knockoutWinners.F &&
+      !!this.state.result.knockoutWinners["3RD"]
+    );
+  }
+
   bracketView(): Record<string, KnockoutMatch> {
     const currentResult = this.getEffectiveResult();
     return computeTournamentBracket(
