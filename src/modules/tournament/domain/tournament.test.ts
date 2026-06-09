@@ -146,9 +146,7 @@ describe("Tournament aggregate", () => {
       let t = Tournament.createDefault();
       const currentResult = t["getEffectiveResult"]();
       const team2A = currentResult.groupOrders.A[1];
-      const team2B = currentResult.groupOrders.B[1];
       const team1F = currentResult.groupOrders.F[0];
-      const team2C = currentResult.groupOrders.C[1];
 
       // Mark 2A, 2B, 1F, 2C as Advanced
       t = t.markAdvanced("2A")._unsafeUnwrap();
@@ -187,9 +185,7 @@ describe("Tournament aggregate", () => {
       let t = Tournament.createDefault();
       const currentResult = t["getEffectiveResult"]();
       const team2A = currentResult.groupOrders.A[1];
-      const team2B = currentResult.groupOrders.B[1];
       const team1F = currentResult.groupOrders.F[0];
-      const team2C = currentResult.groupOrders.C[1];
 
       t = t.markAdvanced("2A")._unsafeUnwrap();
       t = t.markAdvanced("2B")._unsafeUnwrap();
