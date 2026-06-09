@@ -1,18 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { BetSummary } from "@/modules/bet/application/bet-summary";
-import {
-  type LeaderboardEntry,
-  rankEntries,
-  scopeMapper,
-  scoreBet,
-} from "./leaderboard";
-
-describe("scoreBet stub", () => {
-  it("should return 0 for any bet", () => {
-    expect(scoreBet({ id: "bet-1" })).toBe(0);
-    expect(scoreBet({ id: "bet-2" })).toBe(0);
-  });
-});
+import { Bet } from "@/modules/bet/domain/bet";
+import { type LeaderboardEntry, rankEntries, scopeMapper } from "./leaderboard";
+import { createInitialState } from "./prediction-state";
+import { extractScoreableContent } from "./scoring";
 
 describe("rankEntries", () => {
   it("should handle empty input", () => {
@@ -81,88 +71,87 @@ describe("rankEntries", () => {
     ];
 
     const result = rankEntries(entries);
-    // Sort order:
-    // 1. Bob (10 points, 11:00)
-    // 2. Alice (10 points, 12:00)
-    // 3. Charlie (5 points, 10:00)
     expect(result.map((e) => e.userName)).toEqual(["Bob", "Alice", "Charlie"]);
-    // Ranks:
-    // Bob and Alice both have 10 points -> rank 1
-    // Charlie has 5 points -> rank 3
     expect(result.map((e) => e.rank)).toEqual([1, 1, 3]);
   });
 });
 
 describe("scopeMapper", () => {
-  it("should map communities and filter only closed bets", () => {
-    const communities = [
-      {
-        id: "c-1",
-        name: "Office",
-        slug: "office",
-        members: [
-          {
-            user: {
-              id: "user-1",
-              name: "Alice",
-              image: "alice.png",
-            },
+  const communities = [
+    {
+      id: "c-1",
+      name: "Office",
+      slug: "office",
+      members: [
+        {
+          user: {
+            id: "user-1",
+            name: "Alice",
+            image: "alice.png",
           },
-          {
-            user: {
-              id: "user-2",
-              name: "Bob",
-              image: null,
-            },
+        },
+        {
+          user: {
+            id: "user-2",
+            name: "Bob",
+            image: null,
           },
-        ],
-      },
-    ];
-
-    const betSummaries = new Map<string, BetSummary[]>([
-      [
-        "user-1",
-        [
-          {
-            id: "bet-1",
-            label: "Alice Bet 1 (Closed)",
-            status: "closed",
-            createdAt: new Date("2026-06-08T12:00:00Z"),
-            updatedAt: new Date("2026-06-08T12:00:00Z"),
-            signature: "sig1",
-          },
-          {
-            id: "bet-2",
-            label: "Alice Bet 2 (Draft)",
-            status: "draft",
-            createdAt: new Date("2026-06-08T13:00:00Z"),
-            updatedAt: new Date("2026-06-08T13:00:00Z"),
-            signature: undefined,
-          },
-        ],
+        },
       ],
-      [
-        "user-2",
-        [
-          {
-            id: "bet-3",
-            label: "Bob Bet 1 (Closed)",
-            status: "closed",
-            createdAt: new Date("2026-06-08T10:00:00Z"),
-            updatedAt: new Date("2026-06-08T10:00:00Z"),
-            signature: "sig3",
-          },
-        ],
-      ],
-    ]);
+    },
+  ];
 
-    const result = scopeMapper(communities, betSummaries);
+  const bets = new Map<string, Bet[]>([
+    [
+      "user-1",
+      [
+        Bet.fromState({
+          id: "bet-1",
+          userId: "user-1",
+          label: "Alice Bet 1 (Closed)",
+          status: "closed",
+          createdAt: new Date("2026-06-08T12:00:00Z"),
+          updatedAt: new Date("2026-06-08T12:00:00Z"),
+          groupPredictions: null,
+          knockoutWinners: {},
+        }),
+        Bet.fromState({
+          id: "bet-2",
+          userId: "user-1",
+          label: "Alice Bet 2 (Draft)",
+          status: "draft",
+          createdAt: new Date("2026-06-08T13:00:00Z"),
+          updatedAt: new Date("2026-06-08T13:00:00Z"),
+          groupPredictions: null,
+          knockoutWinners: {},
+        }),
+      ],
+    ],
+    [
+      "user-2",
+      [
+        Bet.fromState({
+          id: "bet-3",
+          userId: "user-2",
+          label: "Bob Bet 1 (Closed)",
+          status: "closed",
+          createdAt: new Date("2026-06-08T10:00:00Z"),
+          updatedAt: new Date("2026-06-08T10:00:00Z"),
+          groupPredictions: null,
+          knockoutWinners: {},
+        }),
+      ],
+    ],
+  ]);
+
+  it("should map communities, filter only closed bets and apply pre-deadline gate (points = 0)", () => {
+    const result = scopeMapper(communities, bets, null, false);
 
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("office");
     expect(result[0].label).toBe("Office");
 
-    // Only closed bets of the members should be mapped
+    // Only closed bets of the members should be mapped (draft bet-2 is excluded)
     expect(result[0].entries).toHaveLength(2);
 
     const aliceEntry = result[0].entries.find((e) => e.userName === "Alice");
@@ -170,37 +159,45 @@ describe("scopeMapper", () => {
     expect(aliceEntry?.betName).toBe("Alice Bet 1 (Closed)");
     expect(aliceEntry?.points).toBe(0);
     expect(aliceEntry?.userId).toBe("user-1");
-    expect(aliceEntry?.signature).toBe("sig1");
+    expect(aliceEntry?.signature).toBe(
+      "dfb3e1942172957c618c8649afd6a8894f459073ea892bae17f90f182f172aa7",
+    ); // derived signature
 
     const bobEntry = result[0].entries.find((e) => e.userName === "Bob");
     expect(bobEntry).toBeDefined();
     expect(bobEntry?.betName).toBe("Bob Bet 1 (Closed)");
     expect(bobEntry?.points).toBe(0);
     expect(bobEntry?.userId).toBe("user-2");
-    expect(bobEntry?.signature).toBe("sig3");
+  });
+
+  it("should compute real points after the deadline when actualResults are provided", () => {
+    // Generate actual results based on some default teams to ensure a match
+    const { knockoutMatches: defaultMatches } = createInitialState(null, null);
+    const defaultContent = extractScoreableContent(defaultMatches);
+    const defaultTeams = Array.from(defaultContent.R32);
+
+    // Let's match 3 teams in R32 (3 * 3 = 9 points)
+    const actualResults = {
+      R32: defaultTeams.slice(0, 3),
+      R16: [],
+      QF: [],
+      SF: [],
+      F: [],
+      champion: null,
+      thirdPlace: null,
+    };
+
+    const result = scopeMapper(communities, bets, actualResults, true);
+
+    const aliceEntry = result[0].entries.find((e) => e.userName === "Alice");
+    expect(aliceEntry?.points).toBe(9);
+
+    const bobEntry = result[0].entries.find((e) => e.userName === "Bob");
+    expect(bobEntry?.points).toBe(9);
   });
 
   it("should handle users with no bets or no closed bets", () => {
-    const communities = [
-      {
-        id: "c-1",
-        name: "Office",
-        slug: "office",
-        members: [
-          {
-            user: {
-              id: "user-1",
-              name: "Alice",
-              image: null,
-            },
-          },
-        ],
-      },
-    ];
-
-    const betSummaries = new Map<string, BetSummary[]>();
-
-    const result = scopeMapper(communities, betSummaries);
+    const result = scopeMapper(communities, new Map(), null, false);
     expect(result[0].entries).toHaveLength(0);
   });
 });

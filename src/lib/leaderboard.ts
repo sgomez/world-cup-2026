@@ -1,11 +1,18 @@
-import type { BetSummary } from "@/modules/bet/application/bet-summary";
+import type { Bet } from "@/modules/bet/domain/bet";
+import { createInitialState } from "./prediction-state";
+import {
+  scoreBet as calcScoreBet,
+  extractScoreableContent,
+  type ScoreableContentArrays,
+  toScoreableContent,
+} from "./scoring";
 
 export type LeaderboardEntry = {
   id: string; // The Bet ID
   userId: string; // User ID to check if it's the current user
   userName: string; // Participant's name
   betName: string; // Bet's label
-  points: number; // The score/points (stubbed to 0 for now)
+  points: number; // The score/points
   createdAt: Date; // For stable tiebreaking
   signature?: string;
 };
@@ -15,10 +22,6 @@ export type LeaderboardScope = {
   label: string; // Community name
   entries: LeaderboardEntry[];
 };
-
-export function scoreBet(_bet: { id: string }): number {
-  return 0;
-}
 
 export function rankEntries(
   entries: LeaderboardEntry[],
@@ -54,24 +57,40 @@ export function scopeMapper(
       };
     }[];
   }[],
-  betSummariesByOwner: Map<string, BetSummary[]>,
+  betsByOwner: Map<string, Bet[]>,
+  actualResults: ScoreableContentArrays | null,
+  isPastDeadline: boolean,
 ): LeaderboardScope[] {
+  const actualContent = actualResults
+    ? toScoreableContent(actualResults)
+    : null;
+
   return communities.map((community) => {
     const entries: LeaderboardEntry[] = [];
 
     for (const member of community.members) {
       const user = member.user;
-      const bets = betSummariesByOwner.get(user.id) ?? [];
+      const bets = betsByOwner.get(user.id) ?? [];
 
       for (const bet of bets) {
         if (bet.status === "closed") {
+          let points = 0;
+          if (isPastDeadline && actualContent) {
+            const { knockoutMatches } = createInitialState(
+              bet.groupPredictions,
+              bet.knockoutWinners,
+            );
+            const betContent = extractScoreableContent(knockoutMatches);
+            points = calcScoreBet(betContent, actualContent);
+          }
+
           entries.push({
             id: bet.id,
             userId: user.id,
             userName: user.name,
             betName: bet.label,
-            points: scoreBet(bet),
-            createdAt: bet.createdAt,
+            points,
+            createdAt: bet.createdAt ?? new Date(),
             signature: bet.signature,
           });
         }
