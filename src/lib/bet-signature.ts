@@ -23,5 +23,8 @@ export function computeBetSignature(
   parts.push(`C:${content.champion || ""}`);
   parts.push(`3RD:${content.thirdPlace || ""}`);
 
-  return createHash("sha256").update(parts.join("|")).digest("hex");
+  const salt = process.env.BET_SIGNATURE_SALT || "";
+  return createHash("sha256")
+    .update(salt + parts.join("|"))
+    .digest("hex");
 }
