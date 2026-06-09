@@ -235,6 +235,7 @@
     "advancementGateDescription": "Confirma qué equipos han clasificado oficialmente a dieciseisavos de final.",
     "groupStageTab": "Fase de Grupos",
     "knockoutStageTab": "Eliminatorias",
+    "knockoutStageDescription": "Registra los ganadores oficiales de los partidos de eliminatorias.",
     "slotsLabel": "Posiciones",
     "toggledSuccess": "Clasificación actualizada.",
     "groupWinners": "Ganadores de Grupo",
@@ -251,6 +252,7 @@
     "INVALID_ORDER": "Clasificación de grupo inválida.",
     "INVALID_REF": "Referencia de posición inválida.",
     "SAVE_FAILED": "No se pudieron guardar los resultados del torneo. Inténtalo de nuevo.",
+    "PARTICIPANTS_NOT_ADVANCED": "Los participantes del partido deben estar marcados como clasificados.",
     "INVALID_MATCH": "Partido inválido."
   },
   "betErrors": {

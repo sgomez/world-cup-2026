@@ -235,6 +235,7 @@
     "advancementGateDescription": "Confirm which teams have officially advanced to the Round of 32.",
     "groupStageTab": "Group Stage",
     "knockoutStageTab": "Knockout Stage",
+    "knockoutStageDescription": "Record the official winners of the knockout matches.",
     "slotsLabel": "Slots",
     "toggledSuccess": "Advancement updated.",
     "groupWinners": "Group Winners",
@@ -251,6 +252,7 @@
     "INVALID_ORDER": "Invalid group ordering.",
     "INVALID_REF": "Invalid slot reference.",
     "SAVE_FAILED": "Failed to save the tournament results. Please try again.",
+    "PARTICIPANTS_NOT_ADVANCED": "Match participants must be marked as advanced.",
     "INVALID_MATCH": "Invalid match."
   },
   "betErrors": {

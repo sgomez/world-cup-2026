@@ -116,4 +116,100 @@ describe("Tournament aggregate", () => {
     // 2B did not change, so its advanced flag should be preserved
     expect(t.advancement).toContain("2B");
   });
+
+  describe("knockout winners and propagation", () => {
+    it("requires R32 match participants to be Advanced to set a winner", () => {
+      let t = Tournament.createDefault();
+      const currentResult = t["getEffectiveResult"]();
+      const team2A = currentResult.groupOrders.A[1];
+
+      // Fails because neither participant is Advanced
+      const res1 = t.setKnockoutWinner("R32-73", team2A);
+      expect(res1.isErr()).toBe(true);
+      expect(res1._unsafeUnwrapErr().code).toBe("PARTICIPANTS_NOT_ADVANCED");
+
+      // Mark only one participant as Advanced
+      t = t.markAdvanced("2A")._unsafeUnwrap();
+      const res2 = t.setKnockoutWinner("R32-73", team2A);
+      expect(res2.isErr()).toBe(true);
+      expect(res2._unsafeUnwrapErr().code).toBe("PARTICIPANTS_NOT_ADVANCED");
+
+      // Mark the other participant as Advanced
+      t = t.markAdvanced("2B")._unsafeUnwrap();
+      const res3 = t.setKnockoutWinner("R32-73", team2A);
+      expect(res3.isOk()).toBe(true);
+      t = res3._unsafeUnwrap();
+      expect(t.result?.knockoutWinners["R32-73"]).toBe(team2A);
+    });
+
+    it("propagates winners forward and shows later rounds as TBD until feeding matches have winners", () => {
+      let t = Tournament.createDefault();
+      const currentResult = t["getEffectiveResult"]();
+      const team2A = currentResult.groupOrders.A[1];
+      const team2B = currentResult.groupOrders.B[1];
+      const team1F = currentResult.groupOrders.F[0];
+      const team2C = currentResult.groupOrders.C[1];
+
+      // Mark 2A, 2B, 1F, 2C as Advanced
+      t = t.markAdvanced("2A")._unsafeUnwrap();
+      t = t.markAdvanced("2B")._unsafeUnwrap();
+      t = t.markAdvanced("1F")._unsafeUnwrap();
+      t = t.markAdvanced("2C")._unsafeUnwrap();
+
+      // Set winner of R32-73 (2A vs 2B)
+      t = t.setKnockoutWinner("R32-73", team2A)._unsafeUnwrap();
+
+      let bracket = t.bracketView();
+      // R16-90 feeds from R32-73 and R32-75
+      // team1Id is resolved to team2A, team2Id is null (TBD)
+      expect(bracket["R16-90"].team1Id).toBe(team2A);
+      expect(bracket["R16-90"].team2Id).toBeNull();
+
+      // Try to set winner of R16-90 when team2Id is still null -> should fail
+      const res1 = t.setKnockoutWinner("R16-90", team2A);
+      expect(res1.isErr()).toBe(true);
+      expect(res1._unsafeUnwrapErr().code).toBe("INVALID_MATCH");
+
+      // Set winner of R32-75 (1F vs 2C) to team1F
+      t = t.setKnockoutWinner("R32-75", team1F)._unsafeUnwrap();
+
+      bracket = t.bracketView();
+      // Now R16-90 should have both team1Id and team2Id populated
+      expect(bracket["R16-90"].team1Id).toBe(team2A);
+      expect(bracket["R16-90"].team2Id).toBe(team1F);
+
+      // Now we can set winner of R16-90
+      t = t.setKnockoutWinner("R16-90", team2A)._unsafeUnwrap();
+      expect(t.result?.knockoutWinners["R16-90"]).toBe(team2A);
+    });
+
+    it("cascades clearing down to downstream matches when an upstream winner is cleared", () => {
+      let t = Tournament.createDefault();
+      const currentResult = t["getEffectiveResult"]();
+      const team2A = currentResult.groupOrders.A[1];
+      const team2B = currentResult.groupOrders.B[1];
+      const team1F = currentResult.groupOrders.F[0];
+      const team2C = currentResult.groupOrders.C[1];
+
+      t = t.markAdvanced("2A")._unsafeUnwrap();
+      t = t.markAdvanced("2B")._unsafeUnwrap();
+      t = t.markAdvanced("1F")._unsafeUnwrap();
+      t = t.markAdvanced("2C")._unsafeUnwrap();
+
+      t = t.setKnockoutWinner("R32-73", team2A)._unsafeUnwrap();
+      t = t.setKnockoutWinner("R32-75", team1F)._unsafeUnwrap();
+      t = t.setKnockoutWinner("R16-90", team2A)._unsafeUnwrap();
+
+      expect(t.result?.knockoutWinners["R32-73"]).toBe(team2A);
+      expect(t.result?.knockoutWinners["R16-90"]).toBe(team2A);
+
+      // Clear the upstream winner (R32-73)
+      t = t.clearKnockoutWinner("R32-73")._unsafeUnwrap();
+
+      // Upstream is cleared
+      expect(t.result?.knockoutWinners["R32-73"]).toBeUndefined();
+      // Downstream R16-90 is also cleared because team2A is no longer a participant!
+      expect(t.result?.knockoutWinners["R16-90"]).toBeUndefined();
+    });
+  });
 });
