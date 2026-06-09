@@ -5,7 +5,6 @@ import { TeamBadge } from "@/components/team-badge";
 import {
   getAllTeamsLookup,
   getTeamsInRound,
-  type KnockoutRound,
   type TournamentState,
 } from "@/lib/prediction-state";
 import {
@@ -47,7 +46,6 @@ function RoundCard({
   accent,
 }: {
   title: string;
-  round: KnockoutRound;
   points: number;
   teams: Team[];
   actualTeamIds: Set<string>;
@@ -271,7 +269,6 @@ export function ScoreTab({
 
       <RoundCard
         title={t("roundOf32")}
-        round="R32"
         points={ROUND_POINTS.R32}
         teams={r32Teams}
         actualTeamIds={actualResults.R32}
@@ -279,7 +276,6 @@ export function ScoreTab({
       />
       <RoundCard
         title={t("roundOf16")}
-        round="R16"
         points={ROUND_POINTS.R16}
         teams={r16Teams}
         actualTeamIds={actualResults.R16}
@@ -288,7 +284,6 @@ export function ScoreTab({
 
       <RoundCard
         title={t("quarterFinals")}
-        round="QF"
         points={ROUND_POINTS.QF}
         teams={qfTeams}
         actualTeamIds={actualResults.QF}
@@ -296,7 +291,6 @@ export function ScoreTab({
       />
       <RoundCard
         title={t("semiFinals")}
-        round="SF"
         points={ROUND_POINTS.SF}
         teams={sfTeams}
         actualTeamIds={actualResults.SF}
@@ -305,7 +299,6 @@ export function ScoreTab({
 
       <RoundCard
         title={t("final")}
-        round="F"
         points={ROUND_POINTS.F}
         teams={finalTeams}
         actualTeamIds={actualResults.F}
