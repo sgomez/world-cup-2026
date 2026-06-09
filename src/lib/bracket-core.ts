@@ -252,6 +252,33 @@ export function cascadeClearWinner(
         };
         if (next.winnerId === clearedWinnerId) {
           newMatches = cascadeClearWinner(newMatches, prog.nextMatch);
+        } else if (next.loserId === clearedWinnerId) {
+          newMatches = {
+            ...newMatches,
+            [prog.nextMatch]: {
+              ...newMatches[prog.nextMatch],
+              loserId: null,
+            },
+          };
+          const nextThird = thirdPlaceProgression[prog.nextMatch];
+          if (nextThird) {
+            const t = newMatches["3RD"];
+            if (t) {
+              const thirdSlotKey = nextThird.slot === 1 ? "team1Id" : "team2Id";
+              if (t[thirdSlotKey] === clearedWinnerId) {
+                newMatches = {
+                  ...newMatches,
+                  "3RD": {
+                    ...t,
+                    [thirdSlotKey]: null,
+                    winnerId:
+                      t.winnerId === clearedWinnerId ? null : t.winnerId,
+                    loserId: t.loserId === clearedWinnerId ? null : t.loserId,
+                  },
+                };
+              }
+            }
+          }
         }
       }
     }
@@ -279,32 +306,43 @@ export function cascadeClearWinner(
   return newMatches;
 }
 
-export function mergeR32WithCascade(
-  currentMatches: Record<string, KnockoutMatch>,
-  newR32: Record<string, KnockoutMatch>,
-): Record<string, KnockoutMatch> {
-  let matches = { ...currentMatches };
-  for (const [matchId, newMatch] of Object.entries(newR32)) {
-    const current = matches[matchId];
-    if (!current) {
-      matches = { ...matches, [matchId]: newMatch };
-      continue;
-    }
-    matches = {
-      ...matches,
-      [matchId]: {
-        ...current,
-        team1Id: newMatch.team1Id,
-        team2Id: newMatch.team2Id,
-      },
-    };
-    if (
-      current.winnerId !== null &&
-      current.winnerId !== newMatch.team1Id &&
-      current.winnerId !== newMatch.team2Id
-    ) {
-      matches = cascadeClearWinner(matches, matchId);
+export function extractWinners(
+  knockoutMatches: Record<string, KnockoutMatch>,
+): Record<string, string> {
+  const winners: Record<string, string> = {};
+  for (const [matchId, match] of Object.entries(knockoutMatches)) {
+    if (match.winnerId) {
+      winners[matchId] = match.winnerId;
     }
   }
-  return matches;
+  return winners;
+}
+
+export function rebuildKnockoutMatches(
+  groupOrders: GroupOrders,
+  thirdPlaceOrder: ThirdPlaceOrder,
+  winners: Record<string, string>,
+  combinations: Record<string, Record<string, string>>,
+): Record<string, KnockoutMatch> {
+  const r32 = computeR32Matches(groupOrders, thirdPlaceOrder, combinations);
+  let knockoutMatches = { ...createEmptyKnockoutMatches(), ...r32 };
+
+  const sorted = Object.entries(winners).sort(([aId], [bId]) => {
+    const aRound = aId.replace(/-\d+$/, "") as KnockoutRound;
+    const bRound = bId.replace(/-\d+$/, "") as KnockoutRound;
+    return ROUND_ORDER.indexOf(aRound) - ROUND_ORDER.indexOf(bRound);
+  });
+
+  for (const [matchId, winnerId] of sorted) {
+    const match = knockoutMatches[matchId];
+    if (match && (match.team1Id === winnerId || match.team2Id === winnerId)) {
+      knockoutMatches = applyWinnerToMatches(
+        knockoutMatches,
+        matchId,
+        winnerId,
+      );
+    }
+  }
+
+  return knockoutMatches;
 }
