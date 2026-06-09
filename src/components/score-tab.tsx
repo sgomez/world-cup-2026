@@ -8,28 +8,18 @@ import {
   type KnockoutRound,
   type TournamentState,
 } from "@/lib/prediction-state";
+import {
+  CHAMPION_POINTS,
+  EMPTY_SCOREABLE_CONTENT_ARRAYS,
+  extractScoreableContent,
+  ROUND_POINTS,
+  type ScoreableContentArrays,
+  scoreBet,
+  THIRD_PLACE_POINTS,
+  toScoreableContent,
+} from "@/lib/scoring";
 import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
-
-const ROUND_POINTS: Record<string, number> = {
-  R32: 3,
-  R16: 4,
-  QF: 5,
-  SF: 6,
-  F: 8,
-};
-const THIRD_PLACE_POINTS = 5;
-const CHAMPION_POINTS = 10;
-
-const EMPTY_ACTUAL_RESULTS = {
-  R32: new Set<string>(),
-  R16: new Set<string>(),
-  QF: new Set<string>(),
-  SF: new Set<string>(),
-  F: new Set<string>(),
-  champion: null as string | null,
-  thirdPlace: null as string | null,
-};
 
 function ScoreTeamChip({
   team,
@@ -199,11 +189,18 @@ function WinnerCard({
   );
 }
 
-export function ScoreTab({ state }: { state: TournamentState }) {
+export function ScoreTab({
+  state,
+  actualResults: actualResultsProp = EMPTY_SCOREABLE_CONTENT_ARRAYS,
+}: {
+  state: TournamentState;
+  actualResults?: ScoreableContentArrays;
+}) {
   const t = useTranslations("score");
   const locale = useLocale();
   const teamsLookup = getAllTeamsLookup(locale);
-  const actualResults = EMPTY_ACTUAL_RESULTS;
+  const actualResultsSet = toScoreableContent(actualResultsProp);
+  const actualResults = actualResultsSet; // reuse existing name for compatibility
 
   const r32Teams = getTeamsInRound(state, "R32", locale);
   const r16Teams = getTeamsInRound(state, "R16", locale);
@@ -247,14 +244,9 @@ export function ScoreTab({ state }: { state: TournamentState }) {
     predictedThirdPlace?.id === actualResults.thirdPlace
       ? THIRD_PLACE_POINTS
       : 0;
-  const totalPoints =
-    r32Points +
-    r16Points +
-    qfPoints +
-    sfPoints +
-    finalPoints +
-    championPoints +
-    thirdPlacePoints;
+
+  const betContent = extractScoreableContent(state.knockoutMatches);
+  const totalPoints = scoreBet(betContent, actualResultsSet);
 
   const trophyIcon = (
     <svg

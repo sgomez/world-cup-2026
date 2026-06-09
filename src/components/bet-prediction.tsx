@@ -23,6 +23,10 @@ import {
   type TournamentAction,
   tournamentReducer,
 } from "@/lib/prediction-state";
+import {
+  EMPTY_SCOREABLE_CONTENT_ARRAYS,
+  type ScoreableContentArrays,
+} from "@/lib/scoring";
 
 export function BetPrediction({
   betId,
@@ -33,6 +37,7 @@ export function BetPrediction({
   savedPredictions,
   savedKnockoutWinners,
   headerDescription,
+  actualResults = EMPTY_SCOREABLE_CONTENT_ARRAYS,
 }: {
   betId: string;
   betLabel: string;
@@ -42,6 +47,7 @@ export function BetPrediction({
   savedPredictions: PredictionState | null;
   savedKnockoutWinners?: Record<string, string> | null;
   headerDescription?: ReactNode;
+  actualResults?: ScoreableContentArrays;
 }) {
   const t = useTranslations("bets");
   const [state, dispatch] = useReducer(tournamentReducer, null, () =>
@@ -234,7 +240,7 @@ export function BetPrediction({
         </TabsContent>
 
         <TabsContent value="score">
-          <ScoreTab state={state} />
+          <ScoreTab state={state} actualResults={actualResults} />
         </TabsContent>
       </Tabs>
 
