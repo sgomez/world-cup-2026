@@ -393,11 +393,11 @@ export function StandingsView({
                     <tr className="text-[10px] font-bold uppercase tracking-wider text-mute dark:text-stone border-b border-hairline/30 dark:border-ash/30">
                       <th className="py-1 px-1 text-left w-6">{t("pos")}</th>
                       <th className="py-1 px-2 text-left">{t("team")}</th>
-                      <th className="py-1 px-1.5 text-center w-9">
+                      <th className="py-1 px-1.5 text-center w-10">
                         {t("pts")}
                       </th>
-                      <th className="py-1 px-1 text-center w-6">{t("gf")}</th>
-                      <th className="py-1 px-1 text-center w-6">{t("ga")}</th>
+                      <th className="py-1 px-1 text-center w-7">{t("gf")}</th>
+                      <th className="py-1 px-1 text-center w-7">{t("ga")}</th>
                       <th className="py-1 px-1.5 text-center w-8">{t("gd")}</th>
                     </tr>
                   </thead>
@@ -418,16 +418,18 @@ export function StandingsView({
                           <td className="py-1.5 px-1 font-[family-name:var(--font-oswald)] text-xs text-mute dark:text-stone text-left">
                             {position}
                           </td>
-                          <td className="py-1.5 px-1 flex items-center gap-1">
-                            <TeamBadge
-                              team={row.team}
-                              size="compact"
-                              border={false}
-                              showGrip={false}
-                            />
-                            <span className="text-[9px] uppercase font-bold text-mute dark:text-stone">
-                              ({row.groupLetter})
-                            </span>
+                          <td className="py-1.5 px-1 w-full max-w-[150px]">
+                            <div className="flex items-center gap-1">
+                              <TeamBadge
+                                team={row.team}
+                                size="compact"
+                                border={false}
+                                showGrip={false}
+                              />
+                              <span className="text-[9px] uppercase font-bold text-mute dark:text-stone shrink-0">
+                                ({row.groupLetter})
+                              </span>
+                            </div>
                           </td>
                           <td className="py-1.5 px-1.5 text-center font-[family-name:var(--font-oswald)] text-xs text-ink dark:text-canvas">
                             {row.pts}
