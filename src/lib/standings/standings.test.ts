@@ -589,6 +589,69 @@ describe("getAdvancement", () => {
     expect(result.thirdsAdvancement).toBeUndefined();
   });
 
+  it("does NOT return thirds when all groups are complete but fewer than 12 groups provided", () => {
+    // Edge case: allGroupsComplete is true but groups.length < 12
+    // This exercises the `allGroupsComplete && groups.length !== 12` guard
+    const groups: Record<string, { teams: TeamId[]; matches: GroupMatch[] }> =
+      {};
+    // Only 11 complete groups (no live matches at all)
+    const groupLetters = "abcdefghijk".split(""); // 11 groups, all finished
+    for (const g of groupLetters) {
+      const t = [`${g}1`, `${g}2`, `${g}3`, `${g}4`] as TeamId[];
+      groups[g] = {
+        teams: t,
+        matches: completeGroup(g, t),
+      };
+    }
+
+    const result = getAdvancement({
+      groups,
+      tieBreakChain: DEFAULT_TIEBREAK_CHAIN,
+      manualTieBreaks: {},
+      finishedOnly: true,
+    });
+
+    // Each group's advancement should be settled (all are finished)
+    for (const g of groupLetters) {
+      expect(result.groupAdvancement[g]).toBeDefined();
+    }
+    // But thirds must NOT be settled — only 11 of the required 12 groups provided
+    expect(result.thirdsAdvancement).toBeUndefined();
+  });
+
+  it("returns provisional advancement when finishedOnly is false", () => {
+    // Group has a live match — with finishedOnly: false we still get provisional standings
+    const groupMatches: GroupMatch[] = [
+      { ...match(1, "A1", "A2", 2, 0), group: "a", status: "finished" },
+      { ...match(2, "A1", "A3", 1, 0), group: "a", status: "finished" },
+      { ...match(3, "A2", "A3", 1, 0), group: "a", status: "finished" },
+      { ...match(4, "A1", "A4", 2, 0), group: "a", status: "finished" },
+      { ...match(5, "A2", "A4", 1, 0), group: "a", status: "finished" },
+      { ...match(6, "A3", "A4", 1, 1), group: "a", status: "live" }, // live!
+    ];
+
+    const resultStrict = getAdvancement({
+      groups: { a: { teams: ["A1", "A2", "A3", "A4"], matches: groupMatches } },
+      tieBreakChain: DEFAULT_TIEBREAK_CHAIN,
+      manualTieBreaks: {},
+      finishedOnly: true,
+    });
+    // With finishedOnly: true, incomplete group → undefined
+    expect(resultStrict.groupAdvancement.a).toBeUndefined();
+
+    const resultProvisional = getAdvancement({
+      groups: { a: { teams: ["A1", "A2", "A3", "A4"], matches: groupMatches } },
+      tieBreakChain: DEFAULT_TIEBREAK_CHAIN,
+      manualTieBreaks: {},
+      finishedOnly: false,
+    });
+    // With finishedOnly: false, provisional standings are computed
+    expect(resultProvisional.groupAdvancement.a).toBeDefined();
+    expect(resultProvisional.groupAdvancement.a?.first).toBeDefined();
+    expect(resultProvisional.groupAdvancement.a?.second).toBeDefined();
+    expect(resultProvisional.groupAdvancement.a?.third).toBeDefined();
+  });
+
   it("live matches never settle advancement", () => {
     // Even if 5 of 6 matches are finished with clear winner, live match prevents settlement
     const groupMatches: GroupMatch[] = [

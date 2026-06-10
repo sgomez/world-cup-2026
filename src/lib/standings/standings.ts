@@ -423,10 +423,16 @@ export function getAdvancement(input: AdvancementInput): AdvancementResult {
   let allGroupsComplete = true;
 
   for (const [groupKey, { teams, matches }] of Object.entries(input.groups)) {
-    if (!isGroupComplete(matches)) {
+    const complete = isGroupComplete(matches);
+    if (!complete) {
       allGroupsComplete = false;
-      groupAdvancement[groupKey] = undefined;
-      continue;
+      // When finishedOnly is true (default), skip incomplete groups entirely.
+      // When finishedOnly is false, compute provisional standings using whatever
+      // matches are available (live and finished alike).
+      if (input.finishedOnly) {
+        groupAdvancement[groupKey] = undefined;
+        continue;
+      }
     }
 
     // Build criteria with manual tie-break if provided
@@ -440,9 +446,12 @@ export function getAdvancement(input: AdvancementInput): AdvancementResult {
       : input.tieBreakChain;
 
     const standing = computeGroupStanding(teams, matches, chain);
-    const first = standing[0];
-    const second = standing[1];
-    const third = standing[2];
+    if (standing.length < 4) {
+      throw new Error(
+        `Group ${groupKey}: expected 4 standings, got ${standing.length}`,
+      );
+    }
+    const [first, second, third] = standing as [TeamId, TeamId, TeamId, TeamId];
 
     groupAdvancement[groupKey] = { first, second, third };
 
