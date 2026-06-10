@@ -37,15 +37,20 @@ export function CommunitiesList({ communities }: CommunitiesListProps) {
   return (
     <div className="space-y-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
-            {t("title")}
-          </h1>
-          <p className="text-caption-md text-muted-foreground">
-            {t("description")}
-          </p>
+        <div className="flex items-start gap-4 min-w-0 flex-1">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary mt-0.5">
+            <Users className="size-6" aria-hidden="true" />
+          </div>
+          <div className="min-w-0 flex-1 space-y-1">
+            <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
+              {t("title")}
+            </h1>
+            <p className="text-caption-md text-muted-foreground">
+              {t("description")}
+            </p>
+          </div>
         </div>
-        <Link href="/communities/new" className="button-primary gap-2">
+        <Link href="/communities/new" className="button-primary gap-2 shrink-0">
           <Plus className="size-4" aria-hidden="true" />
           {t("newCommunity")}
         </Link>

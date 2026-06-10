@@ -3,6 +3,7 @@
     "title": "Porra del Mundial 2026"
   },
   "nav": {
+    "calendar": "Calendario",
     "switchLanguage": "Cambiar idioma",
     "communities": "Comunidades",
     "myBets": "Mis Apuestas",
@@ -11,6 +12,24 @@
     "createCommunity": "Crear Comunidad",
     "adminPanel": "Panel de Administración",
     "signOut": "Cerrar Sesión"
+  },
+  "calendar": {
+    "title": "Calendario del Torneo",
+    "description": "Explora el calendario y los resultados en directo del Mundial 2026.",
+    "timezoneNote": "Todos los horarios de inicio se muestran en tu zona horaria local: {tz}",
+    "allPhases": "Todas las Fases",
+    "allTeams": "Todos los Equipos",
+    "jumpToToday": "Ir a Hoy",
+    "live": "EN DIRECTO",
+    "upcoming": "Próximamente",
+    "finished": "Finalizado",
+    "noMatches": "No se encontraron partidos con los filtros aplicados.",
+    "winnerGroup": "Ganador Grupo {group}",
+    "runnerUpGroup": "Segundo Grupo {group}",
+    "bestThird": "Mejor 3º {groups}",
+    "winnerMatch": "Ganador Partido {num}",
+    "loserMatch": "Perdedor Partido {num}",
+    "groupStage": "Fase de Grupos"
   },
   "home": {
     "goToDashboard": "Ir al Panel",

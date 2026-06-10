@@ -51,3 +51,25 @@ const groupsByLocale: Record<string, GroupData[]> = {
 export function getGroups(locale: string): GroupData[] {
   return groupsByLocale[locale] ?? groupsByLocale.en;
 }
+
+export function getTeamByName(name: string, locale: string): Team | null {
+  const normalizedSearch = name.trim().toLowerCase();
+
+  // Find in English raw teams first to get the key (fifa_code)
+  const rawEn = (rawTeamsEn as RawTeam[]).find(
+    (t) =>
+      t.name.toLowerCase() === normalizedSearch ||
+      t.name_normalised?.toLowerCase() === normalizedSearch,
+  );
+
+  if (!rawEn) return null;
+  const targetId = rawEn.fifa_code.toLowerCase();
+
+  // Find the translated team in the groups of the current locale
+  for (const group of getGroups(locale)) {
+    const found = group.teams.find((t) => t.id === targetId);
+    if (found) return found;
+  }
+
+  return null;
+}
