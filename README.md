@@ -1,7 +1,7 @@
 # World Cup 2026
 
 > [!IMPORTANT]
-> **Not a reference architecture.** This is a learning side project.
+> This is a learning side project.
 >
 > Goal: practice **Spec-Driven Development (SDD)** — specs first, throwaway prototype to validate assumptions, then implement. Process: write spec → build prototype → validate → implement.
 >
