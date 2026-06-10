@@ -1,5 +1,12 @@
 # World Cup 2026
 
+> [!IMPORTANT]
+> **Not a reference architecture.** This is a learning side project.
+>
+> Goal: practice **Spec-Driven Development (SDD)** — specs first, throwaway prototype to validate assumptions, then implement. Process: write spec → build prototype → validate → implement.
+>
+> Built to make mistakes and learn. Expect rough edges, questionable decisions, experiments that didn't pan out. Study the process, not the code.
+
 Bet tracker for the 2026 World Cup. Sign in with Google, place predictions, and compete with friends.
 
 ## Prerequisites
