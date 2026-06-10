@@ -59,10 +59,10 @@ export function Navbar({ user }: NavbarProps) {
 
         <div className="flex items-center gap-2 sm:gap-4">
           <Link
-            href="/calendar"
+            href="/bets"
             className="hidden sm:block text-caption-md text-muted-foreground hover:text-foreground transition-colors"
           >
-            {t("calendar")}
+            {t("myBets")}
           </Link>
           <Link
             href="/communities"
@@ -71,16 +71,28 @@ export function Navbar({ user }: NavbarProps) {
             {t("communities")}
           </Link>
           <Link
-            href="/bets"
-            className="hidden sm:block text-caption-md text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {t("myBets")}
-          </Link>
-          <Link
             href="/leaderboard"
             className="hidden sm:block text-caption-md text-muted-foreground hover:text-foreground transition-colors"
           >
             {t("leaderboard")}
+          </Link>
+
+          <span
+            className="hidden sm:block h-4 w-px bg-hairline"
+            aria-hidden="true"
+          />
+
+          <Link
+            href="/calendar"
+            className="hidden sm:block text-caption-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {t("calendar")}
+          </Link>
+          <Link
+            href="/standings"
+            className="hidden sm:block text-caption-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {t("standings")}
           </Link>
 
           <LocaleToggle />
@@ -109,12 +121,6 @@ export function Navbar({ user }: NavbarProps) {
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/calendar")}>
-                {t("calendar")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/profile")}>
-                {t("editProfile")}
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/bets")}>
                 {t("myBets")}
               </DropdownMenuItem>
@@ -126,6 +132,17 @@ export function Navbar({ user }: NavbarProps) {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/communities/new")}>
                 {t("createCommunity")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/calendar")}>
+                {t("calendar")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/standings")}>
+                {t("standings")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/profile")}>
+                {t("editProfile")}
               </DropdownMenuItem>
               {isAdmin && (
                 <DropdownMenuItem onClick={() => router.push("/admin")}>

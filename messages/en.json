@@ -8,6 +8,7 @@
     "communities": "Communities",
     "myBets": "My Bets",
     "leaderboard": "Leaderboard",
+    "standings": "Standings",
     "editProfile": "Edit Profile",
     "createCommunity": "Create Community",
     "adminPanel": "Admin Panel",
@@ -312,5 +313,18 @@
     "noBets": "No participants have closed bets yet in this community.",
     "betsCount": "{count, plural, one {# Bet} other {# Bets}}",
     "view": "View"
+  },
+  "tournament": {
+    "title": "Tournament Standings",
+    "description": "Follow the live standings and tournament bracket.",
+    "groupStage": "Group Stage",
+    "knockoutStage": "Knockout Stage",
+    "pos": "#",
+    "team": "Team",
+    "pts": "PTS",
+    "gf": "GF",
+    "ga": "GA",
+    "gd": "GD",
+    "bestThirds": "Best Third-place Teams"
   }
 }
