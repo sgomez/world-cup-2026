@@ -1,8 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { upsertLiveResult } from "@/modules/live/application/upsert-live-result";
-import type { LiveStatus } from "@/modules/live/domain/live-result";
 import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
 
 export const dynamic = "force-dynamic";
@@ -11,13 +11,15 @@ type RouteContext = {
   params: Promise<{ num: string }>;
 };
 
-type RequestBody = {
-  status: LiveStatus;
-  goals1: number;
-  goals2: number;
-  penalties1?: number;
-  penalties2?: number;
-};
+const RequestBodySchema = z.object({
+  status: z.enum(["live", "finished"]),
+  goals1: z.number(),
+  goals2: z.number(),
+  penalties1: z.number().optional(),
+  penalties2: z.number().optional(),
+});
+
+type RequestBody = z.infer<typeof RequestBodySchema>;
 
 function authenticate(request: Request): Response | null {
   const tokenEnv = process.env.LIVE_FEED_TOKEN;
@@ -76,15 +78,11 @@ function mapErrorToResponse(code: string): Response {
 async function parseBody(request: Request): Promise<RequestBody | Response> {
   try {
     const body = await request.json();
-    const raw = body as Partial<RequestBody>;
-    if (
-      typeof raw.status !== "string" ||
-      typeof raw.goals1 !== "number" ||
-      typeof raw.goals2 !== "number"
-    ) {
+    const result = RequestBodySchema.safeParse(body);
+    if (!result.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 422 });
     }
-    return raw as RequestBody;
+    return result.data;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
