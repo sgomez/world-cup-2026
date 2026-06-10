@@ -1,7 +1,9 @@
 # ADR 0013: Live Scoring and Derived Competition End
 
-**Status:** Accepted
+**Status:** Accepted (extended by ADR 0015)
 **Date:** 2026-06-09
+
+> **Extended by [ADR 0015](./0015-liveresult-feed-and-live-derived-group-order.md).** This ADR's decisions are intact: scoring is `Bet × Result`, live, derived, never stored; Competition End is derived from the Result. 0015 only changes what is *underneath*: the `Result` scored against is itself now derived from `LiveResults`, so scoring derives transitively, and Competition End is reached automatically when the third-place (103) and Final (104) matches are `finished`. `getActualScoreableContent()` / `extractScoreableContent` are unchanged.
 
 ## Context
 

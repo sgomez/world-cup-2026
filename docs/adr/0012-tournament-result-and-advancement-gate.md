@@ -1,7 +1,9 @@
 # ADR 0012: Tournament Result Aggregate and the Advancement Gate
 
-**Status:** Accepted
+**Status:** Superseded in part by ADR 0015
 **Date:** 2026-06-08
+
+> **Superseded by [ADR 0015](./0015-liveresult-feed-and-live-derived-group-order.md).** The `Tournament` aggregate and the "Result mirrors a Bet's shape" decision still stand. But the `Result` is no longer hand-entered or stored: group orders, third-place ranking, knockout winners, and advancement are now **derived from per-match scorelines** (`LiveResults`). This reverses three decisions below — "Standings are entered as orders, never as scorelines", "Store per-match scorelines — Rejected", and "Auto-compute mathematical classification — Rejected" — and replaces the manual **Advancement Gate** with derived-on-completion advancement. Read this ADR for the aggregate's origin; read 0015 for the current model.
 
 ## Context
 
