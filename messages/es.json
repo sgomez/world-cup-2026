@@ -7,7 +7,8 @@
     "switchLanguage": "Cambiar idioma",
     "communities": "Comunidades",
     "myBets": "Mis Apuestas",
-    "leaderboard": "Clasificación",
+    "leaderboard": "Ranking",
+    "standings": "Clasificación",
     "editProfile": "Editar Perfil",
     "createCommunity": "Crear Comunidad",
     "adminPanel": "Panel de Administración",
@@ -41,7 +42,7 @@
     "copyright": "© 2026 Porra del Mundial. Todos los derechos reservados."
   },
   "auth": {
-    "subtitle": "Inicia sesión para hacer predicciones y seguir tu clasificación.",
+    "subtitle": "Inicia sesión para hacer predicciones y seguir tu ranking.",
     "redirectingToGoogle": "Redirigiendo a Google...",
     "signInWithGoogle": "Iniciar sesión con Google",
     "loadingLabel": "Cargando"
@@ -299,7 +300,7 @@
     "NAME_REQUIRED": "El nombre es obligatorio"
   },
   "leaderboard": {
-    "title": "Clasificación",
+    "title": "Ranking",
     "description": "Ranking por puntos de tus predicciones.",
     "rank": "#",
     "participant": "Participante",
@@ -312,5 +313,18 @@
     "noBets": "Ningún participante tiene apuestas cerradas en esta comunidad.",
     "betsCount": "{count, plural, one {# apuesta} other {# apuestas}}",
     "view": "Ver"
+  },
+  "tournament": {
+    "title": "Clasificación del Torneo",
+    "description": "Sigue las clasificaciones en directo y el cuadro del torneo.",
+    "groupStage": "Fase de Grupos",
+    "knockoutStage": "Fase Eliminatoria",
+    "pos": "#",
+    "team": "Equipo",
+    "pts": "PTS",
+    "gf": "GF",
+    "ga": "GA",
+    "gd": "DG",
+    "bestThirds": "Mejores Terceros"
   }
 }

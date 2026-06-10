@@ -40,6 +40,7 @@ export async function setGroupResultAction(
     }
 
     revalidatePath("/admin/result");
+    revalidatePath("/standings");
     return { success: true };
   });
 }
@@ -59,6 +60,7 @@ export async function setThirdPlaceResultAction(
     }
 
     revalidatePath("/admin/result");
+    revalidatePath("/standings");
     return { success: true };
   });
 }
@@ -78,6 +80,7 @@ export async function markAdvancedAction(
     }
 
     revalidatePath("/admin/result");
+    revalidatePath("/standings");
     return { success: true };
   });
 }
@@ -97,6 +100,7 @@ export async function unmarkAdvancedAction(
     }
 
     revalidatePath("/admin/result");
+    revalidatePath("/standings");
     return { success: true };
   });
 }
@@ -118,6 +122,7 @@ export async function setKnockoutResultAction(
     }
 
     revalidatePath("/admin/result");
+    revalidatePath("/standings");
     return { success: true };
   });
 }
@@ -137,6 +142,7 @@ export async function clearKnockoutResultAction(
     }
 
     revalidatePath("/admin/result");
+    revalidatePath("/standings");
     return { success: true };
   });
 }
