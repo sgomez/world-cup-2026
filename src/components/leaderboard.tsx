@@ -4,6 +4,7 @@ import { Trophy, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { LeaderboardTable } from "@/components/leaderboard-table";
+import { PageHeader } from "@/components/ui/page-header";
 import { Link } from "@/i18n/navigation";
 import type { LeaderboardScope } from "@/lib/leaderboard";
 import { cn } from "@/lib/utils";
@@ -46,20 +47,11 @@ export function Leaderboard({
 
   return (
     <section className="space-y-6">
-      {/* Header */}
-      <header className="flex items-center gap-4">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Trophy className="size-6" aria-hidden="true" />
-        </div>
-        <div className="space-y-1">
-          <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
-            {t("title")}
-          </h1>
-          <p className="text-caption-md text-muted-foreground">
-            {t("description")}
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title={t("title")}
+        description={t("description")}
+        icon={<Trophy className="size-6" />}
+      />
 
       {/* Tabs */}
       <div

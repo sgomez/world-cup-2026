@@ -3,6 +3,7 @@
     "title": "World Cup 2026 Sweepstake"
   },
   "nav": {
+    "calendar": "Calendar",
     "switchLanguage": "Switch language",
     "communities": "Communities",
     "myBets": "My Bets",
@@ -11,6 +12,24 @@
     "createCommunity": "Create Community",
     "adminPanel": "Admin Panel",
     "signOut": "Sign Out"
+  },
+  "calendar": {
+    "title": "Tournament Calendar",
+    "description": "Explore the World Cup 2026 match schedule and live results.",
+    "timezoneNote": "All kickoff times are displayed in your local timezone: {tz}",
+    "allPhases": "All Phases",
+    "allTeams": "All Teams",
+    "jumpToToday": "Jump to Today",
+    "live": "LIVE",
+    "upcoming": "Upcoming",
+    "finished": "Finished",
+    "noMatches": "No matches found matching your filters.",
+    "winnerGroup": "Winner Group {group}",
+    "runnerUpGroup": "Runner-up Group {group}",
+    "bestThird": "Best 3rd {groups}",
+    "winnerMatch": "Winner Match {num}",
+    "loserMatch": "Loser Match {num}",
+    "groupStage": "Group Stage"
   },
   "home": {
     "goToDashboard": "Go to Dashboard",

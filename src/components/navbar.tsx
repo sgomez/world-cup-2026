@@ -59,6 +59,12 @@ export function Navbar({ user }: NavbarProps) {
 
         <div className="flex items-center gap-2 sm:gap-4">
           <Link
+            href="/calendar"
+            className="hidden sm:block text-caption-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {t("calendar")}
+          </Link>
+          <Link
             href="/communities"
             className="hidden sm:block text-caption-md text-muted-foreground hover:text-foreground transition-colors"
           >
@@ -103,6 +109,9 @@ export function Navbar({ user }: NavbarProps) {
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/calendar")}>
+                {t("calendar")}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/profile")}>
                 {t("editProfile")}
               </DropdownMenuItem>

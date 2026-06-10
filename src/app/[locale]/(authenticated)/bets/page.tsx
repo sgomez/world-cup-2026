@@ -1,3 +1,4 @@
+import { Dices } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { BetList } from "@/components/bet-list";
 import { CreateBetForm } from "@/components/create-bet-form";
@@ -33,7 +34,11 @@ export default async function BetsPage({
 
   return (
     <div className="max-w-5xl">
-      <PageHeader title={t("title")} description={t("description")} />
+      <PageHeader
+        title={t("title")}
+        description={t("description")}
+        icon={<Dices className="size-6" />}
+      />
 
       <div className="mt-8">
         {isPastDeadline ? (
