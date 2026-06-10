@@ -123,3 +123,16 @@ model Tournament {
   @@map("tournament")
 }
 
+model LiveResult {
+  num         Int      @id
+  status      String
+  goals1      Int
+  goals2      Int
+  penalties1  Int?
+  penalties2  Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("live_result")
+}
+
