@@ -59,7 +59,7 @@ describe("computeGroupStanding — h2h tie-breaking", () => {
     // A and B tied at 4pts overall; C=7, D=1
     // h2h A vs B: A wins → A ranked above B
     const teams: TeamId[] = ["A", "B", "C", "D"];
-    const matches: GroupMatch[] = [
+    const _matches: GroupMatch[] = [
       match(1, "A", "B", 2, 0), // A beats B (A+3, B+0)
       match(2, "A", "C", 0, 2), // C beats A (A+0, C+3)
       match(3, "A", "D", 1, 0), // A beats D (A+3, D+0)
@@ -69,7 +69,7 @@ describe("computeGroupStanding — h2h tie-breaking", () => {
     ];
     // A: 3+0+3=6, B: 0+0+3=3 — NOT a two-way tie.
     // Build actual 2-way tie: A=B=4pts, C and D separate
-    const matches2: GroupMatch[] = [
+    const _matches2: GroupMatch[] = [
       match(1, "A", "B", 2, 0), // A beats B (A+3, B+0)
       match(2, "A", "C", 0, 2), // C beats A (A+0, C+3)
       match(3, "A", "D", 1, 0), // A beats D (A+3, D+0)
@@ -106,7 +106,7 @@ describe("computeGroupStanding — h2h tie-breaking", () => {
     // Three teams all draw against each other → tied on h2h points (1 each)
     // Differentiate by h2h goal difference
     const teams: TeamId[] = ["A", "B", "C", "D"];
-    const matches: GroupMatch[] = [
+    const _matches: GroupMatch[] = [
       match(1, "A", "B", 2, 1), // A beats B overall but need 3-way tied on points
       match(2, "A", "C", 1, 2), // C beats A
       match(3, "A", "D", 2, 0), // A beats D
@@ -225,7 +225,7 @@ describe("manual criterion", () => {
     // A=9, B=1+3=4, C=1+3=4, D=0; B and C tied after h2h
     // h2h B vs C: draw 1-1 → same h2h pts (1 each), same GD (0), same goals (1)
     // manual says C before B
-    const chain = [...DEFAULT_TIEBREAK_CHAIN];
+    const _chain = [...DEFAULT_TIEBREAK_CHAIN];
     // Replace stable with manual then stable
     const manualList: TeamId[] = ["C", "B"]; // Admin says: C first
     const manual = makeManualCriterion(manualList);
@@ -509,9 +509,9 @@ describe("getAdvancement", () => {
       finishedOnly: true,
     });
     // A1 wins most, A2 second, etc.
-    expect(result.groupAdvancement["a"]?.first).toBeDefined();
-    expect(result.groupAdvancement["a"]?.second).toBeDefined();
-    expect(result.groupAdvancement["a"]?.third).toBeDefined();
+    expect(result.groupAdvancement.a?.first).toBeDefined();
+    expect(result.groupAdvancement.a?.second).toBeDefined();
+    expect(result.groupAdvancement.a?.third).toBeDefined();
   });
 
   it("does NOT return advancement when group has live matches", () => {
@@ -536,7 +536,7 @@ describe("getAdvancement", () => {
       finishedOnly: true,
     });
     // Group 'a' has a live match → no settled advancement
-    expect(result.groupAdvancement["a"]).toBeUndefined();
+    expect(result.groupAdvancement.a).toBeUndefined();
   });
 
   it("returns thirds advancement only when all 12 groups are complete", () => {
@@ -612,6 +612,6 @@ describe("getAdvancement", () => {
       finishedOnly: true,
     });
 
-    expect(result.groupAdvancement["a"]).toBeUndefined();
+    expect(result.groupAdvancement.a).toBeUndefined();
   });
 });

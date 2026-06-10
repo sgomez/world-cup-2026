@@ -321,7 +321,7 @@ export function rankThirds(
   };
 
   // Optional manual override for thirds
-  const manualList = manualTieBreaks["thirds"];
+  const manualList = manualTieBreaks.thirds;
   const thirdsChain: TieBreakCriterion[] = [
     pointsCriterion,
     gdCriterion,
