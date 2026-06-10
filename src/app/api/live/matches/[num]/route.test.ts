@@ -136,6 +136,59 @@ describe("PUT /api/live/matches/[num]", () => {
     expect(res.status).toBe(422);
   });
 
+  it("returns 422 when body is missing goals1", async () => {
+    const { PUT } = await import("./route");
+    const req = makeRequest("PUT", { status: "live", goals2: 0 }, VALID_TOKEN);
+    const res = await PUT(req, { params: makeParams("1") });
+    expect(res.status).toBe(422);
+  });
+
+  it("returns 422 when body is missing goals2", async () => {
+    const { PUT } = await import("./route");
+    const req = makeRequest("PUT", { status: "live", goals1: 0 }, VALID_TOKEN);
+    const res = await PUT(req, { params: makeParams("1") });
+    expect(res.status).toBe(422);
+  });
+
+  it("returns 422 when body is missing status", async () => {
+    const { PUT } = await import("./route");
+    const req = makeRequest("PUT", { goals1: 0, goals2: 0 }, VALID_TOKEN);
+    const res = await PUT(req, { params: makeParams("1") });
+    expect(res.status).toBe(422);
+  });
+
+  it("returns 422 when goals1 is not a number", async () => {
+    const { PUT } = await import("./route");
+    const req = makeRequest(
+      "PUT",
+      { status: "live", goals1: "two", goals2: 0 },
+      VALID_TOKEN,
+    );
+    const res = await PUT(req, { params: makeParams("1") });
+    expect(res.status).toBe(422);
+  });
+
+  it("returns 422 when body is empty object", async () => {
+    const { PUT } = await import("./route");
+    const req = makeRequest("PUT", {}, VALID_TOKEN);
+    const res = await PUT(req, { params: makeParams("1") });
+    expect(res.status).toBe(422);
+  });
+
+  it("returns 400 for invalid JSON body", async () => {
+    const { PUT } = await import("./route");
+    const req = new Request("http://localhost/api/live/matches/1", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${VALID_TOKEN}`,
+      },
+      body: "not-json",
+    });
+    const res = await PUT(req, { params: makeParams("1") });
+    expect(res.status).toBe(400);
+  });
+
   it("returns 200 when re-sending identical snapshot (idempotent)", async () => {
     const { PUT } = await import("./route");
     const body = { status: "live", goals1: 1, goals2: 0 };

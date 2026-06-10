@@ -164,6 +164,32 @@ describe("LiveResult.reconcile — group match", () => {
   });
 });
 
+describe("LiveResult.reconcile — asymmetric penalties", () => {
+  it("rejects penalties1 without penalties2 on a knockout match", () => {
+    const [result] = LiveResult.reconcile(null, {
+      num: KNOCKOUT_NUM,
+      status: "finished",
+      goals1: 1,
+      goals2: 1,
+      penalties1: 5,
+    });
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("PENALTIES_NOT_ALLOWED");
+  });
+
+  it("rejects penalties2 without penalties1 on a knockout match", () => {
+    const [result] = LiveResult.reconcile(null, {
+      num: KNOCKOUT_NUM,
+      status: "finished",
+      goals1: 1,
+      goals2: 1,
+      penalties2: 3,
+    });
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("PENALTIES_NOT_ALLOWED");
+  });
+});
+
 describe("LiveResult.reconcile — knockout match", () => {
   it("accepts penalties on knockout matches (num >= 73)", () => {
     const [result, events] = LiveResult.reconcile(null, {

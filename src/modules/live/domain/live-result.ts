@@ -35,6 +35,14 @@ function validateTarget(
   if (target.goals1 < 0 || target.goals2 < 0) {
     return err(liveDomainError("INVALID_GOALS"));
   }
+  // Asymmetric penalty state: both or neither must be provided
+  if (
+    (target.penalties1 !== undefined && target.penalties2 === undefined) ||
+    (target.penalties1 === undefined && target.penalties2 !== undefined)
+  ) {
+    return err(liveDomainError("PENALTIES_NOT_ALLOWED"));
+  }
+  // Penalties only allowed on knockout matches (num >= 73)
   if (
     (target.penalties1 !== undefined || target.penalties2 !== undefined) &&
     !isKnockout(target.num)

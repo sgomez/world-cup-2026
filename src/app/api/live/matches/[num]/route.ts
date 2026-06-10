@@ -76,7 +76,15 @@ function mapErrorToResponse(code: string): Response {
 async function parseBody(request: Request): Promise<RequestBody | Response> {
   try {
     const body = await request.json();
-    return body as RequestBody;
+    const raw = body as Partial<RequestBody>;
+    if (
+      typeof raw.status !== "string" ||
+      typeof raw.goals1 !== "number" ||
+      typeof raw.goals2 !== "number"
+    ) {
+      return NextResponse.json({ error: "Invalid body" }, { status: 422 });
+    }
+    return raw as RequestBody;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
