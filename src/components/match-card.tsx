@@ -4,6 +4,7 @@ import { MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { TeamBadge } from "@/components/team-badge";
+import { getKickoffInstant } from "@/lib/matches";
 import { getTeamByName } from "@/lib/teams";
 
 export type MatchCardProps = {
@@ -96,36 +97,19 @@ export function MatchCard({
   const [localTime, setLocalTime] = useState(time);
 
   useEffect(() => {
-    // Parse time like "13:00 UTC-6" and date like "2026-06-11"
-    const offsetMatch = time.match(/UTC([-+]\d+)/);
-    let parsedOffset = "";
-    if (offsetMatch) {
-      const val = parseInt(offsetMatch[1], 10);
-      const sign = val >= 0 ? "+" : "-";
-      const absVal = Math.abs(val);
-      const padded = String(absVal).padStart(2, "0");
-      parsedOffset = `${sign}${padded}:00`;
-    } else {
-      parsedOffset = "Z";
-    }
-
-    const timePortionMatch = time.match(/^(\d{2}:\d{2})/);
-    const timePortion = timePortionMatch ? timePortionMatch[1] : "00:00";
-
-    try {
-      const isoStr = `${date}T${timePortion}${parsedOffset}`;
-      const dateObj = new Date(isoStr);
-      if (!Number.isNaN(dateObj.getTime())) {
+    getKickoffInstant({ date, time }).match(
+      (dateObj) => {
         const formatted = new Intl.DateTimeFormat(locale, {
           hour: "2-digit",
           minute: "2-digit",
           timeZoneName: "short",
         }).format(dateObj);
         setLocalTime(formatted);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      },
+      (err) => {
+        console.error(err);
+      },
+    );
   }, [time, date, locale]);
 
   const t1 = getTeamByName(team1, locale);

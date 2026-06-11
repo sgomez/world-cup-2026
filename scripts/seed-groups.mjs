@@ -1,6 +1,8 @@
 import { config } from "dotenv";
+
 config({ path: ".env" });
 config({ path: ".env.development", override: true });
+
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import pg from "pg";
@@ -46,7 +48,9 @@ async function main() {
   for (let num = 1; num <= 72; num++) {
     const data = randomMatchData();
     await putMatch(num, data);
-    console.log(`  match ${num.toString().padStart(2)}: ${data.status.padEnd(8)} ${data.goals1}-${data.goals2}`);
+    console.log(
+      `  match ${num.toString().padStart(2)}: ${data.status.padEnd(8)} ${data.goals1}-${data.goals2}`,
+    );
   }
 
   console.log("\nSeeded 72 group phase matches.");
