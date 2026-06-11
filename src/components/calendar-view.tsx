@@ -10,6 +10,9 @@ import type { KnockoutMatch } from "@/lib/bracket-core";
 import { getGroups, getTeamById, getTeamByName } from "@/lib/teams";
 import type { LiveResultState } from "@/modules/live/domain/live-result";
 
+const REFRESH_INTERVAL =
+  parseInt(process.env.NEXT_PUBLIC_REFRESH_INTERVAL ?? "", 10) || 30_000;
+
 // Match number to bracket match ID map for knockout rounds
 const NUM_TO_BRACKET_ID: Record<number, string> = {
   ...Object.fromEntries(
@@ -122,7 +125,6 @@ export function CalendarView({
   useEffect(() => {
     if (!isMounted) return;
 
-    const REFRESH_INTERVAL = 30_000;
     let intervalId: ReturnType<typeof setInterval> | null = null;
 
     const startPolling = () => {

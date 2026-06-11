@@ -7,14 +7,18 @@ import { TeamBadge } from "@/components/team-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "@/i18n/navigation";
 import { matchProgression, R32_MATCHUPS } from "@/lib/bracket-core";
+import { getAllMatches } from "@/lib/matches";
 import {
   getAllTeamsLookup,
   KNOCKOUT_MATCH_IDS,
   type KnockoutMatch,
 } from "@/lib/prediction-state";
-import { getGroups, type Team } from "@/lib/teams";
+import { getGroups, getTeamByName, type Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { computeTournamentBracket } from "@/modules/tournament/domain/derive-result";
+
+const REFRESH_INTERVAL =
+  parseInt(process.env.NEXT_PUBLIC_REFRESH_INTERVAL ?? "", 10) || 30_000;
 
 // Stable empty set for default liveTeamIds prop — avoids spurious memoization
 // cache misses with React Compiler when the prop is omitted.
@@ -108,6 +112,7 @@ export function StandingsView({
   defaultTab,
   locale,
   liveTeamIds = EMPTY_LIVE_TEAM_IDS,
+  liveResults = [],
   savedPredictions = null,
   savedKnockoutWinners = null,
   savedAdvancement = [],
@@ -115,6 +120,14 @@ export function StandingsView({
   defaultTab: "groups" | "knockout";
   locale: string;
   liveTeamIds?: Set<string>;
+  liveResults?: {
+    num: number;
+    status: string;
+    goals1: number;
+    goals2: number;
+    penalties1?: number;
+    penalties2?: number;
+  }[];
   savedPredictions?: {
     groupOrders: Record<string, string[]>;
     thirdPlaceOrder: string[];
@@ -139,7 +152,6 @@ export function StandingsView({
   useEffect(() => {
     if (!isMounted) return;
 
-    const REFRESH_INTERVAL = 30_000;
     let intervalId: ReturnType<typeof setInterval> | null = null;
 
     const startPolling = () => {
@@ -197,12 +209,83 @@ export function StandingsView({
     });
   }, [locale, savedPredictions?.groupOrders]);
 
+  // Calculate raw stats for all teams in the groups
+  const rawTeamStats = useMemo(() => {
+    const stats = new Map<
+      string,
+      {
+        pts: number;
+        gf: number;
+        ga: number;
+        gd: number;
+        isAnyMatchPlayed: boolean;
+      }
+    >();
+    const liveMap = new Map((liveResults || []).map((lr) => [lr.num, lr]));
+
+    for (const group of groups) {
+      const groupName = `Group ${group.group}`;
+      const allGroupMatches = getAllMatches().filter(
+        (m) => m.group === groupName,
+      );
+      const isAnyMatchPlayed = allGroupMatches.some((m) => {
+        const lr = liveMap.get(m.num);
+        return lr && lr.status !== "upcoming";
+      });
+
+      for (const team of group.teams) {
+        let pts = 0;
+        let gf = 0;
+        let ga = 0;
+
+        for (const match of allGroupMatches) {
+          const lr = liveMap.get(match.num);
+          if (!lr || lr.status === "upcoming") continue;
+
+          const t1 = getTeamByName(match.team1, "en");
+          const t2 = getTeamByName(match.team2, "en");
+          if (!t1 || !t2) continue;
+
+          if (t1.id === team.id) {
+            gf += lr.goals1;
+            ga += lr.goals2;
+            if (lr.goals1 > lr.goals2) pts += 3;
+            else if (lr.goals1 === lr.goals2) pts += 1;
+          } else if (t2.id === team.id) {
+            gf += lr.goals2;
+            ga += lr.goals1;
+            if (lr.goals2 > lr.goals1) pts += 3;
+            else if (lr.goals2 === lr.goals1) pts += 1;
+          }
+        }
+
+        stats.set(team.id, { pts, gf, ga, gd: gf - ga, isAnyMatchPlayed });
+      }
+    }
+    return stats;
+  }, [groups, liveResults]);
+
   // Compute the Best Third-place Teams standings table
   const bestThirdsStandings = useMemo(() => {
     const thirds = groups.map((g) => {
       const team = g.teams[2]; // 3rd place team in ordered array
-      const stats = getMockGroupStats(2, g.group);
-      return { team, groupLetter: g.group, ...stats };
+      const stats = rawTeamStats.get(team.id) || {
+        pts: 0,
+        gf: 0,
+        ga: 0,
+        gd: 0,
+        isAnyMatchPlayed: false,
+      };
+      return {
+        team,
+        groupLetter: g.group,
+        position: 3,
+        pts: stats.pts,
+        gf: stats.gf,
+        ga: stats.ga,
+        gd: stats.gd,
+        qualified: true,
+      };
     });
 
     if (
@@ -222,7 +305,50 @@ export function StandingsView({
     }
 
     return thirds;
-  }, [groups, savedPredictions?.thirdPlaceOrder]);
+  }, [groups, rawTeamStats, savedPredictions?.thirdPlaceOrder]);
+
+  // Build the final teamStats map including the qualified flag
+  const teamStats = useMemo(() => {
+    const statsMap = new Map<string, MockStats>();
+    const bestThirdsIds = new Set(
+      bestThirdsStandings.slice(0, 8).map((row) => row.team.id),
+    );
+
+    for (const group of groups) {
+      for (let index = 0; index < group.teams.length; index++) {
+        const team = group.teams[index];
+        const raw = rawTeamStats.get(team.id) || {
+          pts: 0,
+          gf: 0,
+          ga: 0,
+          gd: 0,
+          isAnyMatchPlayed: false,
+        };
+        const position = index + 1;
+
+        let qualified = true;
+        if (raw.isAnyMatchPlayed) {
+          if (position === 1 || position === 2) {
+            qualified = true;
+          } else if (position === 3) {
+            qualified = bestThirdsIds.has(team.id);
+          } else {
+            qualified = false;
+          }
+        }
+
+        statsMap.set(team.id, {
+          position,
+          pts: raw.pts,
+          gf: raw.gf,
+          ga: raw.ga,
+          gd: raw.gd,
+          qualified,
+        });
+      }
+    }
+    return statsMap;
+  }, [groups, rawTeamStats, bestThirdsStandings]);
 
   // Build predictions & propagate teams in bracket core
   const bracketMatches = useMemo(() => {
@@ -244,9 +370,9 @@ export function StandingsView({
     });
   }, [groups, savedPredictions, savedKnockoutWinners, savedAdvancement]);
 
-  // Match scores mapping (all empty since tournament hasn't started)
-  const mockMatchScores = useMemo<
-    Record<
+  // Match scores mapping from liveResults
+  const matchScores = useMemo(() => {
+    const scoresMap: Record<
       string,
       {
         score1: string;
@@ -254,19 +380,172 @@ export function StandingsView({
         score1Pen?: string;
         score2Pen?: string;
       }
-    >
-  >(() => {
-    return {};
-  }, []);
+    > = {};
+
+    const liveMap = new Map((liveResults || []).map((lr) => [lr.num, lr]));
+
+    // R32 matches
+    for (const { num } of R32_MATCHUPS) {
+      const lr = liveMap.get(num);
+      if (lr && lr.status !== "upcoming") {
+        scoresMap[`R32-${num}`] = {
+          score1: String(lr.goals1),
+          score2: String(lr.goals2),
+          score1Pen:
+            lr.penalties1 !== undefined ? String(lr.penalties1) : undefined,
+          score2Pen:
+            lr.penalties2 !== undefined ? String(lr.penalties2) : undefined,
+        };
+      }
+    }
+
+    // R16 matches
+    for (let n = 89; n <= 96; n++) {
+      const lr = liveMap.get(n);
+      if (lr && lr.status !== "upcoming") {
+        scoresMap[`R16-${n}`] = {
+          score1: String(lr.goals1),
+          score2: String(lr.goals2),
+          score1Pen:
+            lr.penalties1 !== undefined ? String(lr.penalties1) : undefined,
+          score2Pen:
+            lr.penalties2 !== undefined ? String(lr.penalties2) : undefined,
+        };
+      }
+    }
+
+    // QF matches
+    for (let n = 97; n <= 100; n++) {
+      const lr = liveMap.get(n);
+      if (lr && lr.status !== "upcoming") {
+        scoresMap[`QF-${n}`] = {
+          score1: String(lr.goals1),
+          score2: String(lr.goals2),
+          score1Pen:
+            lr.penalties1 !== undefined ? String(lr.penalties1) : undefined,
+          score2Pen:
+            lr.penalties2 !== undefined ? String(lr.penalties2) : undefined,
+        };
+      }
+    }
+
+    // SF matches
+    for (const n of [101, 102]) {
+      const lr = liveMap.get(n);
+      if (lr && lr.status !== "upcoming") {
+        scoresMap[`SF-${n}`] = {
+          score1: String(lr.goals1),
+          score2: String(lr.goals2),
+          score1Pen:
+            lr.penalties1 !== undefined ? String(lr.penalties1) : undefined,
+          score2Pen:
+            lr.penalties2 !== undefined ? String(lr.penalties2) : undefined,
+        };
+      }
+    }
+
+    // 3RD match
+    const lr103 = liveMap.get(103);
+    if (lr103 && lr103.status !== "upcoming") {
+      scoresMap["3RD"] = {
+        score1: String(lr103.goals1),
+        score2: String(lr103.goals2),
+        score1Pen:
+          lr103.penalties1 !== undefined ? String(lr103.penalties1) : undefined,
+        score2Pen:
+          lr103.penalties2 !== undefined ? String(lr103.penalties2) : undefined,
+      };
+    }
+
+    // F match
+    const lr104 = liveMap.get(104);
+    if (lr104 && lr104.status !== "upcoming") {
+      scoresMap["F"] = {
+        score1: String(lr104.goals1),
+        score2: String(lr104.goals2),
+        score1Pen:
+          lr104.penalties1 !== undefined ? String(lr104.penalties1) : undefined,
+        score2Pen:
+          lr104.penalties2 !== undefined ? String(lr104.penalties2) : undefined,
+      };
+    }
+
+    return scoresMap;
+  }, [liveResults]);
 
   // Check if a match is finished
   const isMatchFinished = (matchId: string, match: KnockoutMatch) => {
-    return !!mockMatchScores[matchId] && !!match.winnerId;
+    let num: number | undefined;
+    if (matchId.startsWith("R32-")) {
+      num = parseInt(matchId.replace("R32-", ""), 10);
+    } else if (matchId.startsWith("R16-")) {
+      num = parseInt(matchId.replace("R16-", ""), 10);
+    } else if (matchId.startsWith("QF-")) {
+      num = parseInt(matchId.replace("QF-", ""), 10);
+    } else if (matchId.startsWith("SF-")) {
+      num = parseInt(matchId.replace("SF-", ""), 10);
+    } else if (matchId === "3RD") {
+      num = 103;
+    } else if (matchId === "F") {
+      num = 104;
+    }
+
+    if (num !== undefined) {
+      const lr = (liveResults || []).find((r) => r.num === num);
+      return lr?.status === "finished";
+    }
+    return false;
   };
 
-  // Check if a match is upcoming (i.e. participants resolved, but not finished)
+  // Check if a match is live
+  const isMatchLive = (matchId: string, match: KnockoutMatch) => {
+    let num: number | undefined;
+    if (matchId.startsWith("R32-")) {
+      num = parseInt(matchId.replace("R32-", ""), 10);
+    } else if (matchId.startsWith("R16-")) {
+      num = parseInt(matchId.replace("R16-", ""), 10);
+    } else if (matchId.startsWith("QF-")) {
+      num = parseInt(matchId.replace("QF-", ""), 10);
+    } else if (matchId.startsWith("SF-")) {
+      num = parseInt(matchId.replace("SF-", ""), 10);
+    } else if (matchId === "3RD") {
+      num = 103;
+    } else if (matchId === "F") {
+      num = 104;
+    }
+
+    if (num !== undefined) {
+      const lr = (liveResults || []).find((r) => r.num === num);
+      return lr?.status === "live";
+    }
+    return false;
+  };
+
+  // Check if a match is upcoming (i.e. participants resolved, but not finished/live)
   const isMatchUpcoming = (match: KnockoutMatch) => {
-    return !!match.team1Id && !!match.team2Id && !mockMatchScores[match.id];
+    let num: number | undefined;
+    const matchId = match.id;
+    if (matchId.startsWith("R32-")) {
+      num = parseInt(matchId.replace("R32-", ""), 10);
+    } else if (matchId.startsWith("R16-")) {
+      num = parseInt(matchId.replace("R16-", ""), 10);
+    } else if (matchId.startsWith("QF-")) {
+      num = parseInt(matchId.replace("QF-", ""), 10);
+    } else if (matchId.startsWith("SF-")) {
+      num = parseInt(matchId.replace("SF-", ""), 10);
+    } else if (matchId === "3RD") {
+      num = 103;
+    } else if (matchId === "F") {
+      num = 104;
+    }
+
+    if (num !== undefined) {
+      const lr = (liveResults || []).find((r) => r.num === num);
+      return (
+        !!match.team1Id && !!match.team2Id && (!lr || lr.status === "upcoming")
+      );
+    }
+    return false;
   };
 
   return (
@@ -381,10 +660,14 @@ export function StandingsView({
                           </thead>
                           <tbody className="divide-y divide-hairline/10 dark:divide-ash/10 select-none">
                             {group.teams.map((team, index) => {
-                              const stats = getMockGroupStats(
-                                index,
-                                group.group,
-                              );
+                              const stats = teamStats.get(team.id) || {
+                                position: index + 1,
+                                pts: 0,
+                                gf: 0,
+                                ga: 0,
+                                gd: 0,
+                                qualified: true,
+                              };
                               const gdSign =
                                 stats.gd > 0 ? `+${stats.gd}` : stats.gd;
                               return (
@@ -620,8 +903,9 @@ export function StandingsView({
                         winnerId,
                         matchObj,
                       }) => {
-                        const scores = mockMatchScores[matchId];
+                        const scores = matchScores[matchId];
                         const finished = isMatchFinished(matchId, matchObj);
+                        const live = isMatchLive(matchId, matchObj);
                         const upcoming = isMatchUpcoming(matchObj);
 
                         const team1Code = team1
@@ -659,6 +943,11 @@ export function StandingsView({
                                 <span className="text-mute/70 dark:text-stone/70 font-semibold">
                                   {tCalendar("finished")}
                                 </span>
+                              ) : live ? (
+                                <span className="text-sale font-bold animate-pulse flex items-center gap-1">
+                                  <span className="h-1 w-1 rounded-full bg-sale" />
+                                  {tCalendar("live")}
+                                </span>
                               ) : upcoming ? (
                                 <span className="text-primary font-bold animate-pulse flex items-center gap-1">
                                   <span className="h-1 w-1 rounded-full bg-primary" />
@@ -692,7 +981,7 @@ export function StandingsView({
                                         finished && winnerId === team1?.id
                                       }
                                       rightAddon={
-                                        finished && scores ? (
+                                        (finished || live) && scores ? (
                                           <div
                                             className={cn(
                                               "flex items-center gap-1 font-[family-name:var(--font-oswald)] text-xs font-bold shrink-0 pr-1",
@@ -744,7 +1033,7 @@ export function StandingsView({
                                         finished && winnerId === team2?.id
                                       }
                                       rightAddon={
-                                        finished && scores ? (
+                                        (finished || live) && scores ? (
                                           <div
                                             className={cn(
                                               "flex items-center gap-1 font-[family-name:var(--font-oswald)] text-xs font-bold shrink-0 pr-1",

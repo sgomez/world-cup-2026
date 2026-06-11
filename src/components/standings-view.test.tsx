@@ -49,8 +49,8 @@ vi.mock("@/i18n/navigation", () => ({
 }));
 
 // Minimal teams/groups mock
-vi.mock("@/lib/teams", () => ({
-  getGroups: vi.fn(() => [
+vi.mock("@/lib/teams", () => {
+  const mockGroups = [
     {
       group: "A",
       teams: [
@@ -69,8 +69,43 @@ vi.mock("@/lib/teams", () => ({
         { id: "par", name: "Paraguay", flag: "🇵🇾", code: "py" },
       ],
     },
+  ];
+
+  return {
+    getGroups: vi.fn(() => mockGroups),
+    getAllTeamsLookup: vi.fn(() => new Map()),
+    getTeamByName: vi.fn((name: string) => {
+      const normalizedSearch = name.trim().toLowerCase();
+      for (const group of mockGroups) {
+        const found = group.teams.find(
+          (t) =>
+            t.name.toLowerCase() === normalizedSearch ||
+            t.id.toLowerCase() === normalizedSearch,
+        );
+        if (found) return found;
+      }
+      return null;
+    }),
+    getTeamById: vi.fn((id: string) => {
+      for (const group of mockGroups) {
+        const found = group.teams.find((t) => t.id === id);
+        if (found) return found;
+      }
+      return null;
+    }),
+  };
+});
+
+vi.mock("@/lib/matches", () => ({
+  getAllMatches: vi.fn(() => [
+    {
+      num: 1,
+      team1: "South Africa",
+      team2: "Mexico",
+      group: "Group A",
+      round: "Group Stage",
+    },
   ]),
-  getAllTeamsLookup: vi.fn(() => new Map()),
 }));
 
 // Mock bracket-core to avoid complex bracket logic
@@ -204,5 +239,28 @@ describe("StandingsView", () => {
     // Advance another 30 seconds
     vi.advanceTimersByTime(30_000);
     expect(mockRefresh).toHaveBeenCalledTimes(2);
+  });
+
+  it("computes and displays actual group team statistics when liveResults are provided", () => {
+    const liveResults = [
+      { num: 1, status: "finished", goals1: 2, goals2: 1 }, // South Africa 2 - 1 Mexico
+    ] as any;
+
+    render(
+      <StandingsView
+        defaultTab="groups"
+        locale="en"
+        liveTeamIds={new Set()}
+        liveResults={liveResults}
+      />,
+    );
+
+    // South Africa (rsa) should have 3 points, 2 GF, 1 GA, +1 GD
+    // Mexico (mex) should have 0 points, 1 GF, 2 GA, -1 GD
+    expect(screen.getAllByText("3").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("2").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("1").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("+1").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("-1").length).toBeGreaterThan(0);
   });
 });

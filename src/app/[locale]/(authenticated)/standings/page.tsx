@@ -67,12 +67,22 @@ export default async function StandingsPage({
       : null;
   const savedAdvancement = derived.advancement;
 
+  const liveResultsData = liveResults.map((lr) => ({
+    num: lr.num,
+    status: lr.status,
+    goals1: lr.goals1,
+    goals2: lr.goals2,
+    penalties1: lr.penalties1,
+    penalties2: lr.penalties2,
+  }));
+
   return (
     <div className="container mx-auto py-6">
       <StandingsView
         defaultTab={defaultTab}
         locale={locale}
         liveTeamIds={liveTeamIds}
+        liveResults={liveResultsData}
         savedPredictions={savedPredictions}
         savedKnockoutWinners={savedKnockoutWinners}
         savedAdvancement={savedAdvancement}
