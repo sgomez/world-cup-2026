@@ -153,25 +153,19 @@ export const stableCriterion: TieBreakCriterion = (ctx) => {
 };
 
 /**
- * Creates a manual tie-break criterion from an Admin-supplied ordered list.
- * Only acts on a cluster — teams not in the cluster are ignored.
- * Teams not mentioned in the manual list retain their current relative order.
+ * Creates a manual tie-break criterion from Admin-supplied numeric factors.
+ * Sorts tied clusters of teams by their factors descending.
+ * If factors are equal or not defined, they remain tied so fallback rules can apply.
  *
  * Because this criterion runs after points and h2h, it can only order teams
  * that the earlier rules left in the same cluster. It cannot reorder teams
  * already separated by points or head-to-head.
  */
-export function makeManualCriterion(manualOrder: TeamId[]): TieBreakCriterion {
+export function makeManualFactorCriterion(
+  factors: Record<string, number>,
+): TieBreakCriterion {
   return (ctx) => {
-    const clusterSet = new Set(ctx.cluster);
-    // Only keep entries that are in the cluster
-    const ordered = manualOrder.filter((t) => clusterSet.has(t));
-    // Teams not mentioned in manualOrder preserve their input order at the end
-    const mentioned = new Set(ordered);
-    const unmentioned = ctx.cluster.filter((t) => !mentioned.has(t));
-    const finalOrder = [...ordered, ...unmentioned];
-    // Return as singletons (fully separates all mentioned teams)
-    return finalOrder.map((t) => [t]);
+    return groupByScore(ctx.cluster, (t) => factors[t] ?? 0);
   };
 }
 
@@ -291,7 +285,7 @@ export type ThirdsResult = {
  */
 export function rankThirds(
   thirds: ThirdPlaceEntry[],
-  manualTieBreaks: Record<string, TeamId[]>,
+  manualTieBreaks: Record<string, Record<string, number>>,
 ): ThirdsResult {
   // Sort by points desc, then GD desc, then goals desc, then stable (group letter order)
   const teamIds = thirds.map((t) => t.teamId);
@@ -321,12 +315,12 @@ export function rankThirds(
   };
 
   // Optional manual override for thirds
-  const manualList = manualTieBreaks.thirds;
+  const manualFactors = manualTieBreaks.thirds;
   const thirdsChain: TieBreakCriterion[] = [
     pointsCriterion,
     gdCriterion,
     goalsCriterion,
-    ...(manualList ? [makeManualCriterion(manualList)] : []),
+    ...(manualFactors ? [makeManualFactorCriterion(manualFactors)] : []),
     stableByGroup,
   ];
 
@@ -387,7 +381,7 @@ export type GroupAdvancement = {
 export type AdvancementInput = {
   groups: Record<string, { teams: TeamId[]; matches: GroupMatch[] }>;
   tieBreakChain: TieBreakCriterion[];
-  manualTieBreaks: Record<string, TeamId[]>;
+  manualTieBreaks: Record<string, Record<string, number>>;
   finishedOnly: boolean;
 };
 
@@ -436,11 +430,11 @@ export function getAdvancement(input: AdvancementInput): AdvancementResult {
     }
 
     // Build criteria with manual tie-break if provided
-    const manualList = input.manualTieBreaks[groupKey];
-    const chain: TieBreakCriterion[] = manualList
+    const manualFactors = input.manualTieBreaks[groupKey];
+    const chain: TieBreakCriterion[] = manualFactors
       ? [
           ...input.tieBreakChain.slice(0, -1), // drop stable
-          makeManualCriterion(manualList),
+          makeManualFactorCriterion(manualFactors),
           stableCriterion,
         ]
       : input.tieBreakChain;

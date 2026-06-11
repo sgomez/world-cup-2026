@@ -4,8 +4,8 @@ import { PrismaTournamentRepository } from "./prisma-tournament-repository";
 
 const ROW = {
   id: "singleton",
-  manualTieBreaks: { A: ["mex", "kor"] },
-  thirdPlaceManualOrder: ["mex", "bra"],
+  manualTieBreaks: { A: { mex: 2, kor: 1 } },
+  thirdPlaceManualOrder: { mex: 2, bra: 1 },
   createdAt: new Date(),
   updatedAt: new Date(),
 };

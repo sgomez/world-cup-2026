@@ -37,8 +37,12 @@ export async function setManualTieBreakAction(
     const repo = new PrismaTournamentRepository(prisma);
     const existing = await repo.get();
     const tournament = existing ?? Tournament.createDefault();
+    const factors: Record<string, number> = {};
+    orderedIds.forEach((id, idx) => {
+      factors[id] = orderedIds.length - idx;
+    });
     const updated = tournament
-      .setManualTieBreak(group, orderedIds)
+      .setManualTieBreak(group, factors)
       ._unsafeUnwrap();
     const saveResult = await repo.save(updated);
 
@@ -101,8 +105,15 @@ export async function setThirdPlaceManualOrderAction(
     const repo = new PrismaTournamentRepository(prisma);
     const existing = await repo.get();
     const tournament = existing ?? Tournament.createDefault();
+    let factors: Record<string, number> | null = null;
+    if (orderedIds) {
+      factors = {};
+      orderedIds.forEach((id, idx) => {
+        factors![id] = orderedIds.length - idx;
+      });
+    }
     const updated = tournament
-      .setThirdPlaceManualOrder(orderedIds)
+      .setThirdPlaceManualOrder(factors)
       ._unsafeUnwrap();
     const saveResult = await repo.save(updated);
 

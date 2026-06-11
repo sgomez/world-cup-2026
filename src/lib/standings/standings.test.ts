@@ -9,7 +9,7 @@ import {
   h2hGoalDiffCriterion,
   h2hGoalsCriterion,
   h2hPointsCriterion,
-  makeManualCriterion,
+  makeManualFactorCriterion,
   rankThirds,
   stableCriterion,
   type TeamId,
@@ -211,11 +211,11 @@ describe("computeGroupStanding — stable fallback", () => {
   });
 });
 
-describe("manual criterion", () => {
-  it("applies only to still-tied clusters, cannot reorder separated teams", () => {
+describe("manual factor criterion", () => {
+  it("applies only to still-tied clusters, sorting by factors descending", () => {
     const teams: TeamId[] = ["A", "B", "C", "D"];
     // A has more points than B, C, D
-    // B and C are tied on everything → admin says C before B
+    // B and C are tied on everything → admin sets factors: C = 3, B = 2
     const matches: GroupMatch[] = [
       match(1, "A", "B", 3, 0),
       match(2, "A", "C", 3, 0),
@@ -224,13 +224,9 @@ describe("manual criterion", () => {
       match(5, "B", "D", 2, 0),
       match(6, "C", "D", 2, 0),
     ];
-    // A=9, B=1+3=4, C=1+3=4, D=0; B and C tied after h2h
-    // h2h B vs C: draw 1-1 → same h2h pts (1 each), same GD (0), same goals (1)
-    // manual says C before B
-    const _chain = [...DEFAULT_TIEBREAK_CHAIN];
-    // Replace stable with manual then stable
-    const manualList: TeamId[] = ["C", "B"]; // Admin says: C first
-    const manual = makeManualCriterion(manualList);
+    // B and C tied after h2h. Admin sets C = 3, B = 2
+    const manualFactors: Record<string, number> = { C: 3, B: 2 };
+    const manual = makeManualFactorCriterion(manualFactors);
 
     const order = computeGroupStanding(teams, matches, [
       ...DEFAULT_TIEBREAK_CHAIN.slice(0, -1), // drop stableCriterion
@@ -239,12 +235,12 @@ describe("manual criterion", () => {
     ]);
 
     expect(order[0]).toBe("A"); // A clearly first
-    expect(order[1]).toBe("C"); // manual put C before B
+    expect(order[1]).toBe("C"); // manual put C before B because 3 > 2
     expect(order[2]).toBe("B");
     expect(order[3]).toBe("D");
   });
 
-  it("manual criterion provably cannot reorder teams separated by points", () => {
+  it("manual factor criterion provably cannot reorder teams separated by points", () => {
     const teams: TeamId[] = ["A", "B", "C", "D"];
     const matches: GroupMatch[] = [
       match(1, "A", "B", 2, 0),
@@ -255,11 +251,9 @@ describe("manual criterion", () => {
       match(6, "C", "D", 2, 0),
     ];
     // A=9, B=4, C=4, D=0
-    // Even if manual says D, B, C, A — it only acts on tied clusters
-    // So D cannot jump over B or C (D is alone in its cluster)
-    // and A cannot be demoted
-    const manualList: TeamId[] = ["D", "B", "C", "A"]; // Admin ordered wrong way
-    const manual = makeManualCriterion(manualList);
+    // Even if manual says D=10, B=5, C=4, A=1 — it only acts on tied clusters
+    const manualFactors: Record<string, number> = { D: 10, B: 5, C: 4, A: 1 };
+    const manual = makeManualFactorCriterion(manualFactors);
 
     const order = computeGroupStanding(teams, matches, [
       ...DEFAULT_TIEBREAK_CHAIN.slice(0, -1),
@@ -269,9 +263,39 @@ describe("manual criterion", () => {
 
     expect(order[0]).toBe("A"); // A must be first (9pts)
     expect(order[3]).toBe("D"); // D must be last (0pts)
-    // B and C are tied; manual says B before C (D, B, C, A filtered to cluster {B,C} → B then C)
+    // B and C are tied; manual factors say B (5) > C (4)
     expect(order[1]).toBe("B");
     expect(order[2]).toBe("C");
+  });
+
+  it("keeps teams tied (for next fallback) when they have the same factor", () => {
+    const teams: TeamId[] = ["A", "B", "C", "D"];
+    const matches: GroupMatch[] = [
+      match(1, "A", "B", 1, 1),
+      match(2, "A", "C", 1, 1),
+      match(3, "B", "C", 1, 1),
+      match(4, "A", "D", 1, 0),
+      match(5, "B", "D", 1, 0),
+      match(6, "C", "D", 1, 0),
+    ];
+    // A, B, C tied at 5pts.
+    // factors: B=5, C=5, A=1
+    // manual factor criterion groups them by factor: [{B, C}, {A}]
+    // Then next criterion (stable) refines the tied sub-cluster {B, C} -> [B, C]
+    const manualFactors: Record<string, number> = { B: 5, C: 5, A: 1 };
+    const manual = makeManualFactorCriterion(manualFactors);
+
+    const order = computeGroupStanding(teams, matches, [
+      ...DEFAULT_TIEBREAK_CHAIN.slice(0, -1),
+      manual,
+      stableCriterion,
+    ]);
+
+    expect(order[3]).toBe("D"); // D last (0pts)
+    // B and C are first (factor 5), then A (factor 1). B and C preserve their relative order B, C
+    expect(order[0]).toBe("B");
+    expect(order[1]).toBe("C");
+    expect(order[2]).toBe("A");
   });
 });
 

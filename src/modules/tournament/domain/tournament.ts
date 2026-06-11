@@ -17,10 +17,10 @@ import type { DomainError } from "./errors";
  */
 export type TournamentState = {
   id: string;
-  /** Per-group Admin-supplied tie-break order. Key = uppercase group letter (e.g. "A"). */
-  manualTieBreaks: Record<string, string[]>;
+  /** Per-group Admin-supplied tie-break factors. Key = uppercase group letter (e.g. "A"). */
+  manualTieBreaks: Record<string, Record<string, number>>;
   /** Admin-supplied thirds ranking override. Null if no manual override. */
-  thirdPlaceManualOrder: string[] | null;
+  thirdPlaceManualOrder: Record<string, number> | null;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -44,11 +44,11 @@ export class Tournament {
     return this.state.id;
   }
 
-  get manualTieBreaks(): Record<string, string[]> {
+  get manualTieBreaks(): Record<string, Record<string, number>> {
     return this.state.manualTieBreaks;
   }
 
-  get thirdPlaceManualOrder(): string[] | null {
+  get thirdPlaceManualOrder(): Record<string, number> | null {
     return this.state.thirdPlaceManualOrder;
   }
 
@@ -65,19 +65,19 @@ export class Tournament {
   }
 
   /**
-   * Sets the manual tie-break order for a group.
+   * Sets the manual tie-break factors for a group.
    * Groups outside A–L are silently ignored.
    */
   setManualTieBreak(
     group: string,
-    orderedIds: string[],
+    factors: Record<string, number>,
   ): Result<Tournament, DomainError> {
     return ok(
       new Tournament({
         ...this.state,
         manualTieBreaks: {
           ...this.state.manualTieBreaks,
-          [group]: orderedIds,
+          [group]: factors,
         },
       }),
     );
@@ -98,15 +98,15 @@ export class Tournament {
   }
 
   /**
-   * Sets the manual order for the cross-group thirds cluster.
+   * Sets the manual factors for the cross-group thirds cluster.
    */
   setThirdPlaceManualOrder(
-    orderedIds: string[] | null,
+    factors: Record<string, number> | null,
   ): Result<Tournament, DomainError> {
     return ok(
       new Tournament({
         ...this.state,
-        thirdPlaceManualOrder: orderedIds,
+        thirdPlaceManualOrder: factors,
       }),
     );
   }
