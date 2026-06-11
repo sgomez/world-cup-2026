@@ -10,8 +10,8 @@ export async function register() {
     const { PrismaLiveResultRepository } = await import(
       "@/modules/live/infrastructure/prisma-live-result-repository"
     );
-    const { MockLiveFeed } = await import(
-      "@/modules/live/infrastructure/mock-live-feed"
+    const { createLiveFeed } = await import(
+      "@/modules/live/infrastructure/live-feed-factory"
     );
     const { SystemClock } = await import("@/modules/live/domain/clock");
     const { tickLiveFeed } = await import(
@@ -20,7 +20,13 @@ export async function register() {
 
     const repo = new PrismaLiveResultRepository(prisma);
     const clock = new SystemClock();
-    const feed = new MockLiveFeed(clock);
+    const feed = createLiveFeed(
+      {
+        source: process.env.LIVE_FEED_SOURCE,
+        baseUrl: process.env.LIVE_FEED_BASE_URL,
+      },
+      clock,
+    );
 
     const cronPattern = process.env.LIVE_TICK_CRON || "*/5 * * * *";
 
