@@ -1,91 +1,47 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useReducer, useState, useTransition } from "react";
-import { AdminAdvancementGate } from "@/components/admin-advancement-gate";
-import { GroupStage } from "@/components/group-stage";
-import { KnockoutStage } from "@/components/knockout-stage";
+import { useState } from "react";
+import { AdminMatchScoreEditor } from "@/components/admin-match-score-editor";
+import { AdminTieBreakPanel } from "@/components/admin-tie-break-panel";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/toast";
-import {
-  createInitialState,
-  type KnockoutMatch,
-  type PredictionState,
-  type TournamentAction,
-  type TournamentState,
-  tournamentReducer,
-} from "@/lib/prediction-state";
+import type { Match } from "@/lib/matches";
+import type { LiveResultState } from "@/modules/live/domain/live-result";
+import type { GroupTieInfo } from "@/modules/tournament/domain/derive-result";
 
 export function AdminResultEditor({
-  savedPredictions,
-  savedKnockoutWinners,
-  savedAdvancement = [],
-  savedBracketView,
+  matches,
+  liveResults,
+  groupTieInfo,
+  thirdsTieClusters,
+  manualTieBreaks,
+  thirdPlaceManualOrder,
+  locale,
 }: {
-  savedPredictions: PredictionState | null;
-  savedKnockoutWinners?: Record<string, string> | null;
-  savedAdvancement?: string[];
-  savedBracketView: Record<string, KnockoutMatch>;
+  matches: Match[];
+  liveResults: LiveResultState[];
+  groupTieInfo: Record<string, GroupTieInfo>;
+  thirdsTieClusters: string[][];
+  manualTieBreaks: Record<string, string[]>;
+  thirdPlaceManualOrder: string[] | null;
+  locale: string;
 }) {
   const t = useTranslations("admin");
-  const { toast } = useToast();
-  const [state, dispatch] = useReducer(
-    (
-      s: TournamentState,
-      a: TournamentAction | { type: "RESET"; state: TournamentState },
-    ): TournamentState => {
-      if (a.type === "RESET") {
-        return a.state;
-      }
-      return tournamentReducer(s, a as TournamentAction);
-    },
-    null,
-    () => {
-      const baseState = createInitialState(
-        savedPredictions,
-        savedKnockoutWinners,
-      );
-      return {
-        ...baseState,
-        knockoutMatches: savedBracketView,
-      };
-    },
-  );
-  const [isPending, startTransition] = useTransition();
-  const [activeTab, setActiveTab] = useState("groups");
-  const [advancement, setAdvancement] = useState<string[]>(savedAdvancement);
-
-  useEffect(() => {
-    setAdvancement(savedAdvancement);
-  }, [savedAdvancement]);
-
-  useEffect(() => {
-    const newState = createInitialState(savedPredictions, savedKnockoutWinners);
-    newState.knockoutMatches = savedBracketView;
-    dispatch({ type: "RESET", state: newState });
-  }, [savedPredictions, savedKnockoutWinners, savedBracketView]);
-
-  // Group orders, third-place order, and knockout winners are now derived from
-  // LiveResults (ADR 0015). The admin exception-review UI will be implemented in
-  // issue #177. For now these handlers are read-only no-ops.
-  function handleDispatch(_action: TournamentAction) {
-    // no-op: derived from LiveResults
-  }
-
-  function handleToggleAdvancement(_ref: string) {
-    // no-op: advancement derived from LiveResults
-    startTransition(async () => {
-      // placeholder until issue #177
-    });
-  }
+  const [activeTab, setActiveTab] = useState("scores");
 
   const headerDescription =
-    activeTab === "groups"
+    activeTab === "scores"
       ? t("resultsDescription")
-      : activeTab === "advancement"
-        ? t("advancementGateDescription")
-        : t("knockoutStageDescription");
+      : t("advancementGateDescription");
+
+  // Derive the current thirds standing from the tie info (group "thirds" positions)
+  // The standing across all groups' third-place teams comes from the tie info result
+  // For the tie-break panel we pass the team IDs of all third-placed teams
+  // in their current derived order (from the group standings)
+  const thirdsStanding = Object.entries(groupTieInfo)
+    .map(([groupLetter, info]) => info.standing[2] ?? null)
+    .filter((id): id is string => id !== null);
 
   return (
     <div>
@@ -99,48 +55,31 @@ export function AdminResultEditor({
           className="mb-6 w-full justify-start gap-6 pb-0"
         >
           <TabsTrigger
-            value="groups"
+            value="scores"
             className="px-1 py-2 text-caption-md text-mute dark:text-stone data-active:text-ink dark:data-active:text-canvas"
           >
             {t("groupStageTab")}
           </TabsTrigger>
           <TabsTrigger
-            value="advancement"
+            value="tiebreaks"
             className="px-1 py-2 text-caption-md text-mute dark:text-stone data-active:text-ink dark:data-active:text-canvas"
           >
             {t("advancementGateTab")}
           </TabsTrigger>
-          <TabsTrigger
-            value="knockout"
-            className="px-1 py-2 text-caption-md text-mute dark:text-stone data-active:text-ink dark:data-active:text-canvas"
-          >
-            {t("knockoutStageTab")}
-          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="groups">
-          <GroupStage
-            state={state}
-            dispatch={handleDispatch}
-            readOnly={isPending}
-          />
+        <TabsContent value="scores">
+          <AdminMatchScoreEditor matches={matches} liveResults={liveResults} />
         </TabsContent>
 
-        <TabsContent value="advancement">
-          <AdminAdvancementGate
-            groupOrders={state.groupOrders}
-            thirdPlaceOrder={state.thirdPlaceOrder}
-            advancement={advancement}
-            onToggle={handleToggleAdvancement}
-            readOnly={isPending}
-          />
-        </TabsContent>
-
-        <TabsContent value="knockout">
-          <KnockoutStage
-            state={state}
-            dispatch={handleDispatch}
-            readOnly={isPending}
+        <TabsContent value="tiebreaks">
+          <AdminTieBreakPanel
+            groupTieInfo={groupTieInfo}
+            thirdsTieClusters={thirdsTieClusters}
+            thirdsStanding={thirdsStanding}
+            manualTieBreaks={manualTieBreaks}
+            thirdPlaceManualOrder={thirdPlaceManualOrder}
+            locale={locale}
           />
         </TabsContent>
       </Tabs>

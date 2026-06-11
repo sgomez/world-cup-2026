@@ -299,6 +299,45 @@
     "NOT_AUTHENTICATED": "Not authenticated",
     "NAME_REQUIRED": "Name is required"
   },
+  "liveErrors": {
+    "FORBIDDEN": "You are not authorized to modify match results.",
+    "INVALID_NUM": "Invalid match number.",
+    "NOT_FOUND": "Match not found.",
+    "INVALID_GOALS": "Goals must be zero or positive.",
+    "PENALTIES_NOT_ALLOWED": "Penalties are only allowed in knockout matches.",
+    "SAVE_FAILED": "Failed to save the match result. Please try again."
+  },
+  "adminMatchEditor": {
+    "title": "Live Scores",
+    "description": "Enter or correct live match scores. Changes apply immediately.",
+    "matchLabel": "Match {num}",
+    "groupLabel": "Group {group}",
+    "statusLive": "Live",
+    "statusFinished": "Finished",
+    "goals1Label": "Goals (team 1)",
+    "goals2Label": "Goals (team 2)",
+    "penalties1Label": "Penalties (team 1)",
+    "penalties2Label": "Penalties (team 2)",
+    "saveButton": "Save",
+    "saving": "Saving…",
+    "savedSuccess": "Result saved.",
+    "knockoutOnly": "Penalties only apply to knockout matches.",
+    "noLiveResults": "No live or finished matches yet.",
+    "correctionNote": "Finished scores can be corrected here."
+  },
+  "adminTieBreak": {
+    "title": "Tie-Break Ordering",
+    "description": "Drag teams within a tied cluster to set the final order. Separated teams are locked.",
+    "tiedCluster": "Tied cluster — drag to reorder",
+    "pinnedTeam": "Separated by rules — pinned",
+    "saveOrder": "Save order",
+    "saving": "Saving…",
+    "savedSuccess": "Tie-break order saved.",
+    "clearOrder": "Clear manual order",
+    "noTies": "No unresolved ties at this time.",
+    "groupTieBreak": "Group {group} — Tie-Break",
+    "thirdsTieBreak": "Best Third-Place Teams — Tie-Break"
+  },
   "leaderboard": {
     "title": "Leaderboard",
     "description": "Points ranking of your predictions.",

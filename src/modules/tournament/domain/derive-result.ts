@@ -30,6 +30,8 @@ import { getAllMatches } from "@/lib/matches";
 import {
   computeGroupStanding,
   DEFAULT_TIEBREAK_CHAIN,
+  detectGroupTies,
+  detectThirdsTies,
   type GroupMatch,
   getAdvancement,
   makeManualCriterion,
@@ -629,4 +631,173 @@ export function isCompetitionEndedFromLiveResults(
   const match103 = byNum.get(103);
   const match104 = byNum.get(104);
   return match103?.status === "finished" && match104?.status === "finished";
+}
+
+// ---------------------------------------------------------------------------
+// Tie-info derivation for the Admin exception-review panel
+// ---------------------------------------------------------------------------
+
+/**
+ * Per-group tie info: the current standing order and which team clusters
+ * remain unresolved after the automatic rules (need a manual drag-order).
+ */
+export type GroupTieInfo = {
+  /** Current standing order (team IDs, from top to bottom). */
+  standing: TeamId[];
+  /**
+   * Clusters of team IDs that are still tied after automatic criteria.
+   * Each sub-array is a cluster of >= 2 teams that need admin intervention.
+   * Empty array = no ties.
+   */
+  tieClusters: TeamId[][];
+};
+
+/**
+ * Tie info result from `deriveTieInfo`.
+ */
+export type TieInfoResult = {
+  /** Per-group tie info, keyed by uppercase group letter (e.g. "A"). */
+  groups: Record<string, GroupTieInfo>;
+  /**
+   * Thirds tie clusters. Non-empty only when all 12 groups are complete
+   * and at least two thirds share identical stats.
+   */
+  thirdsTieClusters: TeamId[][];
+};
+
+/**
+ * Derives the current standing and unresolved tie clusters for all groups and
+ * the thirds ranking. Used to power the Admin tie-break ordering UI.
+ *
+ * Only `finished` matches are considered (provisional standings from live
+ * matches are not actionable for the manual tie-break).
+ */
+export function deriveTieInfo(
+  liveResults: LiveResult[],
+  manualTieBreaks: Record<string, TeamId[]>,
+  thirdPlaceManualOrder: TeamId[] | null,
+): TieInfoResult {
+  const nameToId = buildNameToIdMap();
+  const allMatchesData = getAllMatches();
+  const liveByNum = new Map<number, LiveResult>(
+    liveResults.map((lr) => [lr.num, lr]),
+  );
+
+  const groupsData = getGroups("en");
+  const groupsMap: Record<string, { teams: TeamId[]; matches: GroupMatch[] }> =
+    {};
+
+  for (const groupData of groupsData) {
+    const groupLetter = groupData.group;
+    const groupName = `Group ${groupLetter}`;
+    const teamIds = groupData.teams.map((t) => t.id);
+    const groupMatches: GroupMatch[] = [];
+
+    for (const m of allMatchesData) {
+      if (m.group !== groupName) continue;
+      const lr = liveByNum.get(m.num);
+      if (!lr) continue;
+      const team1Id = nameToId.get(m.team1);
+      const team2Id = nameToId.get(m.team2);
+      if (!team1Id || !team2Id) continue;
+      groupMatches.push({
+        num: m.num,
+        team1: team1Id,
+        team2: team2Id,
+        goals1: lr.goals1,
+        goals2: lr.goals2,
+        status: lr.status,
+        group: groupLetter,
+      });
+    }
+
+    groupsMap[groupLetter] = { teams: teamIds, matches: groupMatches };
+  }
+
+  const fullManualTieBreaks: Record<string, TeamId[]> = { ...manualTieBreaks };
+  if (thirdPlaceManualOrder) {
+    fullManualTieBreaks.thirds = thirdPlaceManualOrder;
+  }
+
+  // Build per-group results
+  const groups: Record<string, GroupTieInfo> = {};
+
+  for (const [groupLetter, { teams, matches }] of Object.entries(groupsMap)) {
+    const finishedMatches = matches.filter((m) => m.status === "finished");
+
+    const manualList = fullManualTieBreaks[groupLetter];
+    const chain = manualList
+      ? [
+          ...DEFAULT_TIEBREAK_CHAIN.slice(0, -1),
+          makeManualCriterion(manualList),
+          stableCriterion,
+        ]
+      : DEFAULT_TIEBREAK_CHAIN;
+
+    const standing = computeGroupStanding(teams, finishedMatches, chain);
+    const tieClusters = detectGroupTies(teams, finishedMatches);
+
+    groups[groupLetter] = { standing, tieClusters };
+  }
+
+  // Build thirds tier info
+  const allGroupsComplete = Object.values(groupsMap).every(
+    ({ matches }) =>
+      matches.filter((m) => m.status === "finished").length === 6,
+  );
+
+  let thirdsTieClusters: TeamId[][] = [];
+
+  if (allGroupsComplete) {
+    const thirdEntries: ThirdPlaceEntry[] = [];
+
+    for (const [groupLetter, { teams, matches }] of Object.entries(groupsMap)) {
+      const finishedMatches = matches.filter((m) => m.status === "finished");
+      const manualList = fullManualTieBreaks[groupLetter];
+      const chain = manualList
+        ? [
+            ...DEFAULT_TIEBREAK_CHAIN.slice(0, -1),
+            makeManualCriterion(manualList),
+            stableCriterion,
+          ]
+        : DEFAULT_TIEBREAK_CHAIN;
+
+      const standing = computeGroupStanding(teams, finishedMatches, chain);
+      if (standing.length >= 3) {
+        const third = standing[2];
+        const teamMatches = finishedMatches.filter(
+          (m) => m.team1 === third || m.team2 === third,
+        );
+        let pts = 0;
+        let gf = 0;
+        let ga = 0;
+        for (const m of teamMatches) {
+          if (m.team1 === third) {
+            gf += m.goals1;
+            ga += m.goals2;
+            if (m.goals1 > m.goals2) pts += 3;
+            else if (m.goals1 === m.goals2) pts += 1;
+          } else {
+            gf += m.goals2;
+            ga += m.goals1;
+            if (m.goals2 > m.goals1) pts += 3;
+            else if (m.goals2 === m.goals1) pts += 1;
+          }
+        }
+        thirdEntries.push({
+          group: groupLetter.toLowerCase(),
+          teamId: third,
+          points: pts,
+          goalDiff: gf - ga,
+          goals: gf,
+        });
+      }
+    }
+
+    if (thirdEntries.length === 12) {
+      thirdsTieClusters = detectThirdsTies(thirdEntries);
+    }
+  }
+
+  return { groups, thirdsTieClusters };
 }

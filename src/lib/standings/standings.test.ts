@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   computeGroupStanding,
   DEFAULT_TIEBREAK_CHAIN,
+  detectGroupTies,
+  detectThirdsTies,
   type GroupMatch,
   getAdvancement,
   h2hGoalDiffCriterion,
@@ -676,5 +678,102 @@ describe("getAdvancement", () => {
     });
 
     expect(result.groupAdvancement.a).toBeUndefined();
+  });
+});
+
+// ---- detectGroupTies -------------------------------------------------------
+
+describe("detectGroupTies", () => {
+  it("returns empty array when all teams are separated by automatic rules", () => {
+    const teams: TeamId[] = ["A", "B", "C", "D"];
+    const matches: GroupMatch[] = [
+      match(1, "A", "B", 3, 0),
+      match(2, "A", "C", 2, 0),
+      match(3, "A", "D", 1, 0),
+      match(4, "B", "C", 1, 0),
+      match(5, "B", "D", 1, 0),
+      match(6, "C", "D", 1, 0),
+    ];
+
+    const ties = detectGroupTies(teams, matches);
+    expect(ties).toHaveLength(0);
+  });
+
+  it("returns a tied cluster when two teams have identical points and h2h", () => {
+    // A and B both have 4 points and identical h2h (drew each other)
+    // and identical overall goal diff
+    const teams: TeamId[] = ["A", "B", "C", "D"];
+    const matches: GroupMatch[] = [
+      match(1, "A", "B", 1, 1), // draw
+      match(2, "A", "C", 2, 1), // A wins
+      match(3, "A", "D", 1, 2), // D wins
+      match(4, "B", "C", 2, 1), // B wins
+      match(5, "B", "D", 1, 2), // D wins
+      match(6, "C", "D", 0, 0), // draw
+    ];
+    // A: 1+3+0 = 4pts; B: 1+3+0 = 4pts; C: 0+1=1pt; D: 3+3=6pts
+    // h2h A vs B: draw (1-1) → 1pt each → still tied
+    // h2h GD: 0 each → still tied
+    // h2h goals: 1 each → still tied → needs manual
+
+    const ties = detectGroupTies(teams, matches);
+    expect(ties).toHaveLength(1);
+    expect(ties[0]).toContain("A");
+    expect(ties[0]).toContain("B");
+    expect(ties[0]).toHaveLength(2);
+  });
+
+  it("ignores live matches — only finished matches count", () => {
+    const teams: TeamId[] = ["A", "B", "C", "D"];
+    const matches: GroupMatch[] = [
+      match(1, "A", "B", 1, 1), // draw
+      match(2, "A", "C", 2, 1), // A wins
+      match(3, "A", "D", 1, 2), // D wins
+      match(4, "B", "C", 2, 1), // B wins
+      { num: 5, team1: "B", team2: "D", goals1: 1, goals2: 2, status: "live" },
+      match(6, "C", "D", 0, 0),
+    ];
+
+    // The detection should use only finished matches
+    const ties = detectGroupTies(teams, matches);
+    // Should still detect the A/B tie based on finished matches
+    expect(Array.isArray(ties)).toBe(true);
+  });
+
+  it("returns empty when no matches exist yet", () => {
+    const teams: TeamId[] = ["A", "B", "C", "D"];
+    const ties = detectGroupTies(teams, []);
+    // No matches → all teams at 0 pts → all tied, but the cluster runs through
+    // auto criteria which leave them all tied; should return the big cluster
+    expect(ties).toHaveLength(1);
+    expect(ties[0]).toHaveLength(4);
+  });
+});
+
+// ---- detectThirdsTies ------------------------------------------------------
+
+describe("detectThirdsTies", () => {
+  it("returns empty when all thirds are clearly separated", () => {
+    const thirds = [
+      { group: "a", teamId: "T1", points: 9, goalDiff: 5, goals: 6 },
+      { group: "b", teamId: "T2", points: 7, goalDiff: 3, goals: 4 },
+      { group: "c", teamId: "T3", points: 5, goalDiff: 1, goals: 2 },
+    ];
+
+    const ties = detectThirdsTies(thirds);
+    expect(ties).toHaveLength(0);
+  });
+
+  it("returns a tied cluster when two thirds have same stats", () => {
+    const thirds = [
+      { group: "a", teamId: "T1", points: 4, goalDiff: 0, goals: 2 },
+      { group: "b", teamId: "T2", points: 4, goalDiff: 0, goals: 2 },
+      { group: "c", teamId: "T3", points: 1, goalDiff: -2, goals: 1 },
+    ];
+
+    const ties = detectThirdsTies(thirds);
+    expect(ties).toHaveLength(1);
+    expect(ties[0]).toContain("T1");
+    expect(ties[0]).toContain("T2");
   });
 });

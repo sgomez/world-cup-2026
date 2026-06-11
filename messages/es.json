@@ -299,6 +299,45 @@
     "NOT_AUTHENTICATED": "No autenticado",
     "NAME_REQUIRED": "El nombre es obligatorio"
   },
+  "liveErrors": {
+    "FORBIDDEN": "No tienes autorización para modificar resultados de partidos.",
+    "INVALID_NUM": "Número de partido inválido.",
+    "NOT_FOUND": "Partido no encontrado.",
+    "INVALID_GOALS": "Los goles deben ser cero o positivos.",
+    "PENALTIES_NOT_ALLOWED": "Los penaltis solo están permitidos en partidos eliminatorios.",
+    "SAVE_FAILED": "No se pudo guardar el resultado del partido. Inténtalo de nuevo."
+  },
+  "adminMatchEditor": {
+    "title": "Marcadores en Directo",
+    "description": "Introduce o corrige los marcadores en directo. Los cambios se aplican de inmediato.",
+    "matchLabel": "Partido {num}",
+    "groupLabel": "Grupo {group}",
+    "statusLive": "En Directo",
+    "statusFinished": "Finalizado",
+    "goals1Label": "Goles (equipo 1)",
+    "goals2Label": "Goles (equipo 2)",
+    "penalties1Label": "Penaltis (equipo 1)",
+    "penalties2Label": "Penaltis (equipo 2)",
+    "saveButton": "Guardar",
+    "saving": "Guardando…",
+    "savedSuccess": "Resultado guardado.",
+    "knockoutOnly": "Los penaltis solo aplican a partidos eliminatorios.",
+    "noLiveResults": "Aún no hay partidos en directo o finalizados.",
+    "correctionNote": "Los resultados finalizados se pueden corregir aquí."
+  },
+  "adminTieBreak": {
+    "title": "Orden de Desempate",
+    "description": "Arrastra equipos dentro de un grupo empatado para fijar el orden final. Los equipos ya separados están bloqueados.",
+    "tiedCluster": "Grupo empatado — arrastra para reordenar",
+    "pinnedTeam": "Separado por reglas — bloqueado",
+    "saveOrder": "Guardar orden",
+    "saving": "Guardando…",
+    "savedSuccess": "Orden de desempate guardado.",
+    "clearOrder": "Limpiar orden manual",
+    "noTies": "No hay empates sin resolver en este momento.",
+    "groupTieBreak": "Grupo {group} — Desempate",
+    "thirdsTieBreak": "Mejores Terceros — Desempate"
+  },
   "leaderboard": {
     "title": "Ranking",
     "description": "Ranking por puntos de tus predicciones.",
