@@ -17,6 +17,7 @@ export function AdminResultEditor({
   thirdsTieClusters,
   manualTieBreaks,
   thirdPlaceManualOrder,
+  bracketView,
   locale,
 }: {
   matches: Match[];
@@ -25,6 +26,7 @@ export function AdminResultEditor({
   thirdsTieClusters: string[][];
   manualTieBreaks: Record<string, string[]>;
   thirdPlaceManualOrder: string[] | null;
+  bracketView: Record<string, any>;
   locale: string;
 }) {
   const t = useTranslations("admin");
@@ -69,7 +71,12 @@ export function AdminResultEditor({
         </TabsList>
 
         <TabsContent value="scores">
-          <AdminMatchScoreEditor matches={matches} liveResults={liveResults} />
+          <AdminMatchScoreEditor
+            matches={matches}
+            liveResults={liveResults}
+            bracketView={bracketView}
+            locale={locale}
+          />
         </TabsContent>
 
         <TabsContent value="tiebreaks">
