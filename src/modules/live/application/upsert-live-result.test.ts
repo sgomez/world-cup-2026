@@ -194,4 +194,78 @@ describe("upsertLiveResult application service", () => {
     const saved = await repo.findByNum(1);
     expect(saved?.status).toBe("finished");
   });
+
+  it("enforces finished latch with adminOverride: undefined/false", async () => {
+    const existing = LiveResult.fromState({
+      num: 1,
+      status: "finished",
+      goals1: 2,
+      goals2: 0,
+    });
+    const repo = new InMemoryLiveResultRepository([existing]);
+
+    const result = await upsertLiveResult(repo, {
+      num: 1,
+      status: "live",
+      goals1: 2,
+      goals2: 0,
+      allowCreate: true,
+      adminOverride: false,
+    });
+
+    expect(result.isOk()).toBe(true);
+    const saved = await repo.findByNum(1);
+    expect(saved?.status).toBe("finished");
+  });
+
+  it("bypasses finished latch and transitions match with adminOverride: true", async () => {
+    const existing = LiveResult.fromState({
+      num: 1,
+      status: "finished",
+      goals1: 2,
+      goals2: 0,
+    });
+    const repo = new InMemoryLiveResultRepository([existing]);
+
+    const result = await upsertLiveResult(repo, {
+      num: 1,
+      status: "upcoming",
+      goals1: 0,
+      goals2: 0,
+      allowCreate: true,
+      adminOverride: true,
+    });
+
+    expect(result.isOk()).toBe(true);
+    const saved = await repo.findByNum(1);
+    expect(saved?.status).toBe("upcoming");
+    expect(saved?.goals1).toBe(0);
+    expect(saved?.goals2).toBe(0);
+  });
+
+  it("fails validation for upcoming status with goals or penalties", async () => {
+    const repo = new InMemoryLiveResultRepository();
+
+    const result1 = await upsertLiveResult(repo, {
+      num: 1,
+      status: "upcoming",
+      goals1: 1,
+      goals2: 0,
+      allowCreate: true,
+    });
+    expect(result1.isErr()).toBe(true);
+    expect(result1._unsafeUnwrapErr().code).toBe("INVALID_GOALS");
+
+    const result2 = await upsertLiveResult(repo, {
+      num: 73, // knockout
+      status: "upcoming",
+      goals1: 0,
+      goals2: 0,
+      penalties1: 3,
+      penalties2: 1,
+      allowCreate: true,
+    });
+    expect(result2.isErr()).toBe(true);
+    expect(result2._unsafeUnwrapErr().code).toBe("PENALTIES_NOT_ALLOWED");
+  });
 });

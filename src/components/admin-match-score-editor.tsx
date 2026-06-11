@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import type { Match } from "@/lib/matches";
 import { cn } from "@/lib/utils";
-import type { LiveResultState } from "@/modules/live/domain/live-result";
+import type {
+  LiveResultState,
+  LiveStatus,
+} from "@/modules/live/domain/live-result";
 
 type MatchRowState = {
-  status: "live" | "finished";
+  status: LiveStatus;
   goals1: number;
   goals2: number;
   penalties1: string;
@@ -23,7 +26,7 @@ function initRowState(
   existing: LiveResultState | undefined,
 ): MatchRowState {
   return {
-    status: existing?.status ?? "live",
+    status: existing?.status ?? "upcoming",
     goals1: existing?.goals1 ?? 0,
     goals2: existing?.goals2 ?? 0,
     penalties1:
@@ -101,6 +104,7 @@ export function AdminMatchScoreEditor({
         ...(penalties1 !== undefined ? { penalties1 } : {}),
         ...(penalties2 !== undefined ? { penalties2 } : {}),
         allowCreate: true,
+        adminOverride: true,
       });
 
       if (result?.error) {

@@ -250,3 +250,113 @@ describe("LiveResult.reconcile — knockout match", () => {
     ]);
   });
 });
+
+describe("LiveResult.reconcile — upcoming status, adminOverride, and validations", () => {
+  it("allows setting status to upcoming if goals are 0 and penalties are undefined", () => {
+    const [result, events] = LiveResult.reconcile(null, {
+      num: GROUP_NUM,
+      status: "upcoming",
+      goals1: 0,
+      goals2: 0,
+    });
+    expect(result.isOk()).toBe(true);
+    const lr = result._unsafeUnwrap();
+    expect(lr.status).toBe("upcoming");
+    expect(lr.goals1).toBe(0);
+    expect(lr.goals2).toBe(0);
+    expect(events).toHaveLength(0); // upcoming doesn't start the match
+  });
+
+  it("fails validation if status is upcoming and goals are non-zero", () => {
+    const [result] = LiveResult.reconcile(null, {
+      num: GROUP_NUM,
+      status: "upcoming",
+      goals1: 1,
+      goals2: 0,
+    });
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("INVALID_GOALS");
+  });
+
+  it("fails validation if status is upcoming and penalties are defined", () => {
+    const [result] = LiveResult.reconcile(null, {
+      num: KNOCKOUT_NUM,
+      status: "upcoming",
+      goals1: 0,
+      goals2: 0,
+      penalties1: 3,
+      penalties2: 2,
+    });
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("PENALTIES_NOT_ALLOWED");
+  });
+
+  it("ignores finished -> live or finished -> upcoming transition if adminOverride is not true", () => {
+    const existing = LiveResult.fromState({
+      num: GROUP_NUM,
+      status: "finished",
+      goals1: 2,
+      goals2: 1,
+    });
+
+    const [resultLive, eventsLive] = LiveResult.reconcile(existing, {
+      num: GROUP_NUM,
+      status: "live",
+      goals1: 2,
+      goals2: 1,
+    });
+    expect(resultLive.isOk()).toBe(true);
+    expect(resultLive._unsafeUnwrap().status).toBe("finished");
+    expect(eventsLive).toHaveLength(0);
+
+    const [resultUpcoming, eventsUpcoming] = LiveResult.reconcile(existing, {
+      num: GROUP_NUM,
+      status: "upcoming",
+      goals1: 0,
+      goals2: 0,
+    });
+    expect(resultUpcoming.isOk()).toBe(true);
+    expect(resultUpcoming._unsafeUnwrap().status).toBe("finished");
+    expect(eventsUpcoming).toHaveLength(0);
+  });
+
+  it("allows finished -> live or finished -> upcoming transitions if adminOverride is true", () => {
+    const existing = LiveResult.fromState({
+      num: GROUP_NUM,
+      status: "finished",
+      goals1: 2,
+      goals2: 1,
+    });
+
+    const [resultLive, eventsLive] = LiveResult.reconcile(
+      existing,
+      {
+        num: GROUP_NUM,
+        status: "live",
+        goals1: 2,
+        goals2: 1,
+      },
+      true,
+    );
+    expect(resultLive.isOk()).toBe(true);
+    expect(resultLive._unsafeUnwrap().status).toBe("live");
+
+    const [resultUpcoming, eventsUpcoming] = LiveResult.reconcile(
+      existing,
+      {
+        num: GROUP_NUM,
+        status: "upcoming",
+        goals1: 0,
+        goals2: 0,
+      },
+      true,
+    );
+    expect(resultUpcoming.isOk()).toBe(true);
+    const lr = resultUpcoming._unsafeUnwrap();
+    expect(lr.status).toBe("upcoming");
+    expect(lr.goals1).toBe(0);
+    expect(lr.goals2).toBe(0);
+    expect(lr.penalties1).toBeUndefined();
+    expect(lr.penalties2).toBeUndefined();
+  });
+});

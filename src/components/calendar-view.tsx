@@ -400,7 +400,7 @@ export function CalendarView({
     if (!num) return { status: "UPCOMING" };
 
     const lr = liveByNum.get(num);
-    if (!lr) return { status: "UPCOMING" };
+    if (!lr || lr.status === "upcoming") return { status: "UPCOMING" };
 
     if (lr.status === "live") {
       return {
