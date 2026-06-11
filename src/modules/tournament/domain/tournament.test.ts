@@ -41,7 +41,7 @@ describe("Tournament aggregate", () => {
     // No groups settled → all bracket positions are TBD (null)
     expect(bracket["R32-73"].team1Id).toBeNull();
     expect(bracket["R32-73"].team2Id).toBeNull();
-    expect(bracket["F"].winnerId).toBeNull();
+    expect(bracket.F.winnerId).toBeNull();
   });
 
   it("isCompetitionEnded returns false when no LiveResults", () => {
@@ -74,6 +74,19 @@ describe("Tournament aggregate", () => {
       id: "singleton",
       manualTieBreaks: { A: { mex: 2, kor: 1 } },
       thirdPlaceManualOrder: { mex: 2, bra: 1 },
+    });
+    expect(t.toState()).toEqual({
+      id: "singleton",
+      manualTieBreaks: { A: { mex: 2, kor: 1 } },
+      thirdPlaceManualOrder: { mex: 2, bra: 1 },
+    });
+  });
+
+  it("normalizes legacy manualTieBreaks and thirdPlaceManualOrder array formats", () => {
+    const t = Tournament.fromState({
+      id: "singleton",
+      manualTieBreaks: { A: ["mex", "kor"] } as any,
+      thirdPlaceManualOrder: ["mex", "bra"] as any,
     });
     expect(t.toState()).toEqual({
       id: "singleton",

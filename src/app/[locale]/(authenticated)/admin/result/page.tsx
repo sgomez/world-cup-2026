@@ -37,9 +37,10 @@ export default async function AdminResultPage({
   );
 
   const factorsToOrderedList = (
-    factors: Record<string, number> | null | undefined,
+    factors: Record<string, number> | string[] | null | undefined,
   ): string[] => {
     if (!factors) return [];
+    if (Array.isArray(factors)) return factors;
     return Object.entries(factors)
       .sort(([, a], [, b]) => b - a)
       .map(([teamId]) => teamId);
