@@ -109,11 +109,101 @@ export async function setThirdPlaceManualOrderAction(
     if (orderedIds) {
       factors = {};
       orderedIds.forEach((id, idx) => {
-        factors![id] = orderedIds.length - idx;
+        if (factors) {
+          factors[id] = orderedIds.length - idx;
+        }
       });
     }
     const updated = tournament
       .setThirdPlaceManualOrder(factors)
+      ._unsafeUnwrap();
+    const saveResult = await repo.save(updated);
+
+    if (saveResult.isErr()) {
+      return {
+        error: await tournamentErrorMessage(saveResult.error.code),
+      };
+    }
+
+    revalidatePath("/admin/result");
+    revalidatePath("/standings");
+    return { success: true };
+  });
+}
+
+/**
+ * Sets the manual tie-break factor for a specific team in a group.
+ */
+export async function setGroupTieBreakFactorAction(
+  group: string,
+  teamId: string,
+  factor: number,
+): Promise<TournamentActionState> {
+  return withAuthenticatedAction(async (session) => {
+    if (session.user.role !== "admin" && session.user.role !== "super_admin") {
+      return {
+        error: await tournamentErrorMessage("FORBIDDEN"),
+      };
+    }
+
+    const repo = new PrismaTournamentRepository(prisma);
+    const existing = await repo.get();
+    const tournament = existing ?? Tournament.createDefault();
+
+    const currentFactors = { ...(tournament.manualTieBreaks[group] ?? {}) };
+    if (factor === 0) {
+      delete currentFactors[teamId];
+    } else {
+      currentFactors[teamId] = factor;
+    }
+
+    const updated = tournament
+      .setManualTieBreak(group, currentFactors)
+      ._unsafeUnwrap();
+    const saveResult = await repo.save(updated);
+
+    if (saveResult.isErr()) {
+      return {
+        error: await tournamentErrorMessage(saveResult.error.code),
+      };
+    }
+
+    revalidatePath("/admin/result");
+    revalidatePath("/standings");
+    return { success: true };
+  });
+}
+
+/**
+ * Sets the manual tie-break factor for a specific third-place team.
+ */
+export async function setThirdsTieBreakFactorAction(
+  teamId: string,
+  factor: number,
+): Promise<TournamentActionState> {
+  return withAuthenticatedAction(async (session) => {
+    if (session.user.role !== "admin" && session.user.role !== "super_admin") {
+      return {
+        error: await tournamentErrorMessage("FORBIDDEN"),
+      };
+    }
+
+    const repo = new PrismaTournamentRepository(prisma);
+    const existing = await repo.get();
+    const tournament = existing ?? Tournament.createDefault();
+
+    const currentFactors = { ...(tournament.thirdPlaceManualOrder ?? {}) };
+    if (factor === 0) {
+      delete currentFactors[teamId];
+    } else {
+      currentFactors[teamId] = factor;
+    }
+
+    const updatedFactors =
+      Object.keys(currentFactors).length > 0 ? currentFactors : null;
+
+    const updated = tournament
+      .setThirdPlaceManualOrder(updatedFactors)
       ._unsafeUnwrap();
     const saveResult = await repo.save(updated);
 

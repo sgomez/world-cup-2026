@@ -24,9 +24,19 @@ export function AdminResultEditor({
   liveResults: LiveResultState[];
   groupTieInfo: Record<string, GroupTieInfo>;
   thirdsTieClusters: string[][];
-  manualTieBreaks: Record<string, string[]>;
-  thirdPlaceManualOrder: string[] | null;
-  bracketView: Record<string, any>;
+  manualTieBreaks: Record<string, Record<string, number>>;
+  thirdPlaceManualOrder: Record<string, number> | null;
+  bracketView: Record<
+    string,
+    {
+      id: string;
+      round: string;
+      team1Id: string | null;
+      team2Id: string | null;
+      winnerId: string | null;
+      loserId: string | null;
+    }
+  >;
   locale: string;
 }) {
   const t = useTranslations("admin");
@@ -42,7 +52,7 @@ export function AdminResultEditor({
   // For the tie-break panel we pass the team IDs of all third-placed teams
   // in their current derived order (from the group standings)
   const thirdsStanding = Object.entries(groupTieInfo)
-    .map(([groupLetter, info]) => info.standing[2] ?? null)
+    .map(([_groupLetter, info]) => info.standing[2] ?? null)
     .filter((id): id is string => id !== null);
 
   return (
@@ -81,6 +91,8 @@ export function AdminResultEditor({
 
         <TabsContent value="tiebreaks">
           <AdminTieBreakPanel
+            matches={matches}
+            liveResults={liveResults}
             groupTieInfo={groupTieInfo}
             thirdsTieClusters={thirdsTieClusters}
             thirdsStanding={thirdsStanding}

@@ -2,7 +2,7 @@
 
 import { CalendarDays, Filter, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { upsertLiveResultAction } from "@/app/actions/live";
 import { useToast } from "@/components/ui/toast";
 import type { Match } from "@/lib/matches";
@@ -109,7 +109,7 @@ export function AdminMatchScoreEditor({
   const [selectedTeam, setSelectedTeam] = useState<string>("");
   const [selectedPhase, setSelectedPhase] = useState<string>("");
   const [isMounted, setIsMounted] = useState(false);
-  const [userTimezone, setUserTimezone] = useState("");
+  const [_userTimezone, setUserTimezone] = useState("");
 
   const liveByNum = useMemo(() => {
     const map = new Map<number, LiveResultState>();
