@@ -442,7 +442,7 @@ function deriveKnockoutWinners(
       const num = matchIdToNum.get(matchId);
       if (num === undefined) continue;
       const lr = liveByNum.get(num);
-      if (!lr || lr.status !== "finished") continue;
+      if (lr?.status !== "finished") continue;
 
       const match = knockoutMatches[matchId];
       if (!match?.team1Id || !match?.team2Id) continue;
@@ -461,7 +461,7 @@ function deriveKnockoutWinners(
     ["F", 104],
   ] as Array<[string, number]>) {
     const lr = liveByNum.get(num);
-    if (!lr || lr.status !== "finished") continue;
+    if (lr?.status !== "finished") continue;
     const match = knockoutMatches[matchId];
     if (!match?.team1Id || !match?.team2Id) continue;
     const winner = resolveKnockoutWinner(lr, match.team1Id, match.team2Id);

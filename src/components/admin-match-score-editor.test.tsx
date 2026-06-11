@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { upsertLiveResultAction } from "@/app/actions/live";
 import { AdminMatchScoreEditor } from "./admin-match-score-editor";
 
 vi.mock("next-intl", () => ({
   useTranslations: vi.fn(
-    (ns) => (key: string, params?: Record<string, unknown>) => {
+    (_ns) => (key: string, params?: Record<string, unknown>) => {
       const map: Record<string, string> = {
         // calendar
         live: "LIVE",

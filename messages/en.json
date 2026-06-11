@@ -329,15 +329,10 @@
     "penaltiesTitle": "Penalties"
   },
   "adminTieBreak": {
-    "title": "Tie-Break Ordering",
-    "description": "Drag teams within a tied cluster to set the final order. Separated teams are locked.",
-    "tiedCluster": "Tied cluster — drag to reorder",
-    "pinnedTeam": "Separated by rules — pinned",
-    "saveOrder": "Save order",
+    "title": "Tie-Break Factors",
+    "description": "Specify manual tie-break factors (positive integers). Higher factors break ties in favor of the team. Leave blank or 0 to clear.",
     "saving": "Saving…",
-    "savedSuccess": "Tie-break order saved.",
-    "clearOrder": "Clear manual order",
-    "noTies": "No unresolved ties at this time.",
+    "savedSuccess": "Tie-break factor saved.",
     "groupTieBreak": "Group {group} — Tie-Break",
     "thirdsTieBreak": "Best Third-Place Teams — Tie-Break"
   },

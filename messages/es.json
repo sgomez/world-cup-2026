@@ -329,15 +329,10 @@
     "penaltiesTitle": "Penaltis"
   },
   "adminTieBreak": {
-    "title": "Orden de Desempate",
-    "description": "Arrastra equipos dentro de un grupo empatado para fijar el orden final. Los equipos ya separados están bloqueados.",
-    "tiedCluster": "Grupo empatado — arrastra para reordenar",
-    "pinnedTeam": "Separado por reglas — bloqueado",
-    "saveOrder": "Guardar orden",
+    "title": "Factores de Desempate",
+    "description": "Especifica factores manuales de desempate (enteros positivos). Factores más altos rompen empates a favor del equipo. Deja vacío o 0 para limpiar.",
     "saving": "Guardando…",
-    "savedSuccess": "Orden de desempate guardado.",
-    "clearOrder": "Limpiar orden manual",
-    "noTies": "No hay empates sin resolver en este momento.",
+    "savedSuccess": "Factor de desempate guardado.",
     "groupTieBreak": "Grupo {group} — Desempate",
     "thirdsTieBreak": "Mejores Terceros — Desempate"
   },

@@ -328,7 +328,7 @@ describe("LiveResult.reconcile — upcoming status, adminOverride, and validatio
       goals2: 1,
     });
 
-    const [resultLive, eventsLive] = LiveResult.reconcile(
+    const [resultLive, _eventsLive] = LiveResult.reconcile(
       existing,
       {
         num: GROUP_NUM,
@@ -341,7 +341,7 @@ describe("LiveResult.reconcile — upcoming status, adminOverride, and validatio
     expect(resultLive.isOk()).toBe(true);
     expect(resultLive._unsafeUnwrap().status).toBe("live");
 
-    const [resultUpcoming, eventsUpcoming] = LiveResult.reconcile(
+    const [resultUpcoming, _eventsUpcoming] = LiveResult.reconcile(
       existing,
       {
         num: GROUP_NUM,

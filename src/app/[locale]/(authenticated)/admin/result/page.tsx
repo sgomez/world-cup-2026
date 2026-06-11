@@ -36,32 +36,22 @@ export default async function AdminResultPage({
     lr.toState(),
   );
 
-  const factorsToOrderedList = (
-    factors: Record<string, number> | string[] | null | undefined,
-  ): string[] => {
-    if (!factors) return [];
-    if (Array.isArray(factors)) return factors;
-    return Object.entries(factors)
-      .sort(([, a], [, b]) => b - a)
-      .map(([teamId]) => teamId);
-  };
-
-  const mappedManualTieBreaks: Record<string, string[]> = {};
-  for (const [group, factors] of Object.entries(
-    activeTournament.manualTieBreaks,
-  )) {
-    mappedManualTieBreaks[group] = factorsToOrderedList(factors);
-  }
-  const mappedThirdPlaceManualOrder = activeTournament.thirdPlaceManualOrder
-    ? factorsToOrderedList(activeTournament.thirdPlaceManualOrder)
-    : null;
-
   const bracket = activeTournament.bracketView(liveResults, {
     finishedOnly: false,
   });
 
   // Convert KnockoutMatch values to serializable states
-  const serializableBracket: Record<string, any> = {};
+  const serializableBracket: Record<
+    string,
+    {
+      id: string;
+      round: string;
+      team1Id: string | null;
+      team2Id: string | null;
+      winnerId: string | null;
+      loserId: string | null;
+    }
+  > = {};
   for (const [key, match] of Object.entries(bracket)) {
     serializableBracket[key] = {
       id: match.id,
@@ -80,8 +70,8 @@ export default async function AdminResultPage({
         liveResults={liveResultStates}
         groupTieInfo={tieInfo.groups}
         thirdsTieClusters={tieInfo.thirdsTieClusters}
-        manualTieBreaks={mappedManualTieBreaks}
-        thirdPlaceManualOrder={mappedThirdPlaceManualOrder}
+        manualTieBreaks={activeTournament.manualTieBreaks}
+        thirdPlaceManualOrder={activeTournament.thirdPlaceManualOrder}
         bracketView={serializableBracket}
         locale={locale}
       />
