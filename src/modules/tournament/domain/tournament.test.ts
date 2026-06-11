@@ -13,23 +13,23 @@ describe("Tournament aggregate", () => {
   it("stores and clears a per-group manual tie-break", () => {
     let t = Tournament.createDefault();
 
-    t = t.setManualTieBreak("A", ["mex", "kor"])._unsafeUnwrap();
-    expect(t.manualTieBreaks.A).toEqual(["mex", "kor"]);
+    t = t.setManualTieBreak("A", { mex: 2, kor: 1 })._unsafeUnwrap();
+    expect(t.manualTieBreaks.A).toEqual({ mex: 2, kor: 1 });
 
-    t = t.setManualTieBreak("B", ["can", "sui"])._unsafeUnwrap();
-    expect(t.manualTieBreaks.B).toEqual(["can", "sui"]);
-    expect(t.manualTieBreaks.A).toEqual(["mex", "kor"]);
+    t = t.setManualTieBreak("B", { can: 2, sui: 1 })._unsafeUnwrap();
+    expect(t.manualTieBreaks.B).toEqual({ can: 2, sui: 1 });
+    expect(t.manualTieBreaks.A).toEqual({ mex: 2, kor: 1 });
 
     t = t.clearManualTieBreak("A")._unsafeUnwrap();
     expect(t.manualTieBreaks.A).toBeUndefined();
-    expect(t.manualTieBreaks.B).toEqual(["can", "sui"]);
+    expect(t.manualTieBreaks.B).toEqual({ can: 2, sui: 1 });
   });
 
   it("stores and clears the thirds manual order", () => {
     let t = Tournament.createDefault();
 
-    t = t.setThirdPlaceManualOrder(["mex", "kor", "can"])._unsafeUnwrap();
-    expect(t.thirdPlaceManualOrder).toEqual(["mex", "kor", "can"]);
+    t = t.setThirdPlaceManualOrder({ mex: 3, kor: 2, can: 1 })._unsafeUnwrap();
+    expect(t.thirdPlaceManualOrder).toEqual({ mex: 3, kor: 2, can: 1 });
 
     t = t.setThirdPlaceManualOrder(null)._unsafeUnwrap();
     expect(t.thirdPlaceManualOrder).toBeNull();
@@ -41,7 +41,7 @@ describe("Tournament aggregate", () => {
     // No groups settled → all bracket positions are TBD (null)
     expect(bracket["R32-73"].team1Id).toBeNull();
     expect(bracket["R32-73"].team2Id).toBeNull();
-    expect(bracket["F"].winnerId).toBeNull();
+    expect(bracket.F.winnerId).toBeNull();
   });
 
   it("isCompetitionEnded returns false when no LiveResults", () => {
@@ -72,13 +72,26 @@ describe("Tournament aggregate", () => {
   it("toState / fromState round-trips correctly", () => {
     const t = Tournament.fromState({
       id: "singleton",
-      manualTieBreaks: { A: ["mex", "kor"] },
-      thirdPlaceManualOrder: ["mex", "bra"],
+      manualTieBreaks: { A: { mex: 2, kor: 1 } },
+      thirdPlaceManualOrder: { mex: 2, bra: 1 },
     });
     expect(t.toState()).toEqual({
       id: "singleton",
-      manualTieBreaks: { A: ["mex", "kor"] },
-      thirdPlaceManualOrder: ["mex", "bra"],
+      manualTieBreaks: { A: { mex: 2, kor: 1 } },
+      thirdPlaceManualOrder: { mex: 2, bra: 1 },
+    });
+  });
+
+  it("normalizes legacy manualTieBreaks and thirdPlaceManualOrder array formats", () => {
+    const t = Tournament.fromState({
+      id: "singleton",
+      manualTieBreaks: { A: ["mex", "kor"] } as any,
+      thirdPlaceManualOrder: ["mex", "bra"] as any,
+    });
+    expect(t.toState()).toEqual({
+      id: "singleton",
+      manualTieBreaks: { A: { mex: 2, kor: 1 } },
+      thirdPlaceManualOrder: { mex: 2, bra: 1 },
     });
   });
 });

@@ -36,6 +36,26 @@ export default async function AdminResultPage({
     lr.toState(),
   );
 
+  const factorsToOrderedList = (
+    factors: Record<string, number> | string[] | null | undefined,
+  ): string[] => {
+    if (!factors) return [];
+    if (Array.isArray(factors)) return factors;
+    return Object.entries(factors)
+      .sort(([, a], [, b]) => b - a)
+      .map(([teamId]) => teamId);
+  };
+
+  const mappedManualTieBreaks: Record<string, string[]> = {};
+  for (const [group, factors] of Object.entries(
+    activeTournament.manualTieBreaks,
+  )) {
+    mappedManualTieBreaks[group] = factorsToOrderedList(factors);
+  }
+  const mappedThirdPlaceManualOrder = activeTournament.thirdPlaceManualOrder
+    ? factorsToOrderedList(activeTournament.thirdPlaceManualOrder)
+    : null;
+
   return (
     <div className="container mx-auto py-6">
       <AdminResultEditor
@@ -43,8 +63,8 @@ export default async function AdminResultPage({
         liveResults={liveResultStates}
         groupTieInfo={tieInfo.groups}
         thirdsTieClusters={tieInfo.thirdsTieClusters}
-        manualTieBreaks={activeTournament.manualTieBreaks}
-        thirdPlaceManualOrder={activeTournament.thirdPlaceManualOrder}
+        manualTieBreaks={mappedManualTieBreaks}
+        thirdPlaceManualOrder={mappedThirdPlaceManualOrder}
         locale={locale}
       />
     </div>

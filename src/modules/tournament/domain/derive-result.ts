@@ -34,7 +34,7 @@ import {
   detectThirdsTies,
   type GroupMatch,
   getAdvancement,
-  makeManualCriterion,
+  makeManualFactorCriterion,
   rankThirds,
   stableCriterion,
   type TeamId,
@@ -218,8 +218,8 @@ function buildMatchIdToNumMap(): Map<string, number> {
  */
 export function deriveResult(
   liveResults: LiveResult[],
-  manualTieBreaks: Record<string, TeamId[]>,
-  thirdPlaceManualOrder: TeamId[] | null,
+  manualTieBreaks: Record<string, Record<string, number>>,
+  thirdPlaceManualOrder: Record<string, number> | null,
   options: DeriveOptions = {},
 ): DerivedResult {
   const { finishedOnly = true } = options;
@@ -264,7 +264,9 @@ export function deriveResult(
   }
 
   // Build full manual tie-breaks map including thirds
-  const fullManualTieBreaks: Record<string, TeamId[]> = { ...manualTieBreaks };
+  const fullManualTieBreaks: Record<string, Record<string, number>> = {
+    ...manualTieBreaks,
+  };
   if (thirdPlaceManualOrder) {
     fullManualTieBreaks.thirds = thirdPlaceManualOrder;
   }
@@ -302,11 +304,11 @@ export function deriveResult(
     };
     if (teams.length === 0) continue;
 
-    const manualList = fullManualTieBreaks[groupLetter];
-    const chain = manualList
+    const manualFactors = fullManualTieBreaks[groupLetter];
+    const chain = manualFactors
       ? [
           ...DEFAULT_TIEBREAK_CHAIN.slice(0, -1),
-          makeManualCriterion(manualList),
+          makeManualFactorCriterion(manualFactors),
           stableCriterion,
         ]
       : DEFAULT_TIEBREAK_CHAIN;
@@ -331,11 +333,11 @@ export function deriveResult(
     };
     if (teams.length === 0) continue;
 
-    const manualList = fullManualTieBreaks[groupLetter];
-    const chain = manualList
+    const manualFactors = fullManualTieBreaks[groupLetter];
+    const chain = manualFactors
       ? [
           ...DEFAULT_TIEBREAK_CHAIN.slice(0, -1),
-          makeManualCriterion(manualList),
+          makeManualFactorCriterion(manualFactors),
           stableCriterion,
         ]
       : DEFAULT_TIEBREAK_CHAIN;
@@ -563,8 +565,8 @@ export function getR32SlotOccupants(
  */
 export function buildBracketView(
   liveResults: LiveResult[],
-  manualTieBreaks: Record<string, string[]>,
-  thirdPlaceManualOrder: string[] | null,
+  manualTieBreaks: Record<string, Record<string, number>>,
+  thirdPlaceManualOrder: Record<string, number> | null,
   options?: DeriveOptions,
 ): Record<string, KnockoutMatch> {
   const derived = deriveResult(
@@ -674,8 +676,8 @@ export type TieInfoResult = {
  */
 export function deriveTieInfo(
   liveResults: LiveResult[],
-  manualTieBreaks: Record<string, TeamId[]>,
-  thirdPlaceManualOrder: TeamId[] | null,
+  manualTieBreaks: Record<string, Record<string, number>>,
+  thirdPlaceManualOrder: Record<string, number> | null,
 ): TieInfoResult {
   const nameToId = buildNameToIdMap();
   const allMatchesData = getAllMatches();
@@ -714,7 +716,9 @@ export function deriveTieInfo(
     groupsMap[groupLetter] = { teams: teamIds, matches: groupMatches };
   }
 
-  const fullManualTieBreaks: Record<string, TeamId[]> = { ...manualTieBreaks };
+  const fullManualTieBreaks: Record<string, Record<string, number>> = {
+    ...manualTieBreaks,
+  };
   if (thirdPlaceManualOrder) {
     fullManualTieBreaks.thirds = thirdPlaceManualOrder;
   }
@@ -725,11 +729,11 @@ export function deriveTieInfo(
   for (const [groupLetter, { teams, matches }] of Object.entries(groupsMap)) {
     const finishedMatches = matches.filter((m) => m.status === "finished");
 
-    const manualList = fullManualTieBreaks[groupLetter];
-    const chain = manualList
+    const manualFactors = fullManualTieBreaks[groupLetter];
+    const chain = manualFactors
       ? [
           ...DEFAULT_TIEBREAK_CHAIN.slice(0, -1),
-          makeManualCriterion(manualList),
+          makeManualFactorCriterion(manualFactors),
           stableCriterion,
         ]
       : DEFAULT_TIEBREAK_CHAIN;
@@ -753,11 +757,11 @@ export function deriveTieInfo(
 
     for (const [groupLetter, { teams, matches }] of Object.entries(groupsMap)) {
       const finishedMatches = matches.filter((m) => m.status === "finished");
-      const manualList = fullManualTieBreaks[groupLetter];
-      const chain = manualList
+      const manualFactors = fullManualTieBreaks[groupLetter];
+      const chain = manualFactors
         ? [
             ...DEFAULT_TIEBREAK_CHAIN.slice(0, -1),
-            makeManualCriterion(manualList),
+            makeManualFactorCriterion(manualFactors),
             stableCriterion,
           ]
         : DEFAULT_TIEBREAK_CHAIN;

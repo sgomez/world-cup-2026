@@ -17,9 +17,10 @@ export class PrismaTournamentRepository implements TournamentRepository {
 
     return Tournament.fromState({
       id: row.id,
-      manualTieBreaks: (row.manualTieBreaks as Record<string, string[]>) ?? {},
+      manualTieBreaks:
+        (row.manualTieBreaks as Record<string, Record<string, number>>) ?? {},
       thirdPlaceManualOrder:
-        (row.thirdPlaceManualOrder as string[] | null) ?? null,
+        (row.thirdPlaceManualOrder as Record<string, number> | null) ?? null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });

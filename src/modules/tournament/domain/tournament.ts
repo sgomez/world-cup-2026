@@ -17,19 +17,79 @@ import type { DomainError } from "./errors";
  */
 export type TournamentState = {
   id: string;
-  /** Per-group Admin-supplied tie-break order. Key = uppercase group letter (e.g. "A"). */
-  manualTieBreaks: Record<string, string[]>;
+  /** Per-group Admin-supplied tie-break factors. Key = uppercase group letter (e.g. "A"). */
+  manualTieBreaks: Record<string, Record<string, number>>;
   /** Admin-supplied thirds ranking override. Null if no manual override. */
-  thirdPlaceManualOrder: string[] | null;
+  thirdPlaceManualOrder: Record<string, number> | null;
   createdAt?: Date;
   updatedAt?: Date;
 };
 
+function normalizeManualTieBreaks(
+  input: unknown,
+): Record<string, Record<string, number>> {
+  if (!input || typeof input !== "object") return {};
+
+  const result: Record<string, Record<string, number>> = {};
+  for (const [group, value] of Object.entries(
+    input as Record<string, unknown>,
+  )) {
+    if (!value) continue;
+    if (Array.isArray(value)) {
+      const len = value.length;
+      const factors: Record<string, number> = {};
+      value.forEach((teamId, index) => {
+        if (typeof teamId === "string") {
+          factors[teamId] = len - index;
+        }
+      });
+      result[group] = factors;
+    } else if (typeof value === "object") {
+      result[group] = value as Record<string, number>;
+    }
+  }
+  return result;
+}
+
+function normalizeThirdPlaceManualOrder(
+  input: unknown,
+): Record<string, number> | null {
+  if (!input) return null;
+  if (Array.isArray(input)) {
+    const len = input.length;
+    const factors: Record<string, number> = {};
+    input.forEach((teamId, index) => {
+      if (typeof teamId === "string") {
+        factors[teamId] = len - index;
+      }
+    });
+    return factors;
+  }
+  if (typeof input === "object") {
+    return input as Record<string, number>;
+  }
+  return null;
+}
+
 export class Tournament {
   private constructor(private readonly state: TournamentState) {}
 
-  static fromState(state: TournamentState): Tournament {
-    return new Tournament({ ...state });
+  static fromState(state: {
+    id: string;
+    manualTieBreaks?: unknown;
+    thirdPlaceManualOrder?: unknown;
+    createdAt?: Date;
+    updatedAt?: Date;
+  }): Tournament {
+    return new Tournament({
+      id: state.id,
+      manualTieBreaks: normalizeManualTieBreaks(state.manualTieBreaks),
+      thirdPlaceManualOrder: normalizeThirdPlaceManualOrder(
+        state.thirdPlaceManualOrder,
+      ),
+      createdAt: state.createdAt,
+      updatedAt: state.updatedAt,
+    });
   }
 
   static createDefault(id = "singleton"): Tournament {
@@ -44,11 +104,11 @@ export class Tournament {
     return this.state.id;
   }
 
-  get manualTieBreaks(): Record<string, string[]> {
+  get manualTieBreaks(): Record<string, Record<string, number>> {
     return this.state.manualTieBreaks;
   }
 
-  get thirdPlaceManualOrder(): string[] | null {
+  get thirdPlaceManualOrder(): Record<string, number> | null {
     return this.state.thirdPlaceManualOrder;
   }
 
@@ -65,19 +125,19 @@ export class Tournament {
   }
 
   /**
-   * Sets the manual tie-break order for a group.
+   * Sets the manual tie-break factors for a group.
    * Groups outside A–L are silently ignored.
    */
   setManualTieBreak(
     group: string,
-    orderedIds: string[],
+    factors: Record<string, number>,
   ): Result<Tournament, DomainError> {
     return ok(
       new Tournament({
         ...this.state,
         manualTieBreaks: {
           ...this.state.manualTieBreaks,
-          [group]: orderedIds,
+          [group]: factors,
         },
       }),
     );
@@ -98,15 +158,15 @@ export class Tournament {
   }
 
   /**
-   * Sets the manual order for the cross-group thirds cluster.
+   * Sets the manual factors for the cross-group thirds cluster.
    */
   setThirdPlaceManualOrder(
-    orderedIds: string[] | null,
+    factors: Record<string, number> | null,
   ): Result<Tournament, DomainError> {
     return ok(
       new Tournament({
         ...this.state,
-        thirdPlaceManualOrder: orderedIds,
+        thirdPlaceManualOrder: factors,
       }),
     );
   }

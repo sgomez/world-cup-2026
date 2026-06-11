@@ -183,10 +183,10 @@ describe("deriveResult — group advancement", () => {
       finishedMatch(50, 1, 1), // rsa draws kor
     ];
     // rsa pts: 0(vs mex)+3(vs cze)+1(vs kor)=4, kor pts: 3(vs cze)+0(vs mex)+1(vs rsa)=4
-    const result = deriveResult(liveResults, { A: ["kor", "rsa"] }, null);
+    const result = deriveResult(liveResults, { A: { kor: 2, rsa: 1 } }, null);
 
     expect(result.groupOrders.A[0]).toBe("mex"); // 9pts
-    expect(result.groupOrders.A[1]).toBe("kor"); // manual says kor before rsa
+    expect(result.groupOrders.A[1]).toBe("kor"); // manual says kor before rsa (2 > 1)
     expect(result.groupOrders.A[2]).toBe("rsa");
     expect(result.groupOrders.A[3]).toBe("cze"); // 0pts
   });
