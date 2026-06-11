@@ -1,187 +1,29 @@
-import { err, ok, type Result } from "neverthrow";
+import { ok, type Result } from "neverthrow";
+import type { KnockoutMatch } from "@/lib/bracket-core";
+import type { LiveResult } from "@/modules/live/domain/live-result";
 import {
-  applyWinnerToMatches,
-  computeR32Matches,
-  createEmptyKnockoutMatches,
-  type GroupOrders,
-  getTeamIdFromPosition,
-  type KnockoutMatch,
-  type KnockoutRound,
-  R32_MATCHUPS,
-  ROUND_ORDER,
-  type ThirdPlaceOrder,
-} from "@/lib/bracket-core";
-import { getGroups } from "@/lib/teams";
-import combinationsData from "../../../../data/worldcup.combinations.json";
-import { type DomainError, domainError } from "./errors";
+  buildBracketView,
+  type DeriveOptions,
+  isCompetitionEndedFromLiveResults,
+} from "./derive-result";
+import type { DomainError } from "./errors";
 
-export type TournamentResult = {
-  groupOrders: GroupOrders;
-  thirdPlaceOrder: ThirdPlaceOrder;
-  knockoutWinners: Record<string, string>;
-};
-
+/**
+ * The only persistent state for the tournament singleton.
+ *
+ * ADR 0015: `result` (groupOrders / thirdPlaceOrder / knockoutWinners) and
+ * `advancement` are dropped — everything is derived on read from LiveResults.
+ * Only the sparse Manual Tie-Break exception map is stored.
+ */
 export type TournamentState = {
   id: string;
-  result: TournamentResult | null;
-  advancement: string[]; // Set of R32 references marked Advanced
+  /** Per-group Admin-supplied tie-break order. Key = uppercase group letter (e.g. "A"). */
+  manualTieBreaks: Record<string, string[]>;
+  /** Admin-supplied thirds ranking override. Null if no manual override. */
+  thirdPlaceManualOrder: string[] | null;
   createdAt?: Date;
   updatedAt?: Date;
 };
-
-export const VALID_ADVANCEMENT_REFS = new Set([
-  // Winners
-  "1A",
-  "1B",
-  "1C",
-  "1D",
-  "1E",
-  "1F",
-  "1G",
-  "1H",
-  "1I",
-  "1J",
-  "1K",
-  "1L",
-  // Runners-up
-  "2A",
-  "2B",
-  "2C",
-  "2D",
-  "2E",
-  "2F",
-  "2G",
-  "2H",
-  "2I",
-  "2J",
-  "2K",
-  "2L",
-  // Third-place slots
-  "3rd-1A",
-  "3rd-1B",
-  "3rd-1D",
-  "3rd-1E",
-  "3rd-1G",
-  "3rd-1I",
-  "3rd-1K",
-  "3rd-1L",
-]);
-
-export function getR32SlotOccupants(
-  groupOrders: GroupOrders,
-  thirdPlaceOrder: ThirdPlaceOrder,
-  combinations: Record<string, Record<string, string>>,
-): Record<string, string | null> {
-  const occupants: Record<string, string | null> = {};
-
-  const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
-  for (const g of groups) {
-    occupants[`1${g}`] = groupOrders[g]?.[0] ?? null;
-    occupants[`2${g}`] = groupOrders[g]?.[1] ?? null;
-  }
-
-  const top8Letters = thirdPlaceOrder.slice(0, 8).map((id) => id.split("-")[1]);
-  const combinationKey = [...top8Letters].sort().join("");
-  const combinationMap = combinations[combinationKey] ?? {};
-
-  const thirdPlaceOpponents = ["1E", "1I", "1A", "1L", "1D", "1G", "1B", "1K"];
-  for (const opponent of thirdPlaceOpponents) {
-    const lookupKey = `${opponent[0]}${opponent.slice(1).toLowerCase()}`; // e.g. "1e"
-    const thirdSlot = combinationMap[lookupKey]; // e.g. "3f"
-    let teamId: string | null = null;
-    if (thirdSlot) {
-      const groupLetter = thirdSlot[1].toUpperCase(); // "F"
-      teamId = groupOrders[groupLetter]?.[2] ?? null;
-    }
-    occupants[`3rd-${opponent}`] = teamId;
-  }
-
-  return occupants;
-}
-
-export function computeR32MatchesForTournament(
-  groupOrders: GroupOrders,
-  thirdPlaceOrder: ThirdPlaceOrder,
-  combinations: Record<string, Record<string, string>>,
-  advancement: string[],
-): Record<string, KnockoutMatch> {
-  const top8Letters = thirdPlaceOrder.slice(0, 8).map((id) => id.split("-")[1]);
-  const combinationKey = [...top8Letters].sort().join("");
-  const combinationMap = combinations[combinationKey] ?? {};
-
-  const matches: Record<string, KnockoutMatch> = {};
-  for (const { num, team1, team2 } of R32_MATCHUPS) {
-    const matchId = `R32-${num}`;
-
-    const isTeam1Advanced = advancement.includes(team1);
-    const team1Id = isTeam1Advanced
-      ? getTeamIdFromPosition(team1, groupOrders)
-      : null;
-
-    let team2Id: string | null = null;
-    if (team2 === null) {
-      const thirdRef = `3rd-${team1}`;
-      const isTeam2Advanced = advancement.includes(thirdRef);
-      if (isTeam2Advanced) {
-        const lookupKey = `${team1[0]}${team1.slice(1).toLowerCase()}`; // "1E" → "1e"
-        const thirdSlot = combinationMap[lookupKey];
-        if (thirdSlot) {
-          const groupLetter = thirdSlot[1].toUpperCase();
-          team2Id = groupOrders[groupLetter]?.[2] ?? null;
-        }
-      }
-    } else {
-      const isTeam2Advanced = advancement.includes(team2);
-      team2Id = isTeam2Advanced
-        ? getTeamIdFromPosition(team2, groupOrders)
-        : null;
-    }
-
-    matches[matchId] = {
-      id: matchId,
-      round: "R32",
-      team1Id,
-      team2Id,
-      winnerId: null,
-      loserId: null,
-    };
-  }
-  return matches;
-}
-
-export function computeTournamentBracket(
-  result: TournamentResult,
-  advancement: string[],
-  combinations: Record<string, Record<string, string>>,
-): Record<string, KnockoutMatch> {
-  const r32 = computeR32MatchesForTournament(
-    result.groupOrders,
-    result.thirdPlaceOrder,
-    combinations,
-    advancement,
-  );
-
-  let knockoutMatches = { ...createEmptyKnockoutMatches(), ...r32 };
-
-  const sorted = Object.entries(result.knockoutWinners).sort(([aId], [bId]) => {
-    const aRound = aId.replace(/-\d+$/, "") as KnockoutRound;
-    const bRound = bId.replace(/-\d+$/, "") as KnockoutRound;
-    return ROUND_ORDER.indexOf(aRound) - ROUND_ORDER.indexOf(bRound);
-  });
-
-  for (const [matchId, winnerId] of sorted) {
-    const match = knockoutMatches[matchId];
-    if (match && (match.team1Id === winnerId || match.team2Id === winnerId)) {
-      knockoutMatches = applyWinnerToMatches(
-        knockoutMatches,
-        matchId,
-        winnerId,
-      );
-    }
-  }
-
-  return knockoutMatches;
-}
 
 export class Tournament {
   private constructor(private readonly state: TournamentState) {}
@@ -190,11 +32,11 @@ export class Tournament {
     return new Tournament({ ...state });
   }
 
-  static createDefault(id: string = "singleton"): Tournament {
+  static createDefault(id = "singleton"): Tournament {
     return new Tournament({
       id,
-      result: null,
-      advancement: [],
+      manualTieBreaks: {},
+      thirdPlaceManualOrder: null,
     });
   }
 
@@ -202,12 +44,12 @@ export class Tournament {
     return this.state.id;
   }
 
-  get result(): TournamentResult | null {
-    return this.state.result;
+  get manualTieBreaks(): Record<string, string[]> {
+    return this.state.manualTieBreaks;
   }
 
-  get advancement(): string[] {
-    return this.state.advancement;
+  get thirdPlaceManualOrder(): string[] | null {
+    return this.state.thirdPlaceManualOrder;
   }
 
   get createdAt(): Date | undefined {
@@ -222,338 +64,78 @@ export class Tournament {
     return { ...this.state };
   }
 
-  private getEffectiveResult(): TournamentResult {
-    if (this.state.result) {
-      return this.state.result;
-    }
-    const enGroups = getGroups("en");
-    const groupOrders = Object.fromEntries(
-      enGroups.map((g) => [g.group, g.teams.map((t) => t.id)]),
-    );
-    const thirdPlaceOrder = enGroups.map((g) => `3rd-${g.group.toLowerCase()}`);
-    return {
-      groupOrders,
-      thirdPlaceOrder,
-      knockoutWinners: {},
-    };
-  }
-
-  setGroupOrder(
+  /**
+   * Sets the manual tie-break order for a group.
+   * Groups outside A–L are silently ignored.
+   */
+  setManualTieBreak(
     group: string,
     orderedIds: string[],
   ): Result<Tournament, DomainError> {
-    const currentResult = this.getEffectiveResult();
-    const newGroupOrders = {
-      ...currentResult.groupOrders,
-      [group]: orderedIds,
-    };
-
-    // Calculate old slot occupants
-    const oldOccupants = getR32SlotOccupants(
-      currentResult.groupOrders,
-      currentResult.thirdPlaceOrder,
-      combinationsData,
-    );
-
-    // Calculate new slot occupants
-    const newOccupants = getR32SlotOccupants(
-      newGroupOrders,
-      currentResult.thirdPlaceOrder,
-      combinationsData,
-    );
-
-    // Cascade clear invalidated knockout winners
-    // Run prediction style bracket computation to auto-clear stale winners
-    const r32 = computeR32Matches(
-      newGroupOrders,
-      currentResult.thirdPlaceOrder,
-      combinationsData,
-    );
-    let knockoutMatches = { ...createEmptyKnockoutMatches(), ...r32 };
-    const sorted = Object.entries(currentResult.knockoutWinners).sort(
-      ([aId], [bId]) => {
-        const aRound = aId.replace(/-\d+$/, "") as KnockoutRound;
-        const bRound = bId.replace(/-\d+$/, "") as KnockoutRound;
-        return ROUND_ORDER.indexOf(aRound) - ROUND_ORDER.indexOf(bRound);
-      },
-    );
-    for (const [matchId, winnerId] of sorted) {
-      const match = knockoutMatches[matchId];
-      if (match && (match.team1Id === winnerId || match.team2Id === winnerId)) {
-        knockoutMatches = applyWinnerToMatches(
-          knockoutMatches,
-          matchId,
-          winnerId,
-        );
-      }
-    }
-
-    const newKnockoutWinners: Record<string, string> = {};
-    for (const [matchId, match] of Object.entries(knockoutMatches)) {
-      if (match.winnerId) {
-        newKnockoutWinners[matchId] = match.winnerId;
-      }
-    }
-
-    // Clear advancement flags for any slot whose occupant changed
-    const newAdvancement = this.state.advancement.filter((ref) => {
-      const oldOccupant = oldOccupants[ref];
-      const newOccupant = newOccupants[ref];
-      return oldOccupant === newOccupant && oldOccupant !== null;
-    });
-
     return ok(
       new Tournament({
         ...this.state,
-        result: {
-          groupOrders: newGroupOrders,
-          thirdPlaceOrder: currentResult.thirdPlaceOrder,
-          knockoutWinners: newKnockoutWinners,
+        manualTieBreaks: {
+          ...this.state.manualTieBreaks,
+          [group]: orderedIds,
         },
-        advancement: newAdvancement,
       }),
     );
   }
 
-  setThirdPlaceOrder(orderedIds: string[]): Result<Tournament, DomainError> {
-    const currentResult = this.getEffectiveResult();
-
-    // Calculate old slot occupants
-    const oldOccupants = getR32SlotOccupants(
-      currentResult.groupOrders,
-      currentResult.thirdPlaceOrder,
-      combinationsData,
-    );
-
-    // Calculate new slot occupants
-    const newOccupants = getR32SlotOccupants(
-      currentResult.groupOrders,
-      orderedIds,
-      combinationsData,
-    );
-
-    // Cascade clear invalidated knockout winners
-    const r32 = computeR32Matches(
-      currentResult.groupOrders,
-      orderedIds,
-      combinationsData,
-    );
-    let knockoutMatches = { ...createEmptyKnockoutMatches(), ...r32 };
-    const sorted = Object.entries(currentResult.knockoutWinners).sort(
-      ([aId], [bId]) => {
-        const aRound = aId.replace(/-\d+$/, "") as KnockoutRound;
-        const bRound = bId.replace(/-\d+$/, "") as KnockoutRound;
-        return ROUND_ORDER.indexOf(aRound) - ROUND_ORDER.indexOf(bRound);
-      },
-    );
-    for (const [matchId, winnerId] of sorted) {
-      const match = knockoutMatches[matchId];
-      if (match && (match.team1Id === winnerId || match.team2Id === winnerId)) {
-        knockoutMatches = applyWinnerToMatches(
-          knockoutMatches,
-          matchId,
-          winnerId,
-        );
-      }
-    }
-
-    const newKnockoutWinners: Record<string, string> = {};
-    for (const [matchId, match] of Object.entries(knockoutMatches)) {
-      if (match.winnerId) {
-        newKnockoutWinners[matchId] = match.winnerId;
-      }
-    }
-
-    // Clear advancement flags for any slot whose occupant changed
-    const newAdvancement = this.state.advancement.filter((ref) => {
-      const oldOccupant = oldOccupants[ref];
-      const newOccupant = newOccupants[ref];
-      return oldOccupant === newOccupant && oldOccupant !== null;
-    });
-
+  /**
+   * Clears the manual tie-break for a group.
+   */
+  clearManualTieBreak(group: string): Result<Tournament, DomainError> {
+    const updated = { ...this.state.manualTieBreaks };
+    delete updated[group];
     return ok(
       new Tournament({
         ...this.state,
-        result: {
-          groupOrders: currentResult.groupOrders,
-          thirdPlaceOrder: orderedIds,
-          knockoutWinners: newKnockoutWinners,
-        },
-        advancement: newAdvancement,
+        manualTieBreaks: updated,
       }),
     );
   }
 
-  setKnockoutWinner(
-    matchId: string,
-    winnerId: string,
+  /**
+   * Sets the manual order for the cross-group thirds cluster.
+   */
+  setThirdPlaceManualOrder(
+    orderedIds: string[] | null,
   ): Result<Tournament, DomainError> {
-    const bracket = this.bracketView();
-    const match = bracket[matchId];
-    if (!match) {
-      return err(domainError("INVALID_MATCH"));
-    }
-
-    if (!match.team1Id || !match.team2Id) {
-      if (matchId.startsWith("R32-")) {
-        const matchNum = parseInt(matchId.replace("R32-", ""), 10);
-        const matchup = R32_MATCHUPS.find((m) => m.num === matchNum);
-        if (matchup) {
-          const ref1 = matchup.team1;
-          const ref2 =
-            matchup.team2 === null ? `3rd-${matchup.team1}` : matchup.team2;
-          if (
-            !this.state.advancement.includes(ref1) ||
-            !this.state.advancement.includes(ref2)
-          ) {
-            return err(domainError("PARTICIPANTS_NOT_ADVANCED"));
-          }
-        }
-      }
-      return err(domainError("INVALID_MATCH"));
-    }
-
-    if (winnerId !== match.team1Id && winnerId !== match.team2Id) {
-      return err(domainError("INVALID_MATCH"));
-    }
-
-    const currentResult = this.getEffectiveResult();
-
-    // Use prediction-style logic to set knockout winner and cascade
-    const r32 = computeR32Matches(
-      currentResult.groupOrders,
-      currentResult.thirdPlaceOrder,
-      combinationsData,
-    );
-    let knockoutMatches = { ...createEmptyKnockoutMatches(), ...r32 };
-    const sorted = Object.entries(currentResult.knockoutWinners).sort(
-      ([aId], [bId]) => {
-        const aRound = aId.replace(/-\d+$/, "") as KnockoutRound;
-        const bRound = bId.replace(/-\d+$/, "") as KnockoutRound;
-        return ROUND_ORDER.indexOf(aRound) - ROUND_ORDER.indexOf(bRound);
-      },
-    );
-    for (const [mid, wid] of sorted) {
-      const m = knockoutMatches[mid];
-      if (m && (m.team1Id === wid || m.team2Id === wid)) {
-        knockoutMatches = applyWinnerToMatches(knockoutMatches, mid, wid);
-      }
-    }
-
-    // Apply the new winner
-    knockoutMatches = applyWinnerToMatches(knockoutMatches, matchId, winnerId);
-
-    const newKnockoutWinners: Record<string, string> = {};
-    for (const [mid, m] of Object.entries(knockoutMatches)) {
-      if (m.winnerId) {
-        newKnockoutWinners[mid] = m.winnerId;
-      }
-    }
-
     return ok(
       new Tournament({
         ...this.state,
-        result: {
-          ...currentResult,
-          knockoutWinners: newKnockoutWinners,
-        },
+        thirdPlaceManualOrder: orderedIds,
       }),
     );
   }
 
-  clearKnockoutWinner(matchId: string): Result<Tournament, DomainError> {
-    const bracket = this.bracketView();
-    if (!bracket[matchId]) {
-      return err(domainError("INVALID_MATCH"));
-    }
-
-    const currentResult = this.getEffectiveResult();
-
-    // Build the matches
-    const r32 = computeR32Matches(
-      currentResult.groupOrders,
-      currentResult.thirdPlaceOrder,
-      combinationsData,
-    );
-    let knockoutMatches = { ...createEmptyKnockoutMatches(), ...r32 };
-    const sorted = Object.entries(currentResult.knockoutWinners).sort(
-      ([aId], [bId]) => {
-        const aRound = aId.replace(/-\d+$/, "") as KnockoutRound;
-        const bRound = bId.replace(/-\d+$/, "") as KnockoutRound;
-        return ROUND_ORDER.indexOf(aRound) - ROUND_ORDER.indexOf(bRound);
-      },
-    );
-    for (const [mid, wid] of sorted) {
-      const m = knockoutMatches[mid];
-      if (m && (m.team1Id === wid || m.team2Id === wid)) {
-        // If we are clearing this match, skip applying it here
-        if (mid === matchId) continue;
-        knockoutMatches = applyWinnerToMatches(knockoutMatches, mid, wid);
-      }
-    }
-
-    const newKnockoutWinners: Record<string, string> = {};
-    for (const [mid, m] of Object.entries(knockoutMatches)) {
-      if (m.winnerId) {
-        newKnockoutWinners[mid] = m.winnerId;
-      }
-    }
-
-    return ok(
-      new Tournament({
-        ...this.state,
-        result: {
-          ...currentResult,
-          knockoutWinners: newKnockoutWinners,
-        },
-      }),
+  /**
+   * Returns the full knockout bracket derived on-read from LiveResults.
+   *
+   * Pass `options.finishedOnly = false` to include provisional standings
+   * from live (in-progress) matches in the bracket occupants.
+   */
+  bracketView(
+    liveResults: LiveResult[],
+    options?: DeriveOptions,
+  ): Record<string, KnockoutMatch> {
+    return buildBracketView(
+      liveResults,
+      this.state.manualTieBreaks,
+      this.state.thirdPlaceManualOrder,
+      options,
     );
   }
 
-  markAdvanced(ref: string): Result<Tournament, DomainError> {
-    if (!VALID_ADVANCEMENT_REFS.has(ref)) {
-      return err(domainError("INVALID_REF"));
-    }
-    if (this.state.advancement.includes(ref)) {
-      return ok(this);
-    }
-    return ok(
-      new Tournament({
-        ...this.state,
-        advancement: [...this.state.advancement, ref],
-      }),
-    );
-  }
-
-  unmarkAdvanced(ref: string): Result<Tournament, DomainError> {
-    if (!VALID_ADVANCEMENT_REFS.has(ref)) {
-      return err(domainError("INVALID_REF"));
-    }
-    if (!this.state.advancement.includes(ref)) {
-      return ok(this);
-    }
-    return ok(
-      new Tournament({
-        ...this.state,
-        advancement: this.state.advancement.filter((r) => r !== ref),
-      }),
-    );
-  }
-
-  isCompetitionEnded(): boolean {
-    if (!this.state.result) return false;
-    return (
-      !!this.state.result.knockoutWinners.F &&
-      !!this.state.result.knockoutWinners["3RD"]
-    );
-  }
-
-  bracketView(): Record<string, KnockoutMatch> {
-    const currentResult = this.getEffectiveResult();
-    return computeTournamentBracket(
-      currentResult,
-      this.state.advancement,
-      combinationsData,
-    );
+  /**
+   * Returns true when Competition End is reached — both the third-place match
+   * (num=103) and the Final (num=104) are finished.
+   *
+   * ADR 0015: derived from LiveResults, never a stored flag.
+   */
+  isCompetitionEnded(liveResults: LiveResult[]): boolean {
+    return isCompetitionEndedFromLiveResults(liveResults);
   }
 }

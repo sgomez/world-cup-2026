@@ -3,7 +3,6 @@
 import { Trophy, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import combinationsData from "@/../data/worldcup.combinations.json";
 import { TeamBadge } from "@/components/team-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { matchProgression, R32_MATCHUPS } from "@/lib/bracket-core";
@@ -14,7 +13,7 @@ import {
 } from "@/lib/prediction-state";
 import { getGroups, type Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
-import { computeTournamentBracket } from "@/modules/tournament/domain/tournament";
+import { computeTournamentBracket } from "@/modules/tournament/domain/derive-result";
 
 // Mock standings calculation mapping
 type MockStats = {
@@ -184,11 +183,12 @@ export function StandingsView({
       groups.map((g) => `3rd-${g.group.toLowerCase()}`);
     const knockoutWinners = savedKnockoutWinners ?? {};
 
-    return computeTournamentBracket(
-      { groupOrders, thirdPlaceOrder, knockoutWinners },
-      savedAdvancement,
-      combinationsData,
-    );
+    return computeTournamentBracket({
+      groupOrders,
+      thirdPlaceOrder,
+      knockoutWinners,
+      advancement: savedAdvancement,
+    });
   }, [groups, savedPredictions, savedKnockoutWinners, savedAdvancement]);
 
   // Match scores mapping (all empty since tournament hasn't started)

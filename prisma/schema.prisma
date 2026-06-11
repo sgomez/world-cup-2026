@@ -114,11 +114,11 @@ model Verification {
 }
 
 model Tournament {
-  id          String   @id @default("singleton")
-  result      Json?
-  advancement Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                    String   @id @default("singleton")
+  manualTieBreaks       Json     @default("{}")
+  thirdPlaceManualOrder Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@map("tournament")
 }

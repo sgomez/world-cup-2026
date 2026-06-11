@@ -2,14 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { useEffect, useReducer, useState, useTransition } from "react";
-import {
-  clearKnockoutResultAction,
-  markAdvancedAction,
-  setGroupResultAction,
-  setKnockoutResultAction,
-  setThirdPlaceResultAction,
-  unmarkAdvancedAction,
-} from "@/app/actions/tournament";
 import { AdminAdvancementGate } from "@/components/admin-advancement-gate";
 import { GroupStage } from "@/components/group-stage";
 import { KnockoutStage } from "@/components/knockout-stage";
@@ -74,72 +66,17 @@ export function AdminResultEditor({
     dispatch({ type: "RESET", state: newState });
   }, [savedPredictions, savedKnockoutWinners, savedBracketView]);
 
-  function handleDispatch(action: TournamentAction) {
-    // Optimistically update the UI state
-    dispatch(action);
-
-    // Call server action to save it in database
-    startTransition(async () => {
-      if (action.type === "SET_GROUP_ORDER") {
-        const res = await setGroupResultAction(
-          action.groupName,
-          action.orderedIds,
-        );
-        if (res?.error) {
-          toast(res.error, "error");
-        } else {
-          toast(t("resultsSaved"), "success");
-        }
-      } else if (action.type === "SET_THIRD_PLACE_ORDER") {
-        const res = await setThirdPlaceResultAction(action.orderedIds);
-        if (res?.error) {
-          toast(res.error, "error");
-        } else {
-          toast(t("resultsSaved"), "success");
-        }
-      } else if (action.type === "SET_KNOCKOUT_WINNER") {
-        const res = await setKnockoutResultAction(
-          action.matchId,
-          action.winnerId,
-        );
-        if (res?.error) {
-          toast(res.error, "error");
-        } else {
-          toast(t("resultsSaved"), "success");
-        }
-      } else if (action.type === "CLEAR_KNOCKOUT_WINNER") {
-        const res = await clearKnockoutResultAction(action.matchId);
-        if (res?.error) {
-          toast(res.error, "error");
-        } else {
-          toast(t("resultsSaved"), "success");
-        }
-      }
-    });
+  // Group orders, third-place order, and knockout winners are now derived from
+  // LiveResults (ADR 0015). The admin exception-review UI will be implemented in
+  // issue #177. For now these handlers are read-only no-ops.
+  function handleDispatch(_action: TournamentAction) {
+    // no-op: derived from LiveResults
   }
 
-  function handleToggleAdvancement(ref: string) {
-    const isAdvanced = advancement.includes(ref);
-    const newAdvancement = isAdvanced
-      ? advancement.filter((r) => r !== ref)
-      : [...advancement, ref];
-
-    // Optimistically update the UI state
-    setAdvancement(newAdvancement);
-
-    // Call server action to save it in database
+  function handleToggleAdvancement(_ref: string) {
+    // no-op: advancement derived from LiveResults
     startTransition(async () => {
-      const res = isAdvanced
-        ? await unmarkAdvancedAction(ref)
-        : await markAdvancedAction(ref);
-
-      if (res?.error) {
-        toast(res.error, "error");
-        // Rollback on error
-        setAdvancement(advancement);
-      } else {
-        toast(t("toggledSuccess"), "success");
-      }
+      // placeholder until issue #177
     });
   }
 

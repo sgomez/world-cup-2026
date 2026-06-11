@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { ResultAsync } from "neverthrow";
 import { type DomainError, domainError } from "../domain/errors";
-import { Tournament, type TournamentResult } from "../domain/tournament";
+import { Tournament } from "../domain/tournament";
 import type { TournamentRepository } from "../domain/tournament-repository";
 
 type TournamentClient = Pick<PrismaClient, "tournament">;
@@ -17,8 +17,9 @@ export class PrismaTournamentRepository implements TournamentRepository {
 
     return Tournament.fromState({
       id: row.id,
-      result: row.result as TournamentResult | null,
-      advancement: (row.advancement as string[] | null) ?? [],
+      manualTieBreaks: (row.manualTieBreaks as Record<string, string[]>) ?? {},
+      thirdPlaceManualOrder:
+        (row.thirdPlaceManualOrder as string[] | null) ?? null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });
@@ -32,12 +33,13 @@ export class PrismaTournamentRepository implements TournamentRepository {
           where: { id: state.id },
           create: {
             id: state.id,
-            result: (state.result as any) ?? undefined,
-            advancement: state.advancement,
+            manualTieBreaks: state.manualTieBreaks as any,
+            thirdPlaceManualOrder:
+              (state.thirdPlaceManualOrder as any) ?? undefined,
           },
           update: {
-            result: (state.result as any) ?? null,
-            advancement: state.advancement,
+            manualTieBreaks: state.manualTieBreaks as any,
+            thirdPlaceManualOrder: (state.thirdPlaceManualOrder as any) ?? null,
           },
         })
         .then(() => {}),
