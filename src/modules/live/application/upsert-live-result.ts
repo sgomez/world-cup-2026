@@ -74,7 +74,7 @@ export function upsertLiveResult(
 
       // No-op: nothing changed, skip persistence
       const statusChanged =
-        existing !== null && existing.status !== command.status;
+        existing !== null && existing.status !== newLiveResult.status;
       if (events.length === 0 && existing !== null && !statusChanged) {
         return ResultAsync.fromSafePromise(
           Promise.resolve({ liveResult: newLiveResult, events }),

@@ -173,6 +173,11 @@ export function AdminMatchScoreEditor({
                   {t("statusLive")}
                 </span>
               )}
+              {existing?.status === "upcoming" && (
+                <span className="text-[9px] font-bold uppercase tracking-wider text-mute/60 dark:text-stone/60">
+                  {t("statusUpcoming")}
+                </span>
+              )}
             </div>
 
             {/* Teams + score inputs */}
@@ -263,21 +268,40 @@ export function AdminMatchScoreEditor({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
+                    const nextStatus: LiveStatus =
+                      row.status === "upcoming"
+                        ? "live"
+                        : row.status === "live"
+                          ? "finished"
+                          : "upcoming";
                     updateRow(match.num, {
-                      status: row.status === "live" ? "finished" : "live",
-                    })
-                  }
+                      status: nextStatus,
+                      ...(nextStatus === "upcoming"
+                        ? {
+                            goals1: 0,
+                            goals2: 0,
+                            penalties1: "",
+                            penalties2: "",
+                          }
+                        : {}),
+                    });
+                  }}
                   className={cn(
                     "rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors",
-                    row.status === "finished"
-                      ? "bg-success/10 text-success dark:bg-success/20"
-                      : "bg-sale/10 text-sale dark:bg-sale/20",
+                    row.status === "finished" &&
+                      "bg-success/10 text-success dark:bg-success/20",
+                    row.status === "live" &&
+                      "bg-sale/10 text-sale dark:bg-sale/20",
+                    row.status === "upcoming" &&
+                      "bg-soft-cloud text-mute dark:bg-charcoal dark:text-stone",
                   )}
                 >
                   {row.status === "finished"
                     ? t("statusFinished")
-                    : t("statusLive")}
+                    : row.status === "live"
+                      ? t("statusLive")
+                      : t("statusUpcoming")}
                 </button>
               </div>
               <Button

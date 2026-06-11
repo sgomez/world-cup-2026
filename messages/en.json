@@ -314,6 +314,7 @@
     "groupLabel": "Group {group}",
     "statusLive": "Live",
     "statusFinished": "Finished",
+    "statusUpcoming": "Upcoming",
     "goals1Label": "Goals (team 1)",
     "goals2Label": "Goals (team 2)",
     "penalties1Label": "Penalties (team 1)",
