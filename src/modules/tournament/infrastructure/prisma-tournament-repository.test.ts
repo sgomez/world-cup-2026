@@ -4,12 +4,8 @@ import { PrismaTournamentRepository } from "./prisma-tournament-repository";
 
 const ROW = {
   id: "singleton",
-  result: {
-    groupOrders: { A: ["usa", "wal"] },
-    thirdPlaceOrder: ["3rd-a"],
-    knockoutWinners: { "R32-73": "usa" },
-  },
-  advancement: ["1A", "2A", "3rd-1E"],
+  manualTieBreaks: { A: ["mex", "kor"] },
+  thirdPlaceManualOrder: ["mex", "bra"],
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -33,8 +29,8 @@ describe("PrismaTournamentRepository.get", () => {
 
     expect(t?.toState()).toEqual({
       id: "singleton",
-      result: ROW.result,
-      advancement: ROW.advancement,
+      manualTieBreaks: ROW.manualTieBreaks,
+      thirdPlaceManualOrder: ROW.thirdPlaceManualOrder,
       createdAt: ROW.createdAt,
       updatedAt: ROW.updatedAt,
     });
@@ -43,19 +39,19 @@ describe("PrismaTournamentRepository.get", () => {
     });
   });
 
-  it("rehydrates null result and advancement into defaults", async () => {
+  it("rehydrates null manualTieBreaks and thirdPlaceManualOrder into defaults", async () => {
     const prisma = fakePrisma();
     prisma.tournament.findUnique.mockResolvedValue({
       ...ROW,
-      result: null,
-      advancement: null,
+      manualTieBreaks: null,
+      thirdPlaceManualOrder: null,
     });
     const repo = new PrismaTournamentRepository(prisma as never);
 
     const t = await repo.get();
 
-    expect(t?.result).toBeNull();
-    expect(t?.advancement).toEqual([]);
+    expect(t?.manualTieBreaks).toEqual({});
+    expect(t?.thirdPlaceManualOrder).toBeNull();
   });
 
   it("returns null when the row is absent", async () => {
@@ -73,8 +69,8 @@ describe("PrismaTournamentRepository.save", () => {
     const repo = new PrismaTournamentRepository(prisma as never);
     const t = Tournament.fromState({
       id: "singleton",
-      result: ROW.result,
-      advancement: ROW.advancement,
+      manualTieBreaks: ROW.manualTieBreaks,
+      thirdPlaceManualOrder: ROW.thirdPlaceManualOrder,
     });
 
     const result = await repo.save(t);
@@ -84,12 +80,12 @@ describe("PrismaTournamentRepository.save", () => {
       where: { id: "singleton" },
       create: {
         id: "singleton",
-        result: ROW.result,
-        advancement: ROW.advancement,
+        manualTieBreaks: ROW.manualTieBreaks,
+        thirdPlaceManualOrder: ROW.thirdPlaceManualOrder,
       },
       update: {
-        result: ROW.result,
-        advancement: ROW.advancement,
+        manualTieBreaks: ROW.manualTieBreaks,
+        thirdPlaceManualOrder: ROW.thirdPlaceManualOrder,
       },
     });
   });

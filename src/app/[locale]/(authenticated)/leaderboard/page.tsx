@@ -9,6 +9,7 @@ import { peerSummariesByOwners } from "@/modules/bet/application/peer-summaries-
 import { Bet } from "@/modules/bet/domain/bet";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
+import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
 import { getActualScoreableContent } from "@/modules/tournament/application/get-actual-scoreable-content";
 import { Tournament } from "@/modules/tournament/domain/tournament";
 import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
@@ -92,10 +93,14 @@ export default async function LeaderboardPage({
   }
 
   const tournamentRepo = new PrismaTournamentRepository(prisma);
-  const tournament = await tournamentRepo.get();
+  const liveResultRepo = new PrismaLiveResultRepository(prisma);
+  const [tournament, liveResults] = await Promise.all([
+    tournamentRepo.get(),
+    liveResultRepo.findAll(),
+  ]);
   const activeTournament = tournament ?? Tournament.createDefault();
-  const actualResults = await getActualScoreableContent(tournamentRepo);
-  const tournamentEnded = activeTournament.isCompetitionEnded();
+  const actualResults = getActualScoreableContent(tournament, liveResults);
+  const tournamentEnded = activeTournament.isCompetitionEnded(liveResults);
 
   // Map database and summary structures to leaderboard scopes
   const scopes = scopeMapper(

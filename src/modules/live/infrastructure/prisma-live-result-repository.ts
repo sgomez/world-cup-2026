@@ -27,6 +27,22 @@ export class PrismaLiveResultRepository implements LiveResultRepository {
     });
   }
 
+  async findAll(): Promise<LiveResult[]> {
+    const rows = await this.client.liveResult.findMany();
+    return rows.map((row) =>
+      LiveResult.fromState({
+        num: row.num,
+        status: row.status as LiveStatus,
+        goals1: row.goals1,
+        goals2: row.goals2,
+        penalties1: row.penalties1 ?? undefined,
+        penalties2: row.penalties2 ?? undefined,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }),
+    );
+  }
+
   save(liveResult: LiveResult): ResultAsync<void, LiveDomainError> {
     const state = liveResult.toState();
     return ResultAsync.fromPromise(

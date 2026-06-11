@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import {
   getR32SlotOccupants,
   VALID_ADVANCEMENT_REFS,
-} from "@/modules/tournament/domain/tournament";
+} from "@/modules/tournament/domain/derive-result";
 import combinationsData from "../../data/worldcup.combinations.json";
 
 function getSlotLabel(
@@ -131,7 +131,7 @@ export function AdminAdvancementGate({
     combinationsData,
   );
 
-  const refs = Array.from(VALID_ADVANCEMENT_REFS);
+  const refs: string[] = Array.from(VALID_ADVANCEMENT_REFS);
   const winners = refs.filter((ref) => ref.startsWith("1"));
   const runnersUp = refs.filter((ref) => ref.startsWith("2"));
   const thirds = refs.filter((ref) => ref.startsWith("3rd-"));

@@ -3,15 +3,15 @@ import {
   type ScoreableContentArrays,
   toScoreableContentArrays,
 } from "@/lib/scoring";
+import type { LiveResult } from "@/modules/live/domain/live-result";
 import { Tournament } from "../domain/tournament";
-import type { TournamentRepository } from "../domain/tournament-repository";
 
-export async function getActualScoreableContent(
-  repo: TournamentRepository,
-): Promise<ScoreableContentArrays> {
-  const tournament = await repo.get();
+export function getActualScoreableContent(
+  tournament: Tournament | null,
+  liveResults: LiveResult[],
+): ScoreableContentArrays {
   const activeTournament = tournament ?? Tournament.createDefault();
-  const bracketView = activeTournament.bracketView();
+  const bracketView = activeTournament.bracketView(liveResults);
   const scoreableContent = extractScoreableContent(bracketView);
   return toScoreableContentArrays(scoreableContent);
 }

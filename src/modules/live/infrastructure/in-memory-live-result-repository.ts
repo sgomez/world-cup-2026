@@ -16,6 +16,10 @@ export class InMemoryLiveResultRepository implements LiveResultRepository {
     return this.store.get(num) ?? null;
   }
 
+  async findAll(): Promise<LiveResult[]> {
+    return Array.from(this.store.values());
+  }
+
   save(liveResult: LiveResult): ResultAsync<void, LiveDomainError> {
     this.store.set(liveResult.num, liveResult);
     return okAsync(undefined);
