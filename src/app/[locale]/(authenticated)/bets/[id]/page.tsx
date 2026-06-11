@@ -38,10 +38,11 @@ export default async function BetPage({
 
   const tournamentRepo = new PrismaTournamentRepository(prisma);
   const liveResultRepo = new PrismaLiveResultRepository(prisma);
-  const actualResults = await getActualScoreableContent(
-    tournamentRepo,
-    liveResultRepo,
-  );
+  const [tournament, liveResults] = await Promise.all([
+    tournamentRepo.get(),
+    liveResultRepo.findAll(),
+  ]);
+  const actualResults = getActualScoreableContent(tournament, liveResults);
 
   return (
     <div>

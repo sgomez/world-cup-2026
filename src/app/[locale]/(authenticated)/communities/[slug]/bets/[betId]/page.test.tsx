@@ -41,10 +41,18 @@ vi.mock(
   },
 );
 
+vi.mock("@/modules/live/infrastructure/prisma-live-result-repository", () => {
+  return {
+    PrismaLiveResultRepository: class {
+      findAll = vi.fn().mockResolvedValue([]);
+    },
+  };
+});
+
 vi.mock(
   "@/modules/tournament/application/get-actual-scoreable-content",
   () => ({
-    getActualScoreableContent: vi.fn().mockResolvedValue({
+    getActualScoreableContent: vi.fn().mockReturnValue({
       R32: [],
       R16: [],
       QF: [],

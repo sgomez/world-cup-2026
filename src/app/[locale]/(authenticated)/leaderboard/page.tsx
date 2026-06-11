@@ -94,12 +94,12 @@ export default async function LeaderboardPage({
 
   const tournamentRepo = new PrismaTournamentRepository(prisma);
   const liveResultRepo = new PrismaLiveResultRepository(prisma);
-  const [tournament, liveResults, actualResults] = await Promise.all([
+  const [tournament, liveResults] = await Promise.all([
     tournamentRepo.get(),
     liveResultRepo.findAll(),
-    getActualScoreableContent(tournamentRepo, liveResultRepo),
   ]);
   const activeTournament = tournament ?? Tournament.createDefault();
+  const actualResults = getActualScoreableContent(tournament, liveResults);
   const tournamentEnded = activeTournament.isCompetitionEnded(liveResults);
 
   // Map database and summary structures to leaderboard scopes

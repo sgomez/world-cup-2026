@@ -117,10 +117,11 @@ export default async function PeerBetPage({
 
   const tournamentRepo = new PrismaTournamentRepository(prisma);
   const liveResultRepo = new PrismaLiveResultRepository(prisma);
-  const actualResults = await getActualScoreableContent(
-    tournamentRepo,
-    liveResultRepo,
-  );
+  const [tournament, liveResults] = await Promise.all([
+    tournamentRepo.get(),
+    liveResultRepo.findAll(),
+  ]);
+  const actualResults = getActualScoreableContent(tournament, liveResults);
 
   // Otherwise, render the read-only prediction stage
   return (

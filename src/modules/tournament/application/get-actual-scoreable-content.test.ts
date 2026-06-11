@@ -1,17 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { InMemoryLiveResultRepository } from "@/modules/live/infrastructure/in-memory-live-result-repository";
-import { InMemoryTournamentRepository } from "../infrastructure/in-memory-tournament-repository";
 import { getActualScoreableContent } from "./get-actual-scoreable-content";
 
 describe("getActualScoreableContent", () => {
-  it("returns an empty key when no LiveResults exist", async () => {
-    const tournamentRepo = new InMemoryTournamentRepository();
-    const liveResultRepo = new InMemoryLiveResultRepository();
-
-    const result = await getActualScoreableContent(
-      tournamentRepo,
-      liveResultRepo,
-    );
+  it("returns an empty key when tournament is null and no LiveResults exist", () => {
+    const result = getActualScoreableContent(null, []);
 
     expect(result.R32).toEqual([]);
     expect(result.R16).toEqual([]);
