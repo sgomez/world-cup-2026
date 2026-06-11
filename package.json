@@ -14,6 +14,8 @@
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
+    "db:seed:clean": "node scripts/seed-clean.mjs",
+    "db:seed:groups": "node scripts/seed-groups.mjs",
     "env:encrypt": "dotenvx encrypt -f .env.production",
     "env:decrypt": "dotenvx decrypt -f .env.production"
   },
