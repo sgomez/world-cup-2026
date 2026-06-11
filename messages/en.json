@@ -324,7 +324,9 @@
     "savedSuccess": "Result saved.",
     "knockoutOnly": "Penalties only apply to knockout matches.",
     "noLiveResults": "No live or finished matches yet.",
-    "correctionNote": "Finished scores can be corrected here."
+    "correctionNote": "Finished scores can be corrected here.",
+    "filterTitle": "Filters",
+    "penaltiesTitle": "Penalties"
   },
   "adminTieBreak": {
     "title": "Tie-Break Ordering",

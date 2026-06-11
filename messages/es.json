@@ -324,7 +324,9 @@
     "savedSuccess": "Resultado guardado.",
     "knockoutOnly": "Los penaltis solo aplican a partidos eliminatorios.",
     "noLiveResults": "Aún no hay partidos en directo o finalizados.",
-    "correctionNote": "Los resultados finalizados se pueden corregir aquí."
+    "correctionNote": "Los resultados finalizados se pueden corregir aquí.",
+    "filterTitle": "Filtros",
+    "penaltiesTitle": "Penaltis"
   },
   "adminTieBreak": {
     "title": "Orden de Desempate",
