@@ -92,7 +92,11 @@ The scheduled, in-process job that keeps **LiveResults** moving without human in
 One run of the **Live Feed Poller**: a single sweep that auto-starts due matches and applies a **Live Feed** snapshot to each `live` match. Ticks are idempotent — a match skipped or failed in one Tick self-heals on the next.
 
 ### Live Feed
-The external source of in-play match facts the **Live Feed Poller** reads — one snapshot per `live` match: the current scoreline and whether the match has **finished**. It is the authority on *when* a match ends (the Poller never decides this from a clock of its own). Currently a mock that echoes the stored scoreline (so it never resets an Admin correction) and reports `finished` once a match's nominal duration has elapsed since **Kickoff**; a real provider will replace it behind the same port without changing the Poller.
+The external source of in-play match facts the **Live Feed Poller** reads — one snapshot per `live` match: the current scoreline and whether the match has **finished**. It is the authority on *when* a match ends (the Poller never decides this from a clock of its own). Which Feed is used is chosen by the `LIVE_FEED_SOURCE` environment variable, defaulting (fail-safe) to the mock:
+- the **mock** echoes the stored scoreline (so it never resets an Admin correction) and reports `finished` once a match's nominal duration has elapsed since **Kickoff** — the deterministic dev/test Feed;
+- the **worldcup26** provider reads real scorelines from a third-party API, keyed on **Match Number** (validated against the static fixture), and reports `finished` from the provider's own signal.
+
+Both are interchangeable implementations of the same Feed contract; a future provider drops in the same way without changing the Poller. Penalty shootouts are not supplied by the provider — they remain an Admin-only input.
 
 ### Kickoff
 The scheduled start instant of a match, taken from its `date` and timezone-bearing `time` in `data/worldcup.json` and resolved to an absolute UTC instant. The **Live Feed Poller** compares it against the current time to decide when a match auto-starts; the **Live Feed** uses it as the anchor from which a match's duration is measured.
