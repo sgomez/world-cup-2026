@@ -85,5 +85,17 @@ The placeholder shown in any bracket slot whose occupant is not yet settled — 
 ### LiveResult
 The real-world score of a single match — the **single source of match facts** for the whole tournament, from which the entire **Result** is derived. A LiveResult records goals for each side, an optional penalty-shootout score (knockout only), and a **status** of `upcoming` (not started), `live` (in play, scoreline may still change), or `finished` (full time). A match has *no* LiveResult or is set to `upcoming` when not started. Each match is keyed by its **Match Number**. LiveResults have **two writers** sharing one update command: the external bot (via the token-authenticated live API, which cannot revert `finished` matches to `live` due to a latch) and Admins (via the admin panel, who can transition matches freely between `upcoming`, `live`, and `finished`). The finishing order shown in the standings is re-derived from LiveResults (including `live` ones, so the table moves provisionally during a match); **Advanced** status and knockout winners use only `finished` LiveResults. LiveResults are surfaced to all users on the calendar and standings; a team in a `live` match is shown with a flashing live marker.
 
+### Live Feed Poller
+The scheduled, in-process job that keeps **LiveResults** moving without human input — the automated embodiment of the "bot" writer named in **LiveResult**. On a fixed interval it performs one **Tick**: it promotes every match whose **Kickoff** has passed but is still not started (no LiveResult, or one in `upcoming`) to `live` at 0–0, then for each `live` match reads the **Live Feed** and applies the returned snapshot. It writes through the same single upsert command as the bot and the Admin — so last-write-wins holds and the **finished latch** still bars it from un-finishing a match.
+
+### Tick
+One run of the **Live Feed Poller**: a single sweep that auto-starts due matches and applies a **Live Feed** snapshot to each `live` match. Ticks are idempotent — a match skipped or failed in one Tick self-heals on the next.
+
+### Live Feed
+The external source of in-play match facts the **Live Feed Poller** reads — one snapshot per `live` match: the current scoreline and whether the match has **finished**. It is the authority on *when* a match ends (the Poller never decides this from a clock of its own). Currently a mock that echoes the stored scoreline (so it never resets an Admin correction) and reports `finished` once a match's nominal duration has elapsed since **Kickoff**; a real provider will replace it behind the same port without changing the Poller.
+
+### Kickoff
+The scheduled start instant of a match, taken from its `date` and timezone-bearing `time` in `data/worldcup.json` and resolved to an absolute UTC instant. The **Live Feed Poller** compares it against the current time to decide when a match auto-starts; the **Live Feed** uses it as the anchor from which a match's duration is measured.
+
 ### Match Number
 The stable identifier of a match (`num`), unique across the tournament: 1 through 72 for the group-stage matches in chronological order, continuing with the pre-existing knockout numbering (73 onward). It is the identifier a **LiveResult** is keyed by, and the value the live-update API addresses.
