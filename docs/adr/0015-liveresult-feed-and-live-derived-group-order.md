@@ -1,6 +1,6 @@
 # ADR 0015: LiveResults as the Single Source of Match Facts; the Result Becomes Derived
 
-**Status:** Accepted
+**Status:** Superseded in part by ADR 0016
 **Date:** 2026-06-10
 
 **Supersedes (in part):**
