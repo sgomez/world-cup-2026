@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import type { Match } from "@/lib/matches";
 import { cn } from "@/lib/utils";
-import type { LiveResultState } from "@/modules/live/domain/live-result";
+import type {
+  LiveResultState,
+  LiveStatus,
+} from "@/modules/live/domain/live-result";
 
 type MatchRowState = {
-  status: "live" | "finished";
+  status: LiveStatus;
   goals1: number;
   goals2: number;
   penalties1: string;
@@ -23,7 +26,7 @@ function initRowState(
   existing: LiveResultState | undefined,
 ): MatchRowState {
   return {
-    status: existing?.status ?? "live",
+    status: existing?.status ?? "upcoming",
     goals1: existing?.goals1 ?? 0,
     goals2: existing?.goals2 ?? 0,
     penalties1:
@@ -101,6 +104,7 @@ export function AdminMatchScoreEditor({
         ...(penalties1 !== undefined ? { penalties1 } : {}),
         ...(penalties2 !== undefined ? { penalties2 } : {}),
         allowCreate: true,
+        adminOverride: true,
       });
 
       if (result?.error) {
@@ -167,6 +171,11 @@ export function AdminMatchScoreEditor({
               {existing?.status === "live" && (
                 <span className="animate-pulse text-[9px] font-bold uppercase tracking-wider text-sale">
                   {t("statusLive")}
+                </span>
+              )}
+              {existing?.status === "upcoming" && (
+                <span className="text-[9px] font-bold uppercase tracking-wider text-mute/60 dark:text-stone/60">
+                  {t("statusUpcoming")}
                 </span>
               )}
             </div>
@@ -259,21 +268,40 @@ export function AdminMatchScoreEditor({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
+                    const nextStatus: LiveStatus =
+                      row.status === "upcoming"
+                        ? "live"
+                        : row.status === "live"
+                          ? "finished"
+                          : "upcoming";
                     updateRow(match.num, {
-                      status: row.status === "live" ? "finished" : "live",
-                    })
-                  }
+                      status: nextStatus,
+                      ...(nextStatus === "upcoming"
+                        ? {
+                            goals1: 0,
+                            goals2: 0,
+                            penalties1: "",
+                            penalties2: "",
+                          }
+                        : {}),
+                    });
+                  }}
                   className={cn(
                     "rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors",
-                    row.status === "finished"
-                      ? "bg-success/10 text-success dark:bg-success/20"
-                      : "bg-sale/10 text-sale dark:bg-sale/20",
+                    row.status === "finished" &&
+                      "bg-success/10 text-success dark:bg-success/20",
+                    row.status === "live" &&
+                      "bg-sale/10 text-sale dark:bg-sale/20",
+                    row.status === "upcoming" &&
+                      "bg-soft-cloud text-mute dark:bg-charcoal dark:text-stone",
                   )}
                 >
                   {row.status === "finished"
                     ? t("statusFinished")
-                    : t("statusLive")}
+                    : row.status === "live"
+                      ? t("statusLive")
+                      : t("statusUpcoming")}
                 </button>
               </div>
               <Button

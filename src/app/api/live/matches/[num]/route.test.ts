@@ -108,6 +108,17 @@ describe("PUT /api/live/matches/[num]", () => {
     expect(res.status).toBe(200);
   });
 
+  it("returns 200 for valid PUT creating a new LiveResult with status upcoming", async () => {
+    const { PUT } = await import("./route");
+    const req = makeRequest(
+      "PUT",
+      { status: "upcoming", goals1: 0, goals2: 0 },
+      VALID_TOKEN,
+    );
+    const res = await PUT(req, { params: makeParams("1") });
+    expect(res.status).toBe(200);
+  });
+
   it("returns 422 for invalid goals (negative)", async () => {
     const { PUT } = await import("./route");
     const req = makeRequest(

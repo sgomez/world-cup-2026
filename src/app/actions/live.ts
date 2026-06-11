@@ -16,6 +16,7 @@ export type UpsertLiveResultInput = {
   penalties1?: number;
   penalties2?: number;
   allowCreate: boolean;
+  adminOverride?: boolean;
 };
 
 export type LiveActionState = {
@@ -59,6 +60,7 @@ export async function upsertLiveResultAction(
         ? { penalties2: input.penalties2 }
         : {}),
       allowCreate: input.allowCreate,
+      adminOverride: input.adminOverride,
     });
 
     if (result.isErr()) {

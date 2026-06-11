@@ -15,7 +15,7 @@ export type GroupMatch = {
   team2: TeamId;
   goals1: number;
   goals2: number;
-  status: "live" | "finished";
+  status: "upcoming" | "live" | "finished";
   group?: string;
 };
 

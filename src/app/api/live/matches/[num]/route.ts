@@ -12,7 +12,7 @@ type RouteContext = {
 };
 
 const RequestBodySchema = z.object({
-  status: z.enum(["live", "finished"]),
+  status: z.enum(["upcoming", "live", "finished"]),
   goals1: z.number(),
   goals2: z.number(),
   penalties1: z.number().optional(),

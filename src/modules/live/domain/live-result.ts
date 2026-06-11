@@ -2,7 +2,7 @@ import { err, ok, type Result } from "neverthrow";
 import { type LiveDomainError, liveDomainError } from "./errors";
 import type { LiveDomainEvent } from "./events";
 
-export type LiveStatus = "live" | "finished";
+export type LiveStatus = "upcoming" | "live" | "finished";
 
 export type LiveResultState = {
   num: number;
@@ -32,6 +32,15 @@ function isKnockout(num: number): boolean {
 function validateTarget(
   target: ReconcileTarget,
 ): Result<void, LiveDomainError> {
+  if (target.status === "upcoming") {
+    if (target.goals1 !== 0 || target.goals2 !== 0) {
+      return err(liveDomainError("INVALID_GOALS"));
+    }
+    if (target.penalties1 !== undefined || target.penalties2 !== undefined) {
+      return err(liveDomainError("PENALTIES_NOT_ALLOWED"));
+    }
+  }
+
   if (target.goals1 < 0 || target.goals2 < 0) {
     return err(liveDomainError("INVALID_GOALS"));
   }
@@ -107,6 +116,7 @@ export class LiveResult {
   static reconcile(
     current: LiveResult | null,
     target: ReconcileTarget,
+    adminOverride?: boolean,
   ): [Result<LiveResult, LiveDomainError>, LiveDomainEvent[]] {
     const validation = validateTarget(target);
     if (validation.isErr()) {
@@ -115,18 +125,21 @@ export class LiveResult {
 
     const events: LiveDomainEvent[] = [];
 
-    // Finished latch: once finished, a later 'live' snapshot is ignored
+    // Finished latch: once finished, a later 'live' or 'upcoming' snapshot is ignored unless adminOverride is true
     if (
+      !adminOverride &&
       current !== null &&
       current.status === "finished" &&
-      target.status === "live"
+      (target.status === "live" || target.status === "upcoming")
     ) {
       return [ok(current), []];
     }
 
     const isNew = current === null;
 
-    if (isNew) {
+    const wasStarted = current !== null && current.status !== "upcoming";
+    const isStarting = target.status === "live" || target.status === "finished";
+    if (!wasStarted && isStarting) {
       events.push({ type: "MatchStarted", num: target.num });
     }
 
@@ -147,8 +160,9 @@ export class LiveResult {
 
     const wasLive = current === null || current.status === "live";
     const becomesFinished = target.status === "finished";
+    const becomesLive = target.status === "live";
 
-    if (!isNew && wasLive && !becomesFinished && goalsChanged) {
+    if (!isNew && wasLive && becomesLive && goalsChanged) {
       events.push({
         type: "MatchScoreChanged",
         num: target.num,
@@ -197,20 +211,21 @@ export class LiveResult {
     }
 
     // No-op check — if nothing changed and we produced no events
-    // (excluding MatchStarted for new row case), return current unchanged
-    if (events.length === 0 && current !== null) {
+    // (excluding MatchStarted/status change case), return current unchanged
+    const statusChanged = current !== null && current.status !== target.status;
+    if (events.length === 0 && current !== null && !statusChanged) {
       return [ok(current), []];
     }
 
     const newState: LiveResultState = {
       num: target.num,
       status: target.status,
-      goals1: target.goals1,
-      goals2: target.goals2,
-      ...(target.penalties1 !== undefined
+      goals1: target.status === "upcoming" ? 0 : target.goals1,
+      goals2: target.status === "upcoming" ? 0 : target.goals2,
+      ...(target.status !== "upcoming" && target.penalties1 !== undefined
         ? { penalties1: target.penalties1 }
         : {}),
-      ...(target.penalties2 !== undefined
+      ...(target.status !== "upcoming" && target.penalties2 !== undefined
         ? { penalties2: target.penalties2 }
         : {}),
       createdAt: current?.createdAt,

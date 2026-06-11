@@ -314,6 +314,7 @@
     "groupLabel": "Grupo {group}",
     "statusLive": "En Directo",
     "statusFinished": "Finalizado",
+    "statusUpcoming": "Próximamente",
     "goals1Label": "Goles (equipo 1)",
     "goals2Label": "Goles (equipo 2)",
     "penalties1Label": "Penaltis (equipo 1)",

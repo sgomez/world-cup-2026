@@ -24,6 +24,7 @@ export type UpsertLiveResultCommand = {
    * false → PATCH semantics: merge onto existing row; 404 if none
    */
   allowCreate: boolean;
+  adminOverride?: boolean;
 };
 
 export type UpsertLiveResultOutput = {
@@ -59,7 +60,11 @@ export function upsertLiveResult(
           : {}),
       };
 
-      const [reconcileResult, events] = LiveResult.reconcile(existing, target);
+      const [reconcileResult, events] = LiveResult.reconcile(
+        existing,
+        target,
+        command.adminOverride,
+      );
 
       if (reconcileResult.isErr()) {
         return errAsync(reconcileResult.error);
@@ -68,7 +73,9 @@ export function upsertLiveResult(
       const newLiveResult = reconcileResult._unsafeUnwrap();
 
       // No-op: nothing changed, skip persistence
-      if (events.length === 0 && existing !== null) {
+      const statusChanged =
+        existing !== null && existing.status !== newLiveResult.status;
+      if (events.length === 0 && existing !== null && !statusChanged) {
         return ResultAsync.fromSafePromise(
           Promise.resolve({ liveResult: newLiveResult, events }),
         );

@@ -243,7 +243,7 @@ export function deriveResult(
     for (const m of allMatches) {
       if (m.group !== groupName) continue;
       const lr = liveByNum.get(m.num);
-      if (!lr) continue; // not started
+      if (!lr || lr.status === "upcoming") continue; // not started
 
       const team1Id = nameToId.get(m.team1);
       const team2Id = nameToId.get(m.team2);
@@ -696,7 +696,7 @@ export function deriveTieInfo(
     for (const m of allMatchesData) {
       if (m.group !== groupName) continue;
       const lr = liveByNum.get(m.num);
-      if (!lr) continue;
+      if (!lr || lr.status === "upcoming") continue;
       const team1Id = nameToId.get(m.team1);
       const team2Id = nameToId.get(m.team2);
       if (!team1Id || !team2Id) continue;
