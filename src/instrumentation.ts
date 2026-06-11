@@ -1,5 +1,9 @@
 import { Cron } from "croner";
 
+const globalForCron = globalThis as unknown as {
+  liveFeedCron: Cron | undefined;
+};
+
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { prisma } = await import("@/lib/prisma");
@@ -20,9 +24,16 @@ export async function register() {
 
     const cronPattern = process.env.LIVE_TICK_CRON || "*/5 * * * *";
 
+    if (globalForCron.liveFeedCron) {
+      console.log(
+        "[LiveFeedPoller] Stopping existing cron instance due to reload",
+      );
+      globalForCron.liveFeedCron.stop();
+    }
+
     console.log(`[LiveFeedPoller] Initializing with cron: ${cronPattern}`);
 
-    new Cron(
+    const cronInstance = new Cron(
       cronPattern,
       {
         timezone: "UTC",
@@ -46,5 +57,7 @@ export async function register() {
         }
       },
     );
+
+    globalForCron.liveFeedCron = cronInstance;
   }
 }
