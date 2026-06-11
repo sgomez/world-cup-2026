@@ -206,9 +206,13 @@ export function CalendarView({
   // Filter matches based on user selections
   const filteredMatches = useMemo(() => {
     return processedMatches.filter((match) => {
-      // Filter by Phase
-      if (selectedPhase && match.phase !== selectedPhase) {
-        return false;
+      // Filter by Phase or Group
+      if (selectedPhase) {
+        if (/^Group [A-Z]$/.test(selectedPhase)) {
+          if (match.group !== selectedPhase) return false;
+        } else if (match.phase !== selectedPhase) {
+          return false;
+        }
       }
 
       // Filter by Team
@@ -277,6 +281,22 @@ export function CalendarView({
     return order.filter((p) =>
       processedMatches.some((match) => match.phase === p),
     );
+  }, [processedMatches]);
+
+  const availableGroups = useMemo(() => {
+    const seen = new Set<string>();
+    const groups: string[] = [];
+    for (const match of processedMatches) {
+      if (
+        match.phase === "Group Stage" &&
+        match.group &&
+        !seen.has(match.group)
+      ) {
+        seen.add(match.group);
+        groups.push(match.group);
+      }
+    }
+    return groups.sort();
   }, [processedMatches]);
 
   // Get localized phase translation
@@ -488,11 +508,18 @@ export function CalendarView({
               className="appearance-none rounded-lg border border-hairline bg-canvas pl-4 pr-10 py-2 text-sm font-semibold text-ink dark:border-ash dark:bg-charcoal dark:text-canvas outline-none focus:border-ink dark:focus:border-canvas transition-colors"
             >
               <option value="">{tCalendar("allPhases")}</option>
-              {phases.map((phase) => (
-                <option key={phase} value={phase}>
-                  {getPhaseTranslation(phase)}
+              {availableGroups.map((g) => (
+                <option key={g} value={g}>
+                  {tCalendar("groupLabel", { group: g.replace("Group ", "") })}
                 </option>
               ))}
+              {phases
+                .filter((p) => p !== "Group Stage")
+                .map((p) => (
+                  <option key={p} value={p}>
+                    {getPhaseTranslation(p)}
+                  </option>
+                ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-mute dark:text-stone">
               <Filter className="h-3.5 w-3.5" />

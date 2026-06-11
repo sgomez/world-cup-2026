@@ -30,7 +30,8 @@
     "bestThird": "Mejor 3º {groups}",
     "winnerMatch": "Ganador Partido {num}",
     "loserMatch": "Perdedor Partido {num}",
-    "groupStage": "Fase de Grupos"
+    "groupStage": "Fase de Grupos",
+    "groupLabel": "Grupo {group}"
   },
   "home": {
     "goToDashboard": "Ir al Panel",

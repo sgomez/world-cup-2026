@@ -170,9 +170,13 @@ export function AdminMatchScoreEditor({
 
   const filteredMatches = useMemo(() => {
     return processedMatches.filter((match) => {
-      // Filter by Phase
-      if (selectedPhase && match.phase !== selectedPhase) {
-        return false;
+      // Filter by Phase or Group
+      if (selectedPhase) {
+        if (/^Group [A-Z]$/.test(selectedPhase)) {
+          if (match.group !== selectedPhase) return false;
+        } else if (match.phase !== selectedPhase) {
+          return false;
+        }
       }
 
       // Filter by Team
@@ -239,6 +243,22 @@ export function AdminMatchScoreEditor({
     );
   }, [processedMatches]);
 
+  const availableGroups = useMemo(() => {
+    const seen = new Set<string>();
+    const groups: string[] = [];
+    for (const match of processedMatches) {
+      if (
+        match.phase === "Group Stage" &&
+        match.group &&
+        !seen.has(match.group)
+      ) {
+        seen.add(match.group);
+        groups.push(match.group);
+      }
+    }
+    return groups.sort();
+  }, [processedMatches]);
+
   const getPhaseTranslation = (phase: string) => {
     switch (phase) {
       case "Group Stage":
@@ -292,11 +312,18 @@ export function AdminMatchScoreEditor({
           className="h-9 rounded-md border border-hairline bg-soft-cloud px-3 text-xs font-medium text-ink focus:border-info focus:outline-none dark:border-ash dark:bg-charcoal dark:text-canvas"
         >
           <option value="">{tCalendar("allPhases")}</option>
-          {phases.map((p) => (
-            <option key={p} value={p}>
-              {getPhaseTranslation(p)}
+          {availableGroups.map((g) => (
+            <option key={g} value={g}>
+              {tAdmin("groupLabel", { group: g.replace("Group ", "") })}
             </option>
           ))}
+          {phases
+            .filter((p) => p !== "Group Stage")
+            .map((p) => (
+              <option key={p} value={p}>
+                {getPhaseTranslation(p)}
+              </option>
+            ))}
         </select>
 
         {/* Team Filter */}

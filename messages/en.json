@@ -30,7 +30,8 @@
     "bestThird": "Best 3rd {groups}",
     "winnerMatch": "Winner Match {num}",
     "loserMatch": "Loser Match {num}",
-    "groupStage": "Group Stage"
+    "groupStage": "Group Stage",
+    "groupLabel": "Group {group}"
   },
   "home": {
     "goToDashboard": "Go to Dashboard",
