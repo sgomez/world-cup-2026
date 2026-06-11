@@ -1,8 +1,10 @@
 import { setRequestLocale } from "next-intl/server";
 import { AdminResultEditor } from "@/components/admin-result-editor";
+import { getAllMatches } from "@/lib/matches";
 import { prisma } from "@/lib/prisma";
+import type { LiveResultState } from "@/modules/live/domain/live-result";
 import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
-import { deriveResult } from "@/modules/tournament/domain/derive-result";
+import { deriveTieInfo } from "@/modules/tournament/domain/derive-result";
 import { Tournament } from "@/modules/tournament/domain/tournament";
 import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
 
@@ -23,33 +25,27 @@ export default async function AdminResultPage({
   ]);
 
   const activeTournament = tournament ?? Tournament.createDefault();
-  const derived = deriveResult(
+  const tieInfo = deriveTieInfo(
     liveResults,
     activeTournament.manualTieBreaks,
     activeTournament.thirdPlaceManualOrder,
   );
 
-  const savedBracketView = activeTournament.bracketView(liveResults);
-  const savedPredictions =
-    Object.keys(derived.groupOrders).length > 0
-      ? {
-          groupOrders: derived.groupOrders,
-          thirdPlaceOrder: derived.thirdPlaceOrder,
-        }
-      : null;
-  const savedKnockoutWinners =
-    Object.keys(derived.knockoutWinners).length > 0
-      ? derived.knockoutWinners
-      : null;
-  const savedAdvancement = derived.advancement;
+  const allMatches = getAllMatches();
+  const liveResultStates: LiveResultState[] = liveResults.map((lr) =>
+    lr.toState(),
+  );
 
   return (
     <div className="container mx-auto py-6">
       <AdminResultEditor
-        savedPredictions={savedPredictions}
-        savedKnockoutWinners={savedKnockoutWinners}
-        savedAdvancement={savedAdvancement}
-        savedBracketView={savedBracketView}
+        matches={allMatches}
+        liveResults={liveResultStates}
+        groupTieInfo={tieInfo.groups}
+        thirdsTieClusters={tieInfo.thirdsTieClusters}
+        manualTieBreaks={activeTournament.manualTieBreaks}
+        thirdPlaceManualOrder={activeTournament.thirdPlaceManualOrder}
+        locale={locale}
       />
     </div>
   );

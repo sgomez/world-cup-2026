@@ -485,6 +485,113 @@ export function getAdvancement(input: AdvancementInput): AdvancementResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tie detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Detects unresolved tie clusters in a group's standing.
+ *
+ * Returns the list of clusters that remain tied after applying all automatic
+ * criteria (points → h2h points → h2h GD → h2h goals) but before the
+ * manual or stable fallback.
+ *
+ * An unresolved tie means the Admin must drag-reorder that cluster in the UI.
+ * Teams separated by the automatic rules are "pinned" — not in any returned
+ * cluster.
+ *
+ * Only considers `finished` matches (ties in provisional standings are not
+ * actionable until the group is complete).
+ */
+export function detectGroupTies(
+  teams: TeamId[],
+  matches: GroupMatch[],
+): TeamId[][] {
+  const finishedMatches = matches.filter((m) => m.status === "finished");
+
+  // Step 1: group by overall points
+  const byPoints = groupByScore(teams, (t) =>
+    finishedMatches
+      .filter((m) => m.team1 === t || m.team2 === t)
+      .reduce((sum, m) => sum + matchPoints(t, m), 0),
+  );
+
+  // Automatic chain without manual or stable
+  const autoChain: TieBreakCriterion[] = [
+    h2hPointsCriterion,
+    h2hGoalDiffCriterion,
+    h2hGoalsCriterion,
+  ];
+
+  const tieClusters: TeamId[][] = [];
+
+  for (const cluster of byPoints) {
+    if (cluster.length <= 1) continue;
+
+    // Run cluster through autoChain, collecting any remaining tied sub-clusters
+    const remaining = findRemainingTies(cluster, finishedMatches, autoChain);
+    tieClusters.push(...remaining);
+  }
+
+  return tieClusters;
+}
+
+/**
+ * Detects unresolved tie clusters among thirds.
+ *
+ * Returns the list of clusters that remain tied after the automatic thirds
+ * criteria (points → GD → goals) but before manual or stable.
+ *
+ * Only meaningful when all 12 groups have finished (thirds ranking only
+ * settles then).
+ */
+export function detectThirdsTies(thirds: ThirdPlaceEntry[]): TeamId[][] {
+  const thirdsMap = new Map<TeamId, ThirdPlaceEntry>(
+    thirds.map((t) => [t.teamId, t]),
+  );
+  const teamIds = thirds.map((t) => t.teamId);
+
+  const pointsCriterion: TieBreakCriterion = (ctx) =>
+    groupByScore(ctx.cluster, (t) => thirdsMap.get(t)?.points ?? 0);
+  const gdCriterion: TieBreakCriterion = (ctx) =>
+    groupByScore(ctx.cluster, (t) => thirdsMap.get(t)?.goalDiff ?? 0);
+  const goalsCriterion: TieBreakCriterion = (ctx) =>
+    groupByScore(ctx.cluster, (t) => thirdsMap.get(t)?.goals ?? 0);
+
+  const autoChain: TieBreakCriterion[] = [
+    pointsCriterion,
+    gdCriterion,
+    goalsCriterion,
+  ];
+
+  // Rank all 12 by the criteria chain (no points pre-pass for thirds)
+  return findRemainingTies(teamIds, [], autoChain);
+}
+
+/**
+ * Internal helper: runs `cluster` through `chain` and returns sub-clusters
+ * that remain tied (size >= 2) after the chain is exhausted.
+ */
+function findRemainingTies(
+  cluster: TeamId[],
+  matches: GroupMatch[],
+  chain: TieBreakCriterion[],
+): TeamId[][] {
+  if (cluster.length <= 1 || chain.length === 0) {
+    return cluster.length >= 2 ? [cluster] : [];
+  }
+
+  const [criterion, ...rest] = chain;
+  const subClusters = criterion({ cluster, matches });
+
+  const stillTied: TeamId[][] = [];
+  for (const sub of subClusters) {
+    if (sub.length <= 1) continue;
+    stillTied.push(...findRemainingTies(sub, matches, rest));
+  }
+  return stillTied;
+}
+
+// ---------------------------------------------------------------------------
 // Internal: compute third-place team stats
 // ---------------------------------------------------------------------------
 
