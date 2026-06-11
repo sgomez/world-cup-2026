@@ -56,6 +56,23 @@ export default async function AdminResultPage({
     ? factorsToOrderedList(activeTournament.thirdPlaceManualOrder)
     : null;
 
+  const bracket = activeTournament.bracketView(liveResults, {
+    finishedOnly: false,
+  });
+
+  // Convert KnockoutMatch values to serializable states
+  const serializableBracket: Record<string, any> = {};
+  for (const [key, match] of Object.entries(bracket)) {
+    serializableBracket[key] = {
+      id: match.id,
+      round: match.round,
+      team1Id: match.team1Id,
+      team2Id: match.team2Id,
+      winnerId: match.winnerId,
+      loserId: match.loserId,
+    };
+  }
+
   return (
     <div className="container mx-auto py-6">
       <AdminResultEditor
@@ -65,6 +82,7 @@ export default async function AdminResultPage({
         thirdsTieClusters={tieInfo.thirdsTieClusters}
         manualTieBreaks={mappedManualTieBreaks}
         thirdPlaceManualOrder={mappedThirdPlaceManualOrder}
+        bracketView={serializableBracket}
         locale={locale}
       />
     </div>
