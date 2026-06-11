@@ -10,6 +10,8 @@ import {
   h2hGoalsCriterion,
   h2hPointsCriterion,
   makeManualFactorCriterion,
+  overallGoalDiffCriterion,
+  overallGoalsCriterion,
   rankThirds,
   stableCriterion,
   type TeamId,
@@ -104,39 +106,24 @@ describe("computeGroupStanding — h2h tie-breaking", () => {
     expect(order[3]).toBe("D"); // clearly last
   });
 
-  it("resolves three-way tie by h2h goal difference", () => {
-    // Three teams all draw against each other → tied on h2h points (1 each)
-    // Differentiate by h2h goal difference
+  it("falls through to stable when all criteria (including overall GD and goals) are equal", () => {
+    // Three teams all draw against each other and beat D by the same score
+    // → tied on all criteria, stable (input) order applies
     const teams: TeamId[] = ["A", "B", "C", "D"];
-    const _matches: GroupMatch[] = [
-      match(1, "A", "B", 2, 1), // A beats B overall but need 3-way tied on points
-      match(2, "A", "C", 1, 2), // C beats A
-      match(3, "A", "D", 2, 0), // A beats D
-      match(4, "B", "C", 2, 1), // B beats C
-      match(5, "B", "D", 0, 1), // D beats B
-      match(6, "C", "D", 2, 1), // C beats D
-    ];
-    // A: 3+0+3=6, B: 0+3+0=3 — let me try a proper 3-way tie
-    // 3-way tie: A,B,C all get same points; D is irrelevant
-    // A beats D, B beats D, C beats D → each gets 3 pts from D matches
-    // A,B,C all draw each other → each gets 2 pts from internal matches
-    // Total: A=B=C=5pts, D=0
     const matches2: GroupMatch[] = [
       match(1, "A", "B", 1, 1), // draw
       match(2, "A", "C", 1, 1), // draw
       match(3, "B", "C", 1, 1), // draw
-      match(4, "A", "D", 2, 0), // A beats D
-      match(5, "B", "D", 3, 0), // B beats D
-      match(6, "C", "D", 1, 0), // C beats D
+      match(4, "A", "D", 1, 0), // A beats D 1-0
+      match(5, "B", "D", 1, 0), // B beats D 1-0
+      match(6, "C", "D", 1, 0), // C beats D 1-0
     ];
-    // A=B=C=5pts. h2h matches among A,B,C: all draws → h2h points all equal (2)
-    // h2h GD: A=0 (1-1 + 1-1 = 0), B=0, C=0 → still tied
-    // h2h goals: A=2, B=2, C=2 → still tied
-    // Manual & stable → stable order (original input order)
+    // A=B=C=5pts. h2h among A,B,C: all draws → equal on h2h pts, GD, goals
+    // Overall GD: A=+1, B=+1, C=+1 → equal
+    // Overall goals: A=2, B=2, C=2 → equal
+    // → stable order (original input order A, B, C)
     const order = computeGroupStanding(teams, matches2, DEFAULT_TIEBREAK_CHAIN);
-    // D last; A,B,C in some stable order
     expect(order[3]).toBe("D");
-    // stable: preserve input ordering (A, B, C original positions 0,1,2)
     expect(order.slice(0, 3)).toEqual(["A", "B", "C"]);
   });
 
@@ -389,6 +376,101 @@ describe("individual criterion — unit tests", () => {
     expect(remaining).toHaveLength(2);
     expect(remaining).toContain("B");
     expect(remaining).toContain("C");
+  });
+});
+
+describe("computeGroupStanding — overall GD and goals (criteria 4 & 5)", () => {
+  it("resolves two-way tie by overall goal difference when h2h is a draw", () => {
+    // USA vs Paraguay: both 4pts, h2h drew 5-5 (all h2h criteria tied)
+    // Paraguay has better overall GD → Paraguay above USA
+    const teams: TeamId[] = ["USA", "PAR", "C", "D"];
+    const matches: GroupMatch[] = [
+      match(1, "USA", "PAR", 5, 5), // draw → each 1pt
+      match(2, "USA", "C", 2, 0), // USA wins → USA +3pts
+      match(3, "PAR", "D", 3, 0), // PAR wins → PAR +3pts
+      match(4, "USA", "D", 0, 1), // D wins
+      match(5, "PAR", "C", 0, 1), // C wins
+      match(6, "C", "D", 1, 1), // draw
+    ];
+    // USA: 1+3+0=4pts; PAR: 1+0+3=4pts
+    // h2h USA vs PAR: draw (5-5) → 1pt each, GD=0 each, goals=5 each → all tied
+    // Overall GD: USA = (5-5)+(2-0)+(0-1) = +1; PAR = (5-5)+(3-0)+(0-1) = +2
+    // → PAR above USA
+    const order = computeGroupStanding(teams, matches, DEFAULT_TIEBREAK_CHAIN);
+    const usaPos = order.indexOf("USA");
+    const parPos = order.indexOf("PAR");
+    expect(parPos).toBeLessThan(usaPos);
+  });
+
+  it("resolves by overall goals scored when overall GD is equal", () => {
+    // A and B tied on pts, h2h draw, same overall GD; A scored more overall
+    const teams: TeamId[] = ["A", "B", "C", "D"];
+    const matches: GroupMatch[] = [
+      match(1, "A", "B", 2, 2), // draw
+      match(2, "A", "C", 3, 3), // draw → A goals +3, GD 0
+      match(3, "B", "C", 2, 2), // draw → B goals +2, GD 0
+      match(4, "A", "D", 1, 0), // A wins
+      match(5, "B", "D", 1, 0), // B wins
+      match(6, "C", "D", 0, 0), // draw
+    ];
+    // A: 1+1+3=5pts; B: 1+1+3=5pts
+    // h2h: draw (2-2) → equal
+    // Overall GD: A=(0)+(0)+(+1)=+1; B=(0)+(0)+(+1)=+1 → equal
+    // Overall goals: A=2+3+1=6; B=2+2+1=5 → A above B
+    const order = computeGroupStanding(teams, matches, DEFAULT_TIEBREAK_CHAIN);
+    const aPos = order.indexOf("A");
+    const bPos = order.indexOf("B");
+    expect(aPos).toBeLessThan(bPos);
+  });
+});
+
+describe("individual criterion — overall GD and goals unit tests", () => {
+  it("overallGoalDiffCriterion uses all group matches, not just h2h", () => {
+    // A and B in cluster; A has better overall GD from non-h2h matches
+    const ctx: TieBreakContext = {
+      cluster: ["A", "B"],
+      matches: [
+        match(1, "A", "B", 1, 1), // h2h draw — GD 0 each
+        match(2, "A", "C", 3, 0), // A beats C — adds +3 to A's overall GD
+        match(3, "B", "C", 1, 0), // B beats C — adds +1 to B's overall GD
+      ],
+    };
+    const result = overallGoalDiffCriterion(ctx);
+    // A overall GD: (1-1)+(3-0) = +3; B overall GD: (1-1)+(1-0) = +1
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual(["A"]);
+    expect(result[1]).toEqual(["B"]);
+  });
+
+  it("overallGoalsCriterion uses all group matches, not just h2h", () => {
+    const ctx: TieBreakContext = {
+      cluster: ["A", "B"],
+      matches: [
+        match(1, "A", "B", 1, 1), // h2h draw — 1 goal each
+        match(2, "A", "C", 3, 0), // A scores 3 more
+        match(3, "B", "C", 1, 0), // B scores 1 more
+      ],
+    };
+    const result = overallGoalsCriterion(ctx);
+    // A overall goals: 1+3=4; B overall goals: 1+1=2
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual(["A"]);
+    expect(result[1]).toEqual(["B"]);
+  });
+
+  it("overallGoalDiffCriterion returns one cluster when GD is equal", () => {
+    const ctx: TieBreakContext = {
+      cluster: ["A", "B"],
+      matches: [
+        match(1, "A", "B", 1, 1),
+        match(2, "A", "C", 2, 0),
+        match(3, "B", "C", 2, 0),
+      ],
+    };
+    // A GD: 0+2=+2; B GD: 0+2=+2 → still tied
+    const result = overallGoalDiffCriterion(ctx);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toHaveLength(2);
   });
 });
 

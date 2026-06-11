@@ -143,6 +143,30 @@ export const h2hGoalsCriterion: TieBreakCriterion = (ctx) => {
 };
 
 /**
+ * Overall goal difference criterion (FIFA criterion 4).
+ * Considers all group matches for each team in the cluster, not just h2h.
+ */
+export const overallGoalDiffCriterion: TieBreakCriterion = (ctx) => {
+  return groupByScore(ctx.cluster, (t) =>
+    ctx.matches
+      .filter((m) => m.team1 === t || m.team2 === t)
+      .reduce((sum, m) => sum + goalsFor(t, m) - goalsAgainst(t, m), 0),
+  );
+};
+
+/**
+ * Overall goals scored criterion (FIFA criterion 5).
+ * Considers all group matches for each team in the cluster, not just h2h.
+ */
+export const overallGoalsCriterion: TieBreakCriterion = (ctx) => {
+  return groupByScore(ctx.cluster, (t) =>
+    ctx.matches
+      .filter((m) => m.team1 === t || m.team2 === t)
+      .reduce((sum, m) => sum + goalsFor(t, m), 0),
+  );
+};
+
+/**
  * Stable criterion — the terminal fallback.
  * Returns the cluster as individual singletons in the original input order.
  * This is never alphabetical: it preserves the order in which teams appear
@@ -183,6 +207,8 @@ export const DEFAULT_TIEBREAK_CHAIN: TieBreakCriterion[] = [
   h2hPointsCriterion,
   h2hGoalDiffCriterion,
   h2hGoalsCriterion,
+  overallGoalDiffCriterion,
+  overallGoalsCriterion,
   stableCriterion,
 ];
 
@@ -514,6 +540,8 @@ export function detectGroupTies(
     h2hPointsCriterion,
     h2hGoalDiffCriterion,
     h2hGoalsCriterion,
+    overallGoalDiffCriterion,
+    overallGoalsCriterion,
   ];
 
   const tieClusters: TeamId[][] = [];
