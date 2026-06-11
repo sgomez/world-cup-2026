@@ -325,6 +325,8 @@
     "gf": "GF",
     "ga": "GA",
     "gd": "GD",
-    "bestThirds": "Best Third-place Teams"
+    "bestThirds": "Best Third-place Teams",
+    "liveMarker": "LIVE",
+    "liveMarkerLegend": "Team is currently playing a live match"
   }
 }

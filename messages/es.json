@@ -325,6 +325,8 @@
     "gf": "GF",
     "ga": "GA",
     "gd": "DG",
-    "bestThirds": "Mejores Terceros"
+    "bestThirds": "Mejores Terceros",
+    "liveMarker": "EN DIRECTO",
+    "liveMarkerLegend": "El equipo está disputando un partido en directo"
   }
 }

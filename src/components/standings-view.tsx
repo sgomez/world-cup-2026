@@ -2,9 +2,10 @@
 
 import { Trophy, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TeamBadge } from "@/components/team-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRouter } from "@/i18n/navigation";
 import { matchProgression, R32_MATCHUPS } from "@/lib/bracket-core";
 import {
   getAllTeamsLookup,
@@ -102,12 +103,14 @@ function getKnockoutPlaceholder(matchId: string, slot: 1 | 2): string {
 export function StandingsView({
   defaultTab,
   locale,
+  liveTeamIds = new Set(),
   savedPredictions = null,
   savedKnockoutWinners = null,
   savedAdvancement = [],
 }: {
   defaultTab: "groups" | "knockout";
   locale: string;
+  liveTeamIds?: Set<string>;
   savedPredictions?: {
     groupOrders: Record<string, string[]>;
     thirdPlaceOrder: string[];
@@ -115,12 +118,58 @@ export function StandingsView({
   savedKnockoutWinners?: Record<string, string> | null;
   savedAdvancement?: string[];
 }) {
+  const router = useRouter();
   const t = useTranslations("tournament");
   const tGroupStage = useTranslations("groupStage");
   const tKnockout = useTranslations("knockoutStage");
   const tCalendar = useTranslations("calendar");
 
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Auto-refresh every 30s when the tab is visible
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const REFRESH_INTERVAL = 30_000;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    const startPolling = () => {
+      if (intervalId) return;
+      intervalId = setInterval(() => {
+        if (document.visibilityState === "visible") {
+          router.refresh();
+        }
+      }, REFRESH_INTERVAL);
+    };
+
+    const stopPolling = () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    startPolling();
+
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isMounted, router]);
 
   const groups = useMemo(() => {
     const baseGroups = getGroups(locale);
@@ -255,6 +304,17 @@ export function StandingsView({
 
         {/* Group Stage Tab */}
         <TabsContent value="groups">
+          {/* Live legend — only shown when at least one team is currently live */}
+          {liveTeamIds.size > 0 && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-hairline bg-canvas px-3 py-2 shadow-sm dark:border-ash dark:bg-ink">
+              <span className="animate-pulse rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-sale/10 text-sale dark:bg-sale/20">
+                {t("liveMarker")}
+              </span>
+              <span className="text-[11px] text-mute dark:text-stone">
+                {t("liveMarkerLegend")}
+              </span>
+            </div>
+          )}
           <div className="flex flex-col gap-6 min-[1024px]:flex-row">
             {/* Groups Grid */}
             <div className="min-w-0 flex-1">
@@ -335,12 +395,19 @@ export function StandingsView({
                                     {stats.position}
                                   </td>
                                   <td className="py-1.5 px-1 w-full max-w-[150px]">
-                                    <TeamBadge
-                                      team={team}
-                                      size="compact"
-                                      border={false}
-                                      showGrip={false}
-                                    />
+                                    <div className="flex items-center gap-1.5">
+                                      <TeamBadge
+                                        team={team}
+                                        size="compact"
+                                        border={false}
+                                        showGrip={false}
+                                      />
+                                      {liveTeamIds.has(team.id) && (
+                                        <span className="animate-pulse rounded px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-sale/10 text-sale dark:bg-sale/20 shrink-0">
+                                          {t("liveMarker")}
+                                        </span>
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="py-1.5 px-1.5 text-center font-[family-name:var(--font-oswald)] text-xs text-ink dark:text-canvas">
                                     {stats.pts}
