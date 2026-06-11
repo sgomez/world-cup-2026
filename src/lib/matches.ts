@@ -1,3 +1,4 @@
+import { err, ok, type Result } from "neverthrow";
 import worldcupData from "@/../data/worldcup.json";
 
 /**
@@ -34,4 +35,53 @@ export function getAllMatches(): Match[] {
 /** Looks a match up by its Match Number, or `undefined` if none exists. */
 export function getMatchByNum(num: number): Match | undefined {
   return matchesByNum.get(num);
+}
+
+/**
+ * Resolves a match's date plus its timezone-bearing time (e.g. 13:00 UTC-6)
+ * into an absolute UTC instant, returning a neverthrow Result.
+ * Defaults to Z when no offset is present.
+ */
+export function getKickoffInstant(match: {
+  date: string;
+  time: string;
+}): Result<Date, Error> {
+  if (!match.date || !match.time) {
+    return err(new Error("Missing date or time"));
+  }
+
+  // Validate date format (YYYY-MM-DD)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(match.date)) {
+    return err(new Error("Invalid date format, expected YYYY-MM-DD"));
+  }
+
+  // Validate time format (starts with HH:MM)
+  if (!/^\d{2}:\d{2}/.test(match.time)) {
+    return err(new Error("Invalid time format, expected HH:MM"));
+  }
+
+  const timePortionMatch = match.time.match(/^(\d{2}:\d{2})/);
+  const timePortion = timePortionMatch ? timePortionMatch[1] : "00:00";
+
+  // Parse time offset. Example "13:00 UTC-6" or "13:00 UTC+2"
+  const offsetMatch = match.time.match(/UTC([-+]\d+)/);
+  let parsedOffset = "";
+  if (offsetMatch) {
+    const val = parseInt(offsetMatch[1], 10);
+    const sign = val >= 0 ? "+" : "-";
+    const absVal = Math.abs(val);
+    const padded = String(absVal).padStart(2, "0");
+    parsedOffset = `${sign}${padded}:00`;
+  } else {
+    parsedOffset = "Z";
+  }
+
+  const isoStr = `${match.date}T${timePortion}${parsedOffset}`;
+  const dateObj = new Date(isoStr);
+
+  if (Number.isNaN(dateObj.getTime())) {
+    return err(new Error("Invalid resulting date"));
+  }
+
+  return ok(dateObj);
 }
