@@ -140,7 +140,7 @@ function buildR32Matches(
 
   const top8Letters = thirdPlaceOrder
     .slice(0, 8)
-    .map((id) => id.replace("3rd-", "").toUpperCase());
+    .map((id) => id.replace("3rd-", ""));
   const combinationKey = [...top8Letters].sort().join("");
   const combinationMap = combinations[combinationKey] ?? {};
 
@@ -393,9 +393,10 @@ export function deriveResult(
     // the existing TournamentResult shape used by bracket-core
     thirdPlaceOrder = thirdsResult.ranked.map((r) => `3rd-${r.group}`);
 
-    // Add thirds advancement refs
-    for (const r of thirdsResult.ranked) {
-      advancementRefs.push(`3rd-1${r.group.toUpperCase()}`);
+    // All 8 third-place R32 slots are determined once 8 thirds qualify.
+    // Push fixed slot refs (derived from R32_MATCHUPS), not the qualifying groups.
+    for (const { team1, team2 } of R32_MATCHUPS) {
+      if (team2 === null) advancementRefs.push(`3rd-${team1}`);
     }
   }
 

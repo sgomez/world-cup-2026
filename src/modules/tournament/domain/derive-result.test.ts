@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
+import type { GroupOrders } from "@/lib/bracket-core";
 import { LiveResult } from "@/modules/live/domain/live-result";
 import {
+  computeTournamentBracket,
+  type DerivedResult,
   deriveResult,
   isCompetitionEndedFromLiveResults,
 } from "./derive-result";
@@ -245,6 +248,86 @@ describe("deriveResult — thirdPlaceOrder", () => {
     const result = deriveResult(allGroupAFinished(), {}, null);
     // Only group A is done, not all 12
     expect(result.thirdPlaceOrder).toEqual([]);
+  });
+});
+
+describe("deriveResult — third-place R32 slots (integration)", () => {
+  function allGroupsFinished(): LiveResult[] {
+    // matches 1-72 cover all 12 group stages; team1 wins 1-0 everywhere
+    return Array.from({ length: 72 }, (_, i) => finishedMatch(i + 1, 1, 0));
+  }
+
+  it("populates all 8 third-place R32 slots when all 12 groups complete", () => {
+    const result = deriveResult(allGroupsFinished(), {}, null);
+
+    expect(result.thirdPlaceOrder).toHaveLength(8);
+
+    const bracket = computeTournamentBracket(result);
+
+    // R32 matches where team2 is a third: 74, 77, 79, 80, 81, 82, 85, 87
+    for (const num of [74, 77, 79, 80, 81, 82, 85, 87]) {
+      expect(
+        bracket[`R32-${num}`].team2Id,
+        `R32-${num} team2Id`,
+      ).not.toBeNull();
+    }
+  });
+});
+
+describe("computeTournamentBracket — third-place R32 slots", () => {
+  it("populates team2Id for all 8 third-place slots when all 12 groups advance", () => {
+    // top-8 thirds = e,f,g,h,i,j,k,l → combinationKey "efghijkl"
+    const thirdPlaceOrder = [
+      "3rd-e",
+      "3rd-f",
+      "3rd-g",
+      "3rd-h",
+      "3rd-i",
+      "3rd-j",
+      "3rd-k",
+      "3rd-l",
+      "3rd-a",
+      "3rd-b",
+      "3rd-c",
+      "3rd-d",
+    ];
+    const groupOrders: GroupOrders = Object.fromEntries(
+      ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"].map((g) => [
+        g,
+        [`t1${g}`, `t2${g}`, `t3${g}`, `t4${g}`],
+      ]),
+    );
+    const advancement = [
+      ...["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"].flatMap(
+        (g) => [`1${g}`, `2${g}`],
+      ),
+      "3rd-1E",
+      "3rd-1I",
+      "3rd-1A",
+      "3rd-1L",
+      "3rd-1D",
+      "3rd-1G",
+      "3rd-1B",
+      "3rd-1K",
+    ];
+    const derived: DerivedResult = {
+      groupOrders,
+      thirdPlaceOrder,
+      knockoutWinners: {},
+      advancement,
+    };
+
+    const bracket = computeTournamentBracket(derived);
+
+    // All 8 third-place R32 slots must be non-null (regression: uppercase key bug caused null)
+    expect(bracket["R32-74"].team2Id).not.toBeNull(); // 1E vs 3rd
+    expect(bracket["R32-77"].team2Id).not.toBeNull(); // 1I vs 3rd
+    expect(bracket["R32-79"].team2Id).not.toBeNull(); // 1A vs 3rd
+    expect(bracket["R32-80"].team2Id).not.toBeNull(); // 1L vs 3rd
+    expect(bracket["R32-81"].team2Id).not.toBeNull(); // 1D vs 3rd
+    expect(bracket["R32-82"].team2Id).not.toBeNull(); // 1G vs 3rd
+    expect(bracket["R32-85"].team2Id).not.toBeNull(); // 1B vs 3rd
+    expect(bracket["R32-87"].team2Id).not.toBeNull(); // 1K vs 3rd
   });
 });
 
