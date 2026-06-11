@@ -334,7 +334,8 @@
     "saving": "Saving…",
     "savedSuccess": "Tie-break factor saved.",
     "groupTieBreak": "Group {group} — Tie-Break",
-    "thirdsTieBreak": "Best Third-Place Teams — Tie-Break"
+    "thirdsTieBreak": "Best Third-Place Teams — Tie-Break",
+    "factor": "Factor"
   },
   "leaderboard": {
     "title": "Leaderboard",
@@ -358,6 +359,7 @@
     "knockoutStage": "Knockout Stage",
     "pos": "#",
     "team": "Team",
+    "group": "Group",
     "pts": "PTS",
     "gf": "GF",
     "ga": "GA",

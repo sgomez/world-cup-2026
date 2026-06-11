@@ -334,7 +334,8 @@
     "saving": "Guardando…",
     "savedSuccess": "Factor de desempate guardado.",
     "groupTieBreak": "Grupo {group} — Desempate",
-    "thirdsTieBreak": "Mejores Terceros — Desempate"
+    "thirdsTieBreak": "Mejores Terceros — Desempate",
+    "factor": "Factor"
   },
   "leaderboard": {
     "title": "Ranking",
@@ -358,6 +359,7 @@
     "knockoutStage": "Fase Eliminatoria",
     "pos": "#",
     "team": "Equipo",
+    "group": "Grupo",
     "pts": "PTS",
     "gf": "GF",
     "ga": "GA",

@@ -9,27 +9,13 @@ import {
 import { TeamBadge } from "@/components/team-badge";
 import { useToast } from "@/components/ui/toast";
 import type { Match } from "@/lib/matches";
-import { getTeamById } from "@/lib/teams";
+import { getTeamById, getTeamByName } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import type { LiveResultState } from "@/modules/live/domain/live-result";
 import type { GroupTieInfo } from "@/modules/tournament/domain/derive-result";
-import rawTeamsEn from "../../data/worldcup.teams.en.json";
-
-// Helper map to resolve English team names to lowercase FIFA codes
-const teamNameToIdMap = new Map<string, string>();
-for (const t of rawTeamsEn as Array<{
-  name: string;
-  fifa_code: string;
-  name_normalised?: string;
-}>) {
-  teamNameToIdMap.set(t.name, t.fifa_code.toLowerCase());
-  if (t.name_normalised) {
-    teamNameToIdMap.set(t.name_normalised, t.fifa_code.toLowerCase());
-  }
-}
 
 function getTeamId(name: string): string {
-  return teamNameToIdMap.get(name) || name.toLowerCase();
+  return getTeamByName(name, "en")?.id || name.toLowerCase();
 }
 
 /**
@@ -164,6 +150,8 @@ export function AdminTieBreakPanel({
   locale,
 }: AdminTieBreakPanelProps) {
   const t = useTranslations("adminTieBreak");
+  const tTournament = useTranslations("tournament");
+  const tGroupStage = useTranslations("groupStage");
   const { toast } = useToast();
 
   const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
@@ -243,13 +231,27 @@ export function AdminTieBreakPanel({
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="text-[10px] font-bold uppercase tracking-wider text-mute dark:text-stone border-b border-hairline/30 dark:border-ash/30">
-                      <th className="py-1 px-1 text-left w-6">#</th>
-                      <th className="py-1 px-2 text-left">Team</th>
-                      <th className="py-1 px-1 text-center w-8">PTS</th>
-                      <th className="py-1 px-1 text-center w-6">GF</th>
-                      <th className="py-1 px-1 text-center w-6">GA</th>
-                      <th className="py-1 px-1 text-center w-6">GD</th>
-                      <th className="py-1 px-1 text-center w-14">Factor</th>
+                      <th className="py-1 px-1 text-left w-6">
+                        {tTournament("pos")}
+                      </th>
+                      <th className="py-1 px-2 text-left">
+                        {tTournament("team")}
+                      </th>
+                      <th className="py-1 px-1 text-center w-8">
+                        {tTournament("pts")}
+                      </th>
+                      <th className="py-1 px-1 text-center w-6">
+                        {tTournament("gf")}
+                      </th>
+                      <th className="py-1 px-1 text-center w-6">
+                        {tTournament("ga")}
+                      </th>
+                      <th className="py-1 px-1 text-center w-6">
+                        {tTournament("gd")}
+                      </th>
+                      <th className="py-1 px-1 text-center w-14">
+                        {t("factor")}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-hairline/10 dark:divide-ash/10 select-none">
@@ -334,14 +336,26 @@ export function AdminTieBreakPanel({
           <table className="w-full border-collapse">
             <thead>
               <tr className="text-[10px] font-bold uppercase tracking-wider text-mute dark:text-stone border-b border-hairline/30 dark:border-ash/30">
-                <th className="py-1 px-1 text-left w-10">#</th>
-                <th className="py-1 px-2 text-left">Team</th>
-                <th className="py-1 px-2 text-center w-16">Group</th>
-                <th className="py-1 px-1 text-center w-10">PTS</th>
-                <th className="py-1 px-1 text-center w-8">GF</th>
-                <th className="py-1 px-1 text-center w-8">GA</th>
-                <th className="py-1 px-1 text-center w-8">GD</th>
-                <th className="py-1 px-1 text-center w-24">Factor</th>
+                <th className="py-1 px-1 text-left w-10">
+                  {tTournament("pos")}
+                </th>
+                <th className="py-1 px-2 text-left">{tTournament("team")}</th>
+                <th className="py-1 px-2 text-center w-16">
+                  {tTournament("group")}
+                </th>
+                <th className="py-1 px-1 text-center w-10">
+                  {tTournament("pts")}
+                </th>
+                <th className="py-1 px-1 text-center w-8">
+                  {tTournament("gf")}
+                </th>
+                <th className="py-1 px-1 text-center w-8">
+                  {tTournament("ga")}
+                </th>
+                <th className="py-1 px-1 text-center w-8">
+                  {tTournament("gd")}
+                </th>
+                <th className="py-1 px-1 text-center w-24">{t("factor")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline/10 dark:divide-ash/10 select-none">
@@ -376,7 +390,7 @@ export function AdminTieBreakPanel({
                       />
                     </td>
                     <td className="py-2 px-2 text-center text-[10px] font-bold uppercase text-mute dark:text-stone">
-                      Group {item.groupLetter}
+                      {tGroupStage("group", { letter: item.groupLetter })}
                     </td>
                     <td className="py-2 px-1 text-center font-bold text-ink dark:text-canvas">
                       {item.pts}
