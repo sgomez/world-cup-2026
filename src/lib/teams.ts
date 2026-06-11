@@ -73,3 +73,11 @@ export function getTeamByName(name: string, locale: string): Team | null {
 
   return null;
 }
+
+export function getTeamById(id: string, locale: string): Team | null {
+  for (const group of getGroups(locale)) {
+    const found = group.teams.find((t) => t.id === id);
+    if (found) return found;
+  }
+  return null;
+}
