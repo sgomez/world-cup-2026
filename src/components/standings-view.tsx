@@ -16,6 +16,10 @@ import { getGroups, type Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { computeTournamentBracket } from "@/modules/tournament/domain/derive-result";
 
+// Stable empty set for default liveTeamIds prop — avoids spurious memoization
+// cache misses with React Compiler when the prop is omitted.
+const EMPTY_LIVE_TEAM_IDS = new Set<string>();
+
 // Mock standings calculation mapping
 type MockStats = {
   position: number;
@@ -103,7 +107,7 @@ function getKnockoutPlaceholder(matchId: string, slot: 1 | 2): string {
 export function StandingsView({
   defaultTab,
   locale,
-  liveTeamIds = new Set(),
+  liveTeamIds = EMPTY_LIVE_TEAM_IDS,
   savedPredictions = null,
   savedKnockoutWinners = null,
   savedAdvancement = [],
