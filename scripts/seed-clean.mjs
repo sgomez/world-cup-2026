@@ -1,6 +1,8 @@
 import { config } from "dotenv";
+
 config({ path: ".env" });
 config({ path: ".env.development", override: true });
+
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import pg from "pg";
