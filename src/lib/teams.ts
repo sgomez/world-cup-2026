@@ -62,12 +62,20 @@ export function getTeamByName(name: string, locale: string): Team | null {
       t.name_normalised?.toLowerCase() === normalizedSearch,
   );
 
-  if (!rawEn) return null;
-  const targetId = rawEn.fifa_code.toLowerCase();
+  if (rawEn) {
+    const targetId = rawEn.fifa_code.toLowerCase();
+    for (const group of getGroups(locale)) {
+      const found = group.teams.find((t) => t.id === targetId);
+      if (found) return found;
+    }
+    return null;
+  }
 
-  // Find the translated team in the groups of the current locale
+  // Fall back: search by localized name directly (handles names resolved via getTeamById)
   for (const group of getGroups(locale)) {
-    const found = group.teams.find((t) => t.id === targetId);
+    const found = group.teams.find(
+      (t) => t.name.toLowerCase() === normalizedSearch,
+    );
     if (found) return found;
   }
 

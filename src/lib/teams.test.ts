@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type GroupData, getGroups, type Team } from "./teams";
+import { type GroupData, getGroups, getTeamByName, type Team } from "./teams";
 
 const enGroups = getGroups("en");
 const esGroups = getGroups("es");
@@ -125,5 +125,31 @@ describe("getGroups Spanish locale", () => {
     expect(kor?.name).toBe("Korea Republic");
     const ger = enGroups[4].teams.find((t) => t.id === "ger");
     expect(ger?.name).toBe("Germany");
+  });
+});
+
+describe("getTeamByName", () => {
+  it("finds team by English name in en locale", () => {
+    const t = getTeamByName("Germany", "en");
+    expect(t?.id).toBe("ger");
+    expect(t?.flag).toBeTruthy();
+  });
+
+  it("finds team by English name in es locale (returns Spanish translation)", () => {
+    const t = getTeamByName("Germany", "es");
+    expect(t?.id).toBe("ger");
+    expect(t?.name).toBe("Alemania");
+    expect(t?.flag).toBeTruthy();
+  });
+
+  it("finds team by Spanish name in es locale (bracket-resolved name)", () => {
+    const t = getTeamByName("Alemania", "es");
+    expect(t?.id).toBe("ger");
+    expect(t?.flag).toBeTruthy();
+  });
+
+  it("returns null for unknown name", () => {
+    expect(getTeamByName("Fake Country", "en")).toBeNull();
+    expect(getTeamByName("País Inventado", "es")).toBeNull();
   });
 });
