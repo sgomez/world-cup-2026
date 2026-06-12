@@ -2,15 +2,10 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { TeamBadge } from "@/components/team-badge";
-import {
-  getAllTeamsLookup,
-  getTeamsInRound,
-  type TournamentState,
-} from "@/lib/prediction-state";
+import { getAllTeamsLookup } from "@/lib/prediction-state";
 import {
   CHAMPION_POINTS,
   EMPTY_SCOREABLE_CONTENT_ARRAYS,
-  extractScoreableContent,
   ROUND_POINTS,
   type ScoreableContentArrays,
   scoreBetBreakdown,
@@ -192,37 +187,39 @@ function WinnerCard({
 }
 
 export function ScoreTab({
-  state,
+  prediction,
   actualResults: actualResultsProp = EMPTY_SCOREABLE_CONTENT_ARRAYS,
   hasLiveMatch = false,
 }: {
-  state: TournamentState;
+  prediction: ScoreableContentArrays;
   actualResults?: ScoreableContentArrays;
   hasLiveMatch?: boolean;
 }) {
   const t = useTranslations("score");
   const locale = useLocale();
   const teamsLookup = getAllTeamsLookup(locale);
-  const actualResultsSet = toScoreableContent(actualResultsProp);
-  const actualResults = actualResultsSet; // reuse existing name for compatibility
+  const actualResults = toScoreableContent(actualResultsProp);
 
-  const r32Teams = getTeamsInRound(state, "R32", locale);
-  const r16Teams = getTeamsInRound(state, "R16", locale);
-  const qfTeams = getTeamsInRound(state, "QF", locale);
-  const sfTeams = getTeamsInRound(state, "SF", locale);
-  const finalTeams = getTeamsInRound(state, "F", locale);
+  const mapIdsToTeams = (ids: string[]) =>
+    ids
+      .map((id) => teamsLookup.get(id.toLowerCase()))
+      .filter((t): t is Team => t !== undefined);
 
-  const finalMatch = state.knockoutMatches.F;
-  const thirdMatch = state.knockoutMatches["3RD"];
-  const predictedChampion = finalMatch?.winnerId
-    ? (teamsLookup.get(finalMatch.winnerId) ?? null)
+  const r32Teams = mapIdsToTeams(prediction.R32);
+  const r16Teams = mapIdsToTeams(prediction.R16);
+  const qfTeams = mapIdsToTeams(prediction.QF);
+  const sfTeams = mapIdsToTeams(prediction.SF);
+  const finalTeams = mapIdsToTeams(prediction.F);
+
+  const predictedChampion = prediction.champion
+    ? (teamsLookup.get(prediction.champion.toLowerCase()) ?? null)
     : null;
-  const predictedThirdPlace = thirdMatch?.winnerId
-    ? (teamsLookup.get(thirdMatch.winnerId) ?? null)
+  const predictedThirdPlace = prediction.thirdPlace
+    ? (teamsLookup.get(prediction.thirdPlace.toLowerCase()) ?? null)
     : null;
 
-  const betContent = extractScoreableContent(state.knockoutMatches);
-  const breakdown = scoreBetBreakdown(betContent, actualResultsSet);
+  const betContent = toScoreableContent(prediction);
+  const breakdown = scoreBetBreakdown(betContent, actualResults);
   const totalPoints = breakdown.total;
 
   const r32Correct = breakdown.R32.matched;
