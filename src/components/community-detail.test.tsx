@@ -153,7 +153,10 @@ describe("CommunityDetail", () => {
     expect(peerViewBtn).toBeInTheDocument();
 
     // Check link destinations
-    expect(myViewBtn.closest("a")).toHaveAttribute("href", "/bets/bet-1");
+    expect(myViewBtn.closest("a")).toHaveAttribute(
+      "href",
+      "/communities/test-community/bets/bet-1",
+    );
     expect(peerViewBtn.closest("a")).toHaveAttribute(
       "href",
       "/communities/test-community/bets/bet-2",

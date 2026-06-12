@@ -161,10 +161,7 @@ export function CommunityDetail({
                 {visibleBets.length > 0 ? (
                   <div className="space-y-2">
                     {visibleBets.map((b) => {
-                      const href =
-                        m.userId === community.currentUserId
-                          ? `/bets/${b.id}`
-                          : `/communities/${community.slug}/bets/${b.id}`;
+                      const href = `/communities/${community.slug}/bets/${b.id}`;
                       return (
                         <div
                           key={b.id}

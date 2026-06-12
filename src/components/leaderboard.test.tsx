@@ -223,7 +223,10 @@ describe("LeaderboardTable Component", () => {
       "href",
       "/communities/my-community/bets/bet-2",
     );
-    expect(viewLinks[1]).toHaveAttribute("href", "/bets/bet-1");
+    expect(viewLinks[1]).toHaveAttribute(
+      "href",
+      "/communities/my-community/bets/bet-1",
+    );
     expect(viewLinks[2]).toHaveAttribute(
       "href",
       "/communities/my-community/bets/bet-3",
