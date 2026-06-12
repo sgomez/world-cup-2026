@@ -118,3 +118,9 @@ The scheduled start instant of a match, taken from its `date` and timezone-beari
 
 ### Match Number
 The stable identifier of a match (`num`), unique across the tournament: 1 through 72 for the group-stage matches in chronological order, continuing with the pre-existing knockout numbering (73 onward). It is the identifier a **LiveResult** is keyed by, and the value the live-update API addresses.
+
+### Imported Community
+A **Community** whose Bets did not originate on the platform but were bulk-loaded from an external sheet by an Admin. Unlike a native Community — whose members each create and own their own Bets — an Imported Community has a **single Import Owner** that holds *every* imported Bet, one per spreadsheet participant; the participant's identity lives in the Bet **label**, not in a User. It is marked as imported so it can be told apart from native Communities (only Imported Communities may be refreshed by re-import). Real external participants do not own Bets here: they join via the **Invite Link** purely to view the **Leaderboard**. Imported Bets are **Direct Bets**, and as such are exempt from the **Bet Deadline** and the **Bet Limit** — the external community owns its own data quality, and the platform records what they submit even after the Window has closed.
+
+### Import Owner
+The single placeholder **User** that owns all Bets of an **Imported Community** and is its sole real **Community Member**. It exists only to anchor the imported Bets and the Community; nobody authenticates as it (its email is a non-deliverable synthetic address). Its **Profile** name is the Community's name, and it holds the ordinary `user` role. Refreshing an Imported Community means deleting all of the Import Owner's Bets and recreating them from a new sheet; the Import Owner and the Community itself persist across refreshes.
