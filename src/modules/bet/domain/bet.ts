@@ -1,6 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { err, ok, type Result } from "neverthrow";
-import { computeBetSignature } from "@/lib/bet-signature";
+import { computeSignatureFromContent } from "@/lib/bet-signature";
+import { createInitialState } from "@/lib/prediction-state";
+import {
+  extractScoreableContent,
+  type ScoreableContent,
+  type ScoreableContentArrays,
+  toScoreableContent,
+} from "@/lib/scoring";
+import { getGroups } from "@/lib/teams";
 import { BetLabel } from "./bet-label";
 import type { BettingWindow } from "./betting-window";
 import { type DomainError, domainError } from "./errors";
@@ -28,6 +36,7 @@ export type BetState = {
   label: string;
   groupPredictions: GroupPredictions | null;
   knockoutWinners: KnockoutWinners;
+  directPredictions?: ScoreableContentArrays | null;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -49,7 +58,17 @@ export class Bet {
   private constructor(private readonly state: BetState) {}
 
   static fromState(state: BetState): Bet {
-    return new Bet({ ...state });
+    if (state.groupPredictions && state.directPredictions) {
+      throw new Error(
+        "XOR invariant violated: Bet cannot have both groupPredictions and directPredictions",
+      );
+    }
+    return new Bet({
+      ...state,
+      groupPredictions: state.groupPredictions ?? null,
+      knockoutWinners: state.knockoutWinners ?? {},
+      directPredictions: state.directPredictions ?? null,
+    });
   }
 
   static create(
@@ -69,6 +88,7 @@ export class Bet {
         label: betLabel.value,
         groupPredictions: null,
         knockoutWinners: {},
+        directPredictions: null,
       }),
     );
   }
@@ -91,6 +111,132 @@ export class Bet {
         label: betLabel.value,
         groupPredictions: source.groupPredictions,
         knockoutWinners: source.knockoutWinners,
+        directPredictions: source.directPredictions,
+      }),
+    );
+  }
+
+  static createDirect(
+    label: string,
+    ownerId: string,
+    directPredictions: ScoreableContentArrays,
+  ): Result<Bet, DomainError> {
+    if (
+      !directPredictions ||
+      !Array.isArray(directPredictions.R32) ||
+      !Array.isArray(directPredictions.R16) ||
+      !Array.isArray(directPredictions.QF) ||
+      !Array.isArray(directPredictions.SF) ||
+      !Array.isArray(directPredictions.F)
+    ) {
+      return err(domainError("INVALID_PREDICTIONS"));
+    }
+
+    const checkStringArray = (arr: unknown[]) =>
+      arr.every((item) => typeof item === "string");
+
+    if (
+      !checkStringArray(directPredictions.R32) ||
+      !checkStringArray(directPredictions.R16) ||
+      !checkStringArray(directPredictions.QF) ||
+      !checkStringArray(directPredictions.SF) ||
+      !checkStringArray(directPredictions.F) ||
+      (directPredictions.champion &&
+        typeof directPredictions.champion !== "string") ||
+      (directPredictions.thirdPlace &&
+        typeof directPredictions.thirdPlace !== "string")
+    ) {
+      return err(domainError("INVALID_PREDICTIONS"));
+    }
+
+    const normalizedPredictions: ScoreableContentArrays = {
+      R32: directPredictions.R32.map((id) => id.toLowerCase()),
+      R16: directPredictions.R16.map((id) => id.toLowerCase()),
+      QF: directPredictions.QF.map((id) => id.toLowerCase()),
+      SF: directPredictions.SF.map((id) => id.toLowerCase()),
+      F: directPredictions.F.map((id) => id.toLowerCase()),
+      champion: directPredictions.champion
+        ? directPredictions.champion.toLowerCase()
+        : null,
+      thirdPlace: directPredictions.thirdPlace
+        ? directPredictions.thirdPlace.toLowerCase()
+        : null,
+    };
+
+    const KNOWN_TEAM_IDS = new Set(
+      getGroups("en").flatMap((g) => g.teams.map((t) => t.id)),
+    );
+
+    // Validate champion and third-place present
+    if (!normalizedPredictions.champion || !normalizedPredictions.thirdPlace) {
+      return err(domainError("INVALID_PREDICTIONS"));
+    }
+
+    // Validate round sizes 32/16/8/4/2
+    if (
+      normalizedPredictions.R32.length !== 32 ||
+      normalizedPredictions.R16.length !== 16 ||
+      normalizedPredictions.QF.length !== 8 ||
+      normalizedPredictions.SF.length !== 4 ||
+      normalizedPredictions.F.length !== 2
+    ) {
+      return err(domainError("INVALID_PREDICTIONS"));
+    }
+
+    const r32Set = new Set(normalizedPredictions.R32);
+    const r16Set = new Set(normalizedPredictions.R16);
+    const qfSet = new Set(normalizedPredictions.QF);
+    const sfSet = new Set(normalizedPredictions.SF);
+    const fSet = new Set(normalizedPredictions.F);
+
+    // Validate nesting: F ⊆ SF ⊆ QF ⊆ R16 ⊆ R32
+    const nestedF = normalizedPredictions.F.every((id) => sfSet.has(id));
+    const nestedSF = normalizedPredictions.SF.every((id) => qfSet.has(id));
+    const nestedQF = normalizedPredictions.QF.every((id) => r16Set.has(id));
+    const nestedR16 = normalizedPredictions.R16.every((id) => r32Set.has(id));
+    if (!nestedF || !nestedSF || !nestedQF || !nestedR16) {
+      return err(domainError("INVALID_PREDICTIONS"));
+    }
+
+    // Validate Champion ∈ Final
+    if (!fSet.has(normalizedPredictions.champion)) {
+      return err(domainError("INVALID_PREDICTIONS"));
+    }
+
+    // Validate third-place winner ∈ Semi-finals
+    if (!sfSet.has(normalizedPredictions.thirdPlace)) {
+      return err(domainError("INVALID_PREDICTIONS"));
+    }
+
+    // Validate third-place winner ∉ Final
+    if (fSet.has(normalizedPredictions.thirdPlace)) {
+      return err(domainError("INVALID_PREDICTIONS"));
+    }
+
+    // Validate all teams are known
+    const allTeams = [
+      ...normalizedPredictions.R32,
+      ...normalizedPredictions.R16,
+      ...normalizedPredictions.QF,
+      ...normalizedPredictions.SF,
+      ...normalizedPredictions.F,
+      normalizedPredictions.champion,
+      normalizedPredictions.thirdPlace,
+    ];
+    const allKnown = allTeams.every((id) => KNOWN_TEAM_IDS.has(id));
+    if (!allKnown) {
+      return err(domainError("INVALID_PREDICTIONS"));
+    }
+
+    return BetLabel.create(label).map((betLabel) =>
+      Bet.fromState({
+        id: randomUUID(),
+        userId: ownerId,
+        status: "closed",
+        label: betLabel.value,
+        groupPredictions: null,
+        knockoutWinners: {},
+        directPredictions: normalizedPredictions,
       }),
     );
   }
@@ -119,6 +265,10 @@ export class Bet {
     return this.state.knockoutWinners;
   }
 
+  get directPredictions(): ScoreableContentArrays | null {
+    return this.state.directPredictions ?? null;
+  }
+
   get createdAt(): Date | undefined {
     return this.state.createdAt;
   }
@@ -129,10 +279,18 @@ export class Bet {
 
   get signature(): string | undefined {
     if (this.state.status !== "closed") return undefined;
-    return computeBetSignature(
+    return computeSignatureFromContent(this.scoreableContent());
+  }
+
+  scoreableContent(): ScoreableContent {
+    if (this.state.directPredictions) {
+      return toScoreableContent(this.state.directPredictions);
+    }
+    const { knockoutMatches } = createInitialState(
       this.state.groupPredictions,
       this.state.knockoutWinners,
     );
+    return extractScoreableContent(knockoutMatches);
   }
 
   isOwnedBy(userId: string): boolean {
@@ -140,6 +298,9 @@ export class Bet {
   }
 
   close(window: BettingWindow, now: Date): Result<Bet, DomainError> {
+    if (this.state.directPredictions) {
+      return err(domainError("BET_CLOSED"));
+    }
     if (!window.isOpen(now)) {
       return err(domainError("PAST_DEADLINE"));
     }
@@ -156,6 +317,9 @@ export class Bet {
    * Betting Window: once the Bet Deadline has passed no Bet may change status.
    */
   reopen(window: BettingWindow, now: Date): Result<Bet, DomainError> {
+    if (this.state.directPredictions) {
+      return err(domainError("BET_CLOSED"));
+    }
     if (!window.isOpen(now)) {
       return err(domainError("PAST_DEADLINE"));
     }
@@ -168,6 +332,9 @@ export class Bet {
     window: BettingWindow,
     now: Date,
   ): Result<Bet, DomainError> {
+    if (this.state.directPredictions) {
+      return err(domainError("BET_CLOSED"));
+    }
     if (!window.isOpen(now)) {
       return err(domainError("PAST_DEADLINE"));
     }
@@ -182,6 +349,9 @@ export class Bet {
     window: BettingWindow,
     now: Date,
   ): Result<Bet, DomainError> {
+    if (this.state.directPredictions) {
+      return err(domainError("BET_CLOSED"));
+    }
     if (!window.isOpen(now)) {
       return err(domainError("PAST_DEADLINE"));
     }

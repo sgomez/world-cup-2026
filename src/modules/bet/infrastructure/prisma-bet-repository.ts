@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { ResultAsync } from "neverthrow";
+import type { ScoreableContentArrays } from "@/lib/scoring";
 import {
   Bet,
   type BetStatus,
@@ -33,6 +34,8 @@ export class PrismaBetRepository implements BetRepository {
       groupPredictions:
         (row.groupPredictions as GroupPredictions | null) ?? null,
       knockoutWinners: (row.knockoutWinners as KnockoutWinners | null) ?? {},
+      directPredictions:
+        (row.directPredictions as ScoreableContentArrays | null) ?? null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });
@@ -52,6 +55,8 @@ export class PrismaBetRepository implements BetRepository {
         groupPredictions:
           (row.groupPredictions as GroupPredictions | null) ?? null,
         knockoutWinners: (row.knockoutWinners as KnockoutWinners | null) ?? {},
+        directPredictions:
+          (row.directPredictions as ScoreableContentArrays | null) ?? null,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       }),
@@ -72,6 +77,8 @@ export class PrismaBetRepository implements BetRepository {
         groupPredictions:
           (row.groupPredictions as GroupPredictions | null) ?? null,
         knockoutWinners: (row.knockoutWinners as KnockoutWinners | null) ?? {},
+        directPredictions:
+          (row.directPredictions as ScoreableContentArrays | null) ?? null,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       }),
@@ -97,12 +104,16 @@ export class PrismaBetRepository implements BetRepository {
             status: state.status,
             groupPredictions: state.groupPredictions ?? undefined,
             knockoutWinners: state.knockoutWinners,
+            // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON input type check mismatch
+            directPredictions: (state.directPredictions ?? undefined) as any,
           },
           update: {
             label: state.label,
             status: state.status,
             groupPredictions: state.groupPredictions ?? undefined,
             knockoutWinners: state.knockoutWinners,
+            // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON input type check mismatch
+            directPredictions: (state.directPredictions ?? undefined) as any,
           },
         })
         .then(() => undefined),

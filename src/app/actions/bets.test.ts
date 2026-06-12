@@ -543,6 +543,7 @@ describe("copyBet", () => {
       thirdPlaceOrder: VALID_STATE.thirdPlaceOrder,
     },
     knockoutWinners: { "R32-1": "mex" },
+    directPredictions: null,
   };
 
   it("returns error when not authenticated", async () => {

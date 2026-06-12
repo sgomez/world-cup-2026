@@ -8,6 +8,7 @@ import {
   type PredictionState,
   tournamentReducer,
 } from "./prediction-state";
+import { toScoreableContentArrays } from "./scoring";
 
 function buildTeam1WinsWinners(
   groupPredictions: PredictionState | null,
@@ -288,5 +289,31 @@ describe("Bet aggregate signature equivalence", () => {
       knockoutWinners: {},
     });
     expect(bet.signature).toBeUndefined();
+  });
+
+  it("produces identical signatures for a Direct Bet and a Bracket Bet with same predictions", () => {
+    const state = createInitialState(null);
+    const preds = {
+      groupOrders: state.groupOrders,
+      thirdPlaceOrder: state.thirdPlaceOrder,
+    };
+    const winners = buildTeam1WinsWinners(preds);
+    const bracketBet = Bet.fromState({
+      id: "bracket-bet",
+      userId: "user-1",
+      label: "bracket",
+      status: "closed",
+      groupPredictions: preds,
+      knockoutWinners: winners,
+    });
+
+    const arrays = toScoreableContentArrays(bracketBet.scoreableContent());
+    const directBet = Bet.createDirect(
+      "direct",
+      "user-1",
+      arrays,
+    )._unsafeUnwrap();
+
+    expect(directBet.signature).toBe(bracketBet.signature);
   });
 });
