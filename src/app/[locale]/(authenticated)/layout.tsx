@@ -24,6 +24,7 @@ export default async function AuthenticatedLayout({
           image: user.image,
           role: user.role ?? undefined,
         }}
+        isImpersonating={!!session.session.impersonatedBy}
       />
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</main>
     </div>

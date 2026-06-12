@@ -22,6 +22,7 @@ interface NavbarProps {
     image?: string | null;
     role?: string;
   };
+  isImpersonating?: boolean;
 }
 
 function getInitials(name: string): string {
@@ -33,7 +34,7 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export function Navbar({ user }: NavbarProps) {
+export function Navbar({ user, isImpersonating = false }: NavbarProps) {
   const router = useRouter();
   const t = useTranslations("nav");
 
@@ -43,6 +44,13 @@ export function Navbar({ user }: NavbarProps) {
         onSuccess: () => router.push("/"),
       },
     });
+  };
+
+  const handleStopImpersonating = async () => {
+    const { error } = await authClient.admin.stopImpersonating();
+    if (error) return;
+    router.push("/admin");
+    router.refresh();
   };
 
   const isAdmin = user.role === "admin" || user.role === "super_admin";
@@ -150,6 +158,11 @@ export function Navbar({ user }: NavbarProps) {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
+              {isImpersonating && (
+                <DropdownMenuItem onClick={handleStopImpersonating}>
+                  {t("stopImpersonating")}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={handleSignOut}
                 className="text-destructive"

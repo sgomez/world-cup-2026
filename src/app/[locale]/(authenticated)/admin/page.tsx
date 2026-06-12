@@ -1,6 +1,9 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { ImpersonateButton } from "@/components/impersonate-button";
 import { Link } from "@/i18n/navigation";
+import { maskEmail } from "@/lib/mask-email";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 
 export default async function AdminPage({
   params,
@@ -10,6 +13,9 @@ export default async function AdminPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("admin");
+
+  const session = await getSession();
+  const canImpersonate = session?.user.role === "super_admin";
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },
@@ -57,17 +63,16 @@ export default async function AdminPage({
 
       <div className="mt-8 space-y-2">
         {users.map((user) => (
-          <Link
+          <div
             key={user.id}
-            href={`/admin/users/${user.id}`}
             className="flex items-center justify-between rounded-none border border-hairline bg-canvas px-5 py-4 hover:bg-soft-cloud dark:bg-ink dark:hover:bg-charcoal transition-all"
           >
-            <div>
+            <Link href={`/admin/users/${user.id}`} className="min-w-0 flex-1">
               <p className="text-body-strong text-foreground">{user.name}</p>
               <p className="text-caption-md text-muted-foreground">
-                {user.email}
+                {maskEmail(user.email)}
               </p>
-            </div>
+            </Link>
             <div className="flex items-center gap-4">
               <span className="text-caption-sm text-muted-foreground">
                 {t("betsCount", { count: user._count.bets })}
@@ -77,8 +82,11 @@ export default async function AdminPage({
               >
                 {user.role}
               </span>
+              {canImpersonate && session?.user.id !== user.id && (
+                <ImpersonateButton userId={user.id} label={t("impersonate")} />
+              )}
             </div>
-          </Link>
+          </div>
         ))}
       </div>
     </div>

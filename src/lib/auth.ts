@@ -1,8 +1,32 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin } from "better-auth/plugins";
-import { adminAc } from "better-auth/plugins/admin/access";
+import { createAccessControl } from "better-auth/plugins/access";
+import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
 import { prisma } from "./prisma";
+
+const ac = createAccessControl(defaultStatements);
+
+// Admins get every admin permission except impersonation; only super_admins may
+// impersonate users (and admins).
+const adminRole = ac.newRole({
+  user: [
+    "create",
+    "list",
+    "set-role",
+    "ban",
+    "delete",
+    "set-password",
+    "get",
+    "update",
+  ],
+  session: ["list", "revoke", "delete"],
+});
+
+const superAdminRole = ac.newRole({
+  ...adminAc.statements,
+  user: [...adminAc.statements.user, "impersonate-admins"],
+});
 
 export const auth = betterAuth({
   advanced: {
@@ -19,11 +43,12 @@ export const auth = betterAuth({
   },
   plugins: [
     admin({
+      ac,
       adminRoles: ["admin", "super_admin"],
       defaultRole: "user",
       roles: {
-        admin: adminAc,
-        super_admin: adminAc,
+        admin: adminRole,
+        super_admin: superAdminRole,
       },
     }),
   ],

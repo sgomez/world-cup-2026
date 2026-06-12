@@ -12,7 +12,8 @@
     "editProfile": "Editar Perfil",
     "createCommunity": "Crear Comunidad",
     "adminPanel": "Panel de Administración",
-    "signOut": "Cerrar Sesión"
+    "signOut": "Cerrar Sesión",
+    "stopImpersonating": "Dejar de suplantar"
   },
   "calendar": {
     "title": "Calendario del Torneo",
@@ -266,7 +267,8 @@
     "slotWinner": "Ganador Grupo {group}",
     "slotRunnerUp": "Segundo Grupo {group}",
     "slotBestThird": "Mejor 3º vs {vs}",
-    "tbd": "TBD"
+    "tbd": "TBD",
+    "impersonate": "Suplantar"
   },
   "tournamentErrors": {
     "FORBIDDEN": "No tienes autorización para modificar los resultados del torneo.",

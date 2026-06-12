@@ -12,7 +12,8 @@
     "editProfile": "Edit Profile",
     "createCommunity": "Create Community",
     "adminPanel": "Admin Panel",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "stopImpersonating": "Stop impersonating"
   },
   "calendar": {
     "title": "Tournament Calendar",
@@ -266,7 +267,8 @@
     "slotWinner": "Winner Group {group}",
     "slotRunnerUp": "Runner-up Group {group}",
     "slotBestThird": "Best 3rd vs {vs}",
-    "tbd": "TBD"
+    "tbd": "TBD",
+    "impersonate": "Impersonate"
   },
   "tournamentErrors": {
     "FORBIDDEN": "You are not authorized to modify the tournament results.",
