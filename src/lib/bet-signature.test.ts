@@ -316,4 +316,82 @@ describe("Bet aggregate signature equivalence", () => {
 
     expect(directBet.signature).toBe(bracketBet.signature);
   });
+
+  it("Direct Bet signature is case-insensitive in the input team ids", () => {
+    const state = createInitialState(null);
+    const preds = {
+      groupOrders: state.groupOrders,
+      thirdPlaceOrder: state.thirdPlaceOrder,
+    };
+    const winners = buildTeam1WinsWinners(preds);
+    const bracketBet = Bet.fromState({
+      id: "bracket-bet",
+      userId: "user-1",
+      label: "bracket",
+      status: "closed",
+      groupPredictions: preds,
+      knockoutWinners: winners,
+    });
+    const base = toScoreableContentArrays(bracketBet.scoreableContent());
+
+    const toCase = (transform: (id: string) => string) => ({
+      R32: base.R32.map(transform),
+      R16: base.R16.map(transform),
+      QF: base.QF.map(transform),
+      SF: base.SF.map(transform),
+      F: base.F.map(transform),
+      champion: base.champion ? transform(base.champion) : null,
+      thirdPlace: base.thirdPlace ? transform(base.thirdPlace) : null,
+    });
+
+    const upper = Bet.createDirect(
+      "upper",
+      "user-1",
+      toCase((id) => id.toUpperCase()),
+    )._unsafeUnwrap();
+    const lower = Bet.createDirect(
+      "lower",
+      "user-1",
+      toCase((id) => id.toLowerCase()),
+    )._unsafeUnwrap();
+
+    expect(lower.signature).toBe(upper.signature);
+  });
+
+  it("Direct Bet signature is independent of the input team order within each round", () => {
+    const state = createInitialState(null);
+    const preds = {
+      groupOrders: state.groupOrders,
+      thirdPlaceOrder: state.thirdPlaceOrder,
+    };
+    const winners = buildTeam1WinsWinners(preds);
+    const bracketBet = Bet.fromState({
+      id: "bracket-bet",
+      userId: "user-1",
+      label: "bracket",
+      status: "closed",
+      groupPredictions: preds,
+      knockoutWinners: winners,
+    });
+    const base = toScoreableContentArrays(bracketBet.scoreableContent());
+
+    const reversed = {
+      R32: [...base.R32].reverse(),
+      R16: [...base.R16].reverse(),
+      QF: [...base.QF].reverse(),
+      SF: [...base.SF].reverse(),
+      F: [...base.F].reverse(),
+      champion: base.champion,
+      thirdPlace: base.thirdPlace,
+    };
+
+    const ordered = Bet.createDirect("ordered", "user-1", base)._unsafeUnwrap();
+    const shuffled = Bet.createDirect(
+      "shuffled",
+      "user-1",
+      reversed,
+    )._unsafeUnwrap();
+
+    expect(shuffled.signature).toBe(ordered.signature);
+  });
 });

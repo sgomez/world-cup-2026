@@ -143,6 +143,38 @@ describe("ScoreTab", () => {
   });
 });
 
+describe("ScoreTab team ordering", () => {
+  it("renders round-card teams alphabetically by localized name", () => {
+    const prediction = {
+      R32: ["usa", "mex", "bra", "arg"],
+      R16: [],
+      QF: [],
+      SF: [],
+      F: [],
+      champion: null,
+      thirdPlace: null,
+    };
+
+    render(<ScoreTab prediction={prediction} />);
+
+    const r32Title = screen.getByText("roundOf32");
+    const r32Card = r32Title.parentElement?.parentElement?.parentElement;
+    if (!r32Card) throw new Error("R32 card not found");
+
+    const argentina = within(r32Card).getByText("Argentina");
+    const brazil = within(r32Card).getByText("Brazil");
+    const mexico = within(r32Card).getByText("Mexico");
+    const usa = within(r32Card).getByText("United States");
+
+    const precedes = (a: Node, b: Node) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+    expect(precedes(argentina, brazil)).toBe(true);
+    expect(precedes(brazil, mexico)).toBe(true);
+    expect(precedes(mexico, usa)).toBe(true);
+  });
+});
+
 describe("ScoreTab provisional warning", () => {
   const state = createInitialState(null);
 

@@ -203,7 +203,8 @@ export function ScoreTab({
   const mapIdsToTeams = (ids: string[]) =>
     ids
       .map((id) => teamsLookup.get(id.toLowerCase()))
-      .filter((t): t is Team => t !== undefined);
+      .filter((t): t is Team => t !== undefined)
+      .sort((a, b) => a.name.localeCompare(b.name, locale));
 
   const r32Teams = mapIdsToTeams(prediction.R32);
   const r16Teams = mapIdsToTeams(prediction.R16);
