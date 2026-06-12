@@ -125,6 +125,24 @@ function resolveKnockoutWinner(
 }
 
 /**
+ * Resolves the winner of a knockout match, taking into account whether it's
+ * finished or (if provisional mode is enabled) live.
+ */
+function resolveProvisionalOrFinishedWinner(
+  lr: LiveResult,
+  team1Id: string,
+  team2Id: string,
+  isFinished: boolean,
+): string | null {
+  if (isFinished) {
+    return resolveKnockoutWinner(lr, team1Id, team2Id);
+  }
+  if (lr.goals1 > lr.goals2) return team1Id;
+  if (lr.goals2 > lr.goals1) return team2Id;
+  return null;
+}
+
+/**
  * Builds R32 knockout matches from groupOrders + thirdPlaceOrder + advancement.
  * Only populates team IDs for slots listed in `advancement`.
  * Mirrors computeR32MatchesForTournament in tournament.ts without the circular dep.
@@ -412,6 +430,7 @@ export function deriveResult(
     finishedGroupOrders,
     thirdPlaceOrder,
     advancementRefs,
+    provisional,
   );
 
   return {
@@ -424,13 +443,15 @@ export function deriveResult(
 
 /**
  * Derives knockout winners by replaying all finished knockout LiveResults in
- * round order through the bracket machinery.
+ * round order through the bracket machinery. If provisional is true, also
+ * projects current goals leader from live matches.
  */
 function deriveKnockoutWinners(
   liveByNum: Map<number, LiveResult>,
   groupOrders: GroupOrders,
   thirdPlaceOrder: ThirdPlaceOrder,
   advancement: string[],
+  provisional = false,
 ): Record<string, string> {
   const r32 = buildR32Matches(groupOrders, thirdPlaceOrder, advancement);
   let knockoutMatches = { ...createEmptyKnockoutMatches(), ...r32 };
@@ -447,12 +468,22 @@ function deriveKnockoutWinners(
       const num = matchIdToNum.get(matchId);
       if (num === undefined) continue;
       const lr = liveByNum.get(num);
-      if (lr?.status !== "finished") continue;
+      if (!lr) continue;
+
+      const isFinished = lr.status === "finished";
+      const isLiveProvisional = provisional && lr.status === "live";
+      if (!isFinished && !isLiveProvisional) continue;
 
       const match = knockoutMatches[matchId];
       if (!match?.team1Id || !match?.team2Id) continue;
 
-      const winner = resolveKnockoutWinner(lr, match.team1Id, match.team2Id);
+      const winner = resolveProvisionalOrFinishedWinner(
+        lr,
+        match.team1Id,
+        match.team2Id,
+        isFinished,
+      );
+
       if (!winner) continue;
 
       knockoutMatches = applyWinnerToMatches(knockoutMatches, matchId, winner);
@@ -466,10 +497,22 @@ function deriveKnockoutWinners(
     ["F", 104],
   ] as Array<[string, number]>) {
     const lr = liveByNum.get(num);
-    if (lr?.status !== "finished") continue;
+    if (!lr) continue;
+
+    const isFinished = lr.status === "finished";
+    const isLiveProvisional = provisional && lr.status === "live";
+    if (!isFinished && !isLiveProvisional) continue;
+
     const match = knockoutMatches[matchId];
     if (!match?.team1Id || !match?.team2Id) continue;
-    const winner = resolveKnockoutWinner(lr, match.team1Id, match.team2Id);
+
+    const winner = resolveProvisionalOrFinishedWinner(
+      lr,
+      match.team1Id,
+      match.team2Id,
+      isFinished,
+    );
+
     if (!winner) continue;
     knockoutMatches = applyWinnerToMatches(knockoutMatches, matchId, winner);
     knockoutWinners[matchId] = winner;
