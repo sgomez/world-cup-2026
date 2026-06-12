@@ -125,6 +125,24 @@ function resolveKnockoutWinner(
 }
 
 /**
+ * Resolves the winner of a knockout match, taking into account whether it's
+ * finished or (if provisional mode is enabled) live.
+ */
+function resolveProvisionalOrFinishedWinner(
+  lr: LiveResult,
+  team1Id: string,
+  team2Id: string,
+  isFinished: boolean,
+): string | null {
+  if (isFinished) {
+    return resolveKnockoutWinner(lr, team1Id, team2Id);
+  }
+  if (lr.goals1 > lr.goals2) return team1Id;
+  if (lr.goals2 > lr.goals1) return team2Id;
+  return null;
+}
+
+/**
  * Builds R32 knockout matches from groupOrders + thirdPlaceOrder + advancement.
  * Only populates team IDs for slots listed in `advancement`.
  * Mirrors computeR32MatchesForTournament in tournament.ts without the circular dep.
@@ -459,16 +477,12 @@ function deriveKnockoutWinners(
       const match = knockoutMatches[matchId];
       if (!match?.team1Id || !match?.team2Id) continue;
 
-      let winner: string | null = null;
-      if (isFinished) {
-        winner = resolveKnockoutWinner(lr, match.team1Id, match.team2Id);
-      } else {
-        if (lr.goals1 > lr.goals2) {
-          winner = match.team1Id;
-        } else if (lr.goals2 > lr.goals1) {
-          winner = match.team2Id;
-        }
-      }
+      const winner = resolveProvisionalOrFinishedWinner(
+        lr,
+        match.team1Id,
+        match.team2Id,
+        isFinished,
+      );
 
       if (!winner) continue;
 
@@ -492,16 +506,12 @@ function deriveKnockoutWinners(
     const match = knockoutMatches[matchId];
     if (!match?.team1Id || !match?.team2Id) continue;
 
-    let winner: string | null = null;
-    if (isFinished) {
-      winner = resolveKnockoutWinner(lr, match.team1Id, match.team2Id);
-    } else {
-      if (lr.goals1 > lr.goals2) {
-        winner = match.team1Id;
-      } else if (lr.goals2 > lr.goals1) {
-        winner = match.team2Id;
-      }
-    }
+    const winner = resolveProvisionalOrFinishedWinner(
+      lr,
+      match.team1Id,
+      match.team2Id,
+      isFinished,
+    );
 
     if (!winner) continue;
     knockoutMatches = applyWinnerToMatches(knockoutMatches, matchId, winner);
