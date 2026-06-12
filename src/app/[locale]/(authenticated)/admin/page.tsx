@@ -55,6 +55,12 @@ export default async function AdminPage({
           >
             {t("communitiesLink")}
           </Link>
+          <Link
+            href="/admin/import"
+            className="text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
+          >
+            {t("importLink")}
+          </Link>
         </div>
       </div>
       <p className="mt-1 text-caption-md text-muted-foreground">

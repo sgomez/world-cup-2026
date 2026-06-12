@@ -249,6 +249,18 @@
     "joinedLabel": "Joined {date}",
     "backToCommunities": "Back to Communities",
     "betsCount": "{count, plural, one {# bet} other {# bets}}",
+    "importLink": "Import Predictions",
+    "importTitle": "Import Predictions",
+    "importDescription": "Create a new imported community and import bets from an Excel sheet.",
+    "importFormCommunityName": "Community Name",
+    "importFormFile": "Excel Sheet (.xlsx)",
+    "importFormSubmit": "Import",
+    "importFormImporting": "Importing...",
+    "importSuccess": "Community imported successfully!",
+    "importSkippedRowsTitle": "Skipped Rows Report",
+    "importSkippedRowsDescription": "The following rows were skipped due to validation errors. All other rows were imported successfully.",
+    "importSkippedRowItem": "Row {rowNumber}: {reason}",
+    "importErrorInvalidSheet": "The uploaded file is not a valid Excel predictions sheet.",
     "resultsLink": "Tournament Results",
     "resultsTitle": "Tournament Results",
     "resultsDescription": "Record the official finishing orders of the group stage.",
@@ -288,7 +300,8 @@
     "INVALID_LABEL": "Label must be between 1 and 200 characters.",
     "BET_CLOSED": "This bet is closed. Reopen it before making changes.",
     "LIMIT_EXCEEDED": "Bet limit reached",
-    "INVALID_PREDICTIONS": "Invalid predictions."
+    "INVALID_PREDICTIONS": "Invalid predictions.",
+    "INVALID_SHEET": "The uploaded file is not a valid Excel predictions sheet."
   },
   "communityErrors": {
     "NOT_FOUND": "Community not found",

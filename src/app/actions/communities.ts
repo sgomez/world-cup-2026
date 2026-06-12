@@ -6,8 +6,10 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getSession, requireAdmin } from "@/lib/session";
+import { importDirectBets } from "@/modules/bet/application/import-direct-bets";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
+import { ExceljsSheetParser } from "@/modules/bet/infrastructure/exceljs-sheet-parser";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 import { createCommunity as createCommunityUseCase } from "@/modules/community/application/create-community";
 import { deleteCommunity as deleteCommunityUseCase } from "@/modules/community/application/delete-community";
@@ -17,6 +19,7 @@ import { regenerateInviteToken as regenerateInviteTokenUseCase } from "@/modules
 import { removeMember as removeMemberUseCase } from "@/modules/community/application/remove-member";
 import type { DomainErrorCode } from "@/modules/community/domain/errors";
 import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
+import { PrismaImportOwnerProvisioner } from "@/modules/community/infrastructure/prisma-import-owner-provisioner";
 import { getLeaderboard } from "@/modules/leaderboard/application/get-leaderboard";
 import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
 import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
@@ -250,4 +253,110 @@ export async function joinCommunity(
     revalidatePath("/communities");
     redirect({ href: `/communities/${result.value.slug}`, locale });
   });
+}
+
+export type ImportDirectBetsActionState = {
+  error?: string;
+  success?: boolean;
+  communitySlug?: string;
+  skippedRows?: { rowNumber: number; reason: string }[];
+} | null;
+
+export async function importDirectBetsAction(
+  _prev: ImportDirectBetsActionState,
+  formData: FormData,
+): Promise<ImportDirectBetsActionState> {
+  await requireAdmin();
+
+  const communityName = formData.get("communityName")?.toString().trim() ?? "";
+  if (!communityName) {
+    const t = await getTranslations("admin");
+    return {
+      error: t("importErrorInvalidSheet") || "Community name is required",
+    };
+  }
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    const t = await getTranslations("admin");
+    return { error: t("importErrorInvalidSheet") || "Excel file is required" };
+  }
+
+  let fileBuffer: Buffer;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    fileBuffer = Buffer.from(arrayBuffer);
+  } catch (_err) {
+    const t = await getTranslations("admin");
+    return { error: t("importErrorInvalidSheet") };
+  }
+
+  const sheetParser = new ExceljsSheetParser();
+  const inviteToken = randomBytes(32).toString("hex");
+
+  class TransactionRollbackError extends Error {
+    constructor(public readonly domainError: { code: string }) {
+      super(`Rollback: ${domainError.code}`);
+    }
+  }
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      // biome-ignore lint/suspicious/noExplicitAny: Prisma transaction client typecasting
+      const txCommunityRepo = new PrismaCommunityRepository(tx as any);
+      // biome-ignore lint/suspicious/noExplicitAny: Prisma transaction client typecasting
+      const txBetRepo = new PrismaBetRepository(tx as any);
+      // biome-ignore lint/suspicious/noExplicitAny: Prisma transaction client typecasting
+      const txOwnerProvisioner = new PrismaImportOwnerProvisioner(tx as any);
+
+      const res = await importDirectBets(
+        sheetParser,
+        txOwnerProvisioner,
+        txCommunityRepo,
+        txBetRepo,
+        {
+          communityName,
+          fileBuffer,
+          inviteToken,
+        },
+      );
+
+      if (res.isErr()) {
+        throw new TransactionRollbackError(res.error);
+      }
+
+      return res.value;
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/communities");
+
+    return {
+      success: true,
+      communitySlug: result.community.slug,
+      skippedRows: result.skippedRows.map((sr) => ({
+        rowNumber: sr.rowNumber,
+        reason: sr.reason,
+      })),
+    };
+  } catch (error) {
+    if (error instanceof TransactionRollbackError) {
+      const code = error.domainError.code;
+      const tBet = await getTranslations("betErrors");
+      const tComm = await getTranslations("communityErrors");
+
+      let errorMsg = "";
+      if (code === "INVALID_SHEET") {
+        errorMsg = tBet("INVALID_SHEET");
+      } else {
+        errorMsg = tComm(code as never) || tBet(code as never) || code;
+      }
+      return { error: errorMsg };
+    }
+
+    const t = await getTranslations("admin");
+    return {
+      error: t("importErrorInvalidSheet") || "Failed to parse Excel sheet",
+    };
+  }
 }
