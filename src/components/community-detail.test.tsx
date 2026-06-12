@@ -63,7 +63,6 @@ describe("CommunityDetail", () => {
     slug: "test-community",
     ownerId: "user-1",
     owner: { name: "Owner Name" },
-    inviteToken: "invite-token-123",
     currentUserId: "user-1",
     members: [
       {
@@ -94,6 +93,25 @@ describe("CommunityDetail", () => {
       },
     ],
   };
+
+  it("shows the invite section to the owner", () => {
+    render(
+      <CommunityDetail community={mockCommunity} inviteUrl="http://invite" />,
+    );
+
+    expect(screen.getByText("Invite link")).toBeInTheDocument();
+    expect(screen.getByText("http://invite")).toBeInTheDocument();
+    expect(screen.getByText("Copy")).toBeInTheDocument();
+  });
+
+  it("hides the invite section from non-owners", () => {
+    const nonOwnerCommunity = { ...mockCommunity, currentUserId: "user-2" };
+    render(<CommunityDetail community={nonOwnerCommunity} />);
+
+    expect(screen.queryByText("Invite link")).toBeNull();
+    expect(screen.queryByText("Copy")).toBeNull();
+    expect(screen.queryByText("Manage community")).toBeNull();
+  });
 
   it("renders (YOU) chip on the current user's header only", () => {
     render(
