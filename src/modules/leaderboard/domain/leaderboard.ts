@@ -5,13 +5,17 @@ import type {
   BetStatus,
   GroupPredictions,
 } from "@/modules/bet/domain/bet";
+import {
+  type SerializedBetLabel,
+  serializeLabel,
+} from "@/modules/bet/domain/bet-label";
 import type { BettingWindow } from "@/modules/bet/domain/betting-window";
 
 export type LeaderboardEntry = {
   betId: string;
   userId: string;
   userName: string;
-  betName: string;
+  betName: SerializedBetLabel;
   points: number;
   createdAt: Date;
   rank: number;
@@ -20,7 +24,7 @@ export type LeaderboardEntry = {
   signature?: string;
   bet: {
     id: string;
-    label: string;
+    label: SerializedBetLabel;
     userId: string;
     status: BetStatus;
     createdAt?: Date;
@@ -42,6 +46,7 @@ export class Leaderboard {
    * @param now The current timestamp.
    * @param viewerUserId The ID of the current user viewing the leaderboard (if any).
    * @param isCompetitionEnded True if the tournament is completely finished.
+   * @param imported True if the community is imported.
    */
   static create(
     betsWithOwners: { bet: Bet; ownerName: string }[],
@@ -50,6 +55,7 @@ export class Leaderboard {
     now: Date,
     viewerUserId: string | null,
     isCompetitionEnded: boolean,
+    imported = false,
   ): Leaderboard {
     // 1. Exclude draft bets from ranking.
     const activeBets = betsWithOwners.filter(
@@ -70,10 +76,12 @@ export class Leaderboard {
         points = scoreBet(betContent, actualResult);
       }
 
+      const serializedLabel = serializeLabel(bet.label, imported, isOwner);
+
       // Redact predictions if selections are hidden
       const exposedBet = {
         id: bet.id,
-        label: bet.label,
+        label: serializedLabel,
         userId: bet.userId,
         status: bet.status,
         createdAt: bet.createdAt,
@@ -86,7 +94,7 @@ export class Leaderboard {
         betId: bet.id,
         userId: bet.userId,
         userName: ownerName,
-        betName: bet.label,
+        betName: serializedLabel,
         points,
         createdAt: bet.createdAt ?? new Date(),
         selectionsHidden,

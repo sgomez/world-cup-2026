@@ -191,7 +191,8 @@
     "noCommunitiesShowDescription": "Create a new community or adjust your search.",
     "memberCount": "{count, plural, one {# member} other {# members}}",
     "you": "You",
-    "view": "View"
+    "view": "View",
+    "viewLeaderboard": "View Leaderboard"
   },
   "joinCommunity": {
     "invalidInviteTitle": "Invalid Invite",

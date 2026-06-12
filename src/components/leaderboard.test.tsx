@@ -37,18 +37,22 @@ vi.mock("@/i18n/navigation", () => ({
     children,
     href,
     className,
+    ...props
   }: {
     children: React.ReactNode;
     href: string;
     className?: string;
+    [key: string]: any;
   }) => (
-    <a href={href} className={className}>
+    <a href={href} className={className} {...props}>
       {children}
     </a>
   ),
   useRouter: () => ({
     push: vi.fn(),
+    replace: vi.fn(),
   }),
+  usePathname: () => "/leaderboard",
 }));
 
 describe("LeaderboardTable Component", () => {
@@ -57,7 +61,7 @@ describe("LeaderboardTable Component", () => {
       betId: "bet-2",
       userId: "user-2",
       userName: "Bob",
-      betName: "Bob Bet",
+      betName: { obfuscated: false, value: "Bob Bet" },
       points: 10,
       createdAt: new Date("2026-06-08T11:00:00Z"), // Bob is earlier
       rank: 1,
@@ -69,7 +73,7 @@ describe("LeaderboardTable Component", () => {
       betId: "bet-1",
       userId: "user-1",
       userName: "Alice",
-      betName: "Alice Bet",
+      betName: { obfuscated: false, value: "Alice Bet" },
       points: 10,
       createdAt: new Date("2026-06-08T12:00:00Z"),
       rank: 1,
@@ -81,7 +85,7 @@ describe("LeaderboardTable Component", () => {
       betId: "bet-3",
       userId: "user-3",
       userName: "Charlie",
-      betName: "Charlie Bet",
+      betName: { obfuscated: false, value: "Charlie Bet" },
       points: 5,
       createdAt: new Date("2026-06-08T10:00:00Z"),
       rank: 3,
@@ -244,7 +248,7 @@ describe("Leaderboard Component (Tabs)", () => {
           betId: "bet-1",
           userId: "user-1",
           userName: "Alice",
-          betName: "Alice Bet",
+          betName: { obfuscated: false, value: "Alice Bet" },
           points: 10,
           createdAt: new Date("2026-06-08T12:00:00Z"),
           rank: 1,
@@ -262,7 +266,7 @@ describe("Leaderboard Component (Tabs)", () => {
           betId: "bet-2",
           userId: "user-2",
           userName: "Bob",
-          betName: "Bob Bet",
+          betName: { obfuscated: false, value: "Bob Bet" },
           points: 15,
           createdAt: new Date("2026-06-08T12:00:00Z"),
           rank: 1,

@@ -2,11 +2,11 @@
 
 import { Trophy, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import type { LeaderboardEntry } from "@/modules/leaderboard/domain/leaderboard";
 
@@ -30,8 +30,29 @@ export function Leaderboard({
   hasLiveMatch = false,
 }: LeaderboardProps) {
   const t = useTranslations("leaderboard");
+  const router = useRouter();
+  const pathname = usePathname();
   const [activeId, setActiveId] = useState(scopes[0]?.id);
   const active = scopes.find((s) => s.id === activeId) ?? scopes[0];
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.substring(1);
+      if (hash && scopes.some((s) => s.id === hash)) {
+        setActiveId(hash);
+      }
+    };
+
+    // Check hash on mount
+    handleHashChange();
+
+    window.addEventListener("hashchange", handleHashChange);
+    window.addEventListener("popstate", handleHashChange);
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+      window.removeEventListener("popstate", handleHashChange);
+    };
+  }, [scopes]);
 
   if (scopes.length === 0) {
     return (
@@ -80,7 +101,10 @@ export function Leaderboard({
               role="tab"
               type="button"
               aria-selected={isActive}
-              onClick={() => setActiveId(scope.id)}
+              onClick={() => {
+                setActiveId(scope.id);
+                router.replace(`${pathname}#${scope.id}`, { scroll: false });
+              }}
               className={cn(
                 "shrink-0 whitespace-nowrap rounded-lg px-4 py-2 text-caption-md font-medium transition-all duration-150",
                 isActive

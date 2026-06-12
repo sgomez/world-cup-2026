@@ -534,4 +534,84 @@ describe("Leaderboard Bounded Context - Domain Aggregate Root", () => {
       expect(bracketEntry?.hasCup).toBe(true);
     });
   });
+
+  describe("Label Obfuscation in Leaderboard", () => {
+    const testBet = Bet.fromState({
+      id: "bet-1",
+      userId: "import-owner",
+      label: "123 | David",
+      status: "closed",
+      groupPredictions: null,
+      knockoutWinners: {},
+    });
+
+    it("should obfuscate labels for non-owners in imported communities", () => {
+      const leaderboard = Leaderboard.create(
+        [{ bet: testBet, ownerName: "David" }],
+        actualResult,
+        window,
+        afterDeadline,
+        "other-user",
+        false,
+        true, // imported
+      );
+
+      expect(leaderboard.entries[0].betName).toEqual({
+        obfuscated: true,
+        num: "123",
+        head: "Da",
+        tail: "id",
+        middleLen: 1,
+      });
+      expect(leaderboard.entries[0].bet?.label).toEqual({
+        obfuscated: true,
+        num: "123",
+        head: "Da",
+        tail: "id",
+        middleLen: 1,
+      });
+    });
+
+    it("should show full labels for the owner in imported communities", () => {
+      const leaderboard = Leaderboard.create(
+        [{ bet: testBet, ownerName: "David" }],
+        actualResult,
+        window,
+        afterDeadline,
+        "import-owner",
+        false,
+        true, // imported
+      );
+
+      expect(leaderboard.entries[0].betName).toEqual({
+        obfuscated: false,
+        value: "123 | David",
+      });
+      expect(leaderboard.entries[0].bet?.label).toEqual({
+        obfuscated: false,
+        value: "123 | David",
+      });
+    });
+
+    it("should show full labels for everyone in native communities", () => {
+      const leaderboard = Leaderboard.create(
+        [{ bet: testBet, ownerName: "David" }],
+        actualResult,
+        window,
+        afterDeadline,
+        "other-user",
+        false,
+        false, // not imported
+      );
+
+      expect(leaderboard.entries[0].betName).toEqual({
+        obfuscated: false,
+        value: "123 | David",
+      });
+      expect(leaderboard.entries[0].bet?.label).toEqual({
+        obfuscated: false,
+        value: "123 | David",
+      });
+    });
+  });
 });

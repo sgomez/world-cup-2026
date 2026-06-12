@@ -154,7 +154,10 @@ describe("getPeerBet query service", () => {
     expect(value.visibility).toBe("summary");
     expect(value.ownerName).toBe("Owner Name");
     expect(value.communityName).toBe("Our Community");
-    expect(value.bet.label).toBe("My Great Bet");
+    expect(value.bet.label).toEqual({
+      obfuscated: false,
+      value: "My Great Bet",
+    });
   });
 
   it("returns full visibility DTO when accessed after the deadline for closed bets", async () => {
@@ -176,5 +179,64 @@ describe("getPeerBet query service", () => {
     expect(value.visibility).toBe("full");
     expect(value.ownerName).toBe("Owner Name");
     expect(value.communityName).toBe("Our Community");
+  });
+
+  it("returns obfuscated label for non-owner in an imported community", async () => {
+    const betRepo = new InMemoryBetRepository([
+      createTestBet({ label: "123 | David" }),
+    ]);
+    const communityRepo = new InMemoryCommunityRepository([
+      createTestCommunity({
+        imported: true,
+        ownerId: "owner-1",
+        memberIds: ["viewer-1", "owner-1"],
+      }),
+    ]);
+
+    const result = await getPeerBet(betRepo, communityRepo, mockGetUserName, {
+      viewerId: "viewer-1",
+      communitySlug: "our-community",
+      betId: "bet-1",
+      window: WINDOW,
+      now: AFTER,
+    });
+
+    expect(result.isOk()).toBe(true);
+    const value = result._unsafeUnwrap();
+    expect(value.bet.label).toEqual({
+      obfuscated: true,
+      num: "123",
+      head: "Da",
+      tail: "id",
+      middleLen: 1,
+    });
+  });
+
+  it("returns full label for owner in an imported community", async () => {
+    const betRepo = new InMemoryBetRepository([
+      createTestBet({ label: "123 | David" }),
+    ]);
+    const communityRepo = new InMemoryCommunityRepository([
+      createTestCommunity({
+        imported: true,
+        ownerId: "owner-1",
+        memberIds: ["viewer-1", "owner-1"],
+      }),
+    ]);
+
+    const result = await getPeerBet(betRepo, communityRepo, mockGetUserName, {
+      viewerId: "owner-1",
+      communitySlug: "our-community",
+      betId: "bet-1",
+      window: WINDOW,
+      now: AFTER,
+    });
+
+    expect(result.isOk()).toBe(true);
+    const value = result._unsafeUnwrap();
+    expect(value.bet.label).toEqual({
+      obfuscated: false,
+      value: "123 | David",
+    });
   });
 });

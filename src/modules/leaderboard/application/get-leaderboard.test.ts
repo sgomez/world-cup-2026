@@ -201,4 +201,103 @@ describe("GetLeaderboard Application Service Integration Tests", () => {
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().code).toBe("FORBIDDEN");
   });
+
+  it("should return obfuscated labels for non-owners in imported communities", async () => {
+    const community = Community.fromState({
+      id: "comm-1",
+      name: "Champs",
+      slug: "champs",
+      ownerId: "user-alice",
+      inviteToken: "token-123",
+      memberIds: ["user-alice", "user-bob"],
+      imported: true,
+    });
+
+    const aliceBet = Bet.fromState({
+      id: "bet-alice",
+      userId: "user-alice",
+      label: "123 | Alice",
+      status: "closed",
+      groupPredictions: mockPredictions,
+      knockoutWinners: {},
+      createdAt: new Date("2026-06-08T12:00:00Z"),
+    });
+
+    const communityRepo = new InMemoryCommunityRepository([community]);
+    const betRepo = new InMemoryBetRepository([aliceBet]);
+    const tournamentRepo = new InMemoryTournamentRepository(null);
+    const liveResultRepo = new InMemoryLiveResultRepository([]);
+
+    const result = await getLeaderboard(
+      communityRepo,
+      betRepo,
+      tournamentRepo,
+      liveResultRepo,
+      mockGetUserName,
+      {
+        viewerId: "user-bob",
+        communitySlug: "champs",
+        window,
+        now,
+      },
+    );
+
+    expect(result.isOk()).toBe(true);
+    const leaderboard = result._unsafeUnwrap();
+    expect(leaderboard.entries[0].betName).toEqual({
+      obfuscated: true,
+      num: "123",
+      head: "Al",
+      tail: "ce",
+      middleLen: 1,
+    });
+  });
+
+  it("should return full labels for the owner in imported communities", async () => {
+    const community = Community.fromState({
+      id: "comm-1",
+      name: "Champs",
+      slug: "champs",
+      ownerId: "user-alice",
+      inviteToken: "token-123",
+      memberIds: ["user-alice", "user-bob"],
+      imported: true,
+    });
+
+    const aliceBet = Bet.fromState({
+      id: "bet-alice",
+      userId: "user-alice",
+      label: "123 | Alice",
+      status: "closed",
+      groupPredictions: mockPredictions,
+      knockoutWinners: {},
+      createdAt: new Date("2026-06-08T12:00:00Z"),
+    });
+
+    const communityRepo = new InMemoryCommunityRepository([community]);
+    const betRepo = new InMemoryBetRepository([aliceBet]);
+    const tournamentRepo = new InMemoryTournamentRepository(null);
+    const liveResultRepo = new InMemoryLiveResultRepository([]);
+
+    const result = await getLeaderboard(
+      communityRepo,
+      betRepo,
+      tournamentRepo,
+      liveResultRepo,
+      mockGetUserName,
+      {
+        viewerId: "user-alice",
+        communitySlug: "champs",
+        window,
+        now,
+      },
+    );
+
+    expect(result.isOk()).toBe(true);
+    const leaderboard = result._unsafeUnwrap();
+    expect(leaderboard.entries[0].betName).toEqual({
+      obfuscated: false,
+      value: "123 | Alice",
+    });
+  });
 });

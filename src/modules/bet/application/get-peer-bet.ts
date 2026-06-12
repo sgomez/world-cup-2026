@@ -1,6 +1,8 @@
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
+import type { ScoreableContent } from "@/lib/scoring";
 import type { CommunityRepository } from "../../community/domain/community-repository";
-import type { Bet } from "../domain/bet";
+import type { BetStatus } from "../domain/bet";
+import { type SerializedBetLabel, serializeLabel } from "../domain/bet-label";
 import type { BetRepository } from "../domain/bet-repository";
 import type { BettingWindow } from "../domain/betting-window";
 import { type DomainError, domainError } from "../domain/errors";
@@ -14,7 +16,15 @@ export type GetPeerBetQuery = {
 };
 
 export type PeerBetDTO = {
-  bet: Bet;
+  bet: {
+    id: string;
+    label: SerializedBetLabel;
+    userId: string;
+    status: BetStatus;
+    createdAt?: Date;
+    signature?: string;
+    scoreableContent: () => ScoreableContent;
+  };
   ownerName: string;
   communityName: string;
   visibility: "summary" | "full";
@@ -61,8 +71,24 @@ export function getPeerBet(
                 domainError("NOT_FOUND"),
               );
             }
+
+            const isOwner = query.viewerId === community.ownerId;
+            const serializedLabel = serializeLabel(
+              bet.label,
+              community.imported,
+              isOwner,
+            );
+
             return okAsync<PeerBetDTO, DomainError>({
-              bet,
+              bet: {
+                id: bet.id,
+                label: serializedLabel,
+                userId: bet.userId,
+                status: bet.status,
+                createdAt: bet.createdAt,
+                signature: bet.signature,
+                scoreableContent: () => bet.scoreableContent(),
+              },
               ownerName,
               communityName: community.name,
               visibility,

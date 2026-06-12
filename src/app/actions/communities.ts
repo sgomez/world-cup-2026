@@ -4,11 +4,9 @@ import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
-import { BET_DEADLINE } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
 import { getSession, requireAdmin } from "@/lib/session";
 import { importDirectBets } from "@/modules/bet/application/import-direct-bets";
-import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { ExceljsSheetParser } from "@/modules/bet/infrastructure/exceljs-sheet-parser";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 import { createCommunity as createCommunityUseCase } from "@/modules/community/application/create-community";
@@ -20,9 +18,6 @@ import { removeMember as removeMemberUseCase } from "@/modules/community/applica
 import type { DomainErrorCode } from "@/modules/community/domain/errors";
 import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
 import { PrismaImportOwnerProvisioner } from "@/modules/community/infrastructure/prisma-import-owner-provisioner";
-import { getLeaderboard } from "@/modules/leaderboard/application/get-leaderboard";
-import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
-import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
 import { withAuthenticatedAction } from "./authenticated-action";
 
 async function communityErrorMessage(code: DomainErrorCode): Promise<string> {
@@ -67,9 +62,6 @@ export async function getCommunity(slug: string) {
   const session = await getSession();
   if (!session) return null;
 
-  const now = new Date();
-  const window = new BettingWindow(BET_DEADLINE);
-
   const community = await prisma.community.findUnique({
     where: { slug },
     include: {
@@ -92,52 +84,8 @@ export async function getCommunity(slug: string) {
   const isMember = community.members.some((m) => m.userId === session.user.id);
   if (!isMember) return null;
 
-  const communityRepo = new PrismaCommunityRepository(prisma);
-  const betRepo = new PrismaBetRepository(prisma);
-  const tournamentRepo = new PrismaTournamentRepository(prisma);
-  const liveResultRepo = new PrismaLiveResultRepository(prisma);
-
-  const getUserName = async (userId: string) => {
-    const m = community.members.find((mem) => mem.userId === userId);
-    return m?.user.name ?? null;
-  };
-
-  const leaderboardResult = await getLeaderboard(
-    communityRepo,
-    betRepo,
-    tournamentRepo,
-    liveResultRepo,
-    getUserName,
-    {
-      viewerId: session.user.id,
-      communitySlug: slug,
-      window,
-      now,
-    },
-  );
-
-  if (leaderboardResult.isErr()) {
-    return null;
-  }
-
-  const leaderboard = leaderboardResult.value;
-
-  const members = community.members.map((m) => {
-    const userEntries = leaderboard.entries.filter(
-      (e) => e.userId === m.user.id,
-    );
-    const bets = userEntries.map((e) => ({
-      id: e.betId,
-      label: e.betName,
-      status: e.bet ? e.bet.status : "closed",
-      signature: e.signature,
-    }));
-    return { ...m, user: { ...m.user, bets } };
-  });
-
   return {
     ...community,
-    members,
     currentUserId: session.user.id,
   };
 }
