@@ -359,49 +359,64 @@ describe("Direct Bets", () => {
     expect(bet.directPredictions).toEqual(preds);
   });
 
-  it("rejects wrong round size", () => {
+  it("accepts fewer teams in any round but rejects exceeding max teams", () => {
     const preds = validDirectPredictions();
-    const invalidPreds = { ...preds, R32: preds.R32.slice(0, 31) };
-    const result = Bet.createDirect("Direct Bet", "user-1", invalidPreds);
-    expect(result.isErr()).toBe(true);
-    expect(result._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
+    // Fewer teams in R32 (31 instead of 32)
+    const fewerPreds = { ...preds, R32: preds.R32.slice(0, 31) };
+    const resultFewer = Bet.createDirect("Direct Bet", "user-1", fewerPreds);
+    expect(resultFewer.isOk()).toBe(true);
+    expect(resultFewer._unsafeUnwrap().directPredictions?.R32.length).toBe(31);
+
+    // Exceeding max teams in R32 (33 teams)
+    const teams = getGroups("en").flatMap((g) => g.teams.map((t) => t.id));
+    const extraTeam = teams[35]; // a known team not in R32 (which was slice(0, 32))
+    const exceedingPreds = { ...preds, R32: [...preds.R32, extraTeam] };
+    const resultExceeding = Bet.createDirect(
+      "Direct Bet",
+      "user-1",
+      exceedingPreds,
+    );
+    expect(resultExceeding.isErr()).toBe(true);
+    expect(resultExceeding._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
   });
 
-  it("rejects missing champion or third-place", () => {
+  it("accepts missing champion or third-place", () => {
     const preds = validDirectPredictions();
     const noChamp = { ...preds, champion: null };
     const noThird = { ...preds, thirdPlace: null };
-    expect(Bet.createDirect("Direct Bet", "user-1", noChamp).isErr()).toBe(
-      true,
-    );
-    expect(Bet.createDirect("Direct Bet", "user-1", noThird).isErr()).toBe(
-      true,
-    );
+
+    const resultNoChamp = Bet.createDirect("Direct Bet", "user-1", noChamp);
+    expect(resultNoChamp.isOk()).toBe(true);
+    expect(
+      resultNoChamp._unsafeUnwrap().directPredictions?.champion,
+    ).toBeNull();
+
+    const resultNoThird = Bet.createDirect("Direct Bet", "user-1", noThird);
+    expect(resultNoThird.isOk()).toBe(true);
+    expect(
+      resultNoThird._unsafeUnwrap().directPredictions?.thirdPlace,
+    ).toBeNull();
   });
 
-  it("rejects broken nesting", () => {
+  it("accepts broken nesting", () => {
     const preds = validDirectPredictions();
-    // Replace one F team with a team not in SF (e.g. index 31 of R32)
+    // Replace one F team with a team not in SF (e.g. index 30 of R32)
     const brokenF = { ...preds, F: [preds.SF[0], preds.R32[30]] };
     const result = Bet.createDirect("Direct Bet", "user-1", brokenF);
-    expect(result.isErr()).toBe(true);
-    expect(result._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
+    expect(result.isOk()).toBe(true);
   });
 
-  it("rejects champion not in Final", () => {
+  it("accepts champion not in Final or third-place not in Semi-finals", () => {
     const preds = validDirectPredictions();
     const brokenChamp = { ...preds, champion: preds.SF[2] };
-    const result = Bet.createDirect("Direct Bet", "user-1", brokenChamp);
-    expect(result.isErr()).toBe(true);
-    expect(result._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
-  });
+    expect(Bet.createDirect("Direct Bet", "user-1", brokenChamp).isOk()).toBe(
+      true,
+    );
 
-  it("rejects third-place not in Semi-finals", () => {
-    const preds = validDirectPredictions();
     const brokenThird = { ...preds, thirdPlace: preds.R32[30] };
-    const result = Bet.createDirect("Direct Bet", "user-1", brokenThird);
-    expect(result.isErr()).toBe(true);
-    expect(result._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
+    expect(Bet.createDirect("Direct Bet", "user-1", brokenThird).isOk()).toBe(
+      true,
+    );
   });
 
   it("rejects unknown team", () => {
@@ -410,6 +425,16 @@ describe("Direct Bets", () => {
     const result = Bet.createDirect("Direct Bet", "user-1", unknownF);
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
+  });
+
+  it("accepts duplicate team in a round and collapses it to one", () => {
+    const preds = validDirectPredictions();
+    // duplicate first team in R32
+    const dupPreds = { ...preds, R32: [preds.R32[0], ...preds.R32] };
+    const result = Bet.createDirect("Direct Bet", "user-1", dupPreds);
+    expect(result.isOk()).toBe(true);
+    const bet = result._unsafeUnwrap();
+    expect(bet.directPredictions?.R32.length).toBe(preds.R32.length);
   });
 
   it("enforces groupPredictions XOR directPredictions", () => {
@@ -453,12 +478,11 @@ describe("Direct Bets", () => {
     expect(bet.rename("New Label", window, BEFORE).isErr()).toBe(true);
   });
 
-  it("rejects third-place winner in the Final", () => {
+  it("accepts third-place winner in the Final", () => {
     const preds = validDirectPredictions();
     const invalidPreds = { ...preds, thirdPlace: preds.F[0] };
     const result = Bet.createDirect("Direct Bet", "user-1", invalidPreds);
-    expect(result.isErr()).toBe(true);
-    expect(result._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
+    expect(result.isOk()).toBe(true);
   });
 
   it("rejects non-array or non-string input values", () => {

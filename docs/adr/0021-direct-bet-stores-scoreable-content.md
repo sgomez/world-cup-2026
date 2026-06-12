@@ -45,12 +45,7 @@ deriving it from a bracket.
   invariant `directPredictions` **XOR** `groupPredictions` — a Bet is exactly one
   kind.
 - **Born closed.** A dedicated factory `Bet.createDirect(label, ownerId,
-  directPredictions)` constructs the Bet already `closed`. It validates the
-  Direct Prediction's completeness — rounds of size 32/16/8/4/2, Champion and
-  third-place present, nesting `F ⊆ SF ⊆ QF ⊆ R16 ⊆ R32`, Champion ∈ F,
-  third ∈ SF — *instead of* the Bracket Bet's "32 knockout winners" rule. Direct
-  Bets never enter `draft` and are never edited; `updatePredictions`, `close` and
-  `reopen` do not apply to them.
+  directPredictions)` constructs the Bet already `closed`. Under relaxed validation rules (amended by sub-issue #227), it normalizes team IDs, dedupes them within each round (preserving order), validates that round sizes do not exceed their capacity (R32 ≤ 32, R16 ≤ 16, QF ≤ 8, SF ≤ 4, F ≤ 2), and ensures every listed team ID (including the optional Champion and third-place winner) is a known team. It drops the exact-size equality, round nesting checks, and champion/third-place winner cross-field placement checks to tolerate errored-but-coherent bets. Direct Bets never enter `draft` and are never edited; `updatePredictions`, `close` and `reopen` do not apply to them.
 - **One branch point.** `bet.scoreableContent(): ScoreableContent` is the single
   place that knows the two kinds: it returns `toScoreableContent(directPredictions)`
   for a Direct Bet, and `extractScoreableContent(createInitialState(...))` for a
