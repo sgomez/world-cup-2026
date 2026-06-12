@@ -452,4 +452,28 @@ describe("Direct Bets", () => {
     expect(bet.updatePredictions(null, {}, window, BEFORE).isErr()).toBe(true);
     expect(bet.rename("New Label", window, BEFORE).isErr()).toBe(true);
   });
+
+  it("rejects third-place winner in the Final", () => {
+    const preds = validDirectPredictions();
+    const invalidPreds = { ...preds, thirdPlace: preds.F[0] };
+    const result = Bet.createDirect("Direct Bet", "user-1", invalidPreds);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
+  });
+
+  it("rejects non-array or non-string input values", () => {
+    const preds = validDirectPredictions();
+    const invalidPreds1 = { ...preds, R32: "not-an-array" as any };
+    expect(
+      Bet.createDirect("Direct Bet", "user-1", invalidPreds1).isErr(),
+    ).toBe(true);
+
+    const invalidPreds2 = {
+      ...preds,
+      R16: [...preds.R16.slice(0, 15), 42 as any],
+    };
+    expect(
+      Bet.createDirect("Direct Bet", "user-1", invalidPreds2).isErr(),
+    ).toBe(true);
+  });
 });

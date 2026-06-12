@@ -121,12 +121,40 @@ export class Bet {
     ownerId: string,
     directPredictions: ScoreableContentArrays,
   ): Result<Bet, DomainError> {
+    if (
+      !directPredictions ||
+      !Array.isArray(directPredictions.R32) ||
+      !Array.isArray(directPredictions.R16) ||
+      !Array.isArray(directPredictions.QF) ||
+      !Array.isArray(directPredictions.SF) ||
+      !Array.isArray(directPredictions.F)
+    ) {
+      return err(domainError("INVALID_PREDICTIONS"));
+    }
+
+    const checkStringArray = (arr: unknown[]) =>
+      arr.every((item) => typeof item === "string");
+
+    if (
+      !checkStringArray(directPredictions.R32) ||
+      !checkStringArray(directPredictions.R16) ||
+      !checkStringArray(directPredictions.QF) ||
+      !checkStringArray(directPredictions.SF) ||
+      !checkStringArray(directPredictions.F) ||
+      (directPredictions.champion &&
+        typeof directPredictions.champion !== "string") ||
+      (directPredictions.thirdPlace &&
+        typeof directPredictions.thirdPlace !== "string")
+    ) {
+      return err(domainError("INVALID_PREDICTIONS"));
+    }
+
     const normalizedPredictions: ScoreableContentArrays = {
-      R32: (directPredictions.R32 || []).map((id) => id.toLowerCase()),
-      R16: (directPredictions.R16 || []).map((id) => id.toLowerCase()),
-      QF: (directPredictions.QF || []).map((id) => id.toLowerCase()),
-      SF: (directPredictions.SF || []).map((id) => id.toLowerCase()),
-      F: (directPredictions.F || []).map((id) => id.toLowerCase()),
+      R32: directPredictions.R32.map((id) => id.toLowerCase()),
+      R16: directPredictions.R16.map((id) => id.toLowerCase()),
+      QF: directPredictions.QF.map((id) => id.toLowerCase()),
+      SF: directPredictions.SF.map((id) => id.toLowerCase()),
+      F: directPredictions.F.map((id) => id.toLowerCase()),
       champion: directPredictions.champion
         ? directPredictions.champion.toLowerCase()
         : null,
@@ -177,6 +205,11 @@ export class Bet {
 
     // Validate third-place winner ∈ Semi-finals
     if (!sfSet.has(normalizedPredictions.thirdPlace)) {
+      return err(domainError("INVALID_PREDICTIONS"));
+    }
+
+    // Validate third-place winner ∉ Final
+    if (fSet.has(normalizedPredictions.thirdPlace)) {
       return err(domainError("INVALID_PREDICTIONS"));
     }
 
