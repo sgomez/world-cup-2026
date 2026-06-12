@@ -1,6 +1,10 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { createInitialState } from "@/lib/prediction-state";
+import {
+  extractScoreableContent,
+  toScoreableContentArrays,
+} from "@/lib/scoring";
 import { ScoreTab } from "./score-tab";
 
 vi.mock("next-intl", () => ({
@@ -26,10 +30,13 @@ vi.mock("next-intl", () => ({
   }),
 }));
 
+const getPrediction = (state: any) =>
+  toScoreableContentArrays(extractScoreableContent(state.knockoutMatches));
+
 describe("ScoreTab", () => {
   it("renders 'Not yet determined' for champion and third place when predictions are empty", () => {
     const state = createInitialState(null);
-    render(<ScoreTab state={state} />);
+    render(<ScoreTab prediction={getPrediction(state)} />);
 
     // It should render "Not yet determined" for both Champion and Third Place
     const placeholders = screen.getAllByText("Not yet determined");
@@ -48,7 +55,7 @@ describe("ScoreTab", () => {
       loserId: "usa",
     };
 
-    render(<ScoreTab state={state} />);
+    render(<ScoreTab prediction={getPrediction(state)} />);
 
     // Get the card containing the Champion header
     const championHeader = screen.getByText("Champion");
@@ -72,7 +79,7 @@ describe("ScoreTab", () => {
       loserId: "arg",
     };
 
-    render(<ScoreTab state={state} />);
+    render(<ScoreTab prediction={getPrediction(state)} />);
 
     // Get the card containing the Third Place header
     const thirdPlaceHeader = screen.getByText("Third Place");
@@ -105,7 +112,12 @@ describe("ScoreTab", () => {
       thirdPlace: null,
     };
 
-    render(<ScoreTab state={state} actualResults={actualResults} />);
+    render(
+      <ScoreTab
+        prediction={getPrediction(state)}
+        actualResults={actualResults}
+      />,
+    );
 
     // Since MEX and USA match in R32 (3 points per team), total should be 6
     const sixElements = screen.getAllByText("6");
@@ -135,12 +147,12 @@ describe("ScoreTab provisional warning", () => {
   const state = createInitialState(null);
 
   it("does NOT render provisional warning note when hasLiveMatch is false", () => {
-    render(<ScoreTab state={state} hasLiveMatch={false} />);
+    render(<ScoreTab prediction={getPrediction(state)} hasLiveMatch={false} />);
     expect(screen.queryByText("provisionalNote")).not.toBeInTheDocument();
   });
 
   it("renders provisional warning note when hasLiveMatch is true", () => {
-    render(<ScoreTab state={state} hasLiveMatch={true} />);
+    render(<ScoreTab prediction={getPrediction(state)} hasLiveMatch={true} />);
     expect(screen.getByText("provisionalNote")).toBeInTheDocument();
   });
 });

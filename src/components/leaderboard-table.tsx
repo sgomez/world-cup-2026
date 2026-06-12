@@ -55,11 +55,9 @@ export function LeaderboardTable({
       <ul className="divide-y divide-hairline dark:divide-ash">
         {entries.map((entry) => {
           const isCurrentUser = currentUserId && entry.userId === currentUserId;
-          const href = isCurrentUser
-            ? `/bets/${entry.betId}`
-            : communitySlug
-              ? `/communities/${communitySlug}/bets/${entry.betId}`
-              : `/bets/${entry.betId}`;
+          const href = communitySlug
+            ? `/communities/${communitySlug}/bets/${entry.betId}`
+            : `/bets/${entry.betId}`;
           return (
             <li
               key={entry.betId}
@@ -81,16 +79,9 @@ export function LeaderboardTable({
                 </span>
                 <div className="min-w-0 space-y-1">
                   <p className="truncate text-body-strong text-foreground">
-                    {isCurrentUser ? (
+                    {communitySlug || isCurrentUser ? (
                       <Link
-                        href={`/bets/${entry.betId}`}
-                        className="hover:underline transition-colors font-medium"
-                      >
-                        {entry.betName}
-                      </Link>
-                    ) : communitySlug ? (
-                      <Link
-                        href={`/communities/${communitySlug}/bets/${entry.betId}`}
+                        href={href}
                         className="hover:underline transition-colors font-medium"
                       >
                         {entry.betName}

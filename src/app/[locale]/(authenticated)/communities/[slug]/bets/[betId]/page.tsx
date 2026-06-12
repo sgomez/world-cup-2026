@@ -1,12 +1,13 @@
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { BetPrediction } from "@/components/bet-prediction";
 import { LocalDate } from "@/components/local-date";
+import { ScoreTab } from "@/components/score-tab";
 import { PageHeader } from "@/components/ui/page-header";
 import { Link, redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
+import { toScoreableContentArrays } from "@/lib/scoring";
 import { getSession } from "@/lib/session";
 import { getPeerBet } from "@/modules/bet/application/get-peer-bet";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
@@ -114,8 +115,6 @@ export default async function PeerBetPage({
     );
   }
 
-  const isPastDeadline = window.isClosed(now);
-
   const tournamentRepo = new PrismaTournamentRepository(prisma);
   const liveResultRepo = new PrismaLiveResultRepository(prisma);
   const [tournament, liveResults] = await Promise.all([
@@ -125,18 +124,15 @@ export default async function PeerBetPage({
   const actualResults = getActualScoreableContent(tournament, liveResults);
   const liveMatchActive = hasLiveMatch(liveResults);
 
-  // Otherwise, render the read-only prediction stage
+  // Otherwise, render the read-only score view
   return (
     <div className="space-y-6 max-w-5xl">
-      <BetPrediction
-        betId={bet.id}
-        betLabel={bet.label}
-        isOwner={false}
-        isPastDeadline={isPastDeadline}
-        isClosed={true}
-        savedPredictions={bet.groupPredictions}
-        savedKnockoutWinners={bet.knockoutWinners}
-        headerDescription={subtitle}
+      <div className="mb-6">
+        <PageHeader title={bet.label} description={subtitle} />
+      </div>
+
+      <ScoreTab
+        prediction={toScoreableContentArrays(bet.scoreableContent())}
         actualResults={actualResults}
         hasLiveMatch={liveMatchActive}
       />

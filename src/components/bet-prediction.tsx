@@ -25,7 +25,9 @@ import {
 } from "@/lib/prediction-state";
 import {
   EMPTY_SCOREABLE_CONTENT_ARRAYS,
+  extractScoreableContent,
   type ScoreableContentArrays,
+  toScoreableContentArrays,
 } from "@/lib/scoring";
 
 export function BetPrediction({
@@ -243,7 +245,9 @@ export function BetPrediction({
 
         <TabsContent value="score">
           <ScoreTab
-            state={state}
+            prediction={toScoreableContentArrays(
+              extractScoreableContent(state.knockoutMatches),
+            )}
             actualResults={actualResults}
             hasLiveMatch={hasLiveMatch}
           />

@@ -123,23 +123,23 @@ vi.mock("@/components/local-date", () => ({
   },
 }));
 
-vi.mock("@/components/bet-prediction", () => ({
-  BetPrediction: ({
-    betId,
-    isOwner,
-    headerDescription,
+vi.mock("@/components/score-tab", () => ({
+  ScoreTab: ({
+    prediction,
+    actualResults,
+    hasLiveMatch,
   }: {
-    betId: string;
-    isOwner: boolean;
-    headerDescription?: React.ReactNode;
+    prediction: any;
+    actualResults: any;
+    hasLiveMatch: boolean;
   }) => (
     <div
-      data-testid="bet-prediction"
-      data-bet-id={betId}
-      data-is-owner={isOwner ? "true" : "false"}
+      data-testid="score-tab"
+      data-prediction={JSON.stringify(prediction)}
+      data-actual-results={JSON.stringify(actualResults)}
+      data-has-live-match={hasLiveMatch ? "true" : "false"}
     >
-      <div>BetPrediction Component</div>
-      <div data-testid="header-desc-wrapper">{headerDescription}</div>
+      ScoreTab Component
     </div>
   ),
 }));
@@ -161,6 +161,15 @@ describe("PeerBetPage", () => {
     signature: "signature123",
     groupPredictions: null,
     knockoutWinners: {},
+    scoreableContent: vi.fn().mockReturnValue({
+      R32: new Set(),
+      R16: new Set(),
+      QF: new Set(),
+      SF: new Set(),
+      F: new Set(),
+      champion: null,
+      thirdPlace: null,
+    }),
   } as any;
 
   it("redirects to login if not authenticated", async () => {
@@ -264,7 +273,7 @@ describe("PeerBetPage", () => {
     expect(backLink.textContent).toContain("backTo Our Community");
   });
 
-  it("renders read-only prediction stage if accessed after the deadline", async () => {
+  it("renders read-only score view if accessed after the deadline", async () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: "viewer-1" },
     } as any);
@@ -281,21 +290,71 @@ describe("PeerBetPage", () => {
     const result = await PeerBetPage({ params: mockParams });
     render(result);
 
-    // Prediction container should be rendered
-    const predictionComp = screen.getByTestId("bet-prediction");
-    expect(predictionComp).toBeInTheDocument();
-    expect(predictionComp.getAttribute("data-bet-id")).toBe("bet-1");
-    expect(predictionComp.getAttribute("data-is-owner")).toBe("false");
+    // ScoreTab container should be rendered
+    const scoreTabComp = screen.getByTestId("score-tab");
+    expect(scoreTabComp).toBeInTheDocument();
 
-    // Header description wrapper should contain owner name
-    const headerWrapper = screen.getByTestId("header-desc-wrapper");
-    expect(headerWrapper).toBeInTheDocument();
-    expect(headerWrapper.textContent).toContain("Owner");
+    // Page title and description should be rendered
+    expect(screen.getByText("My Great Bet")).toBeInTheDocument();
+    expect(screen.getByText("Owner")).toBeInTheDocument();
 
     // Back link check
     const backLink = screen.getByTestId("link");
     expect(backLink).toBeInTheDocument();
     expect(backLink.getAttribute("href")).toBe("/communities/our-community");
     expect(backLink.textContent).toContain("backTo Our Community");
+  });
+
+  it("renders ScoreTab with directPredictions for a Direct Bet", async () => {
+    const directBet = {
+      id: "bet-direct",
+      label: "My Direct Bet",
+      signature: "signatureDirect",
+      groupPredictions: null,
+      knockoutWinners: {},
+      directPredictions: {
+        R32: ["arg", "bra"],
+        R16: ["arg"],
+        QF: [],
+        SF: [],
+        F: [],
+        champion: "arg",
+        thirdPlace: "bra",
+      },
+      scoreableContent: vi.fn().mockReturnValue({
+        R32: new Set(["ARG", "BRA"]),
+        R16: new Set(["ARG"]),
+        QF: new Set([]),
+        SF: new Set([]),
+        F: new Set([]),
+        champion: "ARG",
+        thirdPlace: "BRA",
+      }),
+    } as any;
+
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "viewer-1" },
+    } as any);
+    mockGetPeerBet.mockResolvedValue(
+      ok({
+        bet: directBet,
+        ownerName: "Owner",
+        communityName: "Our Community",
+        visibility: "full",
+      }),
+    );
+    mockIsClosed.mockReturnValue(true);
+
+    const result = await PeerBetPage({ params: mockParams });
+    render(result);
+
+    // ScoreTab should be rendered with the converted prediction from directPredictions
+    const scoreTab = screen.getByTestId("score-tab");
+    expect(scoreTab).toBeInTheDocument();
+    const predictionData = JSON.parse(
+      scoreTab.getAttribute("data-prediction") || "{}",
+    );
+    expect(predictionData.champion).toBe("ARG");
+    expect(predictionData.R32).toEqual(["ARG", "BRA"]);
   });
 });
