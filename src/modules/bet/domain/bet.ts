@@ -141,20 +141,30 @@ export class Bet {
       !checkStringArray(directPredictions.QF) ||
       !checkStringArray(directPredictions.SF) ||
       !checkStringArray(directPredictions.F) ||
-      (directPredictions.champion &&
+      (directPredictions.champion !== null &&
+        directPredictions.champion !== undefined &&
         typeof directPredictions.champion !== "string") ||
-      (directPredictions.thirdPlace &&
+      (directPredictions.thirdPlace !== null &&
+        directPredictions.thirdPlace !== undefined &&
         typeof directPredictions.thirdPlace !== "string")
     ) {
       return err(domainError("INVALID_PREDICTIONS"));
     }
 
     const normalizedPredictions: ScoreableContentArrays = {
-      R32: directPredictions.R32.map((id) => id.toLowerCase()),
-      R16: directPredictions.R16.map((id) => id.toLowerCase()),
-      QF: directPredictions.QF.map((id) => id.toLowerCase()),
-      SF: directPredictions.SF.map((id) => id.toLowerCase()),
-      F: directPredictions.F.map((id) => id.toLowerCase()),
+      R32: Array.from(
+        new Set(directPredictions.R32.map((id) => id.toLowerCase())),
+      ),
+      R16: Array.from(
+        new Set(directPredictions.R16.map((id) => id.toLowerCase())),
+      ),
+      QF: Array.from(
+        new Set(directPredictions.QF.map((id) => id.toLowerCase())),
+      ),
+      SF: Array.from(
+        new Set(directPredictions.SF.map((id) => id.toLowerCase())),
+      ),
+      F: Array.from(new Set(directPredictions.F.map((id) => id.toLowerCase()))),
       champion: directPredictions.champion
         ? directPredictions.champion.toLowerCase()
         : null,
@@ -167,49 +177,14 @@ export class Bet {
       getGroups("en").flatMap((g) => g.teams.map((t) => t.id)),
     );
 
-    // Validate champion and third-place present
-    if (!normalizedPredictions.champion || !normalizedPredictions.thirdPlace) {
-      return err(domainError("INVALID_PREDICTIONS"));
-    }
-
-    // Validate round sizes 32/16/8/4/2
+    // Validate round max sizes: R32 <= 32, R16 <= 16, QF <= 8, SF <= 4, F <= 2
     if (
-      normalizedPredictions.R32.length !== 32 ||
-      normalizedPredictions.R16.length !== 16 ||
-      normalizedPredictions.QF.length !== 8 ||
-      normalizedPredictions.SF.length !== 4 ||
-      normalizedPredictions.F.length !== 2
+      normalizedPredictions.R32.length > 32 ||
+      normalizedPredictions.R16.length > 16 ||
+      normalizedPredictions.QF.length > 8 ||
+      normalizedPredictions.SF.length > 4 ||
+      normalizedPredictions.F.length > 2
     ) {
-      return err(domainError("INVALID_PREDICTIONS"));
-    }
-
-    const r32Set = new Set(normalizedPredictions.R32);
-    const r16Set = new Set(normalizedPredictions.R16);
-    const qfSet = new Set(normalizedPredictions.QF);
-    const sfSet = new Set(normalizedPredictions.SF);
-    const fSet = new Set(normalizedPredictions.F);
-
-    // Validate nesting: F ⊆ SF ⊆ QF ⊆ R16 ⊆ R32
-    const nestedF = normalizedPredictions.F.every((id) => sfSet.has(id));
-    const nestedSF = normalizedPredictions.SF.every((id) => qfSet.has(id));
-    const nestedQF = normalizedPredictions.QF.every((id) => r16Set.has(id));
-    const nestedR16 = normalizedPredictions.R16.every((id) => r32Set.has(id));
-    if (!nestedF || !nestedSF || !nestedQF || !nestedR16) {
-      return err(domainError("INVALID_PREDICTIONS"));
-    }
-
-    // Validate Champion ∈ Final
-    if (!fSet.has(normalizedPredictions.champion)) {
-      return err(domainError("INVALID_PREDICTIONS"));
-    }
-
-    // Validate third-place winner ∈ Semi-finals
-    if (!sfSet.has(normalizedPredictions.thirdPlace)) {
-      return err(domainError("INVALID_PREDICTIONS"));
-    }
-
-    // Validate third-place winner ∉ Final
-    if (fSet.has(normalizedPredictions.thirdPlace)) {
       return err(domainError("INVALID_PREDICTIONS"));
     }
 
@@ -220,9 +195,14 @@ export class Bet {
       ...normalizedPredictions.QF,
       ...normalizedPredictions.SF,
       ...normalizedPredictions.F,
-      normalizedPredictions.champion,
-      normalizedPredictions.thirdPlace,
     ];
+    if (normalizedPredictions.champion) {
+      allTeams.push(normalizedPredictions.champion);
+    }
+    if (normalizedPredictions.thirdPlace) {
+      allTeams.push(normalizedPredictions.thirdPlace);
+    }
+
     const allKnown = allTeams.every((id) => KNOWN_TEAM_IDS.has(id));
     if (!allKnown) {
       return err(domainError("INVALID_PREDICTIONS"));
