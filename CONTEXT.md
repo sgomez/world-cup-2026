@@ -14,9 +14,20 @@ The access level of a User. One of three values:
 Only one `super_admin` exists at any time (the first registrant). All other elevated users hold `admin`.
 
 ### Bet
-A named tournament bracket prediction created by a User. A User may hold many Bets. Each Bet has a user-given **label**, a **status**, and system-managed timestamps (`createdAt`, `updatedAt`). The label can be edited by the owner before the **Bet Deadline** while in `draft` status. A Bet contains two kinds of prediction:
+A named tournament prediction. A Bet is exactly one of two kinds — a **Bracket Bet** or a **Direct Bet** — distinguished by how its **scoreable content** (the teams reaching each round; see **Score**) is obtained. Each Bet has a **label**, a **status**, and system-managed timestamps (`createdAt`, `updatedAt`). A User may hold many Bets.
+
+### Bracket Bet
+The platform-native kind of Bet, created and edited by a User. Its prediction is entered as two parts and the teams reaching each round are *derived* by cascading them through the tournament bracket:
 - **Group Prediction**: the user's predicted finishing order for each of the 12 groups, and their ranked ordering of the 12 third-place teams (determining which eight advance).
 - **Knockout Prediction**: the user's selected winner for each match in the knockout bracket, stored as a sparse map of match ID to team ID. Winners propagate forward through the bracket and are cascade-cleared when a group prediction change invalidates them.
+
+The label can be edited by the owner before the **Bet Deadline** while in `draft` status.
+
+### Direct Bet
+A Bet whose **scoreable content** is recorded **directly** as a **Direct Prediction** rather than derived from a bracket. It admits predictions made outside the platform's group→bracket flow — e.g. an external community that fills the Round of 32 through the Final straight away, plus the Final winner and third-place winner. A Direct Bet has **no** Group Prediction and **no** Knockout Prediction (and a Bracket Bet has no Direct Prediction — the two are mutually exclusive). It is **born `closed`** and immutable: it never passes through `draft` and is never edited on the platform. It is scored, carries a **Bet Signature**, and is ranked on the **Leaderboard** exactly like a Bracket Bet, because both reduce to the same scoreable content. Only its **Score** is viewable — the Groups and Knockout views depend on bracket structure a Direct Bet does not have.
+
+### Direct Prediction
+The stored prediction of a **Direct Bet**: for each knockout round (Round of 32, Round of 16, Quarter-finals, Semi-finals, Final) the exact set of teams the bettor places in that round, plus the predicted **Champion** and **third-place winner**. It is exactly the **scoreable content** a Bracket Bet would derive, but stated as the source of truth instead of computed. To be valid it must be complete and coherent: the rounds hold 32, 16, 8, 4 and 2 teams respectively; each round's teams are a subset of the previous round's; the Champion is one of the two Final teams; and the third-place winner is one of the four Semi-final teams.
 
 ### Bet Status
 The user-intent state of a Bet. One of two values:
