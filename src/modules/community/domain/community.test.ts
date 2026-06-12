@@ -17,6 +17,23 @@ describe("Community Aggregate Root", () => {
     expect(community.ownerId).toBe(ownerId);
     expect(community.inviteToken).toBe(inviteToken);
     expect(community.memberIds).toEqual([ownerId]);
+    expect(community.imported).toBe(false);
+  });
+
+  it("creates an imported community with the imported flag set to true", () => {
+    const community = Community.createImported(
+      name,
+      slug,
+      ownerId,
+      inviteToken,
+    );
+    expect(community.id).toBeDefined();
+    expect(community.name).toBe("The Office Sweepstake");
+    expect(community.slug).toBe("the-office-sweepstake");
+    expect(community.ownerId).toBe(ownerId);
+    expect(community.inviteToken).toBe(inviteToken);
+    expect(community.memberIds).toEqual([ownerId]);
+    expect(community.imported).toBe(true);
   });
 
   describe("join", () => {

@@ -29,6 +29,7 @@ export class PrismaCommunityRepository implements CommunityRepository {
       slug: row.slug,
       ownerId: row.ownerId,
       inviteToken: row.inviteToken,
+      imported: row.imported,
       memberIds: row.members.map((m) => m.userId),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -52,6 +53,7 @@ export class PrismaCommunityRepository implements CommunityRepository {
       slug: row.slug,
       ownerId: row.ownerId,
       inviteToken: row.inviteToken,
+      imported: row.imported,
       memberIds: row.members.map((m) => m.userId),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -75,6 +77,7 @@ export class PrismaCommunityRepository implements CommunityRepository {
       slug: row.slug,
       ownerId: row.ownerId,
       inviteToken: row.inviteToken,
+      imported: row.imported,
       memberIds: row.members.map((m) => m.userId),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -94,12 +97,14 @@ export class PrismaCommunityRepository implements CommunityRepository {
               slug: state.slug,
               ownerId: state.ownerId,
               inviteToken: state.inviteToken,
+              imported: state.imported,
             },
             update: {
               name: state.name,
               slug: state.slug,
               ownerId: state.ownerId,
               inviteToken: state.inviteToken,
+              imported: state.imported,
             },
           });
 

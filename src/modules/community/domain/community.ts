@@ -11,6 +11,7 @@ export type CommunityState = {
   ownerId: string;
   inviteToken: string;
   memberIds: string[];
+  imported?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -22,6 +23,7 @@ export class Community {
     return new Community({
       ...state,
       memberIds: [...state.memberIds],
+      imported: state.imported ?? false,
     });
   }
 
@@ -38,6 +40,24 @@ export class Community {
       ownerId,
       inviteToken,
       memberIds: [ownerId],
+      imported: false,
+    });
+  }
+
+  static createImported(
+    name: CommunityName,
+    slug: CommunitySlug,
+    ownerId: string,
+    inviteToken: string,
+  ): Community {
+    return new Community({
+      id: randomUUID(),
+      name: name.value,
+      slug: slug.value,
+      ownerId,
+      inviteToken,
+      memberIds: [ownerId],
+      imported: true,
     });
   }
 
@@ -65,6 +85,10 @@ export class Community {
     return this.state.memberIds;
   }
 
+  get imported(): boolean {
+    return this.state.imported ?? false;
+  }
+
   get createdAt(): Date | undefined {
     return this.state.createdAt;
   }
@@ -77,6 +101,7 @@ export class Community {
     return {
       ...this.state,
       memberIds: [...this.state.memberIds],
+      imported: this.state.imported ?? false,
     };
   }
 
