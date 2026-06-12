@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState } from "@/lib/prediction-state";
-import { extractScoreableContent, toScoreableContent } from "@/lib/scoring";
+import {
+  extractScoreableContent,
+  type ScoreableContentArrays,
+  toScoreableContent,
+} from "@/lib/scoring";
 import { Bet } from "@/modules/bet/domain/bet";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { Leaderboard } from "./leaderboard";
@@ -377,6 +381,157 @@ describe("Leaderboard Bounded Context - Domain Aggregate Root", () => {
 
       expect(charlieEntry?.rank).toBe(2);
       expect(charlieEntry?.hasCup).toBe(false);
+    });
+  });
+
+  describe("Direct Bets support in Leaderboard", () => {
+    const directPredictions: ScoreableContentArrays = {
+      R32: defaultTeams.slice(0, 3), // matching R32 teams
+      R16: [],
+      QF: [],
+      SF: [],
+      F: [],
+      champion: null,
+      thirdPlace: null,
+    };
+
+    const directBet = Bet.fromState({
+      id: "bet-direct",
+      userId: "user-direct",
+      label: "Direct Bet",
+      status: "closed",
+      groupPredictions: null,
+      knockoutWinners: {},
+      directPredictions,
+      createdAt: new Date("2026-06-08T12:00:00Z"),
+    });
+
+    const bracketBetWithSameContent = Bet.fromState({
+      id: "bet-bracket",
+      userId: "user-bracket",
+      label: "Bracket Bet",
+      status: "closed",
+      groupPredictions: null,
+      knockoutWinners: {},
+      createdAt: new Date("2026-06-08T11:00:00Z"), // Earlier
+    });
+
+    it("should compute score and rank a Direct Bet correctly alongside Bracket Bets", () => {
+      const leaderboard = Leaderboard.create(
+        [
+          { bet: directBet, ownerName: "DirectOwner" },
+          { bet: bracketBetWithSameContent, ownerName: "BracketOwner" },
+        ],
+        actualResult,
+        window,
+        afterDeadline,
+        null,
+        false,
+      );
+
+      expect(leaderboard.entries).toHaveLength(2);
+
+      const directEntry = leaderboard.entries.find(
+        (e) => e.userName === "DirectOwner",
+      );
+      const bracketEntry = leaderboard.entries.find(
+        (e) => e.userName === "BracketOwner",
+      );
+
+      expect(directEntry).toBeDefined();
+      expect(bracketEntry).toBeDefined();
+
+      // Both should have 9 points
+      expect(directEntry?.points).toBe(9);
+      expect(bracketEntry?.points).toBe(9);
+
+      // They should share the same rank (co-winner)
+      expect(directEntry?.rank).toBe(1);
+      expect(bracketEntry?.rank).toBe(1);
+
+      // Stable ranking puts BracketOwner first due to earlier createdAt
+      expect(leaderboard.entries[0].userName).toBe("BracketOwner");
+      expect(leaderboard.entries[1].userName).toBe("DirectOwner");
+    });
+
+    it("should hide/redact directPredictions for Direct Bets when selections are hidden pre-deadline", () => {
+      const leaderboard = Leaderboard.create(
+        [{ bet: directBet, ownerName: "DirectOwner" }],
+        actualResult,
+        window,
+        beforeDeadline,
+        null,
+        false,
+      );
+
+      const entry = leaderboard.entries[0];
+      expect(entry.selectionsHidden).toBe(true);
+      expect(entry.points).toBe(0);
+      expect(entry.bet?.directPredictions).toBeNull();
+    });
+
+    it("should show/expose directPredictions for Direct Bets when selections are visible post-deadline", () => {
+      const leaderboard = Leaderboard.create(
+        [{ bet: directBet, ownerName: "DirectOwner" }],
+        actualResult,
+        window,
+        afterDeadline,
+        null,
+        false,
+      );
+
+      const entry = leaderboard.entries[0];
+      expect(entry.selectionsHidden).toBe(false);
+      expect(entry.points).toBe(9);
+      expect(entry.bet?.directPredictions).toEqual(directPredictions);
+    });
+
+    it("should update Direct Bet scores dynamically as live actualResults move", () => {
+      const liveActualResultArrays = {
+        R32: defaultTeams.slice(0, 2),
+        R16: [],
+        QF: [],
+        SF: [],
+        F: [],
+        champion: null,
+        thirdPlace: null,
+      };
+      const liveActualResult = toScoreableContent(liveActualResultArrays);
+
+      const leaderboard = Leaderboard.create(
+        [{ bet: directBet, ownerName: "DirectOwner" }],
+        liveActualResult,
+        window,
+        afterDeadline,
+        null,
+        false,
+      );
+
+      expect(leaderboard.entries[0].points).toBe(6);
+    });
+
+    it("should award Cup correctly when tournament ends and a Direct Bet is co-winner", () => {
+      const leaderboard = Leaderboard.create(
+        [
+          { bet: directBet, ownerName: "DirectOwner" },
+          { bet: bracketBetWithSameContent, ownerName: "BracketOwner" },
+        ],
+        actualResult,
+        window,
+        afterDeadline,
+        null,
+        true,
+      );
+
+      const directEntry = leaderboard.entries.find(
+        (e) => e.userName === "DirectOwner",
+      );
+      const bracketEntry = leaderboard.entries.find(
+        (e) => e.userName === "BracketOwner",
+      );
+
+      expect(directEntry?.hasCup).toBe(true);
+      expect(bracketEntry?.hasCup).toBe(true);
     });
   });
 });
