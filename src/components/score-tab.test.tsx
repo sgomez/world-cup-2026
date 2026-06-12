@@ -132,7 +132,7 @@ describe("ScoreTab", () => {
 });
 
 describe("ScoreTab provisional warning", () => {
-  const state = createInitialState(null, null, "en");
+  const state = createInitialState(null);
 
   it("does NOT render provisional warning note when hasLiveMatch is false", () => {
     render(<ScoreTab state={state} hasLiveMatch={false} />);

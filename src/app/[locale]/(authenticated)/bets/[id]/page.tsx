@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
+import { hasLiveMatch } from "@/modules/live/domain/live-result";
 import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
 import { getActualScoreableContent } from "@/modules/tournament/application/get-actual-scoreable-content";
 import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
@@ -43,7 +44,7 @@ export default async function BetPage({
     liveResultRepo.findAll(),
   ]);
   const actualResults = getActualScoreableContent(tournament, liveResults);
-  const liveMatchActive = liveResults.some((lr) => lr.status === "live");
+  const liveMatchActive = hasLiveMatch(liveResults);
 
   return (
     <div>
