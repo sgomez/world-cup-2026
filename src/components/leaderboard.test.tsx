@@ -37,18 +37,22 @@ vi.mock("@/i18n/navigation", () => ({
     children,
     href,
     className,
+    ...props
   }: {
     children: React.ReactNode;
     href: string;
     className?: string;
+    [key: string]: any;
   }) => (
-    <a href={href} className={className}>
+    <a href={href} className={className} {...props}>
       {children}
     </a>
   ),
   useRouter: () => ({
     push: vi.fn(),
+    replace: vi.fn(),
   }),
+  usePathname: () => "/leaderboard",
 }));
 
 describe("LeaderboardTable Component", () => {
