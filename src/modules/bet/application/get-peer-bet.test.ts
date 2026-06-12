@@ -42,7 +42,7 @@ function createTestBet(
 describe("getPeerBet query service", () => {
   const mockGetUserName = async (userId: string) => {
     if (userId === "owner-1") return "Owner Name";
-    return null;
+    return userId + " Name";
   };
 
   it("returns NOT_FOUND if the community does not exist", async () => {
@@ -238,5 +238,98 @@ describe("getPeerBet query service", () => {
       obfuscated: false,
       value: "123 | David",
     });
+  });
+
+  it("returns FORBIDDEN in an imported community for any bet not owned by the Import Owner", async () => {
+    const betRepo = new InMemoryBetRepository([
+      createTestBet({
+        id: "bet-not-owner",
+        userId: "viewer-1",
+        label: "Viewer Bet",
+      }),
+    ]);
+    const communityRepo = new InMemoryCommunityRepository([
+      createTestCommunity({
+        imported: true,
+        ownerId: "owner-1",
+        memberIds: ["viewer-1", "owner-1"],
+      }),
+    ]);
+
+    const result = await getPeerBet(betRepo, communityRepo, mockGetUserName, {
+      viewerId: "viewer-1",
+      communitySlug: "our-community",
+      betId: "bet-not-owner",
+      window: WINDOW,
+      now: AFTER,
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("FORBIDDEN");
+  });
+
+  it("serves a bet owned by the Import Owner in an imported community", async () => {
+    const betRepo = new InMemoryBetRepository([
+      createTestBet({
+        id: "bet-owner",
+        userId: "owner-1",
+        label: "123 | Owner Bet",
+      }),
+    ]);
+    const communityRepo = new InMemoryCommunityRepository([
+      createTestCommunity({
+        imported: true,
+        ownerId: "owner-1",
+        memberIds: ["viewer-1", "owner-1"],
+      }),
+    ]);
+
+    const result = await getPeerBet(betRepo, communityRepo, mockGetUserName, {
+      viewerId: "viewer-1",
+      communitySlug: "our-community",
+      betId: "bet-owner",
+      window: WINDOW,
+      now: AFTER,
+    });
+
+    expect(result.isOk()).toBe(true);
+    const value = result._unsafeUnwrap();
+    expect(value.bet.id).toBe("bet-owner");
+    expect(value.bet.label).toEqual({
+      obfuscated: true,
+      num: "123",
+      head: "Ow",
+      tail: "et",
+      middleLen: 5,
+    });
+  });
+
+  it("serves any member's bet in a native community (not imported)", async () => {
+    const betRepo = new InMemoryBetRepository([
+      createTestBet({
+        id: "bet-member",
+        userId: "viewer-2",
+        label: "Member Bet",
+      }),
+    ]);
+    const communityRepo = new InMemoryCommunityRepository([
+      createTestCommunity({
+        imported: false,
+        ownerId: "owner-1",
+        memberIds: ["viewer-1", "owner-1", "viewer-2"],
+      }),
+    ]);
+
+    const result = await getPeerBet(betRepo, communityRepo, mockGetUserName, {
+      viewerId: "viewer-1",
+      communitySlug: "our-community",
+      betId: "bet-member",
+      window: WINDOW,
+      now: AFTER,
+    });
+
+    expect(result.isOk()).toBe(true);
+    const value = result._unsafeUnwrap();
+    expect(value.bet.id).toBe("bet-member");
   });
 });

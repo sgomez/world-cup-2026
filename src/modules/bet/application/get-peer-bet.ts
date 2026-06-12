@@ -59,6 +59,10 @@ export function getPeerBet(
           return errAsync<PeerBetDTO, DomainError>(domainError("FORBIDDEN"));
         }
 
+        if (community.imported && bet.userId !== community.ownerId) {
+          return errAsync<PeerBetDTO, DomainError>(domainError("FORBIDDEN"));
+        }
+
         const visibility = bet.peerVisibility(query.window, query.now);
         if (visibility === "hidden") {
           return errAsync<PeerBetDTO, DomainError>(domainError("FORBIDDEN"));

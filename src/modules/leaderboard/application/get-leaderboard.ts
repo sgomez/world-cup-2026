@@ -39,7 +39,9 @@ export function getLeaderboard(
 
     return ResultAsync.fromSafePromise(
       Promise.all([
-        betRepo.listByOwners(community.memberIds),
+        betRepo.listByOwners(
+          community.imported ? [community.ownerId] : community.memberIds,
+        ),
         tournamentRepo.get(),
         liveResultRepo.findAll(),
         Promise.all(

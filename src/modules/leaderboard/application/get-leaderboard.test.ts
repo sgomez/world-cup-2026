@@ -300,4 +300,60 @@ describe("GetLeaderboard Application Service Integration Tests", () => {
       value: "123 | Alice",
     });
   });
+
+  it("should rank only the Import Owner's bets in imported communities; an invited member's native bets do not appear", async () => {
+    const community = Community.fromState({
+      id: "comm-1",
+      name: "Champs",
+      slug: "champs",
+      ownerId: "user-alice",
+      inviteToken: "token-123",
+      memberIds: ["user-alice", "user-bob"],
+      imported: true,
+    });
+
+    const aliceBet = Bet.fromState({
+      id: "bet-alice",
+      userId: "user-alice",
+      label: "123 | Alice",
+      status: "closed",
+      groupPredictions: mockPredictions,
+      knockoutWinners: {},
+      createdAt: new Date("2026-06-08T12:00:00Z"),
+    });
+
+    const bobBet = Bet.fromState({
+      id: "bet-bob",
+      userId: "user-bob",
+      label: "Bob Bet",
+      status: "closed",
+      groupPredictions: mockPredictions,
+      knockoutWinners: {},
+      createdAt: new Date("2026-06-08T11:00:00Z"),
+    });
+
+    const communityRepo = new InMemoryCommunityRepository([community]);
+    const betRepo = new InMemoryBetRepository([aliceBet, bobBet]);
+    const tournamentRepo = new InMemoryTournamentRepository(null);
+    const liveResultRepo = new InMemoryLiveResultRepository([]);
+
+    const result = await getLeaderboard(
+      communityRepo,
+      betRepo,
+      tournamentRepo,
+      liveResultRepo,
+      mockGetUserName,
+      {
+        viewerId: "user-bob",
+        communitySlug: "champs",
+        window,
+        now,
+      },
+    );
+
+    expect(result.isOk()).toBe(true);
+    const leaderboard = result._unsafeUnwrap();
+    expect(leaderboard.entries).toHaveLength(1);
+    expect(leaderboard.entries[0].userId).toBe("user-alice");
+  });
 });
