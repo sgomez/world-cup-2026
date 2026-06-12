@@ -20,11 +20,14 @@ export default async function CommunityPage({
   const community = await getCommunity(slug);
   if (!community) notFound();
 
-  const inviteUrl = buildInviteUrl(community.inviteToken);
+  const isOwner = community.ownerId === community.currentUserId;
+  // Strip the invite token from the client payload; only the owner receives a URL.
+  const { inviteToken, ...communityForClient } = community;
+  const inviteUrl = isOwner ? buildInviteUrl(inviteToken) : undefined;
 
   return (
     <div className="mx-auto max-w-5xl">
-      <CommunityDetail community={community} inviteUrl={inviteUrl} />
+      <CommunityDetail community={communityForClient} inviteUrl={inviteUrl} />
     </div>
   );
 }
