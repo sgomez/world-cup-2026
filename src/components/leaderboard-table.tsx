@@ -3,8 +3,8 @@
 import { ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { type LeaderboardEntry, rankEntries } from "@/lib/leaderboard";
 import { cn } from "@/lib/utils";
+import type { LeaderboardEntry } from "@/modules/leaderboard/domain/leaderboard";
 
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[];
@@ -22,9 +22,8 @@ export function LeaderboardTable({
   communitySlug,
 }: LeaderboardTableProps) {
   const t = useTranslations("leaderboard");
-  const ranked = rankEntries(entries);
 
-  if (ranked.length === 0) {
+  if (entries.length === 0) {
     return (
       <div
         className={cn(
@@ -54,16 +53,16 @@ export function LeaderboardTable({
 
       {/* Table Rows */}
       <ul className="divide-y divide-hairline dark:divide-ash">
-        {ranked.map((entry) => {
+        {entries.map((entry) => {
           const isCurrentUser = currentUserId && entry.userId === currentUserId;
           const href = isCurrentUser
-            ? `/bets/${entry.id}`
+            ? `/bets/${entry.betId}`
             : communitySlug
-              ? `/communities/${communitySlug}/bets/${entry.id}`
-              : `/bets/${entry.id}`;
+              ? `/communities/${communitySlug}/bets/${entry.betId}`
+              : `/bets/${entry.betId}`;
           return (
             <li
-              key={entry.id}
+              key={entry.betId}
               className={cn(
                 "grid grid-cols-[3.5rem_1fr_auto_6rem] items-center gap-4 px-6 py-4 transition-all duration-200 hover:bg-soft-cloud/30 dark:hover:bg-charcoal/20",
                 isCurrentUser &&
@@ -84,14 +83,14 @@ export function LeaderboardTable({
                   <p className="truncate text-body-strong text-foreground">
                     {isCurrentUser ? (
                       <Link
-                        href={`/bets/${entry.id}`}
+                        href={`/bets/${entry.betId}`}
                         className="hover:underline transition-colors font-medium"
                       >
                         {entry.betName}
                       </Link>
                     ) : communitySlug ? (
                       <Link
-                        href={`/communities/${communitySlug}/bets/${entry.id}`}
+                        href={`/communities/${communitySlug}/bets/${entry.betId}`}
                         className="hover:underline transition-colors font-medium"
                       >
                         {entry.betName}

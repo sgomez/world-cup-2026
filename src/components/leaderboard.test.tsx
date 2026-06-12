@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { LeaderboardEntry, LeaderboardScope } from "@/lib/leaderboard";
-import { Leaderboard } from "./leaderboard";
+import type { LeaderboardEntry } from "@/modules/leaderboard/domain/leaderboard";
+import { Leaderboard, type LeaderboardScope } from "./leaderboard";
 import { LeaderboardTable } from "./leaderboard-table";
 
 vi.mock("next-intl", () => ({
@@ -54,28 +54,40 @@ vi.mock("@/i18n/navigation", () => ({
 describe("LeaderboardTable Component", () => {
   const sampleEntries: LeaderboardEntry[] = [
     {
-      id: "bet-1",
-      userId: "user-1",
-      userName: "Alice",
-      betName: "Alice Bet",
-      points: 10,
-      createdAt: new Date("2026-06-08T12:00:00Z"),
-    },
-    {
-      id: "bet-2",
+      betId: "bet-2",
       userId: "user-2",
       userName: "Bob",
       betName: "Bob Bet",
       points: 10,
       createdAt: new Date("2026-06-08T11:00:00Z"), // Bob is earlier
+      rank: 1,
+      hasCup: false,
+      selectionsHidden: false,
+      bet: null,
     },
     {
-      id: "bet-3",
+      betId: "bet-1",
+      userId: "user-1",
+      userName: "Alice",
+      betName: "Alice Bet",
+      points: 10,
+      createdAt: new Date("2026-06-08T12:00:00Z"),
+      rank: 1,
+      hasCup: false,
+      selectionsHidden: false,
+      bet: null,
+    },
+    {
+      betId: "bet-3",
       userId: "user-3",
       userName: "Charlie",
       betName: "Charlie Bet",
       points: 5,
       createdAt: new Date("2026-06-08T10:00:00Z"),
+      rank: 3,
+      hasCup: false,
+      selectionsHidden: false,
+      bet: null,
     },
   ];
 
@@ -142,6 +154,7 @@ describe("LeaderboardTable Component", () => {
   });
 
   it("renders the 🏆 emoji for rank 1 and plain numbers for other ranks when tournamentEnded is true", () => {
+    // For test purposes, we will mock entries where rank === 1 hasCup is set (though table component checks rank === 1 directly)
     render(
       <LeaderboardTable
         entries={sampleEntries}
@@ -176,7 +189,7 @@ describe("LeaderboardTable Component", () => {
     // Add signatures to the sample entries
     const entriesWithSigs: LeaderboardEntry[] = sampleEntries.map((e) => ({
       ...e,
-      signature: `signature-for-${e.id}`,
+      signature: `signature-for-${e.betId}`,
     }));
 
     render(
@@ -225,12 +238,16 @@ describe("Leaderboard Component (Tabs)", () => {
       label: "Community A",
       entries: [
         {
-          id: "bet-1",
+          betId: "bet-1",
           userId: "user-1",
           userName: "Alice",
           betName: "Alice Bet",
           points: 10,
           createdAt: new Date("2026-06-08T12:00:00Z"),
+          rank: 1,
+          hasCup: false,
+          selectionsHidden: false,
+          bet: null,
         },
       ],
     },
@@ -239,12 +256,16 @@ describe("Leaderboard Component (Tabs)", () => {
       label: "Community B",
       entries: [
         {
-          id: "bet-2",
+          betId: "bet-2",
           userId: "user-2",
           userName: "Bob",
           betName: "Bob Bet",
           points: 15,
           createdAt: new Date("2026-06-08T12:00:00Z"),
+          rank: 1,
+          hasCup: false,
+          selectionsHidden: false,
+          bet: null,
         },
       ],
     },

@@ -56,6 +56,12 @@ vi.mock("@/lib/prisma", () => {
       update: vi.fn(),
       delete: vi.fn(),
     },
+    tournament: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
+    liveResult: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
   };
   return { prisma: mockPrisma };
 });

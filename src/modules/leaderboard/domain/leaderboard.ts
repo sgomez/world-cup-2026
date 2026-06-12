@@ -18,6 +18,7 @@ export type LeaderboardEntry = {
   rank: number;
   hasCup: boolean;
   selectionsHidden: boolean;
+  signature?: string;
   bet: {
     id: string;
     label: string;
@@ -92,6 +93,7 @@ export class Leaderboard {
         points,
         createdAt: bet.createdAt ?? new Date(),
         selectionsHidden,
+        signature: bet.signature,
         bet: exposedBet,
       };
     });
