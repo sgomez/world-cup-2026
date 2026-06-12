@@ -249,6 +249,18 @@
     "joinedLabel": "Unido {date}",
     "backToCommunities": "Volver a Comunidades",
     "betsCount": "{count, plural, one {# apuesta} other {# apuestas}}",
+    "importLink": "Importar Pronósticos",
+    "importTitle": "Importar Pronósticos",
+    "importDescription": "Crea una nueva comunidad importada e importa apuestas desde una hoja de Excel.",
+    "importFormCommunityName": "Nombre de la Comunidad",
+    "importFormFile": "Hoja de Excel (.xlsx)",
+    "importFormSubmit": "Importar",
+    "importFormImporting": "Importando...",
+    "importSuccess": "¡Comunidad importada con éxito!",
+    "importSkippedRowsTitle": "Informe de Filas Omitidas",
+    "importSkippedRowsDescription": "Las siguientes filas se omitieron debido a errores de validación. Todas las demás filas se importaron con éxito.",
+    "importSkippedRowItem": "Fila {rowNumber}: {reason}",
+    "importErrorInvalidSheet": "El archivo cargado no es una hoja de pronósticos de Excel válida.",
     "resultsLink": "Resultados del Torneo",
     "resultsTitle": "Resultados del Torneo",
     "resultsDescription": "Registra los órdenes de clasificación oficiales de la fase de grupos.",
@@ -288,7 +300,8 @@
     "INVALID_LABEL": "La etiqueta debe tener entre 1 y 200 caracteres.",
     "BET_CLOSED": "Esta apuesta está cerrada. Vuelve a abrirla antes de hacer cambios.",
     "LIMIT_EXCEEDED": "Límite de apuestas alcanzado.",
-    "INVALID_PREDICTIONS": "Predicciones inválidas."
+    "INVALID_PREDICTIONS": "Predicciones inválidas.",
+    "INVALID_SHEET": "El archivo cargado no es una hoja de pronósticos de Excel válida."
   },
   "communityErrors": {
     "NOT_FOUND": "Comunidad no encontrada",

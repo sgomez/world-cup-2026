@@ -15,7 +15,10 @@ export type DomainErrorCode =
   | "INVALID_LABEL"
   | "LIMIT_EXCEEDED"
   | "INVALID_PREDICTIONS"
-  | "BET_CLOSED";
+  | "BET_CLOSED"
+  | "INVALID_SHEET"
+  | "INVALID_NAME"
+  | "SLUG_ALREADY_EXISTS";
 
 export type DomainError = {
   readonly code: DomainErrorCode;
