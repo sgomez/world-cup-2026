@@ -12,6 +12,7 @@ import { getPeerBet } from "@/modules/bet/application/get-peer-bet";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
+import { hasLiveMatch } from "@/modules/live/domain/live-result";
 import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
 import { getActualScoreableContent } from "@/modules/tournament/application/get-actual-scoreable-content";
 import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
@@ -122,6 +123,7 @@ export default async function PeerBetPage({
     liveResultRepo.findAll(),
   ]);
   const actualResults = getActualScoreableContent(tournament, liveResults);
+  const liveMatchActive = hasLiveMatch(liveResults);
 
   // Otherwise, render the read-only prediction stage
   return (
@@ -136,6 +138,7 @@ export default async function PeerBetPage({
         savedKnockoutWinners={bet.knockoutWinners}
         headerDescription={subtitle}
         actualResults={actualResults}
+        hasLiveMatch={liveMatchActive}
       />
 
       <div className="pt-4">

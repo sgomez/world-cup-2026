@@ -356,3 +356,67 @@ describe("isCompetitionEndedFromLiveResults", () => {
     expect(isCompetitionEndedFromLiveResults(results)).toBe(false);
   });
 });
+
+describe("deriveResult — provisional mode", () => {
+  it("projects group top-two when group has at least one started match", () => {
+    // mex vs rsa is live
+    const liveResults = [liveMatch(1, 1, 0)];
+    const result = deriveResult(liveResults, {}, null, { provisional: true });
+
+    // Group A started → 1A and 2A should be in advancement
+    expect(result.advancement).toContain("1A");
+    expect(result.advancement).toContain("2A");
+    expect(result.groupOrders.A).toBeDefined();
+    expect(result.groupOrders.A).toHaveLength(4);
+    // mex wins the live match → first
+    expect(result.groupOrders.A[0]).toBe("mex");
+  });
+
+  it("does NOT project group top-two when group has no started matches", () => {
+    // mex vs rsa is upcoming
+    const liveResults = [{ num: 1, status: "upcoming", goals1: 0, goals2: 0 }];
+    const result = deriveResult(liveResults as any, {}, null, {
+      provisional: true,
+    });
+
+    // Group A not started → no advancement or groupOrders
+    expect(result.advancement).not.toContain("1A");
+    expect(result.advancement).not.toContain("2A");
+    expect(result.groupOrders.A).toBeUndefined();
+  });
+
+  it("does NOT project thirds even when all groups are started", () => {
+    // Start at least one match in each of the 12 groups
+    const liveResults = [
+      liveMatch(1, 1, 0), // Group A
+      liveMatch(3, 1, 0), // Group B
+      liveMatch(5, 1, 0), // Group C
+      liveMatch(7, 1, 0), // Group D
+      liveMatch(9, 1, 0), // Group E
+      liveMatch(11, 1, 0), // Group F
+      liveMatch(13, 1, 0), // Group G
+      liveMatch(15, 1, 0), // Group H
+      liveMatch(17, 1, 0), // Group I
+      liveMatch(19, 1, 0), // Group J
+      liveMatch(21, 1, 0), // Group K
+      liveMatch(23, 1, 0), // Group L
+    ];
+    const result = deriveResult(liveResults, {}, null, { provisional: true });
+
+    // Thirds slot should NOT be in advancement for this slice
+    expect(result.advancement).not.toContain("3rd-1A");
+    expect(result.thirdPlaceOrder).toEqual([]);
+  });
+
+  it("settles to the exact result when group finishes", () => {
+    const liveResults = allGroupAFinished();
+    const result = deriveResult(liveResults, {}, null, { provisional: true });
+
+    expect(result.groupOrders.A[0]).toBe("mex");
+    expect(result.groupOrders.A[1]).toBe("kor");
+    expect(result.groupOrders.A[2]).toBe("rsa");
+    expect(result.groupOrders.A[3]).toBe("cze");
+    expect(result.advancement).toContain("1A");
+    expect(result.advancement).toContain("2A");
+  });
+});

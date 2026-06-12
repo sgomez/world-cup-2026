@@ -38,6 +38,7 @@ export function BetPrediction({
   savedKnockoutWinners,
   headerDescription,
   actualResults = EMPTY_SCOREABLE_CONTENT_ARRAYS,
+  hasLiveMatch = false,
 }: {
   betId: string;
   betLabel: string;
@@ -48,6 +49,7 @@ export function BetPrediction({
   savedKnockoutWinners?: Record<string, string> | null;
   headerDescription?: ReactNode;
   actualResults?: ScoreableContentArrays;
+  hasLiveMatch?: boolean;
 }) {
   const t = useTranslations("bets");
   const [state, dispatch] = useReducer(tournamentReducer, null, () =>
@@ -240,7 +242,11 @@ export function BetPrediction({
         </TabsContent>
 
         <TabsContent value="score">
-          <ScoreTab state={state} actualResults={actualResults} />
+          <ScoreTab
+            state={state}
+            actualResults={actualResults}
+            hasLiveMatch={hasLiveMatch}
+          />
         </TabsContent>
       </Tabs>
 

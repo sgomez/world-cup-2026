@@ -152,7 +152,8 @@
     "semiFinalsLabel": "Semifinales ({count} correctos × 6 pts)",
     "finalLabel": "Final ({count} correctos × 8 pts)",
     "thirdPlaceWinner": "Ganador del 3er Puesto",
-    "championLabel": "Campeón"
+    "championLabel": "Campeón",
+    "provisionalNote": "Nota: Los puntos mostrados son proyecciones provisionales de partidos en vivo y aún pueden cambiar."
   },
   "communities": {
     "title": "Comunidades",
@@ -351,7 +352,8 @@
     "joinOrCreateButton": "Ir a Comunidades",
     "noBets": "Ningún participante tiene apuestas cerradas en esta comunidad.",
     "betsCount": "{count, plural, one {# apuesta} other {# apuestas}}",
-    "view": "Ver"
+    "view": "Ver",
+    "provisionalWarning": "Los puntos y clasificaciones son proyecciones provisionales de partidos en vivo y aún pueden cambiar."
   },
   "tournament": {
     "title": "Clasificación del Torneo",

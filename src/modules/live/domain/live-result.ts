@@ -235,3 +235,9 @@ export class LiveResult {
     return [ok(new LiveResult(newState)), events];
   }
 }
+
+export function hasLiveMatch(
+  liveResults: Array<LiveResult | { status: string }>,
+): boolean {
+  return liveResults.some((lr) => lr.status === "live");
+}

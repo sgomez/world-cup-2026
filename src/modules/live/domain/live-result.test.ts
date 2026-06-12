@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LiveResult } from "./live-result";
+import { hasLiveMatch, LiveResult } from "./live-result";
 
 // Match nums: 1-72 = group stage, 73-104 = knockout
 const GROUP_NUM = 1;
@@ -358,5 +358,43 @@ describe("LiveResult.reconcile — upcoming status, adminOverride, and validatio
     expect(lr.goals2).toBe(0);
     expect(lr.penalties1).toBeUndefined();
     expect(lr.penalties2).toBeUndefined();
+  });
+});
+
+describe("hasLiveMatch predicate", () => {
+  it("returns false when no matches are live", () => {
+    const results = [
+      LiveResult.fromState({
+        num: 1,
+        status: "finished",
+        goals1: 2,
+        goals2: 1,
+      }),
+      LiveResult.fromState({
+        num: 2,
+        status: "upcoming",
+        goals1: 0,
+        goals2: 0,
+      }),
+    ];
+    expect(hasLiveMatch(results)).toBe(false);
+  });
+
+  it("returns true when any match is live", () => {
+    const results = [
+      LiveResult.fromState({
+        num: 1,
+        status: "finished",
+        goals1: 2,
+        goals2: 1,
+      }),
+      LiveResult.fromState({ num: 2, status: "live", goals1: 0, goals2: 0 }),
+    ];
+    expect(hasLiveMatch(results)).toBe(true);
+  });
+
+  it("works with plain objects containing status property", () => {
+    const results = [{ status: "finished" }, { status: "live" }];
+    expect(hasLiveMatch(results as any)).toBe(true);
   });
 });

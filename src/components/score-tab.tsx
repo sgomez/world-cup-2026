@@ -194,9 +194,11 @@ function WinnerCard({
 export function ScoreTab({
   state,
   actualResults: actualResultsProp = EMPTY_SCOREABLE_CONTENT_ARRAYS,
+  hasLiveMatch = false,
 }: {
   state: TournamentState;
   actualResults?: ScoreableContentArrays;
+  hasLiveMatch?: boolean;
 }) {
   const t = useTranslations("score");
   const locale = useLocale();
@@ -266,6 +268,12 @@ export function ScoreTab({
           <span className="ml-2 text-2xl font-medium text-slate-400">pts</span>
         </div>
       </div>
+
+      {hasLiveMatch && (
+        <div className="rounded-xl border border-sale/30 bg-sale/5 p-4 text-center text-caption-md font-medium text-sale dark:border-sale-deep/30">
+          {t("provisionalNote")}
+        </div>
+      )}
 
       <RoundCard
         title={t("roundOf32")}

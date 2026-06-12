@@ -8,6 +8,7 @@ import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
 import { getLeaderboard } from "@/modules/leaderboard/application/get-leaderboard";
+import { hasLiveMatch } from "@/modules/live/domain/live-result";
 import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
 import { Tournament } from "@/modules/tournament/domain/tournament";
 import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
@@ -74,6 +75,7 @@ export default async function LeaderboardPage({
   ]);
   const activeTournament = tournament ?? Tournament.createDefault();
   const tournamentEnded = activeTournament.isCompetitionEnded(liveResults);
+  const liveMatchActive = hasLiveMatch(liveResults);
 
   const scopesResults = await Promise.all(
     communities.map(async (community) => {
@@ -111,6 +113,7 @@ export default async function LeaderboardPage({
         scopes={scopes}
         currentUserId={session.user.id}
         tournamentEnded={tournamentEnded}
+        hasLiveMatch={liveMatchActive}
       />
     </div>
   );

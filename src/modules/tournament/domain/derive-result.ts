@@ -65,6 +65,7 @@ export type DeriveOptions = {
    * When false, provisional standings include live matches for display purposes.
    */
   finishedOnly?: boolean;
+  provisional?: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -222,7 +223,7 @@ export function deriveResult(
   thirdPlaceManualOrder: Record<string, number> | null,
   options: DeriveOptions = {},
 ): DerivedResult {
-  const { finishedOnly = true } = options;
+  const { finishedOnly = true, provisional = false } = options;
 
   const nameToId = buildNameToIdMap();
   const allMatches = getAllMatches();
@@ -272,26 +273,29 @@ export function deriveResult(
   }
 
   // -------------------------------------------------------------------------
-  // Derive advancement (always finished-only)
+  // Derive advancement (always finished-only, unless provisional mode is active)
   // -------------------------------------------------------------------------
   const advancementResult = getAdvancement({
     groups,
     tieBreakChain: DEFAULT_TIEBREAK_CHAIN,
     manualTieBreaks: fullManualTieBreaks,
     finishedOnly: true,
+    provisional,
   });
 
   // -------------------------------------------------------------------------
   // Build group orders (for display: optionally includes live matches)
   // -------------------------------------------------------------------------
-  const displayAdvancementResult = finishedOnly
+  const displayAdvancementResult = provisional
     ? advancementResult
-    : getAdvancement({
-        groups,
-        tieBreakChain: DEFAULT_TIEBREAK_CHAIN,
-        manualTieBreaks: fullManualTieBreaks,
-        finishedOnly: false,
-      });
+    : finishedOnly
+      ? advancementResult
+      : getAdvancement({
+          groups,
+          tieBreakChain: DEFAULT_TIEBREAK_CHAIN,
+          manualTieBreaks: fullManualTieBreaks,
+          finishedOnly: false,
+        });
 
   const groupOrders: GroupOrders = {};
   for (const [groupLetter, adv] of Object.entries(
