@@ -1,18 +1,8 @@
 import { createHash } from "node:crypto";
 import { createInitialState, type PredictionState } from "./prediction-state";
-import { extractScoreableContent } from "./scoring";
+import { extractScoreableContent, type ScoreableContent } from "./scoring";
 
-export function computeBetSignature(
-  groupPredictions: PredictionState | null,
-  knockoutWinners: Record<string, string> | null,
-): string {
-  const { knockoutMatches } = createInitialState(
-    groupPredictions,
-    knockoutWinners,
-  );
-
-  const content = extractScoreableContent(knockoutMatches);
-
+export function computeSignatureFromContent(content: ScoreableContent): string {
   const parts: string[] = [];
   const rounds = ["R32", "R16", "QF", "SF", "F"] as const;
   for (const round of rounds) {
@@ -27,4 +17,17 @@ export function computeBetSignature(
   return createHash("sha256")
     .update(salt + parts.join("|"))
     .digest("hex");
+}
+
+export function computeBetSignature(
+  groupPredictions: PredictionState | null,
+  knockoutWinners: Record<string, string> | null,
+): string {
+  const { knockoutMatches } = createInitialState(
+    groupPredictions,
+    knockoutWinners,
+  );
+
+  const content = extractScoreableContent(knockoutMatches);
+  return computeSignatureFromContent(content);
 }

@@ -14,6 +14,7 @@ export type DomainErrorCode =
   | "SAVE_FAILED"
   | "INVALID_LABEL"
   | "LIMIT_EXCEEDED"
+  | "INVALID_PREDICTIONS"
   | "BET_CLOSED";
 
 export type DomainError = {

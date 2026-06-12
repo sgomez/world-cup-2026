@@ -287,7 +287,8 @@
     "SAVE_FAILED": "No se pudo guardar tu apuesta. Inténtalo de nuevo.",
     "INVALID_LABEL": "La etiqueta debe tener entre 1 y 200 caracteres.",
     "BET_CLOSED": "Esta apuesta está cerrada. Vuelve a abrirla antes de hacer cambios.",
-    "LIMIT_EXCEEDED": "Límite de apuestas alcanzado."
+    "LIMIT_EXCEEDED": "Límite de apuestas alcanzado.",
+    "INVALID_PREDICTIONS": "Predicciones inválidas."
   },
   "communityErrors": {
     "NOT_FOUND": "Comunidad no encontrada",

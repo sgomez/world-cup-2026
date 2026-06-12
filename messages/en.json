@@ -287,7 +287,8 @@
     "SAVE_FAILED": "Your bet could not be saved. Please try again.",
     "INVALID_LABEL": "Label must be between 1 and 200 characters.",
     "BET_CLOSED": "This bet is closed. Reopen it before making changes.",
-    "LIMIT_EXCEEDED": "Bet limit reached"
+    "LIMIT_EXCEEDED": "Bet limit reached",
+    "INVALID_PREDICTIONS": "Invalid predictions."
   },
   "communityErrors": {
     "NOT_FOUND": "Community not found",

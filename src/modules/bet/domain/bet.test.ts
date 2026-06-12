@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { computeSignatureFromContent } from "@/lib/bet-signature";
+import { type ScoreableContentArrays, toScoreableContent } from "@/lib/scoring";
+import { getGroups } from "@/lib/teams";
 import { Bet, type BetState } from "./bet";
 import { BettingWindow } from "./betting-window";
 
@@ -21,6 +24,7 @@ function betState(overrides: Partial<BetState> = {}): BetState {
     label: "My bet",
     groupPredictions: null,
     knockoutWinners: completeWinners(),
+    directPredictions: null,
     ...overrides,
   };
 }
@@ -326,5 +330,126 @@ describe("Bet.peerVisibility", () => {
     const window = new BettingWindow(DEADLINE);
     const draftBet = Bet.fromState(betState({ status: "draft" }));
     expect(draftBet.peerVisibility(window, DEADLINE)).toBe("hidden");
+  });
+});
+
+describe("Direct Bets", () => {
+  function validDirectPredictions(): ScoreableContentArrays {
+    const teams = getGroups("en").flatMap((g) => g.teams.map((t) => t.id));
+    const R32 = teams.slice(0, 32);
+    const R16 = R32.slice(0, 16);
+    const QF = R16.slice(0, 8);
+    const SF = QF.slice(0, 4);
+    const F = SF.slice(0, 2);
+    const champion = F[0];
+    const thirdPlace = SF[2];
+    return { R32, R16, QF, SF, F, champion, thirdPlace };
+  }
+
+  it("creates a closed bet for a valid Direct Prediction", () => {
+    const preds = validDirectPredictions();
+    const result = Bet.createDirect("Direct Bet", "user-1", preds);
+    expect(result.isOk()).toBe(true);
+    const bet = result._unsafeUnwrap();
+    expect(bet.userId).toBe("user-1");
+    expect(bet.status).toBe("closed");
+    expect(bet.label).toBe("Direct Bet");
+    expect(bet.groupPredictions).toBeNull();
+    expect(bet.knockoutWinners).toEqual({});
+    expect(bet.directPredictions).toEqual(preds);
+  });
+
+  it("rejects wrong round size", () => {
+    const preds = validDirectPredictions();
+    const invalidPreds = { ...preds, R32: preds.R32.slice(0, 31) };
+    const result = Bet.createDirect("Direct Bet", "user-1", invalidPreds);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
+  });
+
+  it("rejects missing champion or third-place", () => {
+    const preds = validDirectPredictions();
+    const noChamp = { ...preds, champion: null };
+    const noThird = { ...preds, thirdPlace: null };
+    expect(Bet.createDirect("Direct Bet", "user-1", noChamp).isErr()).toBe(
+      true,
+    );
+    expect(Bet.createDirect("Direct Bet", "user-1", noThird).isErr()).toBe(
+      true,
+    );
+  });
+
+  it("rejects broken nesting", () => {
+    const preds = validDirectPredictions();
+    // Replace one F team with a team not in SF (e.g. index 31 of R32)
+    const brokenF = { ...preds, F: [preds.SF[0], preds.R32[30]] };
+    const result = Bet.createDirect("Direct Bet", "user-1", brokenF);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
+  });
+
+  it("rejects champion not in Final", () => {
+    const preds = validDirectPredictions();
+    const brokenChamp = { ...preds, champion: preds.SF[2] };
+    const result = Bet.createDirect("Direct Bet", "user-1", brokenChamp);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
+  });
+
+  it("rejects third-place not in Semi-finals", () => {
+    const preds = validDirectPredictions();
+    const brokenThird = { ...preds, thirdPlace: preds.R32[30] };
+    const result = Bet.createDirect("Direct Bet", "user-1", brokenThird);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
+  });
+
+  it("rejects unknown team", () => {
+    const preds = validDirectPredictions();
+    const unknownF = { ...preds, F: [preds.SF[0], "unknown"] };
+    const result = Bet.createDirect("Direct Bet", "user-1", unknownF);
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("INVALID_PREDICTIONS");
+  });
+
+  it("enforces groupPredictions XOR directPredictions", () => {
+    const preds = validDirectPredictions();
+    expect(() => {
+      Bet.fromState({
+        id: "bet-1",
+        userId: "user-1",
+        status: "closed",
+        label: "Direct Bet",
+        groupPredictions: { groupOrders: {}, thirdPlaceOrder: [] },
+        knockoutWinners: {},
+        directPredictions: preds,
+      });
+    }).toThrow();
+  });
+
+  it("returns correct scoreableContent for Direct Bet", () => {
+    const preds = validDirectPredictions();
+    const bet = Bet.createDirect("Direct Bet", "user-1", preds)._unsafeUnwrap();
+    expect(bet.scoreableContent()).toEqual(toScoreableContent(preds));
+  });
+
+  it("signature parity: identical prediction contents produce identical signature", () => {
+    const preds = validDirectPredictions();
+    const bet = Bet.createDirect("Direct Bet", "user-1", preds)._unsafeUnwrap();
+    const sig = bet.signature;
+    expect(sig).toBeDefined();
+
+    const expectedSig = computeSignatureFromContent(toScoreableContent(preds));
+    expect(sig).toBe(expectedSig);
+  });
+
+  it("rejects draft mutating actions on Direct Bets", () => {
+    const preds = validDirectPredictions();
+    const bet = Bet.createDirect("Direct Bet", "user-1", preds)._unsafeUnwrap();
+    const window = new BettingWindow(DEADLINE);
+    expect(bet.close(window, BEFORE).isErr()).toBe(true);
+    expect(bet.reopen(window, BEFORE).isErr()).toBe(true);
+    expect(bet.updatePredictions(null, {}, window, BEFORE).isErr()).toBe(true);
+    expect(bet.rename("New Label", window, BEFORE).isErr()).toBe(true);
   });
 });
