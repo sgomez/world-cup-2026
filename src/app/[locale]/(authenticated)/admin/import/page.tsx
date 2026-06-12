@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminImportForm } from "@/components/admin-import-form";
+import { prisma } from "@/lib/prisma";
 
 export default async function AdminImportPage({
   params,
@@ -9,6 +10,15 @@ export default async function AdminImportPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("admin");
+
+  const importedCommunities = await prisma.community.findMany({
+    where: { imported: true },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+    },
+  });
 
   return (
     <div className="max-w-md mx-auto space-y-6">
@@ -21,7 +31,7 @@ export default async function AdminImportPage({
         </p>
       </div>
 
-      <AdminImportForm />
+      <AdminImportForm importedCommunities={importedCommunities} />
     </div>
   );
 }

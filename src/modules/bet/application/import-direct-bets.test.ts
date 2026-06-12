@@ -1,5 +1,8 @@
 import { okAsync } from "neverthrow";
 import { describe, expect, it } from "vitest";
+import { Community } from "../../community/domain/community";
+import { CommunityName } from "../../community/domain/community-name";
+import { CommunitySlug } from "../../community/domain/community-slug";
 import type {
   ImportOwnerProvisioner,
   ProvisionedOwner,
@@ -58,6 +61,7 @@ describe("importDirectBets application service", () => {
 
     const sheetParser = new FakeSheetParser(rows);
     const command = {
+      mode: "create" as const,
       communityName: "My Imported Community",
       fileBuffer: Buffer.from("fake"),
       inviteToken: "token-abc-123",
@@ -129,6 +133,7 @@ describe("importDirectBets application service", () => {
 
     const sheetParser = new FakeSheetParser(rows);
     const command = {
+      mode: "create" as const,
       communityName: "Skipped Rows test",
       fileBuffer: Buffer.from("fake"),
       inviteToken: "token-abc-123",
@@ -163,6 +168,7 @@ describe("importDirectBets application service", () => {
 
     const sheetParser = new FakeSheetParser([]);
     const command = {
+      mode: "create" as const,
       communityName: "Empty Sheet",
       fileBuffer: Buffer.from("fake"),
       inviteToken: "token-abc-123",
@@ -178,5 +184,150 @@ describe("importDirectBets application service", () => {
 
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().code).toBe("INVALID_SHEET");
+  });
+
+  it("successfully refreshes (reuse mode) and replaces bets under the same owner while preserving community details", async () => {
+    const communityRepo = new InMemoryCommunityRepository();
+    const betRepo = new InMemoryBetRepository();
+    const ownerProvisioner = new FakeImportOwnerProvisioner();
+
+    // 1. Create a community first
+    const createRows: ParsedRow[] = [
+      {
+        rowNumber: 3,
+        col0: "1T",
+        col1: "Participant A",
+        predictions: { 2: "G" },
+      },
+    ];
+
+    const createParser = new FakeSheetParser(createRows);
+    const createResult = await importDirectBets(
+      createParser,
+      ownerProvisioner,
+      communityRepo,
+      betRepo,
+      {
+        mode: "create",
+        communityName: "Our Imported Comm",
+        fileBuffer: Buffer.from("fake"),
+        inviteToken: "token-preserved",
+      },
+    );
+
+    expect(createResult.isOk()).toBe(true);
+    const createVal = createResult._unsafeUnwrap();
+    const communityId = createVal.community.id;
+    const ownerId = createVal.community.ownerId;
+    const slug = createVal.community.slug;
+    const inviteToken = createVal.community.inviteToken;
+
+    // Verify 1 bet exists
+    let bets = await betRepo.listByOwner(ownerId);
+    expect(bets).toHaveLength(1);
+    expect(bets[0].label).toBe("1T | Participant A");
+
+    // 2. Reuse/Refresh the community
+    const reuseRows: ParsedRow[] = [
+      {
+        rowNumber: 3,
+        col0: "2P",
+        col1: "Participant B",
+        predictions: { 14: "D" },
+      },
+      {
+        rowNumber: 4,
+        col0: "3P",
+        col1: "Participant C",
+        predictions: { 2: "Z" }, // Bad prediction, will be skipped
+      },
+    ];
+
+    const reuseParser = new FakeSheetParser(reuseRows);
+    const reuseResult = await importDirectBets(
+      reuseParser,
+      ownerProvisioner,
+      communityRepo,
+      betRepo,
+      {
+        mode: "reuse",
+        communityId,
+        fileBuffer: Buffer.from("fake2"),
+      },
+    );
+
+    expect(reuseResult.isOk()).toBe(true);
+    const reuseVal = reuseResult._unsafeUnwrap();
+
+    // Verify community details are unchanged
+    expect(reuseVal.community.id).toBe(communityId);
+    expect(reuseVal.community.ownerId).toBe(ownerId);
+    expect(reuseVal.community.slug).toBe(slug);
+    expect(reuseVal.community.inviteToken).toBe(inviteToken);
+    expect(reuseVal.community.imported).toBe(true);
+
+    // Verify skipped rows report
+    expect(reuseVal.skippedRows).toHaveLength(1);
+    expect(reuseVal.skippedRows[0].rowNumber).toBe(4);
+
+    // Verify bets are replaced: old one deleted, new good one created
+    bets = await betRepo.listByOwner(ownerId);
+    expect(bets).toHaveLength(1);
+    expect(bets[0].label).toBe("2P | Participant B");
+  });
+
+  it("fails to refresh a non-existent or native community in reuse mode", async () => {
+    const communityRepo = new InMemoryCommunityRepository();
+    const betRepo = new InMemoryBetRepository();
+    const ownerProvisioner = new FakeImportOwnerProvisioner();
+
+    // Create a native (non-imported) community
+    const nativeComm = Community.create(
+      CommunityName.create("Native Community")._unsafeUnwrap(),
+      CommunitySlug.create("native-community")._unsafeUnwrap(),
+      "owner-real",
+      "token-real",
+    );
+    await communityRepo.save(nativeComm);
+
+    const rows: ParsedRow[] = [
+      {
+        rowNumber: 3,
+        col0: "1T",
+        col1: "Participant A",
+        predictions: { 2: "G" },
+      },
+    ];
+    const parser = new FakeSheetParser(rows);
+
+    // 1. Try to reuse a native community -> should fail with FORBIDDEN
+    const resForbidden = await importDirectBets(
+      parser,
+      ownerProvisioner,
+      communityRepo,
+      betRepo,
+      {
+        mode: "reuse",
+        communityId: nativeComm.id,
+        fileBuffer: Buffer.from("fake"),
+      },
+    );
+    expect(resForbidden.isErr()).toBe(true);
+    expect(resForbidden._unsafeUnwrapErr().code).toBe("FORBIDDEN");
+
+    // 2. Try to reuse a non-existent community ID -> should fail with NOT_FOUND
+    const resNotFound = await importDirectBets(
+      parser,
+      ownerProvisioner,
+      communityRepo,
+      betRepo,
+      {
+        mode: "reuse",
+        communityId: "does-not-exist",
+        fileBuffer: Buffer.from("fake"),
+      },
+    );
+    expect(resNotFound.isErr()).toBe(true);
+    expect(resNotFound._unsafeUnwrapErr().code).toBe("NOT_FOUND");
   });
 });

@@ -268,17 +268,27 @@ export async function importDirectBetsAction(
 ): Promise<ImportDirectBetsActionState> {
   await requireAdmin();
 
+  const mode =
+    (formData.get("mode")?.toString() as "create" | "reuse") || "create";
+  const communityId = formData.get("communityId")?.toString() || "";
   const communityName = formData.get("communityName")?.toString().trim() ?? "";
-  if (!communityName) {
-    const t = await getTranslations("admin");
+
+  const t = await getTranslations("admin");
+
+  if (mode === "create" && !communityName) {
     return {
       error: t("importErrorInvalidSheet") || "Community name is required",
     };
   }
 
+  if (mode === "reuse" && !communityId) {
+    return {
+      error: t("importErrorInvalidSheet") || "Community selection is required",
+    };
+  }
+
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) {
-    const t = await getTranslations("admin");
     return { error: t("importErrorInvalidSheet") || "Excel file is required" };
   }
 
@@ -287,7 +297,6 @@ export async function importDirectBetsAction(
     const arrayBuffer = await file.arrayBuffer();
     fileBuffer = Buffer.from(arrayBuffer);
   } catch (_err) {
-    const t = await getTranslations("admin");
     return { error: t("importErrorInvalidSheet") };
   }
 
@@ -315,7 +324,9 @@ export async function importDirectBetsAction(
         txCommunityRepo,
         txBetRepo,
         {
-          communityName,
+          mode,
+          communityId: mode === "reuse" ? communityId : undefined,
+          communityName: mode === "create" ? communityName : undefined,
           fileBuffer,
           inviteToken,
         },

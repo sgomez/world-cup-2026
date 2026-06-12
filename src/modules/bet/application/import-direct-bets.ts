@@ -18,9 +18,11 @@ import {
 import type { SheetParser } from "../domain/sheet-parser";
 
 export type ImportDirectBetsCommand = {
-  communityName: string;
+  mode: "create" | "reuse";
+  communityName?: string;
+  communityId?: string;
   fileBuffer: Buffer;
-  inviteToken: string;
+  inviteToken?: string;
 };
 
 export type ImportDirectBetsResult = {
@@ -44,7 +46,84 @@ export function importDirectBets(
       );
     }
 
-    const nameResult = CommunityName.create(command.communityName);
+    if (command.mode === "reuse") {
+      if (!command.communityId) {
+        return errAsync<ImportDirectBetsResult, DomainError>(
+          domainError("NOT_FOUND"),
+        );
+      }
+
+      return ResultAsync.fromPromise(
+        communityRepo.findById(command.communityId),
+        () => domainError("NOT_FOUND"),
+      ).andThen((community) => {
+        if (!community) {
+          return errAsync<ImportDirectBetsResult, DomainError>(
+            domainError("NOT_FOUND"),
+          );
+        }
+        if (!community.imported) {
+          return errAsync<ImportDirectBetsResult, DomainError>(
+            domainError("FORBIDDEN"),
+          );
+        }
+
+        const ownerId = community.ownerId;
+
+        return ResultAsync.fromPromise(betRepo.listByOwner(ownerId), () =>
+          domainError("SAVE_FAILED"),
+        ).andThen((existingBets) => {
+          const skippedRows: SkipReason[] = [];
+          const goodBets: Bet[] = [];
+
+          for (const parsedRow of parsedRows) {
+            const transformResult = transformParsedRow(parsedRow);
+            if (transformResult.isErr()) {
+              skippedRows.push(transformResult.error);
+              continue;
+            }
+            const predictions = transformResult.value;
+
+            const label = `${parsedRow.col0} | ${parsedRow.col1}`;
+            const betResult = Bet.createDirect(label, ownerId, predictions);
+            if (betResult.isErr()) {
+              skippedRows.push({
+                rowNumber: parsedRow.rowNumber,
+                reason: betResult.error.code,
+              });
+              continue;
+            }
+
+            goodBets.push(betResult.value);
+          }
+
+          const deletePromises = existingBets.map((bet) =>
+            betRepo.delete(bet.id),
+          );
+          return ResultAsync.combine(deletePromises)
+            .andThen(() => {
+              const savePromises = goodBets.map((bet) => betRepo.save(bet));
+              return ResultAsync.combine(savePromises);
+            })
+            .map(() => ({
+              community,
+              skippedRows,
+            }));
+        });
+      });
+    }
+
+    // Create mode
+    if (!command.communityName || !command.inviteToken) {
+      return errAsync<ImportDirectBetsResult, DomainError>(
+        domainError("INVALID_NAME"),
+      );
+    }
+
+    const commName = command.communityName;
+    const invToken = command.inviteToken;
+
+    const nameResult = CommunityName.create(commName);
     if (nameResult.isErr()) {
       return errAsync<ImportDirectBetsResult, DomainError>({
         code: nameResult.error.code as DomainErrorCode,
@@ -84,14 +163,14 @@ export function importDirectBets(
         const slugVo = slugVoResult.value;
 
         return ownerProvisioner
-          .provision(command.communityName)
+          .provision(commName)
           .mapErr((e) => ({ code: e.code as DomainErrorCode }))
           .andThen((owner) => {
             const community = Community.createImported(
               name,
               slugVo,
               owner.id,
-              command.inviteToken,
+              invToken,
             );
 
             const skippedRows: SkipReason[] = [];
