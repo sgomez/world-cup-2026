@@ -28,6 +28,18 @@ export default async function LeaderboardPage({
     where: {
       members: { some: { userId: session.user.id } },
     },
+    include: {
+      members: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   const communityRepo = new PrismaCommunityRepository(prisma);
@@ -36,6 +48,12 @@ export default async function LeaderboardPage({
   const liveResultRepo = new PrismaLiveResultRepository(prisma);
 
   const userCache = new Map<string, string | null>();
+  for (const community of communities) {
+    for (const member of community.members) {
+      userCache.set(member.user.id, member.user.name);
+    }
+  }
+
   const getUserName = async (userId: string) => {
     if (userCache.has(userId)) return userCache.get(userId) ?? null;
     const user = await prisma.user.findUnique({
