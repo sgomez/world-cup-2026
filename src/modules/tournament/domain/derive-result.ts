@@ -412,6 +412,7 @@ export function deriveResult(
     finishedGroupOrders,
     thirdPlaceOrder,
     advancementRefs,
+    provisional,
   );
 
   return {
@@ -424,13 +425,15 @@ export function deriveResult(
 
 /**
  * Derives knockout winners by replaying all finished knockout LiveResults in
- * round order through the bracket machinery.
+ * round order through the bracket machinery. If provisional is true, also
+ * projects current goals leader from live matches.
  */
 function deriveKnockoutWinners(
   liveByNum: Map<number, LiveResult>,
   groupOrders: GroupOrders,
   thirdPlaceOrder: ThirdPlaceOrder,
   advancement: string[],
+  provisional = false,
 ): Record<string, string> {
   const r32 = buildR32Matches(groupOrders, thirdPlaceOrder, advancement);
   let knockoutMatches = { ...createEmptyKnockoutMatches(), ...r32 };
@@ -447,12 +450,26 @@ function deriveKnockoutWinners(
       const num = matchIdToNum.get(matchId);
       if (num === undefined) continue;
       const lr = liveByNum.get(num);
-      if (lr?.status !== "finished") continue;
+      if (!lr) continue;
+
+      const isFinished = lr.status === "finished";
+      const isLiveProvisional = provisional && lr.status === "live";
+      if (!isFinished && !isLiveProvisional) continue;
 
       const match = knockoutMatches[matchId];
       if (!match?.team1Id || !match?.team2Id) continue;
 
-      const winner = resolveKnockoutWinner(lr, match.team1Id, match.team2Id);
+      let winner: string | null = null;
+      if (isFinished) {
+        winner = resolveKnockoutWinner(lr, match.team1Id, match.team2Id);
+      } else {
+        if (lr.goals1 > lr.goals2) {
+          winner = match.team1Id;
+        } else if (lr.goals2 > lr.goals1) {
+          winner = match.team2Id;
+        }
+      }
+
       if (!winner) continue;
 
       knockoutMatches = applyWinnerToMatches(knockoutMatches, matchId, winner);
@@ -466,10 +483,26 @@ function deriveKnockoutWinners(
     ["F", 104],
   ] as Array<[string, number]>) {
     const lr = liveByNum.get(num);
-    if (lr?.status !== "finished") continue;
+    if (!lr) continue;
+
+    const isFinished = lr.status === "finished";
+    const isLiveProvisional = provisional && lr.status === "live";
+    if (!isFinished && !isLiveProvisional) continue;
+
     const match = knockoutMatches[matchId];
     if (!match?.team1Id || !match?.team2Id) continue;
-    const winner = resolveKnockoutWinner(lr, match.team1Id, match.team2Id);
+
+    let winner: string | null = null;
+    if (isFinished) {
+      winner = resolveKnockoutWinner(lr, match.team1Id, match.team2Id);
+    } else {
+      if (lr.goals1 > lr.goals2) {
+        winner = match.team1Id;
+      } else if (lr.goals2 > lr.goals1) {
+        winner = match.team2Id;
+      }
+    }
+
     if (!winner) continue;
     knockoutMatches = applyWinnerToMatches(knockoutMatches, matchId, winner);
     knockoutWinners[matchId] = winner;

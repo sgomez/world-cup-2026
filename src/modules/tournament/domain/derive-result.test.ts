@@ -461,4 +461,70 @@ describe("deriveResult — provisional mode", () => {
     );
     expect(provisionalResult.advancement).toEqual(settledResult.advancement);
   });
+
+  describe("provisional mode — knockout projection", () => {
+    it("projects current goals leader from a live knockout match when provisional is true", () => {
+      const groupAResults = allGroupAFinished(); // 2A = kor
+      const groupBResults = allGroupBFinished(); // 2B = sui
+      const r32Match73Live = liveMatch(73, 2, 1); // kor (team1) is leading sui (team2) 2-1
+
+      const results = [...groupAResults, ...groupBResults, r32Match73Live];
+      const result = deriveResult(results, {}, null, { provisional: true });
+
+      // Should project kor as winner
+      expect(result.knockoutWinners["R32-73"]).toBe("kor");
+    });
+
+    it("projects no winner from a drawn live knockout match even when provisional is true", () => {
+      const groupAResults = allGroupAFinished(); // 2A = kor
+      const groupBResults = allGroupBFinished(); // 2B = sui
+      const r32Match73Live = liveMatch(73, 1, 1); // kor draws sui 1-1
+
+      const results = [...groupAResults, ...groupBResults, r32Match73Live];
+      const result = deriveResult(results, {}, null, { provisional: true });
+
+      // Drawn live knockout match projects no winner
+      expect(result.knockoutWinners["R32-73"]).toBeUndefined();
+    });
+
+    it("settles to the exact result when a live knockout match finishes (parity)", () => {
+      const groupAResults = allGroupAFinished(); // 2A = kor
+      const groupBResults = allGroupBFinished(); // 2B = sui
+      const r32Match73Finished = LiveResult.fromState({
+        num: 73,
+        status: "finished",
+        goals1: 1,
+        goals2: 1,
+        penalties1: 3,
+        penalties2: 4,
+      }); // sui wins on penalties
+
+      const results = [...groupAResults, ...groupBResults, r32Match73Finished];
+
+      const provisionalResult = deriveResult(results, {}, null, {
+        provisional: true,
+      });
+      const settledResult = deriveResult(results, {}, null, {
+        provisional: false,
+      });
+
+      expect(provisionalResult.knockoutWinners["R32-73"]).toBe("sui");
+      expect(settledResult.knockoutWinners["R32-73"]).toBe("sui");
+      expect(provisionalResult.knockoutWinners).toEqual(
+        settledResult.knockoutWinners,
+      );
+    });
+
+    it("does NOT project winner for a live knockout match when provisional is false", () => {
+      const groupAResults = allGroupAFinished(); // 2A = kor
+      const groupBResults = allGroupBFinished(); // 2B = sui
+      const r32Match73Live = liveMatch(73, 2, 1); // kor leads 2-1
+
+      const results = [...groupAResults, ...groupBResults, r32Match73Live];
+      const result = deriveResult(results, {}, null, { provisional: false });
+
+      // Live knockout match is ignored in settled mode
+      expect(result.knockoutWinners["R32-73"]).toBeUndefined();
+    });
+  });
 });
