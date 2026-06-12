@@ -191,7 +191,8 @@
     "noCommunitiesShowDescription": "Crea una nueva comunidad o ajusta tu búsqueda.",
     "memberCount": "{count, plural, one {# miembro} other {# miembros}}",
     "you": "Tú",
-    "view": "Ver"
+    "view": "Ver",
+    "viewLeaderboard": "Ver Clasificación"
   },
   "joinCommunity": {
     "invalidInviteTitle": "Invitación Inválida",

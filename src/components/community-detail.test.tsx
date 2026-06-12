@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CommunityDetail } from "./community-detail";
 
@@ -23,6 +23,7 @@ vi.mock("next-intl", () => ({
             member: "Member",
             you: "You",
             view: "View",
+            viewLeaderboard: "View Leaderboard",
           }[key] ?? key
         );
       }
@@ -71,15 +72,6 @@ describe("CommunityDetail", () => {
         user: {
           id: "user-1",
           name: "User One",
-          bets: [
-            {
-              id: "bet-1",
-              label: "My Closed Bet",
-              status: "closed",
-              signature: "sig-123",
-            },
-            { id: "bet-draft-1", label: "My Draft Bet", status: "draft" },
-          ],
         },
       },
       {
@@ -88,7 +80,6 @@ describe("CommunityDetail", () => {
         user: {
           id: "user-2",
           name: "User Two",
-          bets: [{ id: "bet-2", label: "Peer Closed Bet", status: "closed" }],
         },
       },
     ],
@@ -113,88 +104,12 @@ describe("CommunityDetail", () => {
     expect(screen.queryByText("Manage community")).toBeNull();
   });
 
-  it("renders (YOU) chip on the current user's header only", () => {
+  it("renders a view leaderboard link to the community hash", () => {
     render(
       <CommunityDetail community={mockCommunity} inviteUrl="http://invite" />,
     );
 
-    // Header elements for each member should contain their name
-    const userOneHeaders = screen.getAllByText("User One");
-    expect(userOneHeaders.length).toBeGreaterThan(0);
-
-    // Look for the "You" chip. The header is expected to display "User One" and a "You" chip.
-    // We expect "You" to be present in User One's section header container.
-    const youChips = screen.queryAllByText("You");
-    expect(youChips.length).toBe(1);
-
-    // Let's ensure the "You" chip is indeed in the same container as the User One heading.
-    const userOneHeaderContainer = userOneHeaders[
-      userOneHeaders.length - 1
-    ].closest("div") as HTMLElement;
-    expect(within(userOneHeaderContainer).getByText("You")).toBeInTheDocument();
-
-    // User Two is not the current user, so they should not have the "You" chip in their header.
-    const userTwoHeaders = screen.getAllByText("User Two");
-    const userTwoHeaderContainer = userTwoHeaders[
-      userTwoHeaders.length - 1
-    ].closest("div") as HTMLElement;
-    expect(within(userTwoHeaderContainer).queryByText("You")).toBeNull();
-  });
-
-  it("hides draft rows completely", () => {
-    render(
-      <CommunityDetail community={mockCommunity} inviteUrl="http://invite" />,
-    );
-
-    // Draft bet should not be rendered
-    expect(screen.queryByText("My Draft Bet")).toBeNull();
-  });
-
-  it("renders view button for each visible bet row with correct link destinations", () => {
-    render(
-      <CommunityDetail community={mockCommunity} inviteUrl="http://invite" />,
-    );
-
-    // Active/visible bets are "My Closed Bet" and "Peer Closed Bet"
-    const myBetLink = screen.getByText("My Closed Bet");
-    const peerBetLink = screen.getByText("Peer Closed Bet");
-
-    // Get the parent containers of the bet rows
-    const myBetRow = myBetLink.closest(".bg-card") as HTMLElement;
-    const peerBetRow = peerBetLink.closest(".bg-card") as HTMLElement;
-
-    // Each row must have a View button
-    const myViewBtn = within(myBetRow).getByText("View");
-    const peerViewBtn = within(peerBetRow).getByText("View");
-
-    expect(myViewBtn).toBeInTheDocument();
-    expect(peerViewBtn).toBeInTheDocument();
-
-    // Check link destinations
-    expect(myViewBtn.closest("a")).toHaveAttribute(
-      "href",
-      "/communities/test-community/bets/bet-1",
-    );
-    expect(peerViewBtn.closest("a")).toHaveAttribute(
-      "href",
-      "/communities/test-community/bets/bet-2",
-    );
-  });
-
-  it("preserves existing status and signature chips", () => {
-    render(
-      <CommunityDetail community={mockCommunity} inviteUrl="http://invite" />,
-    );
-
-    const myBetLink = screen.getByText("My Closed Bet");
-    const myBetRow = myBetLink.closest(".bg-card") as HTMLElement;
-
-    // "Closed" status chip should be present
-    expect(within(myBetRow).getByText("Closed")).toBeInTheDocument();
-
-    // Signature prefix should be present ("sig-123" -> check if "sig-123" or "sig-123".slice(0, 8) is shown)
-    expect(
-      within(myBetRow).getByText("sig-123".slice(0, 8)),
-    ).toBeInTheDocument();
+    const link = screen.getByText("View Leaderboard").closest("a");
+    expect(link).toHaveAttribute("href", "/leaderboard#test-community");
   });
 });

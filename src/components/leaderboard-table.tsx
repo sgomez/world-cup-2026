@@ -6,6 +6,8 @@ import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import type { LeaderboardEntry } from "@/modules/leaderboard/domain/leaderboard";
 
+import { BetLabelView } from "./bet-label-view";
+
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[];
   currentUserId?: string;
@@ -84,11 +86,11 @@ export function LeaderboardTable({
                         href={href}
                         className="hover:underline transition-colors font-medium text-caption-md sm:text-body-strong"
                       >
-                        {entry.betName}
+                        <BetLabelView label={entry.betName} />
                       </Link>
                     ) : (
                       <span className="font-medium text-caption-md sm:text-body-strong">
-                        {entry.betName}
+                        <BetLabelView label={entry.betName} />
                       </span>
                     )}
                   </p>

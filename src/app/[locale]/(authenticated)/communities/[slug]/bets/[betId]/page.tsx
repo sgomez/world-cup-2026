@@ -1,6 +1,7 @@
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { BetLabelView } from "@/components/bet-label-view";
 import { LocalDate } from "@/components/local-date";
 import { ScoreTab } from "@/components/score-tab";
 import { PageHeader } from "@/components/ui/page-header";
@@ -84,7 +85,10 @@ export default async function PeerBetPage({
   if (visibility === "summary") {
     return (
       <div className="space-y-6 max-w-5xl">
-        <PageHeader title={bet.label} description={subtitle} />
+        <PageHeader
+          title={<BetLabelView label={bet.label} />}
+          description={subtitle}
+        />
 
         <div className="flex flex-col items-center justify-center gap-6 rounded-xl border border-dashed border-hairline bg-canvas py-16 px-4 text-center dark:border-ash">
           <div className="flex size-14 items-center justify-center rounded-xl bg-info/10 text-info">
@@ -128,7 +132,10 @@ export default async function PeerBetPage({
   return (
     <div className="space-y-6 max-w-5xl">
       <div className="mb-6">
-        <PageHeader title={bet.label} description={subtitle} />
+        <PageHeader
+          title={<BetLabelView label={bet.label} />}
+          description={subtitle}
+        />
       </div>
 
       <ScoreTab

@@ -72,6 +72,7 @@ export function getLeaderboard(
         query.now,
         query.viewerId,
         isCompetitionEnded,
+        community.imported,
       );
 
       return okAsync<Leaderboard, DomainError>(leaderboard);
