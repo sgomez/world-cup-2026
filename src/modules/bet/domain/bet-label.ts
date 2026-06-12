@@ -34,16 +34,10 @@ export function obfuscateLabel(label: string): SerializedBetLabel {
     name = label.substring(separatorIndex + 3);
   }
 
-  const letters: { char: string; index: number }[] = [];
-  for (let i = 0; i < name.length; i++) {
-    const char = name[i];
-    if (/^\p{L}$/u.test(char)) {
-      letters.push({ char, index: i });
-    }
-  }
+  const isAlnum = (char: string) => /^[\p{L}\p{N}]$/u.test(char);
 
-  const letterCount = letters.length;
-  if (letterCount <= 4) {
+  const visibleCount = [...name].filter(isAlnum).length;
+  if (visibleCount <= 4) {
     return {
       obfuscated: true,
       num,
@@ -53,15 +47,20 @@ export function obfuscateLabel(label: string): SerializedBetLabel {
     };
   }
 
-  const head = letters[0].char + letters[1].char;
-  const tail = letters[letterCount - 2].char + letters[letterCount - 1].char;
+  // Head/tail are confined to the first/last whitespace-delimited token, so a
+  // trailing "CASA 1" exposes "1" rather than pulling "A" across the space.
+  const tokens = name.split(/\s+/).filter(Boolean);
+  const firstAlnum = [...tokens[0]].filter(isAlnum);
+  const lastAlnum = [...tokens[tokens.length - 1]].filter(isAlnum);
+  const head = firstAlnum.slice(0, 2).join("");
+  const tail = lastAlnum.slice(-2).join("");
 
   return {
     obfuscated: true,
     num,
     head,
     tail,
-    middleLen: name.length - 4,
+    middleLen: name.length - head.length - tail.length,
   };
 }
 

@@ -106,16 +106,27 @@ describe("bet label obfuscation", () => {
     });
   });
 
-  it("handles names with punctuation/quotes/spaces correctly", () => {
-    // David P (6 alphabetical chars: D, a, v, i, d, P. Total chars: 7)
+  it("confines head/tail to the first/last whitespace token", () => {
+    // David P -> tail is the last token "P", not "dP" across the space
     expect(obfuscateLabel("123 | David P")).toEqual({
       obfuscated: true,
       num: "123",
       head: "Da",
-      tail: "dP",
-      middleLen: 3,
+      tail: "P",
+      middleLen: 4,
     });
 
+    // CASA 1 -> trailing token "1" is exposed, not "A1"
+    expect(obfuscateLabel("123 | CASA 1")).toEqual({
+      obfuscated: true,
+      num: "123",
+      head: "CA",
+      tail: "1",
+      middleLen: 3,
+    });
+  });
+
+  it("handles names with punctuation/quotes/spaces correctly", () => {
     // David "Gordito" (12 alphabetical chars: D, a, v, i, d, G, o, r, d, i, t, o. Total chars: 15)
     expect(obfuscateLabel('123 | David "Gordito"')).toEqual({
       obfuscated: true,
@@ -123,6 +134,26 @@ describe("bet label obfuscation", () => {
       head: "Da",
       tail: "to",
       middleLen: 11,
+    });
+  });
+
+  it("exposes digits at the ends, not just letters", () => {
+    // Player 23 (8 alphanumeric chars: P,l,a,y,e,r,2,3. Total chars: 9)
+    expect(obfuscateLabel("1 | Player 23")).toEqual({
+      obfuscated: true,
+      num: "1",
+      head: "Pl",
+      tail: "23",
+      middleLen: 5,
+    });
+
+    // R2D2 (4 alphanumeric chars) -> fully hidden
+    expect(obfuscateLabel("1 | R2D2")).toEqual({
+      obfuscated: true,
+      num: "1",
+      head: "",
+      tail: "",
+      middleLen: 4,
     });
   });
 

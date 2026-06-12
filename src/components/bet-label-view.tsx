@@ -20,7 +20,7 @@ export function BetLabelView({ label, className }: BetLabelViewProps) {
       {label.head && <span className="shrink-0">{label.head}</span>}
       <span
         role="img"
-        className="inline-block h-[0.9em] self-center rounded-[2px] bg-foreground/70 dark:bg-foreground/60 shrink-0"
+        className="inline-block h-[0.9em] self-center rounded-[2px] bg-muted-foreground/40 dark:bg-muted-foreground/40 blur-[2px] shrink-0"
         style={{
           width: `${Math.max(1.5, Math.min(10, label.middleLen * 0.55))}em`,
         }}

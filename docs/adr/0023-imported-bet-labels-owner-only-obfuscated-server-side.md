@@ -40,16 +40,20 @@ and the hidden characters are stripped server-side before serialization.
   `viewerId === ownerId` and is reused. Native Communities
   (`imported === false`) are unaffected — full labels for everyone, as before.
 - **Algorithm.** Split the label on the first `" | "`: the `<NUM>` prefix is
-  emitted **verbatim**. From the `<name>` remainder, take the alphabetical-letter
-  stream (non-alpha chars ignored for counting). If it has **≤ 4** letters the
-  name is hidden **entirely**; otherwise the **first two** and **last two**
-  letters are exposed and the middle is hidden.
+  emitted **verbatim**. From the `<name>` remainder, take the **alphanumeric**
+  stream — letters **and** digits (punctuation/whitespace ignored for counting).
+  If it has **≤ 4** alphanumeric characters the name is hidden **entirely**;
+  otherwise the exposed ends are taken from the **first** and **last
+  whitespace-delimited token** — the first two alphanumeric characters of the
+  first token and the last two of the last token — and the middle is hidden.
+  Confining the ends to a single token keeps them legible: a trailing `CASA 1`
+  exposes `1`, not `A1` pulled across the space.
 - **Server contract.** An obfuscated label is serialized as a structured value —
   `{ num, head, tail, middleLen, obfuscated: true }` — where `head`/`tail` are the
-  two-letter ends (empty when fully hidden) and `middleLen` is a **count only**.
-  The hidden letters themselves are never present in any payload. The client
-  renders `NUM` + `head` + a skeleton/censure banner + `tail`, the banner width
-  proportional to `middleLen`.
+  exposed ends (each up to two characters, empty when fully hidden) and
+  `middleLen` is a **count only**. The hidden characters themselves are never
+  present in any payload. The client renders `NUM` + `head` + a blurred censure
+  banner + `tail`, the banner width proportional to `middleLen`.
 - **Surfaces.** The obfuscation is applied in exactly two server read paths: the
   **Leaderboard** projection and `getPeerBet` (the peer Bet view). Both already
   receive `viewerId`; both are threaded the community's `imported` flag and owner
@@ -92,7 +96,7 @@ imported ones, so removal was unnecessary.
 
 - The Leaderboard entry and the peer Bet view stop carrying a plain `label`
   string for imported, non-owner reads; consumers render a structured obfuscated
-  value instead. The `<NUM>` prefix and the two-letter ends remain legible.
+  value instead. The `<NUM>` prefix and the exposed token ends remain legible.
 - `middleLen` discloses the original name's length to non-owners — an accepted
   trade-off for banner fidelity; the identifying letters are not disclosed.
 - The owner path depends on **impersonation**: an Admin sees full imported labels
