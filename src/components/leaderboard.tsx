@@ -6,8 +6,14 @@ import { useState } from "react";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { Link } from "@/i18n/navigation";
-import type { LeaderboardScope } from "@/lib/leaderboard";
 import { cn } from "@/lib/utils";
+import type { LeaderboardEntry } from "@/modules/leaderboard/domain/leaderboard";
+
+export type LeaderboardScope = {
+  id: string; // Community slug
+  label: string; // Community name
+  entries: LeaderboardEntry[];
+};
 
 interface LeaderboardProps {
   scopes: LeaderboardScope[];

@@ -7,7 +7,6 @@ import { redirect } from "@/i18n/navigation";
 import { BET_DEADLINE } from "@/lib/bet-constants";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { peerSummariesByOwners } from "@/modules/bet/application/peer-summaries-by-owners";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 import { createCommunity as createCommunityUseCase } from "@/modules/community/application/create-community";
@@ -18,6 +17,9 @@ import { regenerateInviteToken as regenerateInviteTokenUseCase } from "@/modules
 import { removeMember as removeMemberUseCase } from "@/modules/community/application/remove-member";
 import type { DomainErrorCode } from "@/modules/community/domain/errors";
 import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
+import { getLeaderboard } from "@/modules/leaderboard/application/get-leaderboard";
+import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
+import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
 import { withAuthenticatedAction } from "./authenticated-action";
 
 async function communityErrorMessage(code: DomainErrorCode): Promise<string> {
@@ -87,12 +89,46 @@ export async function getCommunity(slug: string) {
   const isMember = community.members.some((m) => m.userId === session.user.id);
   if (!isMember) return null;
 
-  const userIds = community.members.map((m) => m.user.id);
-  const repo = new PrismaBetRepository(prisma);
-  const betSummaries = await peerSummariesByOwners(repo, userIds, window, now);
+  const communityRepo = new PrismaCommunityRepository(prisma);
+  const betRepo = new PrismaBetRepository(prisma);
+  const tournamentRepo = new PrismaTournamentRepository(prisma);
+  const liveResultRepo = new PrismaLiveResultRepository(prisma);
+
+  const getUserName = async (userId: string) => {
+    const m = community.members.find((mem) => mem.userId === userId);
+    return m?.user.name ?? null;
+  };
+
+  const leaderboardResult = await getLeaderboard(
+    communityRepo,
+    betRepo,
+    tournamentRepo,
+    liveResultRepo,
+    getUserName,
+    {
+      viewerId: session.user.id,
+      communitySlug: slug,
+      window,
+      now,
+    },
+  );
+
+  if (leaderboardResult.isErr()) {
+    return null;
+  }
+
+  const leaderboard = leaderboardResult.value;
 
   const members = community.members.map((m) => {
-    const bets = betSummaries.get(m.user.id) ?? [];
+    const userEntries = leaderboard.entries.filter(
+      (e) => e.userId === m.user.id,
+    );
+    const bets = userEntries.map((e) => ({
+      id: e.betId,
+      label: e.betName,
+      status: e.bet ? e.bet.status : "closed",
+      signature: e.signature,
+    }));
     return { ...m, user: { ...m.user, bets } };
   });
 
