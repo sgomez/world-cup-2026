@@ -1,6 +1,5 @@
-import { createInitialState } from "@/lib/prediction-state";
-import type { ScoreableContent } from "@/lib/scoring";
-import { extractScoreableContent, scoreBet } from "@/lib/scoring";
+import type { ScoreableContent, ScoreableContentArrays } from "@/lib/scoring";
+import { scoreBet } from "@/lib/scoring";
 import type {
   Bet,
   BetStatus,
@@ -27,6 +26,7 @@ export type LeaderboardEntry = {
     createdAt?: Date;
     groupPredictions: GroupPredictions | null;
     knockoutWinners: Record<string, string>;
+    directPredictions?: ScoreableContentArrays | null;
   } | null;
 };
 
@@ -66,11 +66,7 @@ export class Leaderboard {
       let points = 0;
       if (!selectionsHidden && actualResult) {
         // Calculate actual score
-        const { knockoutMatches } = createInitialState(
-          bet.groupPredictions,
-          bet.knockoutWinners,
-        );
-        const betContent = extractScoreableContent(knockoutMatches);
+        const betContent = bet.scoreableContent();
         points = scoreBet(betContent, actualResult);
       }
 
@@ -83,6 +79,7 @@ export class Leaderboard {
         createdAt: bet.createdAt,
         groupPredictions: selectionsHidden ? null : bet.groupPredictions,
         knockoutWinners: selectionsHidden ? {} : bet.knockoutWinners,
+        directPredictions: selectionsHidden ? null : bet.directPredictions,
       };
 
       return {
