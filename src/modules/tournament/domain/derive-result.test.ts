@@ -385,9 +385,30 @@ describe("deriveResult — provisional mode", () => {
     expect(result.groupOrders.A).toBeUndefined();
   });
 
-  it("does NOT project thirds even when all groups are started", () => {
-    // Start at least one match in each of the 12 groups
-    const liveResults = [
+  it("projects thirds only once all 12 groups have started", () => {
+    // 1. 11 groups started (Group L is upcoming)
+    const elevenStarted = [
+      liveMatch(1, 1, 0), // Group A
+      liveMatch(3, 1, 0), // Group B
+      liveMatch(5, 1, 0), // Group C
+      liveMatch(7, 1, 0), // Group D
+      liveMatch(9, 1, 0), // Group E
+      liveMatch(11, 1, 0), // Group F
+      liveMatch(13, 1, 0), // Group G
+      liveMatch(15, 1, 0), // Group H
+      liveMatch(17, 1, 0), // Group I
+      liveMatch(19, 1, 0), // Group J
+      liveMatch(21, 1, 0), // Group K
+      { num: 23, status: "upcoming", goals1: 0, goals2: 0 }, // Group L not started
+    ];
+    const result11 = deriveResult(elevenStarted as any, {}, null, {
+      provisional: true,
+    });
+    expect(result11.advancement).not.toContain("3rd-1A");
+    expect(result11.thirdPlaceOrder).toEqual([]);
+
+    // 2. All 12 groups started
+    const twelveStarted = [
       liveMatch(1, 1, 0), // Group A
       liveMatch(3, 1, 0), // Group B
       liveMatch(5, 1, 0), // Group C
@@ -401,11 +422,11 @@ describe("deriveResult — provisional mode", () => {
       liveMatch(21, 1, 0), // Group K
       liveMatch(23, 1, 0), // Group L
     ];
-    const result = deriveResult(liveResults, {}, null, { provisional: true });
-
-    // Thirds slot should NOT be in advancement for this slice
-    expect(result.advancement).not.toContain("3rd-1A");
-    expect(result.thirdPlaceOrder).toEqual([]);
+    const result12 = deriveResult(twelveStarted, {}, null, {
+      provisional: true,
+    });
+    expect(result12.advancement).toContain("3rd-1A");
+    expect(result12.thirdPlaceOrder.length).toBe(8);
   });
 
   it("settles to the exact result when group finishes", () => {
@@ -418,5 +439,26 @@ describe("deriveResult — provisional mode", () => {
     expect(result.groupOrders.A[3]).toBe("cze");
     expect(result.advancement).toContain("1A");
     expect(result.advancement).toContain("2A");
+  });
+
+  it("has settle-on-finish parity: provisional matches result in same thirds projection as finished matches", () => {
+    const finishedResults = Array.from({ length: 72 }, (_, i) =>
+      finishedMatch(i + 1, 1, 0),
+    );
+    const settledResult = deriveResult(finishedResults, {}, null, {
+      provisional: false,
+    });
+
+    const provisionalResults = Array.from({ length: 72 }, (_, i) =>
+      liveMatch(i + 1, 1, 0),
+    );
+    const provisionalResult = deriveResult(provisionalResults, {}, null, {
+      provisional: true,
+    });
+
+    expect(provisionalResult.thirdPlaceOrder).toEqual(
+      settledResult.thirdPlaceOrder,
+    );
+    expect(provisionalResult.advancement).toEqual(settledResult.advancement);
   });
 });

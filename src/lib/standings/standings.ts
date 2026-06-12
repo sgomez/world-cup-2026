@@ -495,8 +495,19 @@ export function getAdvancement(input: AdvancementInput): AdvancementResult {
     });
   }
 
-  // Thirds advance only when all 12 groups are complete
+  // Thirds advance only when all 12 groups are complete (or in provisional mode, all 12 groups have started)
   if (input.provisional) {
+    const allTwelveStarted = thirdsEntries.length === 12;
+    if (allTwelveStarted) {
+      const thirdsResult = rankThirds(thirdsEntries, input.manualTieBreaks);
+      return {
+        groupAdvancement,
+        thirdsAdvancement: {
+          qualified: thirdsResult.ranked.map((r) => r.teamId),
+          slotAssignments: thirdsResult.slotAssignments,
+        },
+      };
+    }
     return { groupAdvancement, thirdsAdvancement: undefined };
   }
 
