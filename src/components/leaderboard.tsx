@@ -4,6 +4,7 @@ import { Trophy, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { LeaderboardTable } from "@/components/leaderboard-table";
+import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
@@ -19,12 +20,14 @@ interface LeaderboardProps {
   scopes: LeaderboardScope[];
   currentUserId?: string;
   tournamentEnded?: boolean;
+  hasLiveMatch?: boolean;
 }
 
 export function Leaderboard({
   scopes,
   currentUserId,
   tournamentEnded,
+  hasLiveMatch = false,
 }: LeaderboardProps) {
   const t = useTranslations("leaderboard");
   const [activeId, setActiveId] = useState(scopes[0]?.id);
@@ -58,6 +61,10 @@ export function Leaderboard({
         description={t("description")}
         icon={<Trophy className="size-6" />}
       />
+
+      {hasLiveMatch && (
+        <Banner variant="warning">{t("provisionalWarning")}</Banner>
+      )}
 
       {/* Tabs */}
       <div

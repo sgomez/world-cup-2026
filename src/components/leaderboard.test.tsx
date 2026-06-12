@@ -312,3 +312,17 @@ describe("Leaderboard Component (Tabs)", () => {
     expect(screen.queryByText("1")).not.toBeInTheDocument();
   });
 });
+
+describe("Leaderboard provisional warning", () => {
+  const sampleScopes = [{ id: "comm-1", label: "Community A", entries: [] }];
+
+  it("does NOT render provisional warning banner when hasLiveMatch is false", () => {
+    render(<Leaderboard scopes={sampleScopes} hasLiveMatch={false} />);
+    expect(screen.queryByText("provisionalWarning")).not.toBeInTheDocument();
+  });
+
+  it("renders provisional warning banner when hasLiveMatch is true", () => {
+    render(<Leaderboard scopes={sampleScopes} hasLiveMatch={true} />);
+    expect(screen.getByText("provisionalWarning")).toBeInTheDocument();
+  });
+});

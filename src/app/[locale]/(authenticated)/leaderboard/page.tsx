@@ -74,6 +74,7 @@ export default async function LeaderboardPage({
   ]);
   const activeTournament = tournament ?? Tournament.createDefault();
   const tournamentEnded = activeTournament.isCompetitionEnded(liveResults);
+  const liveMatchActive = liveResults.some((lr) => lr.status === "live");
 
   const scopesResults = await Promise.all(
     communities.map(async (community) => {
@@ -111,6 +112,7 @@ export default async function LeaderboardPage({
         scopes={scopes}
         currentUserId={session.user.id}
         tournamentEnded={tournamentEnded}
+        hasLiveMatch={liveMatchActive}
       />
     </div>
   );

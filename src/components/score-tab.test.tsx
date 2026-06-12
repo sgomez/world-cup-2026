@@ -130,3 +130,17 @@ describe("ScoreTab", () => {
     expect(within(rowParent).getByText("6")).toBeInTheDocument();
   });
 });
+
+describe("ScoreTab provisional warning", () => {
+  const state = createInitialState(null, null, "en");
+
+  it("does NOT render provisional warning note when hasLiveMatch is false", () => {
+    render(<ScoreTab state={state} hasLiveMatch={false} />);
+    expect(screen.queryByText("provisionalNote")).not.toBeInTheDocument();
+  });
+
+  it("renders provisional warning note when hasLiveMatch is true", () => {
+    render(<ScoreTab state={state} hasLiveMatch={true} />);
+    expect(screen.getByText("provisionalNote")).toBeInTheDocument();
+  });
+});

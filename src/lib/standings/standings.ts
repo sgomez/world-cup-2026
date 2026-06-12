@@ -409,6 +409,7 @@ export type AdvancementInput = {
   tieBreakChain: TieBreakCriterion[];
   manualTieBreaks: Record<string, Record<string, number>>;
   finishedOnly: boolean;
+  provisional?: boolean;
 };
 
 export type AdvancementResult = {
@@ -443,15 +444,23 @@ export function getAdvancement(input: AdvancementInput): AdvancementResult {
   let allGroupsComplete = true;
 
   for (const [groupKey, { teams, matches }] of Object.entries(input.groups)) {
-    const complete = isGroupComplete(matches);
-    if (!complete) {
-      allGroupsComplete = false;
-      // When finishedOnly is true (default), skip incomplete groups entirely.
-      // When finishedOnly is false, compute provisional standings using whatever
-      // matches are available (live and finished alike).
-      if (input.finishedOnly) {
+    if (input.provisional) {
+      const started = matches.length >= 1;
+      if (!started) {
         groupAdvancement[groupKey] = undefined;
         continue;
+      }
+    } else {
+      const complete = isGroupComplete(matches);
+      if (!complete) {
+        allGroupsComplete = false;
+        // When finishedOnly is true (default), skip incomplete groups entirely.
+        // When finishedOnly is false, compute provisional standings using whatever
+        // matches are available (live and finished alike).
+        if (input.finishedOnly) {
+          groupAdvancement[groupKey] = undefined;
+          continue;
+        }
       }
     }
 
@@ -487,6 +496,10 @@ export function getAdvancement(input: AdvancementInput): AdvancementResult {
   }
 
   // Thirds advance only when all 12 groups are complete
+  if (input.provisional) {
+    return { groupAdvancement, thirdsAdvancement: undefined };
+  }
+
   const allTwelveComplete =
     allGroupsComplete && Object.keys(input.groups).length === 12;
 

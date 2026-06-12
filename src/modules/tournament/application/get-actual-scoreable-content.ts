@@ -11,7 +11,9 @@ export function getActualScoreableContent(
   liveResults: LiveResult[],
 ): ScoreableContentArrays {
   const activeTournament = tournament ?? Tournament.createDefault();
-  const bracketView = activeTournament.bracketView(liveResults);
+  const bracketView = activeTournament.bracketView(liveResults, {
+    provisional: true,
+  });
   const scoreableContent = extractScoreableContent(bracketView);
   return toScoreableContentArrays(scoreableContent);
 }

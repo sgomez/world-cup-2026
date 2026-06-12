@@ -43,6 +43,7 @@ export default async function BetPage({
     liveResultRepo.findAll(),
   ]);
   const actualResults = getActualScoreableContent(tournament, liveResults);
+  const liveMatchActive = liveResults.some((lr) => lr.status === "live");
 
   return (
     <div>
@@ -55,6 +56,7 @@ export default async function BetPage({
         savedPredictions={savedPredictions}
         savedKnockoutWinners={savedKnockoutWinners}
         actualResults={actualResults}
+        hasLiveMatch={liveMatchActive}
       />
     </div>
   );

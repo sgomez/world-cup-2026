@@ -122,6 +122,7 @@ export default async function PeerBetPage({
     liveResultRepo.findAll(),
   ]);
   const actualResults = getActualScoreableContent(tournament, liveResults);
+  const liveMatchActive = liveResults.some((lr) => lr.status === "live");
 
   // Otherwise, render the read-only prediction stage
   return (
@@ -136,6 +137,7 @@ export default async function PeerBetPage({
         savedKnockoutWinners={bet.knockoutWinners}
         headerDescription={subtitle}
         actualResults={actualResults}
+        hasLiveMatch={liveMatchActive}
       />
 
       <div className="pt-4">
