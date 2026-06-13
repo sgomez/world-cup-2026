@@ -33,7 +33,7 @@ export function RemoveBetButton({ betId, onRemoved }: RemoveBetButtonProps) {
       </AlertDialog.Trigger>
 
       <AlertDialog.Portal>
-        <AlertDialog.Backdrop className="fixed inset-0 z-[100] bg-black/50 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
+        <AlertDialog.Backdrop className="fixed inset-0 z-[100] bg-ink/50 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
         <AlertDialog.Popup className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-full max-w-[384px] rounded-none border border-hairline bg-canvas p-6 dark:bg-ink data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
           <AlertDialog.Title className="text-heading-md font-medium text-foreground uppercase tracking-tight">
             {t("removeDialogTitle")}
@@ -48,7 +48,7 @@ export function RemoveBetButton({ betId, onRemoved }: RemoveBetButtonProps) {
             <AlertDialog.Close
               onClick={handleConfirm}
               disabled={pending}
-              className="button-primary !bg-sale !text-white hover:!bg-sale-deep border-none text-button-sm !h-9 !py-1 !px-4"
+              className="button-primary !bg-sale !text-canvas hover:!bg-sale-deep border-none text-button-sm !h-9 !py-1 !px-4"
             >
               {pending ? t("removing") : t("remove")}
             </AlertDialog.Close>

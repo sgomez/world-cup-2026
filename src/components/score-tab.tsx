@@ -55,19 +55,19 @@ function RoundCard({
   const subtotal = t("subtotal");
 
   return (
-    <div className="rounded-xl bg-white/80 p-4 shadow-lg dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
+    <div className="rounded-xl bg-canvas/80 p-4 shadow-lg dark:bg-gradient-to-br dark:from-charcoal/80 dark:to-ink/80">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={cn("h-4 w-1 rounded-full", accent)} />
-          <h3 className="text-sm font-bold uppercase tracking-wide text-slate-900 dark:text-white">
+          <h3 className="text-sm font-bold uppercase tracking-wide text-ink dark:text-canvas">
             {title}
           </h3>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+          <span className="text-xs text-mute dark:text-stone">
             {matchedTeams.length}/{teams.length} {t("correct")}
           </span>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-700 dark:text-slate-300">
+          <span className="rounded-full bg-soft-cloud px-2 py-0.5 text-xs font-bold text-charcoal dark:bg-charcoal dark:text-stone">
             {points} {t("ptsPerTeam")}
           </span>
         </div>
@@ -83,19 +83,19 @@ function RoundCard({
           })}
         </div>
       ) : (
-        <div className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">
+        <div className="py-4 text-center text-sm text-stone dark:text-mute">
           {noTeamsYet}
         </div>
       )}
 
-      <div className="mt-3 flex items-center justify-end border-t border-slate-200 pt-2 dark:border-slate-700">
-        <span className="text-sm font-bold text-slate-900 dark:text-white">
+      <div className="mt-3 flex items-center justify-end border-t border-hairline pt-2 dark:border-ash">
+        <span className="text-sm font-bold text-ink dark:text-canvas">
           {subtotal}{" "}
           <span
             className={cn(
               totalPoints > 0
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-slate-400",
+                ? "text-success dark:text-success-bright"
+                : "text-mute",
             )}
           >
             {totalPoints} pts
@@ -129,13 +129,13 @@ function WinnerCard({
   const earnedPoints = isMatched ? points : 0;
 
   return (
-    <div className="rounded-xl bg-white/80 p-4 shadow-lg dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
+    <div className="rounded-xl bg-canvas/80 p-4 shadow-lg dark:bg-gradient-to-br dark:from-charcoal/80 dark:to-ink/80">
       <div className="mb-3 flex items-center gap-2">
         <div className={cn("h-4 w-1 rounded-full", accent)} />
-        <h3 className="text-sm font-bold uppercase tracking-wide text-slate-900 dark:text-white">
+        <h3 className="text-sm font-bold uppercase tracking-wide text-ink dark:text-canvas">
           {title}
         </h3>
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-700 dark:text-slate-300">
+        <span className="rounded-full bg-soft-cloud px-2 py-0.5 text-xs font-bold text-charcoal dark:bg-charcoal dark:text-stone">
           {points} pts
         </span>
       </div>
@@ -155,28 +155,28 @@ function WinnerCard({
             className={cn(
               "text-lg font-bold shrink-0",
               isMatched
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-slate-300 dark:text-slate-600",
+                ? "text-success dark:text-success-bright"
+                : "text-hairline dark:text-ash",
             )}
           >
             {isMatched ? `+${points}` : "+0"}
           </span>
         </div>
       ) : (
-        <div className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 p-4 dark:border-slate-700">
+        <div className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-hairline p-4 dark:border-ash">
           {icon}
-          <span className="text-sm text-slate-400 dark:text-slate-500">
+          <span className="text-sm text-stone dark:text-mute">
             {t("notYetDetermined")}
           </span>
         </div>
       )}
-      <div className="mt-2 text-right text-sm font-bold text-slate-900 dark:text-white">
+      <div className="mt-2 text-right text-sm font-bold text-ink dark:text-canvas">
         {t("subtotal")}{" "}
         <span
           className={cn(
             earnedPoints > 0
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-slate-400",
+              ? "text-success dark:text-success-bright"
+              : "text-mute",
           )}
         >
           {earnedPoints} pts
@@ -257,13 +257,13 @@ export function ScoreTab({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 p-6 text-center shadow-xl dark:from-slate-700 dark:to-slate-800">
-        <h2 className="mb-2 text-sm font-medium uppercase tracking-wider text-slate-400">
+      <div className="rounded-2xl bg-gradient-to-r from-charcoal to-ink p-6 text-center shadow-xl dark:from-ash dark:to-charcoal">
+        <h2 className="mb-2 text-sm font-medium uppercase tracking-wider text-stone">
           {t("totalScore")}
         </h2>
-        <div className="text-5xl font-extrabold text-white">
+        <div className="text-5xl font-extrabold text-canvas">
           {totalPoints}
-          <span className="ml-2 text-2xl font-medium text-slate-400">pts</span>
+          <span className="ml-2 text-2xl font-medium text-stone">pts</span>
         </div>
       </div>
 
@@ -278,14 +278,14 @@ export function ScoreTab({
         points={ROUND_POINTS.R32}
         teams={r32Teams}
         actualTeamIds={actualResults.R32}
-        accent="bg-cyan-500"
+        accent="bg-early-rounds"
       />
       <RoundCard
         title={t("roundOf16")}
         points={ROUND_POINTS.R16}
         teams={r16Teams}
         actualTeamIds={actualResults.R16}
-        accent="bg-cyan-500"
+        accent="bg-early-rounds"
       />
 
       <RoundCard
@@ -293,14 +293,14 @@ export function ScoreTab({
         points={ROUND_POINTS.QF}
         teams={qfTeams}
         actualTeamIds={actualResults.QF}
-        accent="bg-amber-500"
+        accent="bg-late-rounds"
       />
       <RoundCard
         title={t("semiFinals")}
         points={ROUND_POINTS.SF}
         teams={sfTeams}
         actualTeamIds={actualResults.SF}
-        accent="bg-amber-500"
+        accent="bg-late-rounds"
       />
 
       <RoundCard
@@ -308,7 +308,7 @@ export function ScoreTab({
         points={ROUND_POINTS.F}
         teams={finalTeams}
         actualTeamIds={actualResults.F}
-        accent="bg-emerald-500"
+        accent="bg-final"
       />
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -317,7 +317,7 @@ export function ScoreTab({
           team={predictedChampion}
           actualWinnerId={actualResults.champion}
           points={CHAMPION_POINTS}
-          accent="bg-amber-500"
+          accent="bg-late-rounds"
           icon={trophyIcon}
         />
         <WinnerCard
@@ -325,13 +325,13 @@ export function ScoreTab({
           team={predictedThirdPlace}
           actualWinnerId={actualResults.thirdPlace}
           points={THIRD_PLACE_POINTS}
-          accent="bg-rose-500"
+          accent="bg-third-place"
           icon={medalIcon}
         />
       </div>
 
-      <div className="rounded-xl bg-white/80 p-4 shadow-lg dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
-        <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-900 dark:text-white">
+      <div className="rounded-xl bg-canvas/80 p-4 shadow-lg dark:bg-gradient-to-br dark:from-charcoal/80 dark:to-ink/80">
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-ink dark:text-canvas">
           {t("pointsBreakdown")}
         </h3>
         <div className="space-y-2">
@@ -361,28 +361,28 @@ export function ScoreTab({
           ].map(({ label, pts }) => (
             <div
               key={label}
-              className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-700/50"
+              className="flex items-center justify-between rounded-lg bg-soft-cloud px-3 py-2 dark:bg-charcoal/50"
             >
-              <span className="text-sm text-slate-600 dark:text-slate-400">
+              <span className="text-sm text-charcoal dark:text-stone">
                 {label}
               </span>
               <span
                 className={cn(
                   "font-bold",
                   pts > 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-slate-400",
+                    ? "text-success dark:text-success-bright"
+                    : "text-mute",
                 )}
               >
                 {pts}
               </span>
             </div>
           ))}
-          <div className="flex items-center justify-between rounded-lg bg-gradient-to-r from-emerald-100 to-emerald-50 px-3 py-3 dark:from-emerald-900/50 dark:to-emerald-900/30">
-            <span className="text-base font-bold text-emerald-800 dark:text-emerald-300">
+          <div className="flex items-center justify-between rounded-lg bg-gradient-to-r from-success/15 to-success/5 px-3 py-3 dark:from-success-bright/20 dark:to-success-bright/10">
+            <span className="text-base font-bold text-success dark:text-success-bright">
               {t("total")}
             </span>
-            <span className="text-xl font-extrabold text-emerald-700 dark:text-emerald-400">
+            <span className="text-xl font-extrabold text-success dark:text-success-bright">
               {totalPoints} pts
             </span>
           </div>

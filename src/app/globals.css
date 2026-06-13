@@ -77,6 +77,12 @@
   --color-accent-teal: var(--accent-teal);
   --color-accent-pink-deep: var(--accent-pink-deep);
 
+  /* Semantic Round Accents */
+  --color-early-rounds: var(--early-rounds);
+  --color-late-rounds: var(--late-rounds);
+  --color-third-place: var(--third-place);
+  --color-final: var(--final);
+
   /* Border radius overrides */
   --radius-none: 0px;
   --radius-sm: 2px;
@@ -126,6 +132,12 @@
   --accent-teal: #0a7281;
   --accent-pink-deep: #4c012d;
 
+  /* Semantic Round Accents */
+  --early-rounds: var(--accent-teal);
+  --late-rounds: var(--accent-purple-soft);
+  --third-place: var(--sale);
+  --final: var(--success);
+
   /* shadcn/ui mappings to Sports Design Tokens */
   --background: var(--canvas);
   --foreground: var(--ink);
@@ -170,6 +182,9 @@
   --border: var(--ash);
   --input: var(--ash);
   --ring: var(--canvas);
+
+  /* Semantic Round Accents - Dark Override */
+  --final: var(--success-bright);
 }
 
 @layer base {
