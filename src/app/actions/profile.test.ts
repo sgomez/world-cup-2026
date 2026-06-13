@@ -17,7 +17,8 @@ vi.mock("next-intl/server", () => ({
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
-      update: vi.fn(),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
     },
   },
 }));
@@ -29,10 +30,24 @@ import { getSession } from "@/lib/session";
 import { updateProfile } from "./profile";
 
 const mockGetSession = vi.mocked(getSession);
-const mockUserUpdate = vi.mocked(prisma.user.update);
+const mockUserFindUnique = vi.mocked(prisma.user.findUnique);
+const mockUserUpsert = vi.mocked(prisma.user.upsert);
 const mockRevalidatePath = vi.mocked(revalidatePath);
 
 const USER_ID = "user-123";
+const MOCK_DB_USER = {
+  id: USER_ID,
+  email: "test@example.com",
+  name: "John Doe",
+  emailVerified: true,
+  image: "https://example.com/avatar.png",
+  role: "user",
+  banned: false,
+  banReason: null,
+  banExpires: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -45,35 +60,47 @@ describe("updateProfile", () => {
     fd.append("name", "John Doe");
     const result = await updateProfile(null, fd);
     expect(result).toEqual({ error: "Not authenticated" });
-    expect(mockUserUpdate).not.toHaveBeenCalled();
+    expect(mockUserUpsert).not.toHaveBeenCalled();
   });
 
   it("returns error when name is missing", async () => {
     mockGetSession.mockResolvedValue({ user: { id: USER_ID } } as Awaited<
       ReturnType<typeof getSession>
     >);
+    mockUserFindUnique.mockResolvedValue(MOCK_DB_USER);
     const fd = new FormData();
     const result = await updateProfile(null, fd);
     expect(result).toEqual({ error: "Name is required" });
-    expect(mockUserUpdate).not.toHaveBeenCalled();
+    expect(mockUserUpsert).not.toHaveBeenCalled();
   });
 
   it("updates user details and revalidates paths on success", async () => {
     mockGetSession.mockResolvedValue({ user: { id: USER_ID } } as Awaited<
       ReturnType<typeof getSession>
     >);
+    mockUserFindUnique.mockResolvedValue(MOCK_DB_USER);
+    mockUserUpsert.mockResolvedValue(MOCK_DB_USER);
+
     const fd = new FormData();
     fd.append("name", "Jane Doe");
     fd.append("image", "https://example.com/avatar.png");
 
     const result = await updateProfile(null, fd);
     expect(result).toEqual({ success: true });
-    expect(mockUserUpdate).toHaveBeenCalledWith({
+    expect(mockUserFindUnique).toHaveBeenCalledWith({
       where: { id: USER_ID },
-      data: {
+    });
+    expect(mockUserUpsert).toHaveBeenCalledWith({
+      where: { id: USER_ID },
+      create: expect.objectContaining({
+        id: USER_ID,
         name: "Jane Doe",
         image: "https://example.com/avatar.png",
-      },
+      }),
+      update: expect.objectContaining({
+        name: "Jane Doe",
+        image: "https://example.com/avatar.png",
+      }),
     });
     expect(mockRevalidatePath).toHaveBeenCalledWith("/profile");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/");
@@ -83,18 +110,26 @@ describe("updateProfile", () => {
     mockGetSession.mockResolvedValue({ user: { id: USER_ID } } as Awaited<
       ReturnType<typeof getSession>
     >);
+    mockUserFindUnique.mockResolvedValue(MOCK_DB_USER);
+    mockUserUpsert.mockResolvedValue(MOCK_DB_USER);
+
     const fd = new FormData();
     fd.append("name", "Jane Doe");
     fd.append("image", "");
 
     const result = await updateProfile(null, fd);
     expect(result).toEqual({ success: true });
-    expect(mockUserUpdate).toHaveBeenCalledWith({
+    expect(mockUserUpsert).toHaveBeenCalledWith({
       where: { id: USER_ID },
-      data: {
+      create: expect.objectContaining({
+        id: USER_ID,
         name: "Jane Doe",
         image: null,
-      },
+      }),
+      update: expect.objectContaining({
+        name: "Jane Doe",
+        image: null,
+      }),
     });
   });
 });
