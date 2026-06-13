@@ -8,27 +8,18 @@ import { TeamBadge } from "@/components/team-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLiveRefresh } from "@/hooks/use-live-refresh";
 import { cn } from "@/lib/utils";
-import { getAllMatches } from "@/modules/schedule";
-import { getGroups, getTeamByName, type Team } from "@/modules/teams";
+import { getGroups, type Team } from "@/modules/teams";
 import { computeTournamentBracket } from "@/modules/tournament/domain/derive-result";
+import type { StandingsTable } from "@/modules/tournament/domain/standings";
 
 // Stable empty set for default liveTeamIds prop — avoids spurious memoization
 // cache misses with React Compiler when the prop is omitted.
 const EMPTY_LIVE_TEAM_IDS = new Set<string>();
 
-// Mock standings calculation mapping
-type MockStats = {
-  position: number;
-  pts: number;
-  gf: number;
-  ga: number;
-  gd: number;
-  qualified: boolean;
-};
-
 export function StandingsView({
   defaultTab,
   locale,
+  standingsTable,
   liveTeamIds = EMPTY_LIVE_TEAM_IDS,
   liveResults = [],
   savedPredictions = null,
@@ -37,6 +28,7 @@ export function StandingsView({
 }: {
   defaultTab: "groups" | "knockout";
   locale: string;
+  standingsTable: StandingsTable;
   liveTeamIds?: Set<string>;
   liveResults?: {
     num: number;
@@ -58,6 +50,19 @@ export function StandingsView({
   const tGroupStage = useTranslations("groupStage");
 
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
+
+  const { teamLookup, teamGroupMap } = useMemo(() => {
+    const baseGroups = getGroups(locale);
+    const lookup = new Map<string, Team>();
+    const groupMap = new Map<string, string>();
+    for (const g of baseGroups) {
+      for (const t of g.teams) {
+        lookup.set(t.id, t);
+        groupMap.set(t.id, g.group);
+      }
+    }
+    return { teamLookup: lookup, teamGroupMap: groupMap };
+  }, [locale]);
 
   const groups = useMemo(() => {
     const baseGroups = getGroups(locale);
@@ -81,147 +86,6 @@ export function StandingsView({
     });
   }, [locale, savedPredictions?.groupOrders]);
 
-  // Calculate raw stats for all teams in the groups
-  const rawTeamStats = useMemo(() => {
-    const stats = new Map<
-      string,
-      {
-        pts: number;
-        gf: number;
-        ga: number;
-        gd: number;
-        isAnyMatchPlayed: boolean;
-      }
-    >();
-    const liveMap = new Map((liveResults || []).map((lr) => [lr.num, lr]));
-
-    for (const group of groups) {
-      const groupName = `Group ${group.group}`;
-      const allGroupMatches = getAllMatches().filter(
-        (m) => m.group === groupName,
-      );
-      const isAnyMatchPlayed = allGroupMatches.some((m) => {
-        const lr = liveMap.get(m.num);
-        return lr && lr.status !== "upcoming";
-      });
-
-      for (const team of group.teams) {
-        let pts = 0;
-        let gf = 0;
-        let ga = 0;
-
-        for (const match of allGroupMatches) {
-          const lr = liveMap.get(match.num);
-          if (!lr || lr.status === "upcoming") continue;
-
-          const t1 = getTeamByName(match.team1, "en");
-          const t2 = getTeamByName(match.team2, "en");
-          if (!t1 || !t2) continue;
-
-          if (t1.id === team.id) {
-            gf += lr.goals1;
-            ga += lr.goals2;
-            if (lr.goals1 > lr.goals2) pts += 3;
-            else if (lr.goals1 === lr.goals2) pts += 1;
-          } else if (t2.id === team.id) {
-            gf += lr.goals2;
-            ga += lr.goals1;
-            if (lr.goals2 > lr.goals1) pts += 3;
-            else if (lr.goals2 === lr.goals1) pts += 1;
-          }
-        }
-
-        stats.set(team.id, { pts, gf, ga, gd: gf - ga, isAnyMatchPlayed });
-      }
-    }
-    return stats;
-  }, [groups, liveResults]);
-
-  // Compute the Best Third-place Teams standings table
-  const bestThirdsStandings = useMemo(() => {
-    const thirds = groups.map((g) => {
-      const team = g.teams[2]; // 3rd place team in ordered array
-      const stats = rawTeamStats.get(team.id) || {
-        pts: 0,
-        gf: 0,
-        ga: 0,
-        gd: 0,
-        isAnyMatchPlayed: false,
-      };
-      return {
-        team,
-        groupLetter: g.group,
-        position: 3,
-        pts: stats.pts,
-        gf: stats.gf,
-        ga: stats.ga,
-        gd: stats.gd,
-        qualified: true,
-      };
-    });
-
-    if (
-      savedPredictions?.thirdPlaceOrder &&
-      savedPredictions.thirdPlaceOrder.length > 0
-    ) {
-      const orderMap = new Map(
-        savedPredictions.thirdPlaceOrder.map((id, index) => [id, index]),
-      );
-      return thirds.sort((a, b) => {
-        const aId = `3rd-${a.groupLetter.toLowerCase()}`;
-        const bId = `3rd-${b.groupLetter.toLowerCase()}`;
-        const aIndex = orderMap.get(aId) ?? 999;
-        const bIndex = orderMap.get(bId) ?? 999;
-        return aIndex - bIndex;
-      });
-    }
-
-    return thirds;
-  }, [groups, rawTeamStats, savedPredictions?.thirdPlaceOrder]);
-
-  // Build the final teamStats map including the qualified flag
-  const teamStats = useMemo(() => {
-    const statsMap = new Map<string, MockStats>();
-    const bestThirdsIds = new Set(
-      bestThirdsStandings.slice(0, 8).map((row) => row.team.id),
-    );
-
-    for (const group of groups) {
-      for (let index = 0; index < group.teams.length; index++) {
-        const team = group.teams[index];
-        const raw = rawTeamStats.get(team.id) || {
-          pts: 0,
-          gf: 0,
-          ga: 0,
-          gd: 0,
-          isAnyMatchPlayed: false,
-        };
-        const position = index + 1;
-
-        let qualified = true;
-        if (raw.isAnyMatchPlayed) {
-          if (position === 1 || position === 2) {
-            qualified = true;
-          } else if (position === 3) {
-            qualified = bestThirdsIds.has(team.id);
-          } else {
-            qualified = false;
-          }
-        }
-
-        statsMap.set(team.id, {
-          position,
-          pts: raw.pts,
-          gf: raw.gf,
-          ga: raw.ga,
-          gd: raw.gd,
-          qualified,
-        });
-      }
-    }
-    return statsMap;
-  }, [groups, rawTeamStats, bestThirdsStandings]);
-
   // Build predictions & propagate teams in bracket core
   const bracketMatches = useMemo(() => {
     const groupOrders =
@@ -239,8 +103,15 @@ export function StandingsView({
       thirdPlaceOrder,
       knockoutWinners,
       advancement: savedAdvancement,
+      standingsTable,
     });
-  }, [groups, savedPredictions, savedKnockoutWinners, savedAdvancement]);
+  }, [
+    groups,
+    savedPredictions,
+    savedKnockoutWinners,
+    savedAdvancement,
+    standingsTable,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -296,7 +167,8 @@ export function StandingsView({
             {/* Groups Grid */}
             <div className="min-w-0 flex-1">
               <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-                {groups.map((group) => {
+                {Object.keys(standingsTable.groups).map((groupLetter) => {
+                  const groupEntry = standingsTable.groups[groupLetter];
                   const cutPosition = [
                     "A",
                     "B",
@@ -306,19 +178,19 @@ export function StandingsView({
                     "F",
                     "G",
                     "H",
-                  ].includes(group.group)
+                  ].includes(groupLetter)
                     ? 3
                     : 2;
                   return (
                     <div
-                      key={group.group}
+                      key={groupLetter}
                       className="rounded-xl border border-hairline bg-canvas p-4 shadow-sm dark:border-ash dark:bg-ink flex flex-col justify-between"
                     >
                       <div>
                         {/* Group Header */}
                         <div className="mb-3 flex items-center justify-between gap-2 border-b border-hairline pb-2 dark:border-ash">
                           <span className="font-display-campaign text-sm font-bold uppercase tracking-wider text-ink dark:text-canvas">
-                            {tGroupStage("group", { letter: group.group })}
+                            {tGroupStage("group", { letter: groupLetter })}
                           </span>
                           <span className="rounded-full bg-soft-cloud px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-mute dark:bg-charcoal dark:text-stone">
                             {tGroupStage("qualifies", {
@@ -353,27 +225,20 @@ export function StandingsView({
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-hairline/10 dark:divide-ash/10 select-none">
-                            {group.teams.map((team, index) => {
-                              const stats = teamStats.get(team.id) || {
-                                position: index + 1,
-                                pts: 0,
-                                gf: 0,
-                                ga: 0,
-                                gd: 0,
-                                qualified: true,
-                              };
-                              const gdSign =
-                                stats.gd > 0 ? `+${stats.gd}` : stats.gd;
+                            {groupEntry.rows.map((row) => {
+                              const team = teamLookup.get(row.teamId);
+                              if (!team) return null;
+                              const gdSign = row.gd > 0 ? `+${row.gd}` : row.gd;
                               return (
                                 <tr
-                                  key={team.id}
+                                  key={row.teamId}
                                   className={cn(
                                     "text-sm font-semibold transition-opacity duration-200",
-                                    !stats.qualified && "opacity-50 grayscale",
+                                    !row.qualified && "opacity-50 grayscale",
                                   )}
                                 >
                                   <td className="py-1.5 px-1 font-[family-name:var(--font-oswald)] text-xs text-mute dark:text-stone text-left">
-                                    {stats.position}
+                                    {row.position}
                                   </td>
                                   <td className="py-1.5 px-1 w-full max-w-[150px]">
                                     <div className="flex items-center gap-1.5">
@@ -383,7 +248,7 @@ export function StandingsView({
                                         border={false}
                                         showGrip={false}
                                       />
-                                      {liveTeamIds.has(team.id) && (
+                                      {liveTeamIds.has(row.teamId) && (
                                         <span className="animate-pulse rounded px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-sale/10 text-sale dark:bg-sale/20 shrink-0">
                                           {t("liveMarker")}
                                         </span>
@@ -391,20 +256,20 @@ export function StandingsView({
                                     </div>
                                   </td>
                                   <td className="py-1.5 px-1.5 text-center font-[family-name:var(--font-oswald)] text-xs text-ink dark:text-canvas">
-                                    {stats.pts}
+                                    {row.pts}
                                   </td>
                                   <td className="py-1.5 px-1 text-center font-[family-name:var(--font-oswald)] text-xs text-ink dark:text-canvas">
-                                    {stats.gf}
+                                    {row.gf}
                                   </td>
                                   <td className="py-1.5 px-1 text-center font-[family-name:var(--font-oswald)] text-xs text-ink dark:text-canvas">
-                                    {stats.ga}
+                                    {row.ga}
                                   </td>
                                   <td
                                     className={cn(
                                       "py-1.5 px-1.5 text-center text-xs font-medium font-[family-name:var(--font-oswald)]",
-                                      stats.gd > 0
+                                      row.gd > 0
                                         ? "text-success dark:text-success-bright"
-                                        : stats.gd < 0
+                                        : row.gd < 0
                                           ? "text-sale"
                                           : "text-ink dark:text-canvas",
                                     )}
@@ -432,7 +297,7 @@ export function StandingsView({
                     {t("bestThirds")}
                   </span>
                   <span className="rounded-full bg-soft-cloud px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-mute dark:bg-charcoal dark:text-stone">
-                    Clasifican 8
+                    {t("bestThirdsQualifies")}
                   </span>
                 </div>
 
@@ -450,32 +315,33 @@ export function StandingsView({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-hairline/10 dark:divide-ash/10 select-none">
-                    {bestThirdsStandings.map((row, index) => {
-                      const position = index + 1;
-                      const qualified = position <= 8;
+                    {standingsTable.bestThirds.map((row) => {
+                      const team = teamLookup.get(row.teamId);
+                      if (!team) return null;
+                      const groupLetter = teamGroupMap.get(row.teamId) || "";
                       const gdSign = row.gd > 0 ? `+${row.gd}` : row.gd;
 
                       return (
                         <tr
-                          key={row.team.id}
+                          key={row.teamId}
                           className={cn(
                             "text-sm font-semibold transition-opacity duration-200",
-                            !qualified && "opacity-50 grayscale",
+                            !row.qualified && "opacity-50 grayscale",
                           )}
                         >
                           <td className="py-1.5 px-1 font-[family-name:var(--font-oswald)] text-xs text-mute dark:text-stone text-left">
-                            {position}
+                            {row.position}
                           </td>
                           <td className="py-1.5 px-1 w-full max-w-[150px]">
                             <div className="flex items-center gap-1">
                               <TeamBadge
-                                team={row.team}
+                                team={team}
                                 size="compact"
                                 border={false}
                                 showGrip={false}
                               />
                               <span className="text-[9px] uppercase font-bold text-mute dark:text-stone shrink-0">
-                                ({row.groupLetter})
+                                ({groupLetter})
                               </span>
                             </div>
                           </td>
