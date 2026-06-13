@@ -1,7 +1,8 @@
-import { errAsync, okAsync, ResultAsync } from "neverthrow";
+import { okAsync, ResultAsync } from "neverthrow";
 import { toScoreableContent } from "../../../lib/scoring";
 import type { BetRepository } from "../../bet/domain/bet-repository";
 import type { BettingWindow } from "../../bet/domain/betting-window";
+import { viewerInCommunity } from "../../community/application/viewer-in-community";
 import type { CommunityRepository } from "../../community/domain/community-repository";
 import type { LiveResultRepository } from "../../live/domain/live-result-repository";
 import { getActualScoreableContent } from "../../tournament/application/get-actual-scoreable-content";
@@ -25,59 +26,47 @@ export function getLeaderboard(
   getUserName: (userId: string) => Promise<string | null>,
   query: GetLeaderboardQuery,
 ): ResultAsync<Leaderboard, DomainError> {
-  return ResultAsync.fromSafePromise(
-    communityRepo.findBySlug(query.communitySlug),
-  ).andThen((community) => {
-    if (!community) {
-      return errAsync<Leaderboard, DomainError>(domainError("NOT_FOUND"));
-    }
+  return viewerInCommunity(communityRepo, getUserName, {
+    communitySlug: query.communitySlug,
+    viewerId: query.viewerId,
+  })
+    .mapErr((err) =>
+      domainError(err.code === "NOT_FOUND" ? "NOT_FOUND" : "FORBIDDEN"),
+    )
+    .andThen((context) => {
+      return ResultAsync.fromSafePromise(
+        Promise.all([
+          betRepo.listByOwners(
+            context.imported ? [context.ownerId] : context.memberIds,
+          ),
+          tournamentRepo.get(),
+          liveResultRepo.findAll(),
+        ]),
+      ).andThen(([bets, tournament, liveResults]) => {
+        const activeTournament = tournament ?? Tournament.createDefault();
+        const actualResults = getActualScoreableContent(
+          tournament,
+          liveResults,
+        );
+        const isCompetitionEnded =
+          activeTournament.isCompetitionEnded(liveResults);
 
-    const isViewerMember = community.memberIds.includes(query.viewerId);
-    if (!isViewerMember) {
-      return errAsync<Leaderboard, DomainError>(domainError("FORBIDDEN"));
-    }
+        const betsWithOwners = bets.map((bet) => ({
+          bet,
+          ownerName: context.nameOf(bet.userId),
+        }));
 
-    return ResultAsync.fromSafePromise(
-      Promise.all([
-        betRepo.listByOwners(
-          community.imported ? [community.ownerId] : community.memberIds,
-        ),
-        tournamentRepo.get(),
-        liveResultRepo.findAll(),
-        Promise.all(
-          community.memberIds.map(async (userId) => {
-            const name = await getUserName(userId);
-            return { userId, name: name ?? "Unknown" };
-          }),
-        ),
-      ]),
-    ).andThen(([bets, tournament, liveResults, userNamesList]) => {
-      const activeTournament = tournament ?? Tournament.createDefault();
-      const actualResults = getActualScoreableContent(tournament, liveResults);
-      const isCompetitionEnded =
-        activeTournament.isCompetitionEnded(liveResults);
+        const leaderboard = Leaderboard.create(
+          betsWithOwners,
+          toScoreableContent(actualResults),
+          query.window,
+          query.now,
+          query.viewerId,
+          isCompetitionEnded,
+          context.imported,
+        );
 
-      const userNamesMap = new Map<string, string>();
-      for (const { userId, name } of userNamesList) {
-        userNamesMap.set(userId, name);
-      }
-
-      const betsWithOwners = bets.map((bet) => ({
-        bet,
-        ownerName: userNamesMap.get(bet.userId) ?? "Unknown",
-      }));
-
-      const leaderboard = Leaderboard.create(
-        betsWithOwners,
-        toScoreableContent(actualResults),
-        query.window,
-        query.now,
-        query.viewerId,
-        isCompetitionEnded,
-        community.imported,
-      );
-
-      return okAsync<Leaderboard, DomainError>(leaderboard);
+        return okAsync<Leaderboard, DomainError>(leaderboard);
+      });
     });
-  });
 }
