@@ -323,7 +323,10 @@
     "NOT_AUTHENTICATED": "No autenticado",
     "NAME_REQUIRED": "El nombre es obligatorio",
     "NOT_FOUND": "Usuario no encontrado",
-    "SAVE_FAILED": "No se pudo guardar el perfil. Inténtalo de nuevo"
+    "SAVE_FAILED": "No se pudo guardar el perfil. Inténtalo de nuevo",
+    "FORBIDDEN": "No estás autorizado para realizar esta acción",
+    "SELF_DEMOTION_NOT_ALLOWED": "No puedes cambiar tu propio rol",
+    "SUPER_ADMIN_IMMUTABLE": "El rol de Super Admin no se puede modificar"
   },
   "liveErrors": {
     "FORBIDDEN": "No tienes autorización para modificar resultados de partidos.",
