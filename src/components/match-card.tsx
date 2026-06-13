@@ -3,6 +3,7 @@
 import { MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { placeholderLabel } from "@/components/placeholder-label";
 import { TeamBadge } from "@/components/team-badge";
 import { getKickoffInstant } from "@/modules/schedule";
 import { getTeamByName } from "@/modules/teams";
@@ -20,37 +21,6 @@ export type MatchCardProps = {
   score1?: string;
   score2?: string;
 };
-
-// biome-ignore lint/suspicious/noExplicitAny: translator helper type
-function getPlaceholderName(code: string, t: any): string {
-  const matchWinner = code.match(/^W(\d+)$/);
-  if (matchWinner) {
-    return t("winnerMatch", { num: matchWinner[1] });
-  }
-
-  const matchLoser = code.match(/^L(\d+)$/);
-  if (matchLoser) {
-    return t("loserMatch", { num: matchLoser[1] });
-  }
-
-  const matchGroup = code.match(/^([12])([A-L])$/);
-  if (matchGroup) {
-    const position = matchGroup[1];
-    const group = matchGroup[2];
-    if (position === "1") {
-      return t("winnerGroup", { group });
-    } else {
-      return t("runnerUpGroup", { group });
-    }
-  }
-
-  if (code.startsWith("3")) {
-    const groups = code.substring(1);
-    return t("bestThird", { groups });
-  }
-
-  return code;
-}
 
 function PlaceholderRow({ label, score }: { label: string; score?: string }) {
   return (
@@ -118,8 +88,8 @@ export function MatchCard({
   const isT1Placeholder = !t1;
   const isT2Placeholder = !t2;
 
-  const t1Label = isT1Placeholder ? getPlaceholderName(team1, t) : t1.name;
-  const t2Label = isT2Placeholder ? getPlaceholderName(team2, t) : t2.name;
+  const t1Label = isT1Placeholder ? placeholderLabel(team1, t) : t1.name;
+  const t2Label = isT2Placeholder ? placeholderLabel(team2, t) : t2.name;
 
   return (
     <div className="rounded-xl border border-hairline bg-canvas p-4 shadow-sm transition-all duration-200 hover:shadow-md dark:border-ash dark:bg-ink flex flex-col justify-between">

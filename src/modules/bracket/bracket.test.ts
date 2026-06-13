@@ -3,6 +3,7 @@ import combinationsData from "../../../data/worldcup.combinations.json";
 import {
   computeR32Matches,
   createInitialState,
+  placeholderCodeForSlot,
   type TournamentState,
 } from "./index";
 
@@ -332,5 +333,35 @@ describe("client-bundle guard", () => {
     expect(typeof mod.createEmptyKnockoutMatches).toBe("function");
     expect(Array.isArray(mod.ROUND_ORDER)).toBe(true);
     expect(typeof mod.KNOCKOUT_MATCH_IDS).toBe("object");
+  });
+});
+
+describe("placeholderCodeForSlot", () => {
+  it("resolves R32 group ref", () => {
+    expect(placeholderCodeForSlot("R32-73", 1)).toBe("2A");
+    expect(placeholderCodeForSlot("R32-73", 2)).toBe("2B");
+  });
+
+  it("resolves R32 thirds", () => {
+    expect(placeholderCodeForSlot("R32-74", 2)).toBe("3A/B/C/D/F");
+    expect(placeholderCodeForSlot("R32-87", 2)).toBe("3D/E/I/J/L");
+    // test the mock/fallback case
+    expect(placeholderCodeForSlot("R32-999", 2)).toBe("3ABCD");
+  });
+
+  it("resolves winner-fed slots", () => {
+    expect(placeholderCodeForSlot("R16-89", 1)).toBe("W74");
+    expect(placeholderCodeForSlot("R16-89", 2)).toBe("W77");
+    expect(placeholderCodeForSlot("QF-97", 1)).toBe("W89");
+  });
+
+  it("resolves loser-fed third-place slots", () => {
+    expect(placeholderCodeForSlot("3RD", 1)).toBe("L101");
+    expect(placeholderCodeForSlot("3RD", 2)).toBe("L102");
+  });
+
+  it("resolves final slots", () => {
+    expect(placeholderCodeForSlot("F", 1)).toBe("W101");
+    expect(placeholderCodeForSlot("F", 2)).toBe("W102");
   });
 });

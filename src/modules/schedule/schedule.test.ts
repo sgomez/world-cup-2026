@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import worldcupData from "@/../data/worldcup.json";
-import { getAllMatches, getKickoffInstant, getMatchByNum } from "./index";
+import {
+  getAllMatches,
+  getKickoffInstant,
+  getMatchByNum,
+  matchScore,
+  matchStatus,
+  numForSlot,
+  slotForNum,
+} from "./index";
 
 describe("Match numbering in worldcup.json", () => {
   const matches = worldcupData.matches as Array<{ num?: number }>;
@@ -111,5 +119,79 @@ describe("getKickoffInstant", () => {
     expect(getKickoffInstant({ date: "2026-06-11", time: "" }).isErr()).toBe(
       true,
     );
+  });
+});
+
+describe("slotForNum and numForSlot", () => {
+  it("covers boundaries explicitly", () => {
+    expect(slotForNum(73)).toBe("R32-73");
+    expect(slotForNum(88)).toBe("R32-88");
+    expect(slotForNum(89)).toBe("R16-89");
+    expect(slotForNum(96)).toBe("R16-96");
+    expect(slotForNum(97)).toBe("QF-97");
+    expect(slotForNum(100)).toBe("QF-100");
+    expect(slotForNum(101)).toBe("SF-101");
+    expect(slotForNum(102)).toBe("SF-102");
+    expect(slotForNum(103)).toBe("3RD");
+    expect(slotForNum(104)).toBe("F");
+  });
+
+  it("returns undefined for group stage matches (1-72)", () => {
+    for (let i = 1; i <= 72; i++) {
+      expect(slotForNum(i)).toBeUndefined();
+    }
+  });
+
+  it("holds round-trip numForSlot(slotForNum(n)) === n for all knockout nums", () => {
+    for (let n = 73; n <= 104; n++) {
+      const slot = slotForNum(n);
+      expect(slot).toBeDefined();
+      expect(numForSlot(slot!)).toBe(n);
+    }
+  });
+});
+
+describe("matchStatus and matchScore", () => {
+  const mockLiveResults = [
+    { num: 1, status: "live", goals1: 2, goals2: 1 },
+    {
+      num: 2,
+      status: "finished",
+      goals1: 1,
+      goals2: 1,
+      penalties1: 4,
+      penalties2: 3,
+    },
+    { num: 3, status: "upcoming", goals1: 0, goals2: 0 },
+  ];
+
+  it("handles absent result", () => {
+    expect(matchStatus(4, mockLiveResults)).toBe("upcoming");
+    expect(matchScore(4, mockLiveResults)).toBeUndefined();
+  });
+
+  it("handles upcoming status", () => {
+    expect(matchStatus(3, mockLiveResults)).toBe("upcoming");
+    expect(matchScore(3, mockLiveResults)).toBeUndefined();
+  });
+
+  it("handles live status", () => {
+    expect(matchStatus(1, mockLiveResults)).toBe("live");
+    expect(matchScore(1, mockLiveResults)).toEqual({
+      goals1: 2,
+      goals2: 1,
+      penalties1: undefined,
+      penalties2: undefined,
+    });
+  });
+
+  it("handles finished status", () => {
+    expect(matchStatus(2, mockLiveResults)).toBe("finished");
+    expect(matchScore(2, mockLiveResults)).toEqual({
+      goals1: 1,
+      goals2: 1,
+      penalties1: 4,
+      penalties2: 3,
+    });
   });
 });

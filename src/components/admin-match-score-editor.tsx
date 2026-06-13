@@ -4,6 +4,7 @@ import { CalendarDays, Filter, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { upsertLiveResultAction } from "@/app/actions/live";
+import { placeholderLabel } from "@/components/placeholder-label";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import type {
@@ -60,36 +61,6 @@ const getLocalDateString = (dateStr: string, timeStr: string) => {
     return dateStr;
   }
 };
-
-function getPlaceholderName(code: string, t: any): string {
-  const matchWinner = code.match(/^W(\d+)$/);
-  if (matchWinner) {
-    return t("winnerMatch", { num: matchWinner[1] });
-  }
-
-  const matchLoser = code.match(/^L(\d+)$/);
-  if (matchLoser) {
-    return t("loserMatch", { num: matchLoser[1] });
-  }
-
-  const matchGroup = code.match(/^([12])([A-L])$/);
-  if (matchGroup) {
-    const position = matchGroup[1];
-    const group = matchGroup[2];
-    if (position === "1") {
-      return t("winnerGroup", { group });
-    } else {
-      return t("runnerUpGroup", { group });
-    }
-  }
-
-  if (code.startsWith("3")) {
-    const groups = code.substring(1);
-    return t("bestThird", { groups });
-  }
-
-  return code;
-}
 
 export function AdminMatchScoreEditor({
   matches,
@@ -484,8 +455,8 @@ function MatchEditorCard({
     t2 = getTeamByName(team2Id, locale);
   }
 
-  const t1Label = t1 ? t1.name : getPlaceholderName(team1Id, tCalendar);
-  const t2Label = t2 ? t2.name : getPlaceholderName(team2Id, tCalendar);
+  const t1Label = t1 ? t1.name : placeholderLabel(team1Id, tCalendar);
+  const t2Label = t2 ? t2.name : placeholderLabel(team2Id, tCalendar);
 
   const save = async (vals: {
     status: LiveStatus;
