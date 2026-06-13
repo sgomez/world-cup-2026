@@ -3,14 +3,12 @@
 import { Trophy, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import { placeholderLabel } from "@/components/placeholder-label";
+import { KnockoutBracket } from "@/components/knockout-bracket";
 import { TeamBadge } from "@/components/team-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import { KNOCKOUT_MATCH_IDS, placeholderCodeForSlot } from "@/modules/bracket";
-import { getAllTeamsLookup } from "@/modules/bracket/prediction-ui";
-import { getAllMatches, matchScore, matchStatus } from "@/modules/schedule";
+import { getAllMatches } from "@/modules/schedule";
 import { getGroups, getTeamByName, type Team } from "@/modules/teams";
 import { computeTournamentBracket } from "@/modules/tournament/domain/derive-result";
 
@@ -61,8 +59,6 @@ export function StandingsView({
   const router = useRouter();
   const t = useTranslations("tournament");
   const tGroupStage = useTranslations("groupStage");
-  const tKnockout = useTranslations("knockoutStage");
-  const tCalendar = useTranslations("calendar");
 
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const [isMounted, setIsMounted] = useState(false);
@@ -563,270 +559,11 @@ export function StandingsView({
 
         {/* Knockout Stage Tab */}
         <TabsContent value="knockout" className="space-y-6">
-          {Object.entries(KNOCKOUT_MATCH_IDS).map(
-            ([roundName, matchIds], _rIndex) => {
-              // Get proper round title
-              let roundTitle = roundName;
-              let accentColor = "bg-cyan-500";
-              if (roundName === "R32") {
-                roundTitle = tKnockout("roundOf32");
-                accentColor = "bg-cyan-500";
-              } else if (roundName === "R16") {
-                roundTitle = tKnockout("roundOf16");
-                accentColor = "bg-cyan-500";
-              } else if (roundName === "QF") {
-                roundTitle = tKnockout("quarterFinals");
-                accentColor = "bg-amber-500";
-              } else if (roundName === "SF") {
-                roundTitle = tKnockout("semiFinals");
-                accentColor = "bg-amber-500";
-              } else if (roundName === "3RD") {
-                roundTitle = tKnockout("thirdPlaceMatch");
-                accentColor = "bg-rose-500";
-              } else if (roundName === "F") {
-                roundTitle = tKnockout("final");
-                accentColor = "bg-emerald-500";
-              }
-
-              const teamsLookup = getAllTeamsLookup(locale);
-              const matches = matchIds.map((matchId, _i) => {
-                const match = bracketMatches[matchId];
-                return {
-                  matchId,
-                  matchNumber: matchId.includes("-")
-                    ? parseInt(matchId.split("-")[1], 10)
-                    : matchId === "F"
-                      ? 104
-                      : 103,
-                  team1: match?.team1Id
-                    ? (teamsLookup.get(match.team1Id) ?? null)
-                    : null,
-                  team2: match?.team2Id
-                    ? (teamsLookup.get(match.team2Id) ?? null)
-                    : null,
-                  winnerId: match?.winnerId ?? null,
-                  matchObj: match,
-                };
-              });
-
-              // Grid column classes depending on match count in round
-              let gridColsClass = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
-              if (roundName === "R16") {
-                gridColsClass = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
-              } else if (roundName === "QF") {
-                gridColsClass = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
-              } else if (
-                roundName === "SF" ||
-                roundName === "3RD" ||
-                roundName === "F"
-              ) {
-                gridColsClass = "grid-cols-1 sm:grid-cols-2 max-w-2xl";
-              }
-
-              return (
-                <div
-                  key={roundName}
-                  className="rounded-xl border border-hairline bg-canvas/60 p-4 shadow-sm dark:border-ash dark:bg-ink/40"
-                >
-                  {/* Round Header */}
-                  <div className="mb-4 flex items-center gap-2">
-                    <div className={cn("h-4 w-1 rounded-full", accentColor)} />
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-ink dark:text-canvas">
-                      {roundTitle}
-                    </h3>
-                    <span className="text-xs text-mute dark:text-stone font-semibold">
-                      ({tKnockout("matchCount", { count: matchIds.length })})
-                    </span>
-                  </div>
-
-                  {/* Match Grid */}
-                  <div className={cn("grid gap-4", gridColsClass)}>
-                    {matches.map(
-                      ({
-                        matchId,
-                        matchNumber,
-                        team1,
-                        team2,
-                        winnerId,
-                        matchObj,
-                      }) => {
-                        const scores = matchScore(matchNumber, liveResults);
-                        const status = matchStatus(matchNumber, liveResults);
-                        const finished = status === "finished";
-                        const live = status === "live";
-                        const upcoming =
-                          status === "upcoming" &&
-                          !!matchObj?.team1Id &&
-                          !!matchObj?.team2Id;
-
-                        const team1Code = team1
-                          ? team1.id
-                          : placeholderCodeForSlot(matchId, 1);
-                        const team2Code = team2
-                          ? team2.id
-                          : placeholderCodeForSlot(matchId, 2);
-
-                        const team1Label = team1
-                          ? team1.name
-                          : placeholderLabel(team1Code, tCalendar);
-                        const team2Label = team2
-                          ? team2.name
-                          : placeholderLabel(team2Code, tCalendar);
-
-                        // Penalties displays
-                        const pen1 =
-                          scores?.penalties1 !== undefined
-                            ? `(${scores.penalties1})`
-                            : "";
-                        const pen2 =
-                          scores?.penalties2 !== undefined
-                            ? `(${scores.penalties2})`
-                            : "";
-
-                        return (
-                          <div
-                            key={matchId}
-                            className="rounded-lg border border-hairline bg-canvas p-3 shadow-sm dark:border-ash dark:bg-ink flex flex-col justify-between"
-                          >
-                            <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-mute dark:text-stone border-b border-hairline/25 pb-1 dark:border-ash/25 flex items-center justify-between">
-                              <span>
-                                {tKnockout("match", { number: matchNumber })}
-                              </span>
-                              {finished ? (
-                                <span className="text-mute/70 dark:text-stone/70 font-semibold">
-                                  {tCalendar("finished")}
-                                </span>
-                              ) : live ? (
-                                <span className="text-sale font-bold animate-pulse flex items-center gap-1">
-                                  <span className="h-1 w-1 rounded-full bg-sale" />
-                                  {tCalendar("live")}
-                                </span>
-                              ) : upcoming ? (
-                                <span className="text-primary font-bold animate-pulse flex items-center gap-1">
-                                  <span className="h-1 w-1 rounded-full bg-primary" />
-                                  {tCalendar("upcoming")}
-                                </span>
-                              ) : (
-                                <span className="text-mute/40 dark:text-stone/40 font-semibold">
-                                  TBD
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex flex-col gap-1.5 select-none">
-                              {/* Team 1 Row */}
-                              <div
-                                className={cn(
-                                  "flex items-center justify-between gap-2 rounded-md",
-                                  finished &&
-                                    winnerId !== team1?.id &&
-                                    "opacity-45 grayscale",
-                                )}
-                              >
-                                <div className="w-full min-w-0">
-                                  {team1 ? (
-                                    <TeamBadge
-                                      team={team1}
-                                      size="compact"
-                                      border={false}
-                                      showGrip={false}
-                                      matched={
-                                        finished && winnerId === team1?.id
-                                      }
-                                      rightAddon={
-                                        (finished || live) && scores ? (
-                                          <div
-                                            className={cn(
-                                              "flex items-center gap-1 font-[family-name:var(--font-oswald)] text-xs font-bold shrink-0 pr-1",
-                                              finished && winnerId === team1?.id
-                                                ? "text-success dark:text-success-bright"
-                                                : "text-ink dark:text-canvas",
-                                            )}
-                                          >
-                                            <span>{scores.goals1}</span>
-                                            {pen1 && (
-                                              <span className="text-[10px] text-mute dark:text-stone font-semibold">
-                                                {pen1}
-                                              </span>
-                                            )}
-                                          </div>
-                                        ) : null
-                                      }
-                                    />
-                                  ) : (
-                                    <div className="flex items-center gap-2 rounded bg-soft-cloud/30 px-2 py-1.5 border border-dashed border-hairline/50 dark:bg-charcoal/30 dark:border-ash/50 h-8">
-                                      <div className="h-4 w-4 shrink-0 rounded-sm bg-soft-cloud dark:bg-charcoal flex items-center justify-center text-[10px] font-bold text-mute/50">
-                                        ?
-                                      </div>
-                                      <span className="text-[11px] font-[family-name:var(--font-oswald)] uppercase text-mute/60 dark:text-stone/60 truncate tracking-wide">
-                                        {team1Label}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Team 2 Row */}
-                              <div
-                                className={cn(
-                                  "flex items-center justify-between gap-2 rounded-md",
-                                  finished &&
-                                    winnerId !== team2?.id &&
-                                    "opacity-45 grayscale",
-                                )}
-                              >
-                                <div className="w-full min-w-0">
-                                  {team2 ? (
-                                    <TeamBadge
-                                      team={team2}
-                                      size="compact"
-                                      border={false}
-                                      showGrip={false}
-                                      matched={
-                                        finished && winnerId === team2?.id
-                                      }
-                                      rightAddon={
-                                        (finished || live) && scores ? (
-                                          <div
-                                            className={cn(
-                                              "flex items-center gap-1 font-[family-name:var(--font-oswald)] text-xs font-bold shrink-0 pr-1",
-                                              finished && winnerId === team2?.id
-                                                ? "text-success dark:text-success-bright"
-                                                : "text-ink dark:text-canvas",
-                                            )}
-                                          >
-                                            <span>{scores.goals2}</span>
-                                            {pen2 && (
-                                              <span className="text-[10px] text-mute dark:text-stone font-semibold">
-                                                {pen2}
-                                              </span>
-                                            )}
-                                          </div>
-                                        ) : null
-                                      }
-                                    />
-                                  ) : (
-                                    <div className="flex items-center gap-2 rounded bg-soft-cloud/30 px-2 py-1.5 border border-dashed border-hairline/50 dark:bg-charcoal/30 dark:border-ash/50 h-8">
-                                      <div className="h-4 w-4 shrink-0 rounded-sm bg-soft-cloud dark:bg-charcoal flex items-center justify-center text-[10px] font-bold text-mute/50">
-                                        ?
-                                      </div>
-                                      <span className="text-[11px] font-[family-name:var(--font-oswald)] uppercase text-mute/60 dark:text-stone/60 truncate tracking-wide">
-                                        {team2Label}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      },
-                    )}
-                  </div>
-                </div>
-              );
-            },
-          )}
+          <KnockoutBracket
+            mode="scored"
+            bracketMatches={bracketMatches}
+            liveResults={liveResults}
+          />
         </TabsContent>
       </Tabs>
     </div>

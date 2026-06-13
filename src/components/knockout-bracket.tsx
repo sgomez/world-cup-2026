@@ -2,17 +2,25 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import type { Dispatch } from "react";
+import { placeholderLabel } from "@/components/placeholder-label";
 import { TeamBadge } from "@/components/team-badge";
 import { cn } from "@/lib/utils";
 import {
   KNOCKOUT_MATCH_IDS,
+  type KnockoutMatch,
   type KnockoutRound,
+  placeholderCodeForSlot,
   type TournamentState,
 } from "@/modules/bracket";
 import {
   getAllTeamsLookup,
   type TournamentAction,
 } from "@/modules/bracket/prediction-ui";
+import {
+  type LiveMatchResult,
+  matchScore,
+  matchStatus,
+} from "@/modules/schedule";
 import type { Team } from "@/modules/teams";
 
 type KnockoutBracketProps =
@@ -24,8 +32,8 @@ type KnockoutBracketProps =
     }
   | {
       mode: "scored";
-      // scored mode props will be defined and implemented in a follow-up issue
-      state?: unknown;
+      bracketMatches: Record<string, KnockoutMatch>;
+      liveResults?: LiveMatchResult[];
     };
 
 type RoundMetadata = {
@@ -89,31 +97,75 @@ export function MatchTeamRow({
   isLoser,
   canSelect,
   onSelect,
+  rightAddon,
+  placeholderLabelText,
 }: {
   team: Team | null;
   isWinner: boolean;
   isLoser: boolean;
   canSelect: boolean;
-  onSelect: () => void;
+  onSelect?: () => void;
+  rightAddon?: React.ReactNode;
+  placeholderLabelText?: string;
 }) {
-  if (!team) return <EmptySlot />;
+  if (!team) {
+    if (placeholderLabelText) {
+      return (
+        <div className="flex items-center gap-2 rounded bg-soft-cloud/30 px-2 py-1.5 border border-dashed border-hairline/50 dark:bg-charcoal/30 dark:border-ash/50 h-8">
+          <div className="h-4 w-4 shrink-0 rounded-sm bg-soft-cloud dark:bg-charcoal flex items-center justify-center text-[10px] font-bold text-mute/50">
+            ?
+          </div>
+          <span className="text-[11px] font-[family-name:var(--font-oswald)] uppercase text-mute/60 dark:text-stone/60 truncate tracking-wide">
+            {placeholderLabelText}
+          </span>
+        </div>
+      );
+    }
+    return <EmptySlot />;
+  }
 
-  const checkmark = isWinner ? (
-    <div className="flex items-center justify-center shrink-0 z-20">
-      <svg
-        aria-hidden="true"
-        className="h-4 w-4 text-success dark:text-success-bright"
-        fill="currentColor"
-        viewBox="0 0 20 20"
+  const checkmark =
+    isWinner && canSelect ? (
+      <div className="flex items-center justify-center shrink-0 z-20">
+        <svg
+          aria-hidden="true"
+          className="h-4 w-4 text-success dark:text-success-bright"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fillRule="evenodd"
+            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </div>
+    ) : null;
+
+  const rowContent = (
+    <TeamBadge
+      team={team}
+      matched={isWinner}
+      eliminated={isLoser}
+      rightAddon={rightAddon ?? checkmark}
+      border={false}
+      size={!canSelect ? "compact" : "default"}
+      showGrip={false}
+    />
+  );
+
+  if (!onSelect) {
+    return (
+      <div
+        className={cn(
+          "relative block w-full text-left rounded-md cursor-default",
+          isLoser && "opacity-45 grayscale",
+        )}
       >
-        <path
-          fillRule="evenodd"
-          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-          clipRule="evenodd"
-        />
-      </svg>
-    </div>
-  ) : null;
+        {rowContent}
+      </div>
+    );
+  }
 
   return (
     <button
@@ -122,77 +174,194 @@ export function MatchTeamRow({
       type="button"
       className={cn(
         "relative block w-full text-left transition-all duration-200 focus:outline-none rounded-md",
-        canSelect && "cursor-pointer hover:opacity-90 active:scale-[0.99]",
-        !canSelect && "cursor-default",
+        "cursor-pointer hover:opacity-90 active:scale-[0.99]",
       )}
     >
-      <TeamBadge
-        team={team}
-        matched={isWinner}
-        eliminated={isLoser}
-        rightAddon={checkmark}
-        border={false}
-      />
+      {rowContent}
     </button>
   );
 }
 
-function MatchCard({
-  matchNumber,
-  matchId: _matchId,
-  team1,
-  team2,
-  winnerId,
-  onSelectWinner,
-  readOnly,
-}: {
-  matchNumber: number;
-  matchId: string;
-  team1: Team | null;
-  team2: Team | null;
-  winnerId: string | null;
-  onSelectWinner: (teamId: string) => void;
-  readOnly: boolean;
-}) {
+type MatchCardProps =
+  | {
+      mode: "editable";
+      matchNumber: number;
+      matchId: string;
+      team1: Team | null;
+      team2: Team | null;
+      winnerId: string | null;
+      onSelectWinner: (teamId: string) => void;
+      readOnly: boolean;
+    }
+  | {
+      mode: "scored";
+      matchNumber: number;
+      matchId: string;
+      team1: Team | null;
+      team2: Team | null;
+      winnerId: string | null;
+      liveResults: LiveMatchResult[];
+    };
+
+function MatchCard(props: MatchCardProps) {
   const t = useTranslations("knockoutStage");
-  const canSelect = team1 !== null && team2 !== null && !readOnly;
-  return (
-    <div className="rounded-lg bg-canvas/90 p-2 shadow-md dark:bg-ink/90">
-      <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-mute dark:text-stone">
-        {t("match", { number: matchNumber })}
+  const tCalendar = useTranslations("calendar");
+
+  if (props.mode === "editable") {
+    const { matchNumber, team1, team2, winnerId, onSelectWinner, readOnly } =
+      props;
+    const canSelect = team1 !== null && team2 !== null && !readOnly;
+    return (
+      <div className="rounded-lg bg-canvas/90 p-2 shadow-md dark:bg-ink/90">
+        <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-mute dark:text-stone">
+          {t("match", { number: matchNumber })}
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <MatchTeamRow
+            team={team1}
+            isWinner={winnerId === team1?.id}
+            isLoser={winnerId !== null && winnerId !== team1?.id}
+            canSelect={canSelect}
+            onSelect={() => team1 && onSelectWinner(team1.id)}
+          />
+          <MatchTeamRow
+            team={team2}
+            isWinner={winnerId === team2?.id}
+            isLoser={winnerId !== null && winnerId !== team2?.id}
+            canSelect={canSelect}
+            onSelect={() => team2 && onSelectWinner(team2.id)}
+          />
+        </div>
       </div>
-      <div className="flex flex-col gap-0.5">
-        <MatchTeamRow
-          team={team1}
-          isWinner={winnerId === team1?.id}
-          isLoser={winnerId !== null && winnerId !== team1?.id}
-          canSelect={canSelect}
-          onSelect={() => team1 && onSelectWinner(team1.id)}
-        />
-        <MatchTeamRow
-          team={team2}
-          isWinner={winnerId === team2?.id}
-          isLoser={winnerId !== null && winnerId !== team2?.id}
-          canSelect={canSelect}
-          onSelect={() => team2 && onSelectWinner(team2.id)}
-        />
+    );
+  } else {
+    const { matchNumber, matchId, team1, team2, winnerId, liveResults } = props;
+    const scores = matchScore(matchNumber, liveResults);
+    const status = matchStatus(matchNumber, liveResults);
+    const finished = status === "finished";
+    const live = status === "live";
+    const upcoming = status === "upcoming" && team1 !== null && team2 !== null;
+
+    const team1Code = team1 ? team1.id : placeholderCodeForSlot(matchId, 1);
+    const team2Code = team2 ? team2.id : placeholderCodeForSlot(matchId, 2);
+
+    const team1Label = team1
+      ? team1.name
+      : placeholderLabel(team1Code, tCalendar);
+    const team2Label = team2
+      ? team2.name
+      : placeholderLabel(team2Code, tCalendar);
+
+    const pen1 =
+      scores?.penalties1 !== undefined ? `(${scores.penalties1})` : "";
+    const pen2 =
+      scores?.penalties2 !== undefined ? `(${scores.penalties2})` : "";
+
+    const rightAddon1 =
+      (finished || live) && scores ? (
+        <div
+          className={cn(
+            "flex items-center gap-1 font-[family-name:var(--font-oswald)] text-xs font-bold shrink-0 pr-1",
+            finished && winnerId === team1?.id
+              ? "text-success dark:text-success-bright"
+              : "text-ink dark:text-canvas",
+          )}
+        >
+          <span>{scores.goals1}</span>
+          {pen1 && (
+            <span className="text-[10px] text-mute dark:text-stone font-semibold">
+              {pen1}
+            </span>
+          )}
+        </div>
+      ) : null;
+
+    const rightAddon2 =
+      (finished || live) && scores ? (
+        <div
+          className={cn(
+            "flex items-center gap-1 font-[family-name:var(--font-oswald)] text-xs font-bold shrink-0 pr-1",
+            finished && winnerId === team2?.id
+              ? "text-success dark:text-success-bright"
+              : "text-ink dark:text-canvas",
+          )}
+        >
+          <span>{scores.goals2}</span>
+          {pen2 && (
+            <span className="text-[10px] text-mute dark:text-stone font-semibold">
+              {pen2}
+            </span>
+          )}
+        </div>
+      ) : null;
+
+    return (
+      <div className="rounded-lg bg-canvas p-3 border border-hairline shadow-sm dark:border-ash dark:bg-ink flex flex-col justify-between">
+        <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-mute dark:text-stone border-b border-hairline/25 pb-1 dark:border-ash/25 flex items-center justify-between">
+          <span>{t("match", { number: matchNumber })}</span>
+          {finished ? (
+            <span className="text-mute/70 dark:text-stone/70 font-semibold">
+              {tCalendar("finished")}
+            </span>
+          ) : live ? (
+            <span className="text-sale font-bold animate-pulse flex items-center gap-1">
+              <span className="h-1 w-1 rounded-full bg-sale" />
+              {tCalendar("live")}
+            </span>
+          ) : upcoming ? (
+            <span className="text-primary font-bold animate-pulse flex items-center gap-1">
+              <span className="h-1 w-1 rounded-full bg-primary" />
+              {tCalendar("upcoming")}
+            </span>
+          ) : (
+            <span className="text-mute/40 dark:text-stone/40 font-semibold">
+              TBD
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1.5 select-none">
+          <MatchTeamRow
+            team={team1}
+            isWinner={finished && winnerId === team1?.id}
+            isLoser={finished && winnerId !== null && winnerId !== team1?.id}
+            canSelect={false}
+            rightAddon={rightAddon1}
+            placeholderLabelText={team1Label}
+          />
+          <MatchTeamRow
+            team={team2}
+            isWinner={finished && winnerId === team2?.id}
+            isLoser={finished && winnerId !== null && winnerId !== team2?.id}
+            canSelect={false}
+            rightAddon={rightAddon2}
+            placeholderLabelText={team2Label}
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 }
 
 function RoundSection({
   round,
-  state,
-  dispatch,
-  readOnly = false,
   teamsLookup,
+  modeProps,
 }: {
   round: KnockoutRound;
-  state: TournamentState;
-  dispatch: Dispatch<TournamentAction>;
-  readOnly?: boolean;
   teamsLookup: Map<string, Team>;
+  modeProps:
+    | {
+        mode: "editable";
+        state: TournamentState;
+        dispatch: Dispatch<TournamentAction>;
+        readOnly: boolean;
+      }
+    | {
+        mode: "scored";
+        bracketMatches: Record<string, KnockoutMatch>;
+        liveResults: LiveMatchResult[];
+      };
 }) {
   const t = useTranslations("knockoutStage");
   const metadata = ROUND_METADATA[round];
@@ -200,22 +369,43 @@ function RoundSection({
   const matchCount = matchIds.length;
 
   const matches = matchIds.map((matchId, i) => {
-    const match = state.knockoutMatches[matchId];
-    return {
-      matchId,
-      matchNumber: i + 1,
-      team1: match?.team1Id ? (teamsLookup.get(match.team1Id) ?? null) : null,
-      team2: match?.team2Id ? (teamsLookup.get(match.team2Id) ?? null) : null,
-      winnerId: match?.winnerId ?? null,
-    };
+    if (modeProps.mode === "editable") {
+      const match = modeProps.state.knockoutMatches[matchId];
+      return {
+        matchId,
+        matchNumber: i + 1,
+        team1: match?.team1Id ? (teamsLookup.get(match.team1Id) ?? null) : null,
+        team2: match?.team2Id ? (teamsLookup.get(match.team2Id) ?? null) : null,
+        winnerId: match?.winnerId ?? null,
+      };
+    } else {
+      const match = modeProps.bracketMatches[matchId];
+      const matchNumber = matchId.includes("-")
+        ? parseInt(matchId.split("-")[1], 10)
+        : matchId === "F"
+          ? 104
+          : 103;
+      return {
+        matchId,
+        matchNumber,
+        team1: match?.team1Id ? (teamsLookup.get(match.team1Id) ?? null) : null,
+        team2: match?.team2Id ? (teamsLookup.get(match.team2Id) ?? null) : null,
+        winnerId: match?.winnerId ?? null,
+      };
+    }
   });
 
   const handleSelectWinner = (matchId: string, teamId: string) => {
-    const match = state.knockoutMatches[matchId];
+    if (modeProps.mode !== "editable") return;
+    const match = modeProps.state.knockoutMatches[matchId];
     if (match?.winnerId === teamId) {
-      dispatch({ type: "CLEAR_KNOCKOUT_WINNER", matchId });
+      modeProps.dispatch({ type: "CLEAR_KNOCKOUT_WINNER", matchId });
     } else {
-      dispatch({ type: "SET_KNOCKOUT_WINNER", matchId, winnerId: teamId });
+      modeProps.dispatch({
+        type: "SET_KNOCKOUT_WINNER",
+        matchId,
+        winnerId: teamId,
+      });
     }
   };
 
@@ -236,16 +426,38 @@ function RoundSection({
         </span>
       </div>
       <div className={cn("grid gap-2", metadata.gridCols)}>
-        {matches.map((match) => (
-          <MatchCard
-            key={match.matchId}
-            {...match}
-            readOnly={readOnly}
-            onSelectWinner={(teamId) =>
-              handleSelectWinner(match.matchId, teamId)
-            }
-          />
-        ))}
+        {matches.map((match) => {
+          if (modeProps.mode === "editable") {
+            return (
+              <MatchCard
+                key={match.matchId}
+                mode="editable"
+                matchId={match.matchId}
+                matchNumber={match.matchNumber}
+                team1={match.team1}
+                team2={match.team2}
+                winnerId={match.winnerId}
+                readOnly={modeProps.readOnly}
+                onSelectWinner={(teamId) =>
+                  handleSelectWinner(match.matchId, teamId)
+                }
+              />
+            );
+          } else {
+            return (
+              <MatchCard
+                key={match.matchId}
+                mode="scored"
+                matchId={match.matchId}
+                matchNumber={match.matchNumber}
+                team1={match.team1}
+                team2={match.team2}
+                winnerId={match.winnerId}
+                liveResults={modeProps.liveResults}
+              />
+            );
+          }
+        })}
       </div>
     </div>
   );
@@ -253,15 +465,21 @@ function RoundSection({
 
 export function KnockoutBracket(props: KnockoutBracketProps) {
   const locale = useLocale();
-
-  if (props.mode === "scored") {
-    // Scored mode will be implemented in a follow-up issue,
-    // currently we only render a placeholder or minimal read-only structure
-    return null;
-  }
-
-  const { state, dispatch, readOnly = false } = props;
   const teamsLookup = getAllTeamsLookup(locale);
+
+  const modeProps =
+    props.mode === "editable"
+      ? {
+          mode: "editable" as const,
+          state: props.state,
+          dispatch: props.dispatch,
+          readOnly: props.readOnly ?? false,
+        }
+      : {
+          mode: "scored" as const,
+          bracketMatches: props.bracketMatches,
+          liveResults: props.liveResults ?? [],
+        };
 
   return (
     <div className="space-y-4">
@@ -269,10 +487,8 @@ export function KnockoutBracket(props: KnockoutBracketProps) {
         <RoundSection
           key={round}
           round={round}
-          state={state}
-          dispatch={dispatch}
-          readOnly={readOnly}
           teamsLookup={teamsLookup}
+          modeProps={modeProps}
         />
       ))}
       <div className="grid gap-4 sm:grid-cols-2">
@@ -280,20 +496,12 @@ export function KnockoutBracket(props: KnockoutBracketProps) {
           <RoundSection
             key={round}
             round={round}
-            state={state}
-            dispatch={dispatch}
-            readOnly={readOnly}
             teamsLookup={teamsLookup}
+            modeProps={modeProps}
           />
         ))}
       </div>
-      <RoundSection
-        round="F"
-        state={state}
-        dispatch={dispatch}
-        readOnly={readOnly}
-        teamsLookup={teamsLookup}
-      />
+      <RoundSection round="F" teamsLookup={teamsLookup} modeProps={modeProps} />
     </div>
   );
 }
