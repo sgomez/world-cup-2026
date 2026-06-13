@@ -1,9 +1,9 @@
-import combinationsData from "../../data/worldcup.combinations.json";
 import {
   applyWinnerToMatches,
   cascadeClearWinner,
   computeR32Matches,
   createEmptyKnockoutMatches,
+  createInitialState,
   extractWinners,
   type GroupOrders,
   KNOCKOUT_MATCH_IDS,
@@ -14,7 +14,8 @@ import {
   rebuildKnockoutMatches,
   type ThirdPlaceOrder,
   type TournamentState,
-} from "./bracket-core";
+} from "@/modules/bracket";
+import combinationsData from "../../data/worldcup.combinations.json";
 import { getGroups, type Team } from "./teams";
 
 export type {
@@ -31,6 +32,7 @@ export {
   cascadeClearWinner,
   computeR32Matches,
   createEmptyKnockoutMatches,
+  createInitialState,
   extractWinners,
   KNOCKOUT_MATCH_IDS,
   ROUND_ORDER,
@@ -44,30 +46,6 @@ export type TournamentAction =
   | { type: "CLEAR_KNOCKOUT_WINNER"; matchId: string };
 
 export type PredictionAction = TournamentAction;
-
-export function createInitialState(
-  saved: PredictionState | null,
-  knockoutWinners?: Record<string, string> | null,
-): TournamentState {
-  const enGroups = getGroups("en");
-  const groupOrders =
-    saved?.groupOrders ??
-    Object.fromEntries(
-      enGroups.map((g) => [g.group, g.teams.map((t) => t.id)]),
-    );
-  const thirdPlaceOrder =
-    saved?.thirdPlaceOrder ??
-    enGroups.map((g) => `3rd-${g.group.toLowerCase()}`);
-
-  const knockoutMatches = rebuildKnockoutMatches(
-    groupOrders,
-    thirdPlaceOrder,
-    knockoutWinners ?? {},
-    combinationsData,
-  );
-
-  return { groupOrders, thirdPlaceOrder, knockoutMatches };
-}
 
 export function tournamentReducer(
   state: TournamentState,
