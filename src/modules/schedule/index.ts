@@ -85,3 +85,93 @@ export function getKickoffInstant(match: {
 
   return ok(dateObj);
 }
+
+const numToSlotMap: Record<number, string> = {
+  ...Object.fromEntries(
+    [73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88].map(
+      (n) => [n, `R32-${n}`],
+    ),
+  ),
+  ...Object.fromEntries(
+    [89, 90, 91, 92, 93, 94, 95, 96].map((n) => [n, `R16-${n}`]),
+  ),
+  ...Object.fromEntries([97, 98, 99, 100].map((n) => [n, `QF-${n}`])),
+  101: "SF-101",
+  102: "SF-102",
+  103: "3RD",
+  104: "F",
+};
+
+const slotToNumMap = new Map<string, number>(
+  Object.entries(numToSlotMap).map(([numStr, slot]) => [slot, Number(numStr)]),
+);
+
+/**
+ * Returns the bracket slot ID for a given Match Number.
+ * Group-stage numbers (1-72) or invalid numbers return undefined.
+ */
+export function slotForNum(num: number): string | undefined {
+  return numToSlotMap[num];
+}
+
+/**
+ * Returns the Match Number for a given bracket slot ID.
+ * Returns undefined if the slot is not found.
+ */
+export function numForSlot(slot: string): number | undefined {
+  return slotToNumMap.get(slot);
+}
+
+export type LiveMatchResult = {
+  num: number;
+  status: string;
+  goals1: number;
+  goals2: number;
+  penalties1?: number;
+  penalties2?: number;
+};
+
+/**
+ * Derives the match status ("upcoming" | "live" | "finished") from the live result list.
+ * An absent or "upcoming" result resolves to "upcoming".
+ */
+export function matchStatus(
+  num: number,
+  liveResults: LiveMatchResult[],
+): "upcoming" | "live" | "finished" {
+  const result = liveResults.find((r) => r.num === num);
+  if (!result || result.status === "upcoming") {
+    return "upcoming";
+  }
+  if (result.status === "live" || result.status === "finished") {
+    return result.status as "live" | "finished";
+  }
+  return "upcoming";
+}
+
+/**
+ * Derives the score for a given Match Number from the live result list.
+ * Returns undefined if the match has not started (i.e. status is "upcoming" or absent).
+ */
+export function matchScore(
+  num: number,
+  liveResults: LiveMatchResult[],
+):
+  | {
+      goals1: number;
+      goals2: number;
+      penalties1?: number;
+      penalties2?: number;
+    }
+  | undefined {
+  const result = liveResults.find((r) => r.num === num);
+  if (!result || result.status === "upcoming") {
+    return undefined;
+  }
+  return {
+    goals1: result.goals1,
+    goals2: result.goals2,
+    penalties1: result.penalties1,
+    penalties2: result.penalties2,
+  };
+}

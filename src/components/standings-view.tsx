@@ -3,6 +3,7 @@
 import { Trophy, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
+import { placeholderLabel } from "@/components/placeholder-label";
 import { TeamBadge } from "@/components/team-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "@/i18n/navigation";
@@ -45,37 +46,6 @@ function _getMockGroupStats(index: number, _groupLetter: string): MockStats {
     gd: 0,
     qualified: true,
   };
-}
-
-// Helper to determine TBD slot labels (copied and adapted from calendar page)
-// biome-ignore lint/suspicious/noExplicitAny: translator helper type
-function getPlaceholderName(code: string, t: any): string {
-  const matchWinner = code.match(/^W(\d+)$/);
-  if (matchWinner) {
-    return t("winnerMatch", { num: matchWinner[1] });
-  }
-
-  const matchLoser = code.match(/^L(\d+)$/);
-  if (matchLoser) {
-    return t("loserMatch", { num: matchLoser[1] });
-  }
-
-  const matchGroup = code.match(/^([12])([A-L])$/);
-  if (matchGroup) {
-    const position = matchGroup[1];
-    const group = matchGroup[2];
-    if (position === "1") {
-      return t("winnerGroup", { group });
-    }
-    return t("runnerUpGroup", { group });
-  }
-
-  if (code.startsWith("3")) {
-    const groups = code.substring(1);
-    return t("bestThird", { groups });
-  }
-
-  return code;
 }
 
 // Generate the placeholder code for any knockout match slot
@@ -918,10 +888,10 @@ export function StandingsView({
 
                         const team1Label = team1
                           ? team1.name
-                          : getPlaceholderName(team1Code, tCalendar);
+                          : placeholderLabel(team1Code, tCalendar);
                         const team2Label = team2
                           ? team2.name
-                          : getPlaceholderName(team2Code, tCalendar);
+                          : placeholderLabel(team2Code, tCalendar);
 
                         // Penalties displays
                         const pen1 = scores?.score1Pen

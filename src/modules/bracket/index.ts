@@ -389,3 +389,52 @@ export function createInitialState(
 
   return { groupOrders, thirdPlaceOrder, knockoutMatches };
 }
+
+/**
+ * Returns the bracket reference placeholder code for an unresolved slot.
+ * Examples: "W101", "L101", "2A", "3ABCD", etc.
+ */
+export function placeholderCodeForSlot(slotId: string, side: 1 | 2): string {
+  if (slotId.startsWith("R32-")) {
+    const num = parseInt(slotId.replace("R32-", ""), 10);
+    const matchup = R32_MATCHUPS.find((m) => m.num === num);
+    if (matchup) {
+      const ref = side === 1 ? matchup.team1 : matchup.team2;
+      if (ref) return ref;
+    }
+    // If team2 is null (third-place slot) or it is a mock matchup:
+    if (side === 2) {
+      const thirdsMap: Record<number, string> = {
+        74: "3A/B/C/D/F",
+        77: "3C/D/F/G/H",
+        79: "3C/E/F/H/I",
+        80: "3E/H/I/J/K",
+        81: "3B/E/F/I/J",
+        82: "3A/E/H/I/J",
+        85: "3E/F/G/I/J",
+        87: "3D/E/I/J/L",
+      };
+      return thirdsMap[num] || "3ABCD";
+    }
+    return matchup?.team1 || "TBD";
+  }
+
+  // Reverse lookup matchProgression to see which match feeds this slot
+  const entry = Object.entries(matchProgression).find(
+    ([_, val]) => val.nextMatch === slotId && val.slot === side,
+  );
+  if (entry) {
+    const sourceMatchId = entry[0];
+    const sourceNum = sourceMatchId.split("-")[1];
+    return `W${sourceNum}`;
+  }
+
+  if (slotId === "3RD") {
+    return side === 1 ? "L101" : "L102";
+  }
+  if (slotId === "F") {
+    return side === 1 ? "W101" : "W102";
+  }
+
+  return "TBD";
+}
