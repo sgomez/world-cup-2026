@@ -1,8 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
 import { AdminResultEditor } from "@/components/admin-result-editor";
 import { container } from "@/lib/container";
-import { getAllMatches } from "@/lib/matches";
 import type { LiveResultState } from "@/modules/live/domain/live-result";
+import { getAllMatches } from "@/modules/schedule";
 import { deriveTieInfo } from "@/modules/tournament/domain/derive-result";
 import { Tournament } from "@/modules/tournament/domain/tournament";
 

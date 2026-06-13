@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import worldcupData from "@/../data/worldcup.json";
-import { getAllMatches, getKickoffInstant, getMatchByNum } from "./matches";
+import { getAllMatches, getKickoffInstant, getMatchByNum } from "./index";
 
 describe("Match numbering in worldcup.json", () => {
   const matches = worldcupData.matches as Array<{ num?: number }>;

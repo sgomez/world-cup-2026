@@ -1,8 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
 import { StandingsView } from "@/components/standings-view";
 import { container } from "@/lib/container";
-import { getAllMatches } from "@/lib/matches";
-import { getTeamByName } from "@/lib/teams";
+import { getAllMatches } from "@/modules/schedule";
+import { getTeamByName } from "@/modules/teams";
 import { deriveResult } from "@/modules/tournament/domain/derive-result";
 import { Tournament } from "@/modules/tournament/domain/tournament";
 

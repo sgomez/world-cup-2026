@@ -4,8 +4,8 @@ import { MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { TeamBadge } from "@/components/team-badge";
-import { getKickoffInstant } from "@/lib/matches";
-import { getTeamByName } from "@/lib/teams";
+import { getKickoffInstant } from "@/modules/schedule";
+import { getTeamByName } from "@/modules/teams";
 
 export type MatchCardProps = {
   round: string;

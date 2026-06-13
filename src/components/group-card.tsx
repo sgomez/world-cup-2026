@@ -22,7 +22,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { TeamRow } from "@/components/team-row";
-import type { Team } from "@/lib/teams";
+import type { Team } from "@/modules/teams";
 
 export type GroupCardProps = {
   id?: string;

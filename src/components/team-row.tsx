@@ -3,8 +3,8 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TeamBadge } from "@/components/team-badge";
-import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
+import type { Team } from "@/modules/teams";
 
 export type TeamRowProps = {
   team: Team;

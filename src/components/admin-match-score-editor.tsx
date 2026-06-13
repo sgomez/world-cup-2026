@@ -5,13 +5,13 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { upsertLiveResultAction } from "@/app/actions/live";
 import { useToast } from "@/components/ui/toast";
-import type { Match } from "@/lib/matches";
-import { getGroups, getTeamById, getTeamByName } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import type {
   LiveResultState,
   LiveStatus,
 } from "@/modules/live/domain/live-result";
+import type { Match } from "@/modules/schedule";
+import { getGroups, getTeamById, getTeamByName } from "@/modules/teams";
 
 // Match number to bracket match ID map for knockout rounds
 const NUM_TO_BRACKET_ID: Record<number, string> = {

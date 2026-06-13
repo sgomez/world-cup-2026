@@ -1,8 +1,8 @@
 "use client";
 
 import { GripVertical } from "lucide-react";
-import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
+import type { Team } from "@/modules/teams";
 
 export type TeamBadgeProps = {
   team: Team;

@@ -1,5 +1,5 @@
-import rawTeamsEn from "../../data/worldcup.teams.en.json";
-import rawTeamsEs from "../../data/worldcup.teams.es.json";
+import rawTeamsEn from "../../../data/worldcup.teams.en.json";
+import rawTeamsEs from "../../../data/worldcup.teams.es.json";
 
 export type Team = {
   id: string;

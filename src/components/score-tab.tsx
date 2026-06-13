@@ -2,7 +2,6 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { TeamBadge } from "@/components/team-badge";
-import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { getAllTeamsLookup } from "@/modules/bracket/prediction-ui";
 import {
@@ -14,6 +13,7 @@ import {
   THIRD_PLACE_POINTS,
   toScoreableContent,
 } from "@/modules/score";
+import type { Team } from "@/modules/teams";
 
 function ScoreTeamChip({
   team,

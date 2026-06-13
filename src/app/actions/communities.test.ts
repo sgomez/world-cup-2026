@@ -24,7 +24,7 @@ vi.mock("next-intl/server", () => ({
   ),
 }));
 vi.mock("@/i18n/navigation", () => ({ redirect: vi.fn() }));
-vi.mock("@/lib/bet-constants", () => ({
+vi.mock("@/config/bet", () => ({
   BET_DEADLINE: new Date("2026-06-11T19:00:00Z"),
   MAX_BETS_PER_USER: 3,
 }));

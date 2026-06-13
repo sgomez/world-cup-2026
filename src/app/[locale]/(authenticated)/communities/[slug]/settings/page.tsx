@@ -7,8 +7,8 @@ import { DeleteCommunityForm } from "@/components/delete-community-form";
 import { RegenerateInviteTokenForm } from "@/components/regenerate-invite-token-form";
 import { RemoveMemberForm } from "@/components/remove-member-form";
 import { Link, redirect } from "@/i18n/navigation";
-import { buildInviteUrl } from "@/lib/communities";
 import { getSession } from "@/lib/session";
+import { buildInviteUrl } from "@/modules/community/application/build-invite-url";
 
 export default async function CommunitySettingsPage({
   params,

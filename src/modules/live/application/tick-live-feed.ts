@@ -1,5 +1,9 @@
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
-import { getAllMatches, getKickoffInstant, type Match } from "@/lib/matches";
+import {
+  getAllMatches,
+  getKickoffInstant,
+  type Match,
+} from "@/modules/schedule";
 import type { Clock } from "../domain/clock";
 import type { LiveFeed } from "../domain/live-feed";
 import type { LiveResult } from "../domain/live-result";

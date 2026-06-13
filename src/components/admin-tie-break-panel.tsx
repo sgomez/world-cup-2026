@@ -8,10 +8,10 @@ import {
 } from "@/app/actions/tournament";
 import { TeamBadge } from "@/components/team-badge";
 import { useToast } from "@/components/ui/toast";
-import type { Match } from "@/lib/matches";
-import { getTeamById, getTeamByName } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import type { LiveResultState } from "@/modules/live/domain/live-result";
+import type { Match } from "@/modules/schedule";
+import { getTeamById, getTeamByName } from "@/modules/teams";
 import type { GroupTieInfo } from "@/modules/tournament/domain/derive-result";
 
 function getTeamId(name: string): string {

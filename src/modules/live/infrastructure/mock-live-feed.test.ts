@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Match } from "@/lib/matches";
+import type { Match } from "@/modules/schedule";
 import type { Clock } from "../domain/clock";
 import { LiveResult } from "../domain/live-result";
 import { MockLiveFeed } from "./mock-live-feed";

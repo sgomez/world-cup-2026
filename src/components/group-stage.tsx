@@ -3,12 +3,12 @@
 import { useLocale, useTranslations } from "next-intl";
 import { type Dispatch, useMemo } from "react";
 import { GroupCard } from "@/components/group-card";
-import { getGroups, type Team } from "@/lib/teams";
 import type { TournamentState } from "@/modules/bracket";
 import {
   getOrderedThirdPlaceTeams,
   type TournamentAction,
 } from "@/modules/bracket/prediction-ui";
+import { getGroups, type Team } from "@/modules/teams";
 
 function getGroupTeamsOrdered(
   state: TournamentState,

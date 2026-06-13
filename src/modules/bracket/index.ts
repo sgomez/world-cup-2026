@@ -1,4 +1,4 @@
-import { getGroups } from "@/lib/teams";
+import { getGroups } from "@/modules/teams";
 import combinationsData from "../../../data/worldcup.combinations.json";
 
 // ---------------------------------------------------------------------------

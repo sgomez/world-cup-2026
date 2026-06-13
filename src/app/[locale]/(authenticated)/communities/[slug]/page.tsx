@@ -3,8 +3,8 @@ import { setRequestLocale } from "next-intl/server";
 import { getCommunity } from "@/app/actions/communities";
 import { CommunityDetail } from "@/components/community-detail";
 import { redirect } from "@/i18n/navigation";
-import { buildInviteUrl } from "@/lib/communities";
 import { getSession } from "@/lib/session";
+import { buildInviteUrl } from "@/modules/community/application/build-invite-url";
 
 export default async function CommunityPage({
   params,

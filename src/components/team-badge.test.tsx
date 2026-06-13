@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { Team } from "@/lib/teams";
+import type { Team } from "@/modules/teams";
 import { TeamBadge } from "./team-badge";
 
 const mockTeam: Team = {
