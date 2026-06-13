@@ -42,7 +42,7 @@ function createTestBet(
 describe("getPeerBet query service", () => {
   const mockGetUserName = async (userId: string) => {
     if (userId === "owner-1") return "Owner Name";
-    return userId + " Name";
+    return `${userId} Name`;
   };
 
   it("returns NOT_FOUND if the community does not exist", async () => {

@@ -5,6 +5,7 @@ import { closeBet as closeBetUseCase } from "@/modules/bet/application/close-bet
 import { copyBet as copyBetUseCase } from "@/modules/bet/application/copy-bet";
 import { createBet as createBetUseCase } from "@/modules/bet/application/create-bet";
 import { getPeerBet as getPeerBetUseCase } from "@/modules/bet/application/get-peer-bet";
+import { importDirectBets as importDirectBetsUseCase } from "@/modules/bet/application/import-direct-bets";
 import { listSummaries as listSummariesUseCase } from "@/modules/bet/application/list-summaries";
 import { removeBet as removeBetUseCase } from "@/modules/bet/application/remove-bet";
 import { renameBet as renameBetUseCase } from "@/modules/bet/application/rename-bet";
@@ -13,6 +14,8 @@ import { summariesByOwners as summariesByOwnersUseCase } from "@/modules/bet/app
 import { updateBetPredictions as updateBetPredictionsUseCase } from "@/modules/bet/application/update-bet-predictions";
 import type { BetRepository } from "@/modules/bet/domain/bet-repository";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
+import type { SheetParser } from "@/modules/bet/domain/sheet-parser";
+import { ExceljsSheetParser } from "@/modules/bet/infrastructure/exceljs-sheet-parser";
 import { InMemoryBetRepository } from "@/modules/bet/infrastructure/in-memory-bet-repository";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
@@ -60,6 +63,7 @@ type BaseContainerDeps = {
   ownerProvisioner: ImportOwnerProvisioner;
   clock: () => Date;
   betDeadline: Date;
+  sheetParser: SheetParser;
 };
 
 export function createBaseContainer(deps: BaseContainerDeps) {
@@ -180,6 +184,21 @@ export function createBaseContainer(deps: BaseContainerDeps) {
         },
         isPastDeadline() {
           return window.isClosed(deps.clock());
+        },
+        importDirect(args: {
+          mode: "create" | "reuse";
+          communityName?: string;
+          communityId?: string;
+          fileBuffer: Buffer;
+          inviteToken?: string;
+        }) {
+          return importDirectBetsUseCase(
+            deps.sheetParser,
+            deps.ownerProvisioner,
+            deps.communityRepo,
+            deps.betRepo,
+            args,
+          );
         },
         get deadline() {
           return deps.betDeadline;
@@ -310,6 +329,66 @@ export function createBaseContainer(deps: BaseContainerDeps) {
   };
 }
 
+/**
+ * The composition root (Dependency Injection Container) for the application.
+ * It wires infrastructure repositories (Prisma-backed or InMemory) with domain-specific
+ * use cases, providing a unified, decoupled API seam for Next.js Server Actions and Pages.
+ *
+ * Dependency Direction:
+ *   Next.js App Components / Actions -> Container (Boundary) -> Application Services (Use Cases) -> Domain
+ *
+ * The container exposes the following modules/accessors:
+ *
+ * - **`bets()`**: Operates on tournament predictions (Bracket Bets and Direct Bets).
+ *   - `create({ userId, label, limit })`: Creates a new Bracket Bet in `draft` status.
+ *   - `remove({ betId, userId })`: Deletes a bet.
+ *   - `close({ betId, userId })`: Validates predictions and transitions bet to `closed` status.
+ *   - `reopen({ betId, userId })`: Reopens a closed bet back to `draft` before the deadline.
+ *   - `copy({ betId, userId, limit })`: Copies an existing bet.
+ *   - `rename({ betId, userId, label })`: Updates a bet's label.
+ *   - `updatePredictions(...)`: Updates the group and knockout predictions.
+ *   - `listSummaries(userId)`: Lists a user's bet summaries.
+ *   - `summariesByOwners(userIds)`: Lists summaries for multiple users.
+ *   - `findById(id)`: Reads a bet by ID.
+ *   - `getPeerBet(args, nameResolver)`: Reads peer bet predictions (obfuscated or full).
+ *   - `isPastDeadline()`: Checks if current time is past the bet deadline.
+ *   - `importDirect(args)`: Parses Excel spreadsheets and imports direct bets.
+ *   - `deadline`: Read-only access to the hard bet deadline.
+ *
+ * - **`communities()`**: Operates on shared user groups.
+ *   - `create({ ownerId, name, inviteToken })`: Creates a new community.
+ *   - `delete({ actorId, slug })`: Deletes a community (restricted to owner).
+ *   - `join({ userId, inviteToken })`: Joins a community using an invite token.
+ *   - `leave({ userId, slug })`: Removes a user from a community.
+ *   - `regenerateInviteToken({ actorId, slug, newToken })`: Rotates the invite token.
+ *   - `removeMember({ actorId, targetUserId, slug })`: Removes a member.
+ *   - `findBySlug(slug)`: Finds a community by its slug.
+ *
+ * - **`tournament()`**: Reads and saves tournament configurations.
+ *   - `get()`: Fetches the current tournament settings.
+ *   - `save(tournament)`: Saves or updates the tournament settings.
+ *
+ * - **`live()`**: Manages live results, scores, and mock feed ticks.
+ *   - `findByNum(num)`: Fetches a live result by Match Number.
+ *   - `findAll()`: Fetches all live results.
+ *   - `save(liveResult)`: Saves a live result.
+ *   - `upsert(args)`: Creates or updates a live result.
+ *   - `tick(feed, clock)`: Promotes schedule and processes feed ticks.
+ *
+ * - **`users()`**: Operates on user profiles and roles.
+ *   - `updateProfile({ userId, name, image })`: Updates profile information.
+ *   - `changeRole({ actorId, targetUserId, newRole })`: Modifies a user's role.
+ *   - `promoteFirstRegistrant({ userId })`: Promotes the first registrant to super_admin.
+ *   - `findById(userId)`: Finds a user by ID.
+ *
+ * - **`leaderboard()`**: Calculates rankings.
+ *   - `get(query, nameResolver)`: Gets the community leaderboard.
+ *
+ * Other Core Accessors & Seams:
+ * - **`getNameResolver(initialCache?)`**: Returns a memoized name resolver.
+ * - **`transaction(callback)`**: Provides transactional boundaries. Runs the callback within a Prisma transaction or test-backup rollback scope.
+ * - **`repos`**: Directly exposes repositories for query-only access or advanced scenarios.
+ */
 export type Container = ReturnType<typeof createBaseContainer> & {
   transaction<T>(
     callback: (
@@ -318,6 +397,15 @@ export type Container = ReturnType<typeof createBaseContainer> & {
   ): Promise<T>;
 };
 
+/**
+ * Factory to create the production Container backed by Prisma repositories
+ * and real infrastructure adapters.
+ *
+ * @param deps - Dependencies configuration
+ * @param deps.prisma - The Prisma client instance
+ * @param deps.clock - Function returning current Date (avoids system local clock reliance)
+ * @param deps.betDeadline - The hard-coded Bet deadline Date
+ */
 export function createContainer(deps: {
   prisma: PrismaClient;
   clock: () => Date;
@@ -329,6 +417,7 @@ export function createContainer(deps: {
   const tournamentRepo = new PrismaTournamentRepository(deps.prisma);
   const liveResultRepo = new PrismaLiveResultRepository(deps.prisma);
   const ownerProvisioner = new PrismaImportOwnerProvisioner(deps.prisma);
+  const sheetParser = new ExceljsSheetParser();
 
   const baseContainer = createBaseContainer({
     betRepo,
@@ -339,6 +428,7 @@ export function createContainer(deps: {
     ownerProvisioner,
     clock: deps.clock,
     betDeadline: deps.betDeadline,
+    sheetParser,
   });
 
   return {
@@ -358,6 +448,7 @@ export function createContainer(deps: {
           ownerProvisioner: new PrismaImportOwnerProvisioner(tx),
           clock: deps.clock,
           betDeadline: deps.betDeadline,
+          sheetParser,
         });
         return callback(txContainer);
       });
@@ -365,6 +456,12 @@ export function createContainer(deps: {
   };
 }
 
+/**
+ * Factory to create a test Container backed by in-memory repositories
+ * and mock adapters. Exposes transaction simulation via backup-and-restore.
+ *
+ * @param deps - Optional overrides for repositories, clock, and deadline
+ */
 export function createTestContainer(deps?: {
   betRepo?: InMemoryBetRepository;
   communityRepo?: InMemoryCommunityRepository;
@@ -374,6 +471,7 @@ export function createTestContainer(deps?: {
   ownerProvisioner?: InMemoryImportOwnerProvisioner;
   clock?: () => Date;
   betDeadline?: Date;
+  sheetParser?: SheetParser;
 }): ReturnType<typeof createBaseContainer> & {
   transaction<T>(
     callback: (
@@ -394,6 +492,7 @@ export function createTestContainer(deps?: {
     deps?.liveResultRepo ?? new InMemoryLiveResultRepository();
   const ownerProvisioner =
     deps?.ownerProvisioner ?? new InMemoryImportOwnerProvisioner();
+  const sheetParser = deps?.sheetParser ?? { parse: async () => [] };
 
   const baseContainer = createBaseContainer({
     betRepo,
@@ -404,6 +503,7 @@ export function createTestContainer(deps?: {
     ownerProvisioner,
     clock,
     betDeadline,
+    sheetParser,
   });
 
   return {
@@ -430,6 +530,7 @@ export function createTestContainer(deps?: {
           ownerProvisioner,
           clock,
           betDeadline,
+          sheetParser,
         });
         return await callback(txContainer);
       } catch (error) {
