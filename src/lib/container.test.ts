@@ -221,4 +221,75 @@ describe("Container - leaderboard() accessor and getNameResolver", () => {
     );
     expect(leaderboardResult.isOk()).toBe(true);
   });
+
+  it("defaultNameResolver should be uncached and reflect profile name changes", async () => {
+    const user = User.create({
+      id: "user-alice",
+      email: "alice@example.com",
+      name: "Alice",
+      emailVerified: true,
+      image: null,
+    })._unsafeUnwrap();
+
+    const userRepo = new InMemoryUserRepository([user]);
+    const communityRepo = new InMemoryCommunityRepository();
+    const betRepo = new InMemoryBetRepository();
+    const container = createTestContainer({ userRepo, communityRepo, betRepo });
+
+    // Seed community
+    await container.communities().create({
+      ownerId: "user-alice",
+      name: "Champs",
+      inviteToken: "token-123",
+    });
+
+    // Seed a bet
+    const createResult = await container.bets().create({
+      userId: "user-alice",
+      label: "Test Bet",
+      limit: 3,
+    });
+    const bet = createResult._unsafeUnwrap();
+
+    // Complete predictions and close the bet to make it peer-visible
+    const completeWinners = () =>
+      Object.fromEntries(
+        Array.from({ length: 32 }, (_, i) => [`M${i}`, `team-${i}`]),
+      );
+    await container.bets().updatePredictions({
+      betId: bet.id,
+      userId: "user-alice",
+      groupPredictions: null,
+      knockoutWinners: completeWinners(),
+    });
+    await container.bets().close({
+      betId: bet.id,
+      userId: "user-alice",
+    });
+
+    // First lookup using default resolver
+    const peerBetResult1 = await container.bets().getPeerBet({
+      viewerId: "user-alice",
+      communitySlug: "champs",
+      betId: bet.id,
+    });
+    expect(peerBetResult1.isOk()).toBe(true);
+    expect(peerBetResult1._unsafeUnwrap().ownerName).toBe("Alice");
+
+    // Update profile
+    await container.users().updateProfile({
+      userId: "user-alice",
+      name: "Alice Updated",
+      image: null,
+    });
+
+    // Second lookup using default resolver should return the new name
+    const peerBetResult2 = await container.bets().getPeerBet({
+      viewerId: "user-alice",
+      communitySlug: "champs",
+      betId: bet.id,
+    });
+    expect(peerBetResult2.isOk()).toBe(true);
+    expect(peerBetResult2._unsafeUnwrap().ownerName).toBe("Alice Updated");
+  });
 });

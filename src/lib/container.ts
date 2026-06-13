@@ -74,7 +74,12 @@ export function createBaseContainer(deps: BaseContainerDeps) {
     };
   };
 
-  const defaultNameResolver = getNameResolver();
+  const defaultNameResolver = async (
+    userId: string,
+  ): Promise<string | null> => {
+    const user = await deps.userRepo.findById(userId);
+    return user ? user.name : null;
+  };
 
   return {
     getNameResolver,
