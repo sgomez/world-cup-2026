@@ -1,7 +1,8 @@
-import { errAsync, okAsync, ResultAsync } from "neverthrow";
+import type { ResultAsync } from "neverthrow";
 import type { BetRepository } from "../domain/bet-repository";
 import type { BettingWindow } from "../domain/betting-window";
-import { type DomainError, domainError } from "../domain/errors";
+import type { DomainError } from "../domain/errors";
+import { mutateOwnedBet } from "./mutate-owned-bet";
 
 export type CloseBetCommand = {
   betId: string;
@@ -21,13 +22,7 @@ export function closeBet(
   repo: BetRepository,
   command: CloseBetCommand,
 ): ResultAsync<void, DomainError> {
-  return ResultAsync.fromSafePromise(repo.findById(command.betId))
-    .andThen((bet) => (bet ? okAsync(bet) : errAsync(domainError("NOT_FOUND"))))
-    .andThen((bet) =>
-      bet.isOwnedBy(command.userId)
-        ? okAsync(bet)
-        : errAsync(domainError("FORBIDDEN")),
-    )
-    .andThen((bet) => bet.close(command.window, command.now))
-    .andThen((closed) => repo.save(closed));
+  return mutateOwnedBet(repo, command, (bet) =>
+    bet.close(command.window, command.now),
+  );
 }
