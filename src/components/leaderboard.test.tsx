@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useRouter } from "@/i18n/navigation";
 import type { LeaderboardEntry } from "@/modules/leaderboard/domain/leaderboard";
 import { Leaderboard, type LeaderboardScope } from "./leaderboard";
 import { LeaderboardTable } from "./leaderboard-table";
@@ -48,10 +49,11 @@ vi.mock("@/i18n/navigation", () => ({
       {children}
     </a>
   ),
-  useRouter: () => ({
+  useRouter: vi.fn(() => ({
     push: vi.fn(),
     replace: vi.fn(),
-  }),
+    refresh: vi.fn(),
+  })),
   usePathname: () => "/leaderboard",
 }));
 
@@ -331,5 +333,33 @@ describe("Leaderboard provisional warning", () => {
   it("renders provisional warning banner when hasLiveMatch is true", () => {
     render(<Leaderboard scopes={sampleScopes} hasLiveMatch={true} />);
     expect(screen.getByText("provisionalWarning")).toBeInTheDocument();
+  });
+});
+
+describe("Leaderboard live refresh", () => {
+  const sampleScopes = [{ id: "comm-1", label: "Community A", entries: [] }];
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it("refreshes on tick", () => {
+    const mockRefresh = vi.fn();
+    vi.mocked(useRouter).mockReturnValue({
+      push: vi.fn(),
+      replace: vi.fn(),
+      refresh: mockRefresh,
+    } as any);
+
+    render(<Leaderboard scopes={sampleScopes} />);
+
+    // Advance by default 30s
+    vi.advanceTimersByTime(30_000);
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
   });
 });
