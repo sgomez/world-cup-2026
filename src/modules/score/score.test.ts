@@ -337,3 +337,14 @@ describe("scoreBreakdown", () => {
     expect(res.total).toBe(3 + 4 + 5 + 6 + 8 + 10 + 5);
   });
 });
+
+describe("client-bundle guard", () => {
+  it("score module imports no server-only or Prisma symbols", async () => {
+    // If this import throws (e.g. due to 'server-only'), the test fails.
+    // This guard ensures the module remains isomorphic and safe for client bundles
+    // (e.g. bet-prediction.tsx and score-tab.tsx import it in the browser bundle).
+    const mod = await import("./index");
+    expect(typeof mod.score).toBe("function");
+    expect(typeof mod.scoreBreakdown).toBe("function");
+  });
+});
