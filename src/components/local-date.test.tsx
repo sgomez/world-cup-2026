@@ -1,12 +1,16 @@
+import { composeStories } from "@storybook/react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { LocalDate } from "./local-date";
+import * as stories from "./local-date.stories";
 
 vi.mock("next-intl", () => ({
   useLocale: vi.fn(() => "en"),
 }));
 
 import { useLocale } from "next-intl";
+
+const { Default } = composeStories(stories);
 
 describe("LocalDate Component", () => {
   it("renders UTC fallback initially, then formats local timezone on mount", () => {
@@ -30,5 +34,11 @@ describe("LocalDate Component", () => {
     // Spanish formatting uses 24-hour format and does not render AM/PM.
     expect(container.textContent).not.toContain("PM");
     expect(container.textContent).not.toContain("AM");
+  });
+});
+
+describe("LocalDate Composed Stories", () => {
+  it("runs Default story play function", async () => {
+    await Default.run();
   });
 });

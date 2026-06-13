@@ -1,7 +1,11 @@
+import { composeStories } from "@storybook/react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { Team } from "@/modules/teams";
 import { TeamBadge } from "./team-badge";
+import * as stories from "./team-badge.stories";
+
+const { Default, Eliminated } = composeStories(stories);
 
 const mockTeam: Team = {
   id: "arg",
@@ -36,5 +40,15 @@ describe("TeamBadge", () => {
     expect(flagBgDiv).toBeInTheDocument();
     const style = flagBgDiv.getAttribute("style") || "";
     expect(style).toContain("flagcdn.com/w320/ar.png");
+  });
+});
+
+describe("TeamBadge Composed Stories", () => {
+  it("runs Default story play function", async () => {
+    await Default.run();
+  });
+
+  it("runs Eliminated story play function", async () => {
+    await Eliminated.run();
   });
 });
