@@ -23,8 +23,11 @@ import { leaveCommunity as leaveCommunityUseCase } from "@/modules/community/app
 import { regenerateInviteToken as regenerateInviteTokenUseCase } from "@/modules/community/application/regenerate-invite-token";
 import { removeMember as removeMemberUseCase } from "@/modules/community/application/remove-member";
 import type { CommunityRepository } from "@/modules/community/domain/community-repository";
+import type { ImportOwnerProvisioner } from "@/modules/community/domain/import-owner-provisioner";
 import { InMemoryCommunityRepository } from "@/modules/community/infrastructure/in-memory-community-repository";
+import { InMemoryImportOwnerProvisioner } from "@/modules/community/infrastructure/in-memory-import-owner-provisioner";
 import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
+import { PrismaImportOwnerProvisioner } from "@/modules/community/infrastructure/prisma-import-owner-provisioner";
 
 import { getLeaderboard as getLeaderboardUseCase } from "@/modules/leaderboard/application/get-leaderboard";
 import { tickLiveFeed as tickLiveFeedUseCase } from "@/modules/live/application/tick-live-feed";
@@ -54,6 +57,7 @@ type BaseContainerDeps = {
   userRepo: UserRepository;
   tournamentRepo: TournamentRepository;
   liveResultRepo: LiveResultRepository;
+  ownerProvisioner: ImportOwnerProvisioner;
   clock: () => Date;
   betDeadline: Date;
 };
@@ -83,6 +87,14 @@ export function createBaseContainer(deps: BaseContainerDeps) {
 
   return {
     getNameResolver,
+    repos: {
+      bet: deps.betRepo,
+      community: deps.communityRepo,
+      user: deps.userRepo,
+      tournament: deps.tournamentRepo,
+      liveResult: deps.liveResultRepo,
+      ownerProvisioner: deps.ownerProvisioner,
+    },
     bets() {
       return {
         create(args: { userId: string; label: string; limit: number }) {
@@ -298,26 +310,59 @@ export function createBaseContainer(deps: BaseContainerDeps) {
   };
 }
 
+export type Container = ReturnType<typeof createBaseContainer> & {
+  transaction<T>(
+    callback: (
+      txContainer: ReturnType<typeof createBaseContainer>,
+    ) => Promise<T>,
+  ): Promise<T>;
+};
+
 export function createContainer(deps: {
   prisma: PrismaClient;
   clock: () => Date;
   betDeadline: Date;
-}) {
+}): Container {
   const betRepo = new PrismaBetRepository(deps.prisma);
   const communityRepo = new PrismaCommunityRepository(deps.prisma);
   const userRepo = new PrismaUserRepository(deps.prisma);
   const tournamentRepo = new PrismaTournamentRepository(deps.prisma);
   const liveResultRepo = new PrismaLiveResultRepository(deps.prisma);
+  const ownerProvisioner = new PrismaImportOwnerProvisioner(deps.prisma);
 
-  return createBaseContainer({
+  const baseContainer = createBaseContainer({
     betRepo,
     communityRepo,
     userRepo,
     tournamentRepo,
     liveResultRepo,
+    ownerProvisioner,
     clock: deps.clock,
     betDeadline: deps.betDeadline,
   });
+
+  return {
+    ...baseContainer,
+    async transaction<T>(
+      callback: (
+        txContainer: ReturnType<typeof createBaseContainer>,
+      ) => Promise<T>,
+    ): Promise<T> {
+      return deps.prisma.$transaction(async (tx) => {
+        const txContainer = createBaseContainer({
+          betRepo: new PrismaBetRepository(tx),
+          communityRepo: new PrismaCommunityRepository(tx),
+          userRepo: new PrismaUserRepository(tx),
+          tournamentRepo: new PrismaTournamentRepository(tx),
+          liveResultRepo: new PrismaLiveResultRepository(tx),
+          ownerProvisioner: new PrismaImportOwnerProvisioner(tx),
+          clock: deps.clock,
+          betDeadline: deps.betDeadline,
+        });
+        return callback(txContainer);
+      });
+    },
+  };
 }
 
 export function createTestContainer(deps?: {
@@ -326,21 +371,78 @@ export function createTestContainer(deps?: {
   userRepo?: InMemoryUserRepository;
   tournamentRepo?: InMemoryTournamentRepository;
   liveResultRepo?: InMemoryLiveResultRepository;
+  ownerProvisioner?: InMemoryImportOwnerProvisioner;
   clock?: () => Date;
   betDeadline?: Date;
-}) {
+}): ReturnType<typeof createBaseContainer> & {
+  transaction<T>(
+    callback: (
+      txContainer: ReturnType<typeof createBaseContainer>,
+    ) => Promise<T>,
+  ): Promise<T>;
+} {
   const clock = deps?.clock ?? (() => new Date("2026-06-01T00:00:00Z"));
   const betDeadline = deps?.betDeadline ?? new Date("2026-06-11T19:00:00Z");
 
-  return createBaseContainer({
-    betRepo: deps?.betRepo ?? new InMemoryBetRepository(),
-    communityRepo: deps?.communityRepo ?? new InMemoryCommunityRepository(),
-    userRepo: deps?.userRepo ?? new InMemoryUserRepository(),
-    tournamentRepo: deps?.tournamentRepo ?? new InMemoryTournamentRepository(),
-    liveResultRepo: deps?.liveResultRepo ?? new InMemoryLiveResultRepository(),
+  const betRepo = deps?.betRepo ?? new InMemoryBetRepository();
+  const communityRepo =
+    deps?.communityRepo ?? new InMemoryCommunityRepository();
+  const userRepo = deps?.userRepo ?? new InMemoryUserRepository();
+  const tournamentRepo =
+    deps?.tournamentRepo ?? new InMemoryTournamentRepository();
+  const liveResultRepo =
+    deps?.liveResultRepo ?? new InMemoryLiveResultRepository();
+  const ownerProvisioner =
+    deps?.ownerProvisioner ?? new InMemoryImportOwnerProvisioner();
+
+  const baseContainer = createBaseContainer({
+    betRepo,
+    communityRepo,
+    userRepo,
+    tournamentRepo,
+    liveResultRepo,
+    ownerProvisioner,
     clock,
     betDeadline,
   });
+
+  return {
+    ...baseContainer,
+    async transaction<T>(
+      callback: (
+        txContainer: ReturnType<typeof createBaseContainer>,
+      ) => Promise<T>,
+    ): Promise<T> {
+      const betBackup = betRepo.getData();
+      const communityBackup = communityRepo.getData();
+      const userBackup = userRepo.getData();
+      const tournamentBackup = tournamentRepo.getData();
+      const liveResultBackup = liveResultRepo.getData();
+      const ownerProvisionerBackup = ownerProvisioner.getData();
+
+      try {
+        const txContainer = createTestContainer({
+          betRepo,
+          communityRepo,
+          userRepo,
+          tournamentRepo,
+          liveResultRepo,
+          ownerProvisioner,
+          clock,
+          betDeadline,
+        });
+        return await callback(txContainer);
+      } catch (error) {
+        betRepo.setData(betBackup);
+        communityRepo.setData(communityBackup);
+        userRepo.setData(userBackup);
+        tournamentRepo.setData(tournamentBackup);
+        liveResultRepo.setData(liveResultBackup);
+        ownerProvisioner.setData(ownerProvisionerBackup);
+        throw error;
+      }
+    },
+  };
 }
 
 export const container = createContainer({
@@ -348,5 +450,3 @@ export const container = createContainer({
   clock: () => new Date(),
   betDeadline: BET_DEADLINE,
 });
-
-export type Container = ReturnType<typeof createContainer>;

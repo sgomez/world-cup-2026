@@ -18,4 +18,12 @@ export class InMemoryTournamentRepository implements TournamentRepository {
     this.tournament = tournament;
     return okAsync(undefined);
   }
+
+  getData(): Tournament | null {
+    return this.tournament;
+  }
+
+  setData(data: Tournament | null) {
+    this.tournament = data;
+  }
 }

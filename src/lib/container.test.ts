@@ -293,3 +293,41 @@ describe("Container - leaderboard() accessor and getNameResolver", () => {
     expect(peerBetResult2._unsafeUnwrap().ownerName).toBe("Alice Updated");
   });
 });
+
+describe("Container - transaction scope", () => {
+  it("commits operations if the callback succeeds", async () => {
+    const container = createTestContainer();
+
+    await container.transaction(async (txContainer) => {
+      const createResult = await txContainer.communities().create({
+        ownerId: "owner-1",
+        name: "Succeeding Comm",
+        inviteToken: "token-ok",
+      });
+      expect(createResult.isOk()).toBe(true);
+    });
+
+    const found = await container.communities().findBySlug("succeeding-comm");
+    expect(found).not.toBeNull();
+    expect(found?.name).toBe("Succeeding Comm");
+  });
+
+  it("rolls back all operations if the callback throws an error", async () => {
+    const container = createTestContainer();
+
+    await expect(
+      container.transaction(async (txContainer) => {
+        const createResult = await txContainer.communities().create({
+          ownerId: "owner-1",
+          name: "Rolling Back Comm",
+          inviteToken: "token-fail",
+        });
+        expect(createResult.isOk()).toBe(true);
+        throw new Error("Force rollback");
+      }),
+    ).rejects.toThrow("Force rollback");
+
+    const found = await container.communities().findBySlug("rolling-back-comm");
+    expect(found).toBeNull();
+  });
+});

@@ -39,4 +39,15 @@ export class InMemoryCommunityRepository implements CommunityRepository {
     this.store.delete(id);
     return okAsync(undefined);
   }
+
+  getData(): Map<string, Community> {
+    return new Map(this.store);
+  }
+
+  setData(data: Map<string, Community>) {
+    this.store.clear();
+    for (const [k, v] of data) {
+      this.store.set(k, v);
+    }
+  }
 }

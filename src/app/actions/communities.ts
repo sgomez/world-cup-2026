@@ -9,10 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession, requireAdmin } from "@/lib/session";
 import { importDirectBets } from "@/modules/bet/application/import-direct-bets";
 import { ExceljsSheetParser } from "@/modules/bet/infrastructure/exceljs-sheet-parser";
-import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 import type { DomainErrorCode } from "@/modules/community/domain/errors";
-import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
-import { PrismaImportOwnerProvisioner } from "@/modules/community/infrastructure/prisma-import-owner-provisioner";
 import { withAuthenticatedAction } from "./authenticated-action";
 
 async function communityErrorMessage(code: DomainErrorCode): Promise<string> {
@@ -247,19 +244,12 @@ export async function importDirectBetsAction(
   }
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      // biome-ignore lint/suspicious/noExplicitAny: Prisma transaction client typecasting
-      const txCommunityRepo = new PrismaCommunityRepository(tx as any);
-      // biome-ignore lint/suspicious/noExplicitAny: Prisma transaction client typecasting
-      const txBetRepo = new PrismaBetRepository(tx as any);
-      // biome-ignore lint/suspicious/noExplicitAny: Prisma transaction client typecasting
-      const txOwnerProvisioner = new PrismaImportOwnerProvisioner(tx as any);
-
+    const result = await container.transaction(async (txContainer) => {
       const res = await importDirectBets(
         sheetParser,
-        txOwnerProvisioner,
-        txCommunityRepo,
-        txBetRepo,
+        txContainer.repos.ownerProvisioner,
+        txContainer.repos.community,
+        txContainer.repos.bet,
         {
           mode,
           communityId: mode === "reuse" ? communityId : undefined,

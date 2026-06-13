@@ -55,4 +55,15 @@ export class InMemoryBetRepository implements BetRepository {
     this.store.delete(id);
     return okAsync(undefined);
   }
+
+  getData(): Map<string, Bet> {
+    return new Map(this.store);
+  }
+
+  setData(data: Map<string, Bet>) {
+    this.store.clear();
+    for (const [k, v] of data) {
+      this.store.set(k, v);
+    }
+  }
 }
