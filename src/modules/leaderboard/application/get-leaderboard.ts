@@ -1,5 +1,5 @@
 import { okAsync, ResultAsync } from "neverthrow";
-import { toScoreableContent } from "../../../lib/scoring";
+import { toScoreableContent } from "@/modules/score";
 import type { BetRepository } from "../../bet/domain/bet-repository";
 import type { BettingWindow } from "../../bet/domain/betting-window";
 import { viewerInCommunity } from "../../community/application/viewer-in-community";

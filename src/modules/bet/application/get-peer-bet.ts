@@ -1,5 +1,5 @@
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
-import type { ScoreableContent } from "@/lib/scoring";
+import type { ScoreableContent } from "@/modules/score";
 import { viewerInCommunity } from "../../community/application/viewer-in-community";
 import type { CommunityRepository } from "../../community/domain/community-repository";
 import type { BetStatus } from "../domain/bet";

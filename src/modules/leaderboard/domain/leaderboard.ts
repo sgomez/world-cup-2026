@@ -1,5 +1,3 @@
-import type { ScoreableContent, ScoreableContentArrays } from "@/lib/scoring";
-import { scoreBet } from "@/lib/scoring";
 import type {
   Bet,
   BetStatus,
@@ -10,6 +8,11 @@ import {
   serializeLabel,
 } from "@/modules/bet/domain/bet-label";
 import type { BettingWindow } from "@/modules/bet/domain/betting-window";
+import {
+  type ScoreableContent,
+  type ScoreableContentArrays,
+  score,
+} from "@/modules/score";
 
 export type LeaderboardEntry = {
   betId: string;
@@ -73,7 +76,7 @@ export class Leaderboard {
       if (!selectionsHidden && actualResult) {
         // Calculate actual score
         const betContent = bet.scoreableContent();
-        points = scoreBet(betContent, actualResult);
+        points = score(betContent, actualResult);
       }
 
       const serializedLabel = serializeLabel(bet.label, imported, isOwner);

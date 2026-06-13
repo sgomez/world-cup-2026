@@ -4,7 +4,7 @@ import { createInitialState } from "@/lib/prediction-state";
 import {
   extractScoreableContent,
   toScoreableContentArrays,
-} from "@/lib/scoring";
+} from "@/modules/score";
 import { ScoreTab } from "./score-tab";
 
 vi.mock("next-intl", () => ({

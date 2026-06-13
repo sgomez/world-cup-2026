@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { ResultAsync } from "neverthrow";
-import type { ScoreableContentArrays } from "@/lib/scoring";
+import type { ScoreableContentArrays } from "@/modules/score";
 import {
   Bet,
   type BetStatus,

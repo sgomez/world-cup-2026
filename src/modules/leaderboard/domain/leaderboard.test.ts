@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState } from "@/lib/prediction-state";
+import { Bet } from "@/modules/bet/domain/bet";
+import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import {
   extractScoreableContent,
   type ScoreableContentArrays,
   toScoreableContent,
-} from "@/lib/scoring";
-import { Bet } from "@/modules/bet/domain/bet";
-import { BettingWindow } from "@/modules/bet/domain/betting-window";
+} from "@/modules/score";
 import { Leaderboard } from "./leaderboard";
 
 describe("Leaderboard Bounded Context - Domain Aggregate Root", () => {

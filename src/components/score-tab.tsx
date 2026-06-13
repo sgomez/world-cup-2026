@@ -3,17 +3,17 @@
 import { useLocale, useTranslations } from "next-intl";
 import { TeamBadge } from "@/components/team-badge";
 import { getAllTeamsLookup } from "@/lib/prediction-state";
+import type { Team } from "@/lib/teams";
+import { cn } from "@/lib/utils";
 import {
   CHAMPION_POINTS,
   EMPTY_SCOREABLE_CONTENT_ARRAYS,
   ROUND_POINTS,
   type ScoreableContentArrays,
-  scoreBetBreakdown,
+  scoreBreakdown,
   THIRD_PLACE_POINTS,
   toScoreableContent,
-} from "@/lib/scoring";
-import type { Team } from "@/lib/teams";
-import { cn } from "@/lib/utils";
+} from "@/modules/score";
 
 function ScoreTeamChip({
   team,
@@ -220,7 +220,7 @@ export function ScoreTab({
     : null;
 
   const betContent = toScoreableContent(prediction);
-  const breakdown = scoreBetBreakdown(betContent, actualResults);
+  const breakdown = scoreBreakdown(betContent, actualResults);
   const totalPoints = breakdown.total;
 
   const r32Correct = breakdown.R32.matched;

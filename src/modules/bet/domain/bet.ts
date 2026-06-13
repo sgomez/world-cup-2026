@@ -2,13 +2,13 @@ import { randomUUID } from "node:crypto";
 import { err, ok, type Result } from "neverthrow";
 import { computeSignatureFromContent } from "@/lib/bet-signature";
 import { createInitialState } from "@/lib/prediction-state";
+import { getGroups } from "@/lib/teams";
 import {
   extractScoreableContent,
   type ScoreableContent,
   type ScoreableContentArrays,
   toScoreableContent,
-} from "@/lib/scoring";
-import { getGroups } from "@/lib/teams";
+} from "@/modules/score";
 import { BetLabel } from "./bet-label";
 import type { BettingWindow } from "./betting-window";
 import { type DomainError, domainError } from "./errors";
