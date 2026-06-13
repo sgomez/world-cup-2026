@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { err, ok, type Result } from "neverthrow";
-import { computeSignatureFromContent } from "@/lib/bet-signature";
 import { getGroups } from "@/lib/teams";
 import { createInitialState } from "@/modules/bracket";
 import {
@@ -9,6 +8,7 @@ import {
   type ScoreableContentArrays,
   toScoreableContent,
 } from "@/modules/score";
+import { signature as computeSignatureFromContent } from "@/modules/score/server";
 import { BetLabel } from "./bet-label";
 import type { BettingWindow } from "./betting-window";
 import { type DomainError, domainError } from "./errors";
