@@ -103,6 +103,20 @@ describe("PrismaUserRepository", () => {
     });
   });
 
+  describe("countByRole", () => {
+    it("returns the number of users with the specified role", async () => {
+      const prisma = fakePrisma();
+      prisma.user.count.mockResolvedValue(3);
+      const repo = new PrismaUserRepository(prisma as never);
+
+      const count = await repo.countByRole("admin");
+      expect(count).toBe(3);
+      expect(prisma.user.count).toHaveBeenCalledWith({
+        where: { role: "admin" },
+      });
+    });
+  });
+
   describe("save", () => {
     it("upserts the user aggregate via prisma", async () => {
       const prisma = fakePrisma();

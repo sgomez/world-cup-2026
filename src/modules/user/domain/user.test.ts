@@ -182,4 +182,16 @@ describe("User Aggregate Root", () => {
       expect(updated.role).toBe("admin");
     });
   });
+
+  describe("promoteToSuperAdmin", () => {
+    it("promotes a user to super_admin unconditionally", () => {
+      const target = User.create({
+        ...validUserParams,
+        id: "target-user",
+        role: "user",
+      })._unsafeUnwrap();
+      const updated = target.promoteToSuperAdmin();
+      expect(updated.role).toBe("super_admin");
+    });
+  });
 });

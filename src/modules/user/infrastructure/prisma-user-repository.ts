@@ -55,6 +55,12 @@ export class PrismaUserRepository implements UserRepository {
     return this.client.user.count();
   }
 
+  async countByRole(role: string): Promise<number> {
+    return this.client.user.count({
+      where: { role },
+    });
+  }
+
   save(user: User): ResultAsync<void, DomainError> {
     const state = user.toState();
     return ResultAsync.fromPromise(
