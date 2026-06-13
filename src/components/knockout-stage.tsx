@@ -3,15 +3,17 @@
 import { useLocale, useTranslations } from "next-intl";
 import type { Dispatch } from "react";
 import { TeamBadge } from "@/components/team-badge";
-import {
-  getAllTeamsLookup,
-  KNOCKOUT_MATCH_IDS,
-  type KnockoutRound,
-  type TournamentAction,
-  type TournamentState,
-} from "@/lib/prediction-state";
 import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
+import {
+  KNOCKOUT_MATCH_IDS,
+  type KnockoutRound,
+  type TournamentState,
+} from "@/modules/bracket";
+import {
+  getAllTeamsLookup,
+  type TournamentAction,
+} from "@/modules/bracket/prediction-ui";
 
 function EmptySlot() {
   return (

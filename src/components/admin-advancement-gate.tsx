@@ -3,9 +3,9 @@
 import { useLocale, useTranslations } from "next-intl";
 import { TeamBadge } from "@/components/team-badge";
 import type { GroupOrders, ThirdPlaceOrder } from "@/lib/bracket-core";
-import { getAllTeamsLookup } from "@/lib/prediction-state";
 import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
+import { getAllTeamsLookup } from "@/modules/bracket/prediction-ui";
 import {
   getR32SlotOccupants,
   VALID_ADVANCEMENT_REFS,
