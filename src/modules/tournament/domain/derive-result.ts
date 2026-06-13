@@ -15,17 +15,6 @@
  * - Competition End: matches 103 and 104 are both finished
  */
 
-import {
-  applyWinnerToMatches,
-  createEmptyKnockoutMatches,
-  type GroupOrders,
-  getTeamIdFromPosition,
-  type KnockoutMatch,
-  type KnockoutRound,
-  R32_MATCHUPS,
-  ROUND_ORDER,
-  type ThirdPlaceOrder,
-} from "@/lib/bracket-core";
 import { getAllMatches } from "@/lib/matches";
 import {
   computeGroupStanding,
@@ -41,6 +30,17 @@ import {
   type ThirdPlaceEntry,
 } from "@/lib/standings/standings";
 import { getGroups } from "@/lib/teams";
+import {
+  applyWinnerToMatches,
+  createEmptyKnockoutMatches,
+  type GroupOrders,
+  getTeamIdFromPosition,
+  type KnockoutMatch,
+  type KnockoutRound,
+  R32_MATCHUPS,
+  ROUND_ORDER,
+  type ThirdPlaceOrder,
+} from "@/modules/bracket";
 import type { LiveResult } from "@/modules/live/domain/live-result";
 import combinationsData from "../../../../data/worldcup.combinations.json";
 import rawTeamsEn from "../../../../data/worldcup.teams.en.json";

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { KnockoutMatch } from "@/lib/bracket-core";
+import type { KnockoutMatch } from "@/modules/bracket";
 import type { LiveResultState } from "@/modules/live/domain/live-result";
 import { CalendarView } from "./calendar-view";
 

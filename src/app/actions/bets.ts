@@ -5,8 +5,8 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { MAX_BETS_PER_USER } from "@/lib/bet-constants";
 import { container } from "@/lib/container";
-import type { TournamentState } from "@/lib/prediction-state";
 import type { DomainErrorCode } from "@/modules/bet/domain/errors";
+import type { TournamentState } from "@/modules/bracket";
 import { withAuthenticatedAction } from "./authenticated-action";
 
 async function betErrorMessage(code: DomainErrorCode): Promise<string> {
@@ -14,7 +14,7 @@ async function betErrorMessage(code: DomainErrorCode): Promise<string> {
   return t(code);
 }
 
-export type { PredictionState } from "@/lib/prediction-state";
+export type { PredictionState } from "@/modules/bracket";
 export type BetActionState = { error?: string; success?: boolean } | null;
 
 export async function createBet(

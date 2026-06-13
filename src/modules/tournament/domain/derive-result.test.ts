@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { GroupOrders } from "@/lib/bracket-core";
+import type { GroupOrders } from "@/modules/bracket";
 import { LiveResult } from "@/modules/live/domain/live-result";
 import {
   computeTournamentBracket,

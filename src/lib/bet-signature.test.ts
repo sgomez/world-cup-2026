@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Bet } from "@/modules/bet/domain/bet";
-import { toScoreableContentArrays } from "@/modules/score";
-import { computeBetSignature } from "./bet-signature";
 import {
   createInitialState,
   KNOCKOUT_MATCH_IDS,
   type KnockoutRound,
   type PredictionState,
-  tournamentReducer,
-} from "./prediction-state";
+} from "@/modules/bracket";
+import { tournamentReducer } from "@/modules/bracket/prediction-ui";
+import { toScoreableContentArrays } from "@/modules/score";
+import { computeBetSignature } from "./bet-signature";
 
 function buildTeam1WinsWinners(
   groupPredictions: PredictionState | null,

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { closeBet, renameBet, reopenBet } from "@/app/actions/bets";
-import type { KnockoutMatch } from "@/lib/prediction-state";
+import type { KnockoutMatch } from "@/modules/bracket";
 import { BetPrediction } from "./bet-prediction";
 
 vi.mock("next-intl", () => ({

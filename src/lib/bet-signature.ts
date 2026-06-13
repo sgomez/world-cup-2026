@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
+import { createInitialState, type PredictionState } from "@/modules/bracket";
 import {
   extractScoreableContent,
   type ScoreableContent,
 } from "@/modules/score";
-import { createInitialState, type PredictionState } from "./prediction-state";
 
 export function computeSignatureFromContent(content: ScoreableContent): string {
   const parts: string[] = [];

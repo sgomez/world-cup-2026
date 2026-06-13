@@ -46,9 +46,9 @@ vi.mock("@/lib/bet-constants", () => ({
 }));
 
 import { redirect } from "@/i18n/navigation";
-import type { TournamentState } from "@/lib/prediction-state";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import type { TournamentState } from "@/modules/bracket";
 import {
   closeBet,
   copyBet,

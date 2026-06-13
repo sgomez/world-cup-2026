@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createInitialState, type KnockoutMatch } from "@/lib/prediction-state";
+import { createInitialState, type KnockoutMatch } from "@/modules/bracket";
 import {
   CHAMPION_POINTS,
   extractScoreableContent,

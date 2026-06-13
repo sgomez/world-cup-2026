@@ -6,8 +6,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import worldcupData from "@/../data/worldcup.json";
 import { MatchCard } from "@/components/match-card";
 import { useRouter } from "@/i18n/navigation";
-import type { KnockoutMatch } from "@/lib/bracket-core";
 import { getGroups, getTeamById, getTeamByName } from "@/lib/teams";
+import type { KnockoutMatch } from "@/modules/bracket";
 import type { LiveResultState } from "@/modules/live/domain/live-result";
 
 const REFRESH_INTERVAL =

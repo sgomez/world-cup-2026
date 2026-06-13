@@ -6,11 +6,15 @@ import { useEffect, useMemo, useState } from "react";
 import { TeamBadge } from "@/components/team-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "@/i18n/navigation";
-import { matchProgression, R32_MATCHUPS } from "@/lib/bracket-core";
 import { getAllMatches } from "@/lib/matches";
 import { getGroups, getTeamByName, type Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
-import { KNOCKOUT_MATCH_IDS, type KnockoutMatch } from "@/modules/bracket";
+import {
+  KNOCKOUT_MATCH_IDS,
+  type KnockoutMatch,
+  matchProgression,
+  R32_MATCHUPS,
+} from "@/modules/bracket";
 import { getAllTeamsLookup } from "@/modules/bracket/prediction-ui";
 import { computeTournamentBracket } from "@/modules/tournament/domain/derive-result";
 
