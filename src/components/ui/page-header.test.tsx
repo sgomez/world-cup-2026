@@ -1,25 +1,42 @@
+import { composeStories } from "@storybook/react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { PageHeader } from "./page-header";
+import * as stories from "./page-header.stories";
 
-describe("PageHeader", () => {
-  it("stacks the action below the title on mobile and aligns it inline on larger screens", () => {
-    render(
-      <PageHeader
-        title="My title"
-        action={<button type="button">Act</button>}
-      />,
-    );
+const { Default, WithDescriptionAndAction, WithIcon } = composeStories(stories);
 
-    const root = screen.getByText("Act").closest("div")?.parentElement;
+describe("PageHeader Composed Stories", () => {
+  it("renders the Default page header", () => {
+    render(<Default />);
+    const heading = screen.getByRole("heading", {
+      name: /default page header/i,
+    });
+    expect(heading).toBeInTheDocument();
+  });
+
+  it("renders with description and action", () => {
+    render(<WithDescriptionAndAction />);
+    expect(
+      screen.getByText("Manage your team brackets and view statistics here."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /create community/i }),
+    ).toBeInTheDocument();
+
+    const root = screen
+      .getByRole("button", { name: /create community/i })
+      .closest("div")?.parentElement;
     expect(root).toHaveClass("flex-col");
     expect(root).toHaveClass("sm:flex-row");
   });
 
-  it("keeps the title able to shrink so long titles can truncate", () => {
-    render(<PageHeader title="My title" />);
-
-    const titleWrapper = screen.getByRole("heading").parentElement;
+  it("renders with an icon", () => {
+    render(<WithIcon />);
+    const heading = screen.getByRole("heading", {
+      name: /tournament settings/i,
+    });
+    expect(heading).toBeInTheDocument();
+    const titleWrapper = heading.parentElement;
     expect(titleWrapper).toHaveClass("min-w-0");
   });
 });
