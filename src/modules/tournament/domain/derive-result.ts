@@ -16,19 +16,6 @@
  */
 
 import { getAllMatches } from "@/lib/matches";
-import {
-  computeGroupStanding,
-  DEFAULT_TIEBREAK_CHAIN,
-  detectGroupTies,
-  detectThirdsTies,
-  type GroupMatch,
-  getAdvancement,
-  makeManualFactorCriterion,
-  rankThirds,
-  stableCriterion,
-  type TeamId,
-  type ThirdPlaceEntry,
-} from "@/lib/standings/standings";
 import { getGroups } from "@/lib/teams";
 import {
   applyWinnerToMatches,
@@ -44,6 +31,19 @@ import {
 import type { LiveResult } from "@/modules/live/domain/live-result";
 import combinationsData from "../../../../data/worldcup.combinations.json";
 import rawTeamsEn from "../../../../data/worldcup.teams.en.json";
+import {
+  computeGroupStanding,
+  DEFAULT_TIEBREAK_CHAIN,
+  detectGroupTies,
+  detectThirdsTies,
+  type GroupMatch,
+  getAdvancement,
+  makeManualFactorCriterion,
+  rankThirds,
+  stableCriterion,
+  type TeamId,
+  type ThirdPlaceEntry,
+} from "./standings";
 
 export type DerivedResult = {
   /** Settled group finishing orders, keyed by uppercase group letter. Empty if not settled. */
