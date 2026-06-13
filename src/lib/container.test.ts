@@ -331,3 +331,43 @@ describe("Container - transaction scope", () => {
     expect(found).toBeNull();
   });
 });
+
+describe("Container - importDirect use case via bets() accessor", () => {
+  it("should successfully parse a sheet and import direct bets in transaction", async () => {
+    // 1T: MEX (G) -> MEX champion, MEX in all rounds (R32, R16, QF, SF, F)
+    const rows = [
+      {
+        rowNumber: 3,
+        col0: "1T",
+        col1: "Participant A",
+        predictions: {
+          2: "G", // Column 2 = MEX
+        },
+      },
+    ];
+
+    const sheetParser = {
+      parse: async () => rows,
+    };
+
+    const container = createTestContainer({ sheetParser });
+
+    const result = await container.transaction(async (txContainer) => {
+      return txContainer.bets().importDirect({
+        mode: "create",
+        communityName: "My Imported Community",
+        fileBuffer: Buffer.from("fake"),
+        inviteToken: "token-abc-123",
+      });
+    });
+
+    expect(result.isOk()).toBe(true);
+    const { community } = result._unsafeUnwrap();
+    expect(community.name).toBe("My Imported Community");
+    expect(community.imported).toBe(true);
+
+    const bets = await container.bets().listSummaries(community.ownerId);
+    expect(bets).toHaveLength(1);
+    expect(bets[0].label).toBe("1T | Participant A");
+  });
+});

@@ -7,8 +7,6 @@ import { redirect } from "@/i18n/navigation";
 import { container } from "@/lib/container";
 import { prisma } from "@/lib/prisma";
 import { getSession, requireAdmin } from "@/lib/session";
-import { importDirectBets } from "@/modules/bet/application/import-direct-bets";
-import { ExceljsSheetParser } from "@/modules/bet/infrastructure/exceljs-sheet-parser";
 import type { DomainErrorCode } from "@/modules/community/domain/errors";
 import { withAuthenticatedAction } from "./authenticated-action";
 
@@ -234,7 +232,6 @@ export async function importDirectBetsAction(
     return { error: t("importErrorInvalidSheet") };
   }
 
-  const sheetParser = new ExceljsSheetParser();
   const inviteToken = randomBytes(32).toString("hex");
 
   class TransactionRollbackError extends Error {
@@ -245,19 +242,13 @@ export async function importDirectBetsAction(
 
   try {
     const result = await container.transaction(async (txContainer) => {
-      const res = await importDirectBets(
-        sheetParser,
-        txContainer.repos.ownerProvisioner,
-        txContainer.repos.community,
-        txContainer.repos.bet,
-        {
-          mode,
-          communityId: mode === "reuse" ? communityId : undefined,
-          communityName: mode === "create" ? communityName : undefined,
-          fileBuffer,
-          inviteToken,
-        },
-      );
+      const res = await txContainer.bets().importDirect({
+        mode,
+        communityId: mode === "reuse" ? communityId : undefined,
+        communityName: mode === "create" ? communityName : undefined,
+        fileBuffer,
+        inviteToken,
+      });
 
       if (res.isErr()) {
         throw new TransactionRollbackError(res.error);

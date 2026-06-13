@@ -34,7 +34,7 @@ type MockStats = {
   qualified: boolean;
 };
 
-function getMockGroupStats(index: number, _groupLetter: string): MockStats {
+function _getMockGroupStats(index: number, _groupLetter: string): MockStats {
   // Clean all mockup values to 0 points/goals and set qualified to true as tournament hasn't started
   return {
     position: index + 1,
@@ -460,7 +460,7 @@ export function StandingsView({
     // F match
     const lr104 = liveMap.get(104);
     if (lr104 && lr104.status !== "upcoming") {
-      scoresMap["F"] = {
+      scoresMap.F = {
         score1: String(lr104.goals1),
         score2: String(lr104.goals2),
         score1Pen:
@@ -474,7 +474,7 @@ export function StandingsView({
   }, [liveResults]);
 
   // Check if a match is finished
-  const isMatchFinished = (matchId: string, match: KnockoutMatch) => {
+  const isMatchFinished = (matchId: string, _match: KnockoutMatch) => {
     let num: number | undefined;
     if (matchId.startsWith("R32-")) {
       num = parseInt(matchId.replace("R32-", ""), 10);
@@ -498,7 +498,7 @@ export function StandingsView({
   };
 
   // Check if a match is live
-  const isMatchLive = (matchId: string, match: KnockoutMatch) => {
+  const isMatchLive = (matchId: string, _match: KnockoutMatch) => {
     let num: number | undefined;
     if (matchId.startsWith("R32-")) {
       num = parseInt(matchId.replace("R32-", ""), 10);
