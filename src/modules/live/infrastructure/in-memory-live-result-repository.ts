@@ -24,4 +24,15 @@ export class InMemoryLiveResultRepository implements LiveResultRepository {
     this.store.set(liveResult.num, liveResult);
     return okAsync(undefined);
   }
+
+  getData(): Map<number, LiveResult> {
+    return new Map(this.store);
+  }
+
+  setData(data: Map<number, LiveResult>) {
+    this.store.clear();
+    for (const [k, v] of data) {
+      this.store.set(k, v);
+    }
+  }
 }
