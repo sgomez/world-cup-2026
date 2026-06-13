@@ -118,9 +118,8 @@ vi.mock("@/lib/bracket-core", () => ({
   getTeamIdFromPosition: vi.fn(() => null),
 }));
 
-// Mock prediction-state
-vi.mock("@/lib/prediction-state", () => ({
-  getAllTeamsLookup: vi.fn(() => new Map()),
+// Mock modules/bracket (core engine)
+vi.mock("@/modules/bracket", () => ({
   KNOCKOUT_MATCH_IDS: {
     R32: [],
     R16: [],
@@ -129,6 +128,11 @@ vi.mock("@/lib/prediction-state", () => ({
     "3RD": [],
     F: [],
   },
+}));
+
+// Mock modules/bracket/prediction-ui (UI seam)
+vi.mock("@/modules/bracket/prediction-ui", () => ({
+  getAllTeamsLookup: vi.fn(() => new Map()),
 }));
 
 // Mock derive-result

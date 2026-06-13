@@ -144,9 +144,8 @@ vi.mock("@/components/knockout-stage", () => {
   };
 });
 
-vi.mock("@/lib/prediction-state", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/lib/prediction-state")>();
+vi.mock("@/modules/bracket", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/bracket")>();
   return {
     ...actual,
     createInitialState: vi.fn((saved, knockoutWinners) => {

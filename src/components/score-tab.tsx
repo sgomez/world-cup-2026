@@ -2,9 +2,9 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { TeamBadge } from "@/components/team-badge";
-import { getAllTeamsLookup } from "@/lib/prediction-state";
 import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
+import { getAllTeamsLookup } from "@/modules/bracket/prediction-ui";
 import {
   CHAMPION_POINTS,
   EMPTY_SCOREABLE_CONTENT_ARRAYS,

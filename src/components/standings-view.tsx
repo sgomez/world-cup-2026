@@ -8,13 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "@/i18n/navigation";
 import { matchProgression, R32_MATCHUPS } from "@/lib/bracket-core";
 import { getAllMatches } from "@/lib/matches";
-import {
-  getAllTeamsLookup,
-  KNOCKOUT_MATCH_IDS,
-  type KnockoutMatch,
-} from "@/lib/prediction-state";
 import { getGroups, getTeamByName, type Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
+import { KNOCKOUT_MATCH_IDS, type KnockoutMatch } from "@/modules/bracket";
+import { getAllTeamsLookup } from "@/modules/bracket/prediction-ui";
 import { computeTournamentBracket } from "@/modules/tournament/domain/derive-result";
 
 const REFRESH_INTERVAL =

@@ -17,12 +17,11 @@ import { RenameBetButton } from "@/components/rename-bet-button";
 import { ScoreTab } from "@/components/score-tab";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createInitialState, type PredictionState } from "@/modules/bracket";
 import {
-  createInitialState,
-  type PredictionState,
   type TournamentAction,
   tournamentReducer,
-} from "@/lib/prediction-state";
+} from "@/modules/bracket/prediction-ui";
 import {
   EMPTY_SCOREABLE_CONTENT_ARRAYS,
   extractScoreableContent,
