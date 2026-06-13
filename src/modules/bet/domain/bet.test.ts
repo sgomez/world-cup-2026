@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { computeSignatureFromContent } from "@/lib/bet-signature";
-import { type ScoreableContentArrays, toScoreableContent } from "@/lib/scoring";
 import { getGroups } from "@/lib/teams";
+import {
+  type ScoreableContentArrays,
+  toScoreableContent,
+} from "@/modules/score";
 import { Bet, type BetState } from "./bet";
 import { BettingWindow } from "./betting-window";
 

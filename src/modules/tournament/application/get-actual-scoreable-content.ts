@@ -1,9 +1,9 @@
+import type { LiveResult } from "@/modules/live/domain/live-result";
 import {
   extractScoreableContent,
   type ScoreableContentArrays,
   toScoreableContentArrays,
-} from "@/lib/scoring";
-import type { LiveResult } from "@/modules/live/domain/live-result";
+} from "@/modules/score";
 import { Tournament } from "../domain/tournament";
 
 export function getActualScoreableContent(

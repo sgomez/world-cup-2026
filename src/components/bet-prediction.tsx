@@ -28,7 +28,7 @@ import {
   extractScoreableContent,
   type ScoreableContentArrays,
   toScoreableContentArrays,
-} from "@/lib/scoring";
+} from "@/modules/score";
 
 export function BetPrediction({
   betId,

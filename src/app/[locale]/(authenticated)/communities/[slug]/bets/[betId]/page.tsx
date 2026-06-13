@@ -7,9 +7,9 @@ import { ScoreTab } from "@/components/score-tab";
 import { PageHeader } from "@/components/ui/page-header";
 import { Link, redirect } from "@/i18n/navigation";
 import { container } from "@/lib/container";
-import { toScoreableContentArrays } from "@/lib/scoring";
 import { getSession } from "@/lib/session";
 import { hasLiveMatch } from "@/modules/live/domain/live-result";
+import { toScoreableContentArrays } from "@/modules/score";
 import { getActualScoreableContent } from "@/modules/tournament/application/get-actual-scoreable-content";
 
 export default async function PeerBetPage({

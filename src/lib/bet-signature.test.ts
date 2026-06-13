@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Bet } from "@/modules/bet/domain/bet";
+import { toScoreableContentArrays } from "@/modules/score";
 import { computeBetSignature } from "./bet-signature";
 import {
   createInitialState,
@@ -8,7 +9,6 @@ import {
   type PredictionState,
   tournamentReducer,
 } from "./prediction-state";
-import { toScoreableContentArrays } from "./scoring";
 
 function buildTeam1WinsWinners(
   groupPredictions: PredictionState | null,
