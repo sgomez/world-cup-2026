@@ -118,6 +118,15 @@ external participants view as members.
   `Bet.createDirect` and do not loosen any native write path.
 - Refreshing is destructive-by-design for the Import Owner's Bets but bounded to
   Imported Communities by the `imported` guard.
+- The Import Owner is an ordinary `user`-role row, so it surfaces in the admin user
+  list and is impersonable (intended — impersonation is how its full Bet labels are
+  read, ADR 0023). Promoting it to `admin` is inert (it can't authenticate; only
+  super_admins impersonate, and they already outrank `admin`), so no guard is added
+  for that. The one real hazard is deletion: `owner ... onDelete: Cascade` means
+  deleting the Import Owner would orphan the Imported Community and its ~190 Bets.
+  No user-delete surface exists today, so this is latent — **any future user-delete
+  path must refuse a User that owns an `imported` Community.** (Triaged from
+  sgomez/world-cup-2026#243, closed wontfix.)
 - The upload is parsed entirely in memory: the server action reads the upload
   `Buffer` straight into the `exceljs` adapter (`parse(buffer): ParsedRow[]`), so
   the importer needs **no writable volume or temp dir** — no change to the
