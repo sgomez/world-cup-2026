@@ -3,6 +3,7 @@ import { Bet } from "../domain/bet";
 import type { BetRepository } from "../domain/bet-repository";
 import type { BettingWindow } from "../domain/betting-window";
 import { type DomainError, domainError } from "../domain/errors";
+import { loadOwnedBet } from "./mutate-owned-bet";
 
 export type CopyBetCommand = {
   betId: string;
@@ -16,13 +17,7 @@ export function copyBet(
   repo: BetRepository,
   command: CopyBetCommand,
 ): ResultAsync<Bet, DomainError> {
-  return ResultAsync.fromSafePromise(repo.findById(command.betId))
-    .andThen((bet) => (bet ? okAsync(bet) : errAsync(domainError("NOT_FOUND"))))
-    .andThen((bet) =>
-      bet.isOwnedBy(command.userId)
-        ? okAsync(bet)
-        : errAsync(domainError("FORBIDDEN")),
-    )
+  return loadOwnedBet(repo, command)
     .andThen((sourceBet) => {
       if (!command.window.isOpen(command.now)) {
         return errAsync<Bet, DomainError>(domainError("PAST_DEADLINE"));

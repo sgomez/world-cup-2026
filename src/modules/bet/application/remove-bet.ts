@@ -1,7 +1,8 @@
-import { errAsync, okAsync, ResultAsync } from "neverthrow";
+import { errAsync, okAsync, type ResultAsync } from "neverthrow";
 import type { BetRepository } from "../domain/bet-repository";
 import type { BettingWindow } from "../domain/betting-window";
 import { type DomainError, domainError } from "../domain/errors";
+import { loadOwnedBet } from "./mutate-owned-bet";
 
 export type RemoveBetCommand = {
   betId: string;
@@ -23,13 +24,7 @@ export function removeBet(
   repo: BetRepository,
   command: RemoveBetCommand,
 ): ResultAsync<void, DomainError> {
-  return ResultAsync.fromSafePromise(repo.findById(command.betId))
-    .andThen((bet) => (bet ? okAsync(bet) : errAsync(domainError("NOT_FOUND"))))
-    .andThen((bet) =>
-      bet.isOwnedBy(command.userId)
-        ? okAsync(bet)
-        : errAsync(domainError("FORBIDDEN")),
-    )
+  return loadOwnedBet(repo, command)
     .andThen((bet) =>
       command.window.isOpen(command.now)
         ? okAsync(bet)
