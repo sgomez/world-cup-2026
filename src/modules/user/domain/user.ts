@@ -116,4 +116,25 @@ export class User {
       }),
     );
   }
+
+  changeRole(actor: User, newRole: string): Result<User, DomainError> {
+    if (this.role === "super_admin") {
+      return err(domainError("SUPER_ADMIN_IMMUTABLE"));
+    }
+
+    if (actor.id === this.id) {
+      return err(domainError("SELF_DEMOTION_NOT_ALLOWED"));
+    }
+
+    if (actor.role !== "admin" && actor.role !== "super_admin") {
+      return err(domainError("FORBIDDEN"));
+    }
+
+    return ok(
+      new User({
+        ...this.state,
+        role: newRole,
+      }),
+    );
+  }
 }

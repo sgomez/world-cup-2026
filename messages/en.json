@@ -323,7 +323,10 @@
     "NOT_AUTHENTICATED": "Not authenticated",
     "NAME_REQUIRED": "Name is required",
     "NOT_FOUND": "User not found",
-    "SAVE_FAILED": "Failed to save profile. Please try again"
+    "SAVE_FAILED": "Failed to save profile. Please try again",
+    "FORBIDDEN": "You are not authorized to perform this action",
+    "SELF_DEMOTION_NOT_ALLOWED": "You cannot change your own role",
+    "SUPER_ADMIN_IMMUTABLE": "Super Admin role cannot be modified"
   },
   "liveErrors": {
     "FORBIDDEN": "You are not authorized to modify match results.",

@@ -109,4 +109,77 @@ describe("User Aggregate Root", () => {
       expect(updated.image).toBeNull();
     });
   });
+
+  describe("changeRole", () => {
+    const actorUser = User.create({
+      ...validUserParams,
+      id: "actor-user",
+      role: "user",
+    })._unsafeUnwrap();
+    const actorAdmin = User.create({
+      ...validUserParams,
+      id: "actor-admin",
+      role: "admin",
+    })._unsafeUnwrap();
+    const actorSuperAdmin = User.create({
+      ...validUserParams,
+      id: "actor-super",
+      role: "super_admin",
+    })._unsafeUnwrap();
+
+    it("rejects modifications on super_admin target", () => {
+      const superAdminTarget = User.create({
+        ...validUserParams,
+        id: "target-super",
+        role: "super_admin",
+      })._unsafeUnwrap();
+      const result = superAdminTarget.changeRole(actorSuperAdmin, "admin");
+      expect(result.isErr()).toBe(true);
+      expect(result._unsafeUnwrapErr().code).toBe("SUPER_ADMIN_IMMUTABLE");
+    });
+
+    it("rejects self-demotion/self-modification", () => {
+      const adminTarget = User.create({
+        ...validUserParams,
+        id: "actor-admin",
+        role: "admin",
+      })._unsafeUnwrap();
+      const result = adminTarget.changeRole(actorAdmin, "user");
+      expect(result.isErr()).toBe(true);
+      expect(result._unsafeUnwrapErr().code).toBe("SELF_DEMOTION_NOT_ALLOWED");
+    });
+
+    it("rejects non-admin/non-super-admin actors", () => {
+      const target = User.create({
+        ...validUserParams,
+        id: "target-user",
+        role: "user",
+      })._unsafeUnwrap();
+      const result = target.changeRole(actorUser, "admin");
+      expect(result.isErr()).toBe(true);
+      expect(result._unsafeUnwrapErr().code).toBe("FORBIDDEN");
+    });
+
+    it("allows admin to change user's role", () => {
+      const target = User.create({
+        ...validUserParams,
+        id: "target-user",
+        role: "user",
+      })._unsafeUnwrap();
+      const updated = target.changeRole(actorAdmin, "admin")._unsafeUnwrap();
+      expect(updated.role).toBe("admin");
+    });
+
+    it("allows super_admin to change user's role", () => {
+      const target = User.create({
+        ...validUserParams,
+        id: "target-user",
+        role: "user",
+      })._unsafeUnwrap();
+      const updated = target
+        .changeRole(actorSuperAdmin, "admin")
+        ._unsafeUnwrap();
+      expect(updated.role).toBe("admin");
+    });
+  });
 });
