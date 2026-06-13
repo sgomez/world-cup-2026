@@ -26,7 +26,8 @@ export function CreateBetForm() {
         <Button
           type="submit"
           loading={pending}
-          className="rounded-xl flex items-center gap-2 whitespace-nowrap"
+          rounded="xl"
+          className="flex items-center gap-2 whitespace-nowrap"
         >
           <Plus className="size-4" aria-hidden="true" />
           {t("addBet")}

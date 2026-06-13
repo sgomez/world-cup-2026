@@ -27,7 +27,8 @@ export function LocaleToggle() {
       onClick={() => router.replace(pathname, { locale: nextLocale })}
       variant="secondary"
       size="sm"
-      className="rounded-full w-auto px-3 gap-1 text-foreground"
+      rounded="full"
+      className="w-auto px-3 gap-1 text-foreground"
       aria-label={t("switchLanguage")}
     >
       <span aria-hidden="true">{current.flag}</span>

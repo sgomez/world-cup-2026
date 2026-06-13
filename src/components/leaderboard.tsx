@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 import { Banner } from "@/components/ui/banner";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { useLiveRefresh } from "@/hooks/use-live-refresh";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
@@ -99,7 +98,7 @@ export function Leaderboard({
         {scopes.map((scope) => {
           const isActive = scope.id === active?.id;
           return (
-            <Button
+            <button
               key={scope.id}
               role="tab"
               type="button"
@@ -108,16 +107,15 @@ export function Leaderboard({
                 setActiveId(scope.id);
                 router.replace(`${pathname}#${scope.id}`, { scroll: false });
               }}
-              variant="ghost"
               className={cn(
-                "shrink-0 whitespace-nowrap rounded-lg px-4 py-2 text-caption-md font-medium transition-all duration-150 h-auto hover:bg-transparent",
+                "shrink-0 whitespace-nowrap rounded-lg px-4 py-2 text-caption-md font-medium transition-all duration-150",
                 isActive
                   ? "bg-canvas text-foreground shadow-sm dark:bg-charcoal"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
               {scope.label}
-            </Button>
+            </button>
           );
         })}
       </div>
