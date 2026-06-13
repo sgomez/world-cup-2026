@@ -31,16 +31,10 @@ type BaseContainerDeps = {
 
 export function createBaseContainer(deps: BaseContainerDeps) {
   const window = new BettingWindow(deps.betDeadline);
-  const userCache = new Map<string, string | null>();
 
   const getUserName = async (userId: string): Promise<string | null> => {
-    if (userCache.has(userId)) {
-      return userCache.get(userId) ?? null;
-    }
     const user = await deps.userRepo.findById(userId);
-    const name = user ? user.name : null;
-    userCache.set(userId, name);
-    return name;
+    return user ? user.name : null;
   };
 
   return {
