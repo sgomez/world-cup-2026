@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
+import { useLiveRefresh } from "@/hooks/use-live-refresh";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import type { LeaderboardEntry } from "@/modules/leaderboard/domain/leaderboard";
@@ -29,6 +30,7 @@ export function Leaderboard({
   tournamentEnded,
   hasLiveMatch = false,
 }: LeaderboardProps) {
+  useLiveRefresh();
   const t = useTranslations("leaderboard");
   const router = useRouter();
   const pathname = usePathname();

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import worldcupData from "@/../data/worldcup.json";
 import { MatchCard } from "@/components/match-card";
 import { placeholderLabel } from "@/components/placeholder-label";
-import { useRouter } from "@/i18n/navigation";
+import { useLiveRefresh } from "@/hooks/use-live-refresh";
 import { type KnockoutMatch, placeholderCodeForSlot } from "@/modules/bracket";
 import type { LiveResultState } from "@/modules/live/domain/live-result";
 import {
@@ -16,9 +16,6 @@ import {
   slotForNum,
 } from "@/modules/schedule";
 import { getGroups, getTeamById, getTeamByName } from "@/modules/teams";
-
-const REFRESH_INTERVAL =
-  parseInt(process.env.NEXT_PUBLIC_REFRESH_INTERVAL ?? "", 10) || 30_000;
 
 type Match = {
   round: string;
@@ -63,7 +60,7 @@ export function CalendarView({
   bracketView,
   locale,
 }: CalendarViewProps) {
-  const router = useRouter();
+  useLiveRefresh();
   const tCalendar = useTranslations("calendar");
   const tKnock = useTranslations("knockoutStage");
 
@@ -82,45 +79,6 @@ export function CalendarView({
       setUserTimezone("UTC");
     }
   }, []);
-
-  // Auto-refresh every 30s when the tab is visible
-  useEffect(() => {
-    if (!isMounted) return;
-
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-
-    const startPolling = () => {
-      if (intervalId) return;
-      intervalId = setInterval(() => {
-        if (document.visibilityState === "visible") {
-          router.refresh();
-        }
-      }, REFRESH_INTERVAL);
-    };
-
-    const stopPolling = () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        startPolling();
-      } else {
-        stopPolling();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    startPolling();
-
-    return () => {
-      stopPolling();
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [isMounted, router]);
 
   // Get all teams from groups, sorted alphabetically
   const allTeams = useMemo(() => {

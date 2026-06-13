@@ -2,18 +2,15 @@
 
 import { Trophy, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { KnockoutBracket } from "@/components/knockout-bracket";
 import { TeamBadge } from "@/components/team-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useRouter } from "@/i18n/navigation";
+import { useLiveRefresh } from "@/hooks/use-live-refresh";
 import { cn } from "@/lib/utils";
 import { getAllMatches } from "@/modules/schedule";
 import { getGroups, getTeamByName, type Team } from "@/modules/teams";
 import { computeTournamentBracket } from "@/modules/tournament/domain/derive-result";
-
-const REFRESH_INTERVAL =
-  parseInt(process.env.NEXT_PUBLIC_REFRESH_INTERVAL ?? "", 10) || 30_000;
 
 // Stable empty set for default liveTeamIds prop — avoids spurious memoization
 // cache misses with React Compiler when the prop is omitted.
@@ -56,55 +53,11 @@ export function StandingsView({
   savedKnockoutWinners?: Record<string, string> | null;
   savedAdvancement?: string[];
 }) {
-  const router = useRouter();
+  useLiveRefresh();
   const t = useTranslations("tournament");
   const tGroupStage = useTranslations("groupStage");
 
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  // Auto-refresh every 30s when the tab is visible
-  useEffect(() => {
-    if (!isMounted) return;
-
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-
-    const startPolling = () => {
-      if (intervalId) return;
-      intervalId = setInterval(() => {
-        if (document.visibilityState === "visible") {
-          router.refresh();
-        }
-      }, REFRESH_INTERVAL);
-    };
-
-    const stopPolling = () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        startPolling();
-      } else {
-        stopPolling();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    startPolling();
-
-    return () => {
-      stopPolling();
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [isMounted, router]);
 
   const groups = useMemo(() => {
     const baseGroups = getGroups(locale);
