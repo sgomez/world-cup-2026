@@ -1,4 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { InMemoryBetRepository } from "@/modules/bet/infrastructure/in-memory-bet-repository";
+import { InMemoryCommunityRepository } from "@/modules/community/infrastructure/in-memory-community-repository";
+import { Tournament } from "@/modules/tournament/domain/tournament";
+import { User } from "@/modules/user/domain/user";
+import { InMemoryUserRepository } from "@/modules/user/infrastructure/in-memory-user-repository";
 import { createTestContainer } from "./container";
 
 describe("Container - bets() accessor", () => {
@@ -67,5 +72,153 @@ describe("Container - bets() accessor", () => {
 
     const closedBet = await container.bets().findById(createdBet.id);
     expect(closedBet?.status).toBe("closed");
+  });
+});
+
+describe("Container - communities() accessor", () => {
+  it("performs community creation, search, and member actions", async () => {
+    const container = createTestContainer();
+
+    const createResult = await container.communities().create({
+      ownerId: "owner-1",
+      name: "My Community",
+      inviteToken: "token-abc",
+    });
+    expect(createResult.isOk()).toBe(true);
+    const comm = createResult._unsafeUnwrap();
+    expect(comm.name).toBe("My Community");
+    expect(comm.slug).toBe("my-community");
+
+    const found = await container.communities().findBySlug("my-community");
+    expect(found).not.toBeNull();
+    expect(found?.name).toBe("My Community");
+
+    const joinResult = await container.communities().join({
+      userId: "user-2",
+      inviteToken: "token-abc",
+    });
+    expect(joinResult.isOk()).toBe(true);
+  });
+});
+
+describe("Container - tournament() and live() accessors", () => {
+  it("interacts with tournament settings and live matches", async () => {
+    const container = createTestContainer();
+
+    const tournament = await container.tournament().get();
+    expect(tournament).toBeNull(); // default is null in InMemoryTournamentRepository before seeding
+
+    // save tournament
+    const defaultTournament = Tournament.createDefault();
+    const saveResult = await container.tournament().save(defaultTournament);
+    expect(saveResult.isOk()).toBe(true);
+
+    const saved = await container.tournament().get();
+    expect(saved?.id).toBe("singleton");
+
+    // Live result
+    const liveRes = await container.live().findAll();
+    expect(liveRes.length).toBe(0);
+
+    const upsertRes = await container.live().upsert({
+      num: 1,
+      status: "live",
+      goals1: 2,
+      goals2: 1,
+      allowCreate: true,
+    });
+    expect(upsertRes.isOk()).toBe(true);
+
+    const foundLive = await container.live().findByNum(1);
+    expect(foundLive?.goals1).toBe(2);
+  });
+});
+
+describe("Container - users() accessor", () => {
+  it("interacts with users", async () => {
+    const user = User.create({
+      id: "user-1",
+      email: "user@example.com",
+      name: "Old Name",
+      emailVerified: true,
+      image: null,
+    })._unsafeUnwrap();
+
+    const userRepo = new InMemoryUserRepository([user]);
+    const container = createTestContainer({ userRepo });
+
+    const updateRes = await container.users().updateProfile({
+      userId: "user-1",
+      name: "New Name",
+      image: "https://example.com/image.png",
+    });
+    expect(updateRes.isOk()).toBe(true);
+    expect(updateRes._unsafeUnwrap().name).toBe("New Name");
+
+    const found = await container.users().findById("user-1");
+    expect(found?.name).toBe("New Name");
+  });
+});
+
+describe("Container - leaderboard() accessor and getNameResolver", () => {
+  it("should successfully calculate the leaderboard and resolve names", async () => {
+    const user1 = User.create({
+      id: "user-alice",
+      email: "alice@example.com",
+      name: "Alice",
+      emailVerified: true,
+      image: null,
+    })._unsafeUnwrap();
+    const user2 = User.create({
+      id: "user-bob",
+      email: "bob@example.com",
+      name: "Bob",
+      emailVerified: true,
+      image: null,
+    })._unsafeUnwrap();
+
+    const userRepo = new InMemoryUserRepository([user1, user2]);
+    const communityRepo = new InMemoryCommunityRepository();
+    const betRepo = new InMemoryBetRepository();
+
+    const container = createTestContainer({ userRepo, communityRepo, betRepo });
+
+    // Seed community
+    const createCommResult = await container.communities().create({
+      ownerId: "user-alice",
+      name: "Champs",
+      inviteToken: "token-123",
+    });
+    expect(createCommResult.isOk()).toBe(true);
+    createCommResult._unsafeUnwrap();
+
+    // Join bob
+    const joinResult = await container.communities().join({
+      userId: "user-bob",
+      inviteToken: "token-123",
+    });
+    expect(joinResult.isOk()).toBe(true);
+
+    // Seed nameResolver
+    const initialCache = new Map<string, string | null>([
+      ["user-alice", "Alice"],
+    ]);
+    const nameResolver = container.getNameResolver(initialCache);
+
+    // Test name resolver
+    const nameAlice = await nameResolver("user-alice");
+    expect(nameAlice).toBe("Alice"); // from cache
+    const nameBob = await nameResolver("user-bob");
+    expect(nameBob).toBe("Bob"); // resolved from repo
+
+    // Get leaderboard
+    const leaderboardResult = await container.leaderboard().get(
+      {
+        viewerId: "user-alice",
+        communitySlug: "champs",
+      },
+      nameResolver,
+    );
+    expect(leaderboardResult.isOk()).toBe(true);
   });
 });

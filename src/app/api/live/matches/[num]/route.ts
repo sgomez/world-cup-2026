@@ -1,9 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import { upsertLiveResult } from "@/modules/live/application/upsert-live-result";
-import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
+import { container } from "@/lib/container";
 
 export const dynamic = "force-dynamic";
 
@@ -98,8 +96,7 @@ export async function PUT(request: Request, context: RouteContext) {
   const body = await parseBody(request);
   if (body instanceof Response) return body;
 
-  const repo = new PrismaLiveResultRepository(prisma);
-  const result = await upsertLiveResult(repo, {
+  const result = await container.live().upsert({
     num,
     status: body.status,
     goals1: body.goals1,
@@ -135,8 +132,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const body = await parseBody(request);
   if (body instanceof Response) return body;
 
-  const repo = new PrismaLiveResultRepository(prisma);
-  const result = await upsertLiveResult(repo, {
+  const result = await container.live().upsert({
     num,
     status: body.status,
     goals1: body.goals1,

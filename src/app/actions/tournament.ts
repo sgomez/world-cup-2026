@@ -2,10 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
-import { prisma } from "@/lib/prisma";
+import { container } from "@/lib/container";
 import type { DomainErrorCode } from "@/modules/tournament/domain/errors";
 import { Tournament } from "@/modules/tournament/domain/tournament";
-import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
 import { withAuthenticatedAction } from "./authenticated-action";
 
 async function tournamentErrorMessage(code: DomainErrorCode): Promise<string> {
@@ -34,8 +33,7 @@ export async function setManualTieBreakAction(
       };
     }
 
-    const repo = new PrismaTournamentRepository(prisma);
-    const existing = await repo.get();
+    const existing = await container.tournament().get();
     const tournament = existing ?? Tournament.createDefault();
     const factors: Record<string, number> = {};
     orderedIds.forEach((id, idx) => {
@@ -44,7 +42,7 @@ export async function setManualTieBreakAction(
     const updated = tournament
       .setManualTieBreak(group, factors)
       ._unsafeUnwrap();
-    const saveResult = await repo.save(updated);
+    const saveResult = await container.tournament().save(updated);
 
     if (saveResult.isErr()) {
       return {
@@ -71,11 +69,10 @@ export async function clearManualTieBreakAction(
       };
     }
 
-    const repo = new PrismaTournamentRepository(prisma);
-    const existing = await repo.get();
+    const existing = await container.tournament().get();
     const tournament = existing ?? Tournament.createDefault();
     const updated = tournament.clearManualTieBreak(group)._unsafeUnwrap();
-    const saveResult = await repo.save(updated);
+    const saveResult = await container.tournament().save(updated);
 
     if (saveResult.isErr()) {
       return {
@@ -102,8 +99,7 @@ export async function setThirdPlaceManualOrderAction(
       };
     }
 
-    const repo = new PrismaTournamentRepository(prisma);
-    const existing = await repo.get();
+    const existing = await container.tournament().get();
     const tournament = existing ?? Tournament.createDefault();
     let factors: Record<string, number> | null = null;
     if (orderedIds) {
@@ -117,7 +113,7 @@ export async function setThirdPlaceManualOrderAction(
     const updated = tournament
       .setThirdPlaceManualOrder(factors)
       ._unsafeUnwrap();
-    const saveResult = await repo.save(updated);
+    const saveResult = await container.tournament().save(updated);
 
     if (saveResult.isErr()) {
       return {
@@ -146,8 +142,7 @@ export async function setGroupTieBreakFactorAction(
       };
     }
 
-    const repo = new PrismaTournamentRepository(prisma);
-    const existing = await repo.get();
+    const existing = await container.tournament().get();
     const tournament = existing ?? Tournament.createDefault();
 
     const currentFactors = { ...(tournament.manualTieBreaks[group] ?? {}) };
@@ -160,7 +155,7 @@ export async function setGroupTieBreakFactorAction(
     const updated = tournament
       .setManualTieBreak(group, currentFactors)
       ._unsafeUnwrap();
-    const saveResult = await repo.save(updated);
+    const saveResult = await container.tournament().save(updated);
 
     if (saveResult.isErr()) {
       return {
@@ -188,8 +183,7 @@ export async function setThirdsTieBreakFactorAction(
       };
     }
 
-    const repo = new PrismaTournamentRepository(prisma);
-    const existing = await repo.get();
+    const existing = await container.tournament().get();
     const tournament = existing ?? Tournament.createDefault();
 
     const currentFactors = { ...(tournament.thirdPlaceManualOrder ?? {}) };
@@ -205,7 +199,7 @@ export async function setThirdsTieBreakFactorAction(
     const updated = tournament
       .setThirdPlaceManualOrder(updatedFactors)
       ._unsafeUnwrap();
-    const saveResult = await repo.save(updated);
+    const saveResult = await container.tournament().save(updated);
 
     if (saveResult.isErr()) {
       return {

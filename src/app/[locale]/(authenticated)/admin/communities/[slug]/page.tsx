@@ -1,10 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { container } from "@/lib/container";
 import { prisma } from "@/lib/prisma";
-
-import { summariesByOwners } from "@/modules/bet/application/summaries-by-owners";
-import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
 interface Props {
   params: Promise<{ locale: string; slug: string }>;
@@ -38,8 +36,7 @@ export default async function AdminCommunityDetailPage({ params }: Props) {
   if (!communityRaw) notFound();
 
   const userIds = communityRaw.members.map((m) => m.userId);
-  const repo = new PrismaBetRepository(prisma);
-  const betSummaries = await summariesByOwners(repo, userIds);
+  const betSummaries = await container.bets().summariesByOwners(userIds);
 
   const community = {
     ...communityRaw,

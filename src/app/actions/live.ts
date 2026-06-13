@@ -2,10 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
-import { prisma } from "@/lib/prisma";
-import { upsertLiveResult } from "@/modules/live/application/upsert-live-result";
+import { container } from "@/lib/container";
 import type { LiveStatus } from "@/modules/live/domain/live-result";
-import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
 import { withAuthenticatedAction } from "./authenticated-action";
 
 export type UpsertLiveResultInput = {
@@ -47,8 +45,7 @@ export async function upsertLiveResultAction(
       };
     }
 
-    const repo = new PrismaLiveResultRepository(prisma);
-    const result = await upsertLiveResult(repo, {
+    const result = await container.live().upsert({
       num: input.num,
       status: input.status,
       goals1: input.goals1,

@@ -7,13 +7,10 @@ import { ScoreTab } from "@/components/score-tab";
 import { PageHeader } from "@/components/ui/page-header";
 import { Link, redirect } from "@/i18n/navigation";
 import { container } from "@/lib/container";
-import { prisma } from "@/lib/prisma";
 import { toScoreableContentArrays } from "@/lib/scoring";
 import { getSession } from "@/lib/session";
 import { hasLiveMatch } from "@/modules/live/domain/live-result";
-import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
 import { getActualScoreableContent } from "@/modules/tournament/application/get-actual-scoreable-content";
-import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
 
 export default async function PeerBetPage({
   params,
@@ -100,11 +97,9 @@ export default async function PeerBetPage({
     );
   }
 
-  const tournamentRepo = new PrismaTournamentRepository(prisma);
-  const liveResultRepo = new PrismaLiveResultRepository(prisma);
   const [tournament, liveResults] = await Promise.all([
-    tournamentRepo.get(),
-    liveResultRepo.findAll(),
+    container.tournament().get(),
+    container.live().findAll(),
   ]);
   const actualResults = getActualScoreableContent(tournament, liveResults);
   const liveMatchActive = hasLiveMatch(liveResults);

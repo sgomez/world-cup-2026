@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { setUserRole } from "@/app/actions/admin";
+import { container } from "@/lib/container";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
-import { listSummaries } from "@/modules/bet/application/list-summaries";
-import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
 interface Props {
   params: Promise<{ locale: string; id: string }>;
@@ -21,8 +20,7 @@ export default async function AdminUserPage({ params }: Props) {
   const targetRaw = await prisma.user.findUnique({ where: { id } });
   if (!targetRaw) notFound();
 
-  const repo = new PrismaBetRepository(prisma);
-  const bets = await listSummaries(repo, id);
+  const bets = await container.bets().listSummaries(id);
 
   const target = {
     ...targetRaw,

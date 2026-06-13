@@ -4,17 +4,12 @@ import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
+import { container } from "@/lib/container";
 import { prisma } from "@/lib/prisma";
 import { getSession, requireAdmin } from "@/lib/session";
 import { importDirectBets } from "@/modules/bet/application/import-direct-bets";
 import { ExceljsSheetParser } from "@/modules/bet/infrastructure/exceljs-sheet-parser";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
-import { createCommunity as createCommunityUseCase } from "@/modules/community/application/create-community";
-import { deleteCommunity as deleteCommunityUseCase } from "@/modules/community/application/delete-community";
-import { joinCommunity as joinCommunityUseCase } from "@/modules/community/application/join-community";
-import { leaveCommunity as leaveCommunityUseCase } from "@/modules/community/application/leave-community";
-import { regenerateInviteToken as regenerateInviteTokenUseCase } from "@/modules/community/application/regenerate-invite-token";
-import { removeMember as removeMemberUseCase } from "@/modules/community/application/remove-member";
 import type { DomainErrorCode } from "@/modules/community/domain/errors";
 import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
 import { PrismaImportOwnerProvisioner } from "@/modules/community/infrastructure/prisma-import-owner-provisioner";
@@ -35,10 +30,9 @@ export async function createCommunity(
   return withAuthenticatedAction(async (session) => {
     const name = formData.get("name")?.toString().trim() ?? "";
 
-    const repo = new PrismaCommunityRepository(prisma);
     const inviteToken = randomBytes(32).toString("hex");
 
-    const result = await createCommunityUseCase(repo, {
+    const result = await container.communities().create({
       ownerId: session.user.id,
       name,
       inviteToken,
@@ -96,8 +90,7 @@ export async function leaveCommunity(
   _formData: FormData,
 ): Promise<CommunityActionState> {
   return withAuthenticatedAction(async (session) => {
-    const repo = new PrismaCommunityRepository(prisma);
-    const result = await leaveCommunityUseCase(repo, {
+    const result = await container.communities().leave({
       userId: session.user.id,
       slug,
     });
@@ -119,8 +112,7 @@ export async function removeMember(
   _formData: FormData,
 ): Promise<CommunityActionState> {
   return withAuthenticatedAction(async (session) => {
-    const repo = new PrismaCommunityRepository(prisma);
-    const result = await removeMemberUseCase(repo, {
+    const result = await container.communities().removeMember({
       actorId: session.user.id,
       targetUserId,
       slug,
@@ -142,8 +134,7 @@ export async function deleteCommunity(
   _formData: FormData,
 ): Promise<CommunityActionState> {
   return withAuthenticatedAction(async (session) => {
-    const repo = new PrismaCommunityRepository(prisma);
-    const result = await deleteCommunityUseCase(repo, {
+    const result = await container.communities().delete({
       actorId: session.user.id,
       slug,
     });
@@ -164,9 +155,8 @@ export async function regenerateInviteToken(
   _formData: FormData,
 ): Promise<CommunityActionState> {
   return withAuthenticatedAction(async (session) => {
-    const repo = new PrismaCommunityRepository(prisma);
     const newToken = randomBytes(32).toString("hex");
-    const result = await regenerateInviteTokenUseCase(repo, {
+    const result = await container.communities().regenerateInviteToken({
       actorId: session.user.id,
       slug,
       newToken,
@@ -187,8 +177,7 @@ export async function joinCommunity(
   _formData: FormData,
 ): Promise<JoinCommunityState> {
   return withAuthenticatedAction(async (session) => {
-    const repo = new PrismaCommunityRepository(prisma);
-    const result = await joinCommunityUseCase(repo, {
+    const result = await container.communities().join({
       userId: session.user.id,
       inviteToken: token,
     });

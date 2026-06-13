@@ -1,12 +1,10 @@
 import { setRequestLocale } from "next-intl/server";
 import { StandingsView } from "@/components/standings-view";
+import { container } from "@/lib/container";
 import { getAllMatches } from "@/lib/matches";
-import { prisma } from "@/lib/prisma";
 import { getTeamByName } from "@/lib/teams";
-import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
 import { deriveResult } from "@/modules/tournament/domain/derive-result";
 import { Tournament } from "@/modules/tournament/domain/tournament";
-import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
 
 export default async function StandingsPage({
   params,
@@ -16,12 +14,9 @@ export default async function StandingsPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const tournamentRepo = new PrismaTournamentRepository(prisma);
-  const liveResultRepo = new PrismaLiveResultRepository(prisma);
-
   const [tournament, liveResults] = await Promise.all([
-    tournamentRepo.get(),
-    liveResultRepo.findAll(),
+    container.tournament().get(),
+    container.live().findAll(),
   ]);
 
   const activeTournament = tournament ?? Tournament.createDefault();
