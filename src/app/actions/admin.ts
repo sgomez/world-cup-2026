@@ -2,9 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
-import { prisma } from "@/lib/prisma";
-import { changeRole as changeRoleUseCase } from "@/modules/user/application/change-role";
-import { PrismaUserRepository } from "@/modules/user/infrastructure/prisma-user-repository";
+import { container } from "@/lib/container";
 import { withAuthenticatedAction } from "./authenticated-action";
 
 type Role = "user" | "admin" | "super_admin";
@@ -16,8 +14,7 @@ export async function setUserRole(
   newRole: Role,
 ): Promise<{ error?: string; success?: boolean }> {
   const result = await withAuthenticatedAction(async (session) => {
-    const repo = new PrismaUserRepository(prisma);
-    const res = await changeRoleUseCase(repo, {
+    const res = await container.users().changeRole({
       actorId: session.user.id,
       targetUserId,
       newRole,

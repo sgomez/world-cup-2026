@@ -1,9 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { CalendarView } from "@/components/calendar-view";
-import { prisma } from "@/lib/prisma";
-import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
+import { container } from "@/lib/container";
 import { Tournament } from "@/modules/tournament/domain/tournament";
-import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
 
 export default async function CalendarPage({
   params,
@@ -13,12 +11,9 @@ export default async function CalendarPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const tournamentRepo = new PrismaTournamentRepository(prisma);
-  const liveResultRepo = new PrismaLiveResultRepository(prisma);
-
   const [tournament, liveResults] = await Promise.all([
-    tournamentRepo.get(),
-    liveResultRepo.findAll(),
+    container.tournament().get(),
+    container.live().findAll(),
   ]);
 
   const activeTournament = tournament ?? Tournament.createDefault();

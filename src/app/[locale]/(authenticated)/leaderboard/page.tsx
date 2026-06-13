@@ -1,17 +1,11 @@
 import { setRequestLocale } from "next-intl/server";
 import { Leaderboard } from "@/components/leaderboard";
 import { redirect } from "@/i18n/navigation";
-import { BET_DEADLINE } from "@/lib/bet-constants";
+import { container } from "@/lib/container";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { BettingWindow } from "@/modules/bet/domain/betting-window";
-import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
-import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
-import { getLeaderboard } from "@/modules/leaderboard/application/get-leaderboard";
 import { hasLiveMatch } from "@/modules/live/domain/live-result";
-import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
 import { Tournament } from "@/modules/tournament/domain/tournament";
-import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
 
 export default async function LeaderboardPage({
   params,
@@ -43,11 +37,6 @@ export default async function LeaderboardPage({
     },
   });
 
-  const communityRepo = new PrismaCommunityRepository(prisma);
-  const betRepo = new PrismaBetRepository(prisma);
-  const tournamentRepo = new PrismaTournamentRepository(prisma);
-  const liveResultRepo = new PrismaLiveResultRepository(prisma);
-
   const userCache = new Map<string, string | null>();
   for (const community of communities) {
     for (const member of community.members) {
@@ -55,23 +44,11 @@ export default async function LeaderboardPage({
     }
   }
 
-  const getUserName = async (userId: string) => {
-    if (userCache.has(userId)) return userCache.get(userId) ?? null;
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true },
-    });
-    const name = user?.name ?? null;
-    userCache.set(userId, name);
-    return name;
-  };
-
-  const now = new Date();
-  const window = new BettingWindow(BET_DEADLINE);
+  const nameResolver = container.getNameResolver(userCache);
 
   const [tournament, liveResults] = await Promise.all([
-    tournamentRepo.get(),
-    liveResultRepo.findAll(),
+    container.tournament().get(),
+    container.live().findAll(),
   ]);
   const activeTournament = tournament ?? Tournament.createDefault();
   const tournamentEnded = activeTournament.isCompetitionEnded(liveResults);
@@ -79,18 +56,12 @@ export default async function LeaderboardPage({
 
   const scopesResults = await Promise.all(
     communities.map(async (community) => {
-      const res = await getLeaderboard(
-        communityRepo,
-        betRepo,
-        tournamentRepo,
-        liveResultRepo,
-        getUserName,
+      const res = await container.leaderboard().get(
         {
           viewerId: session.user.id,
           communitySlug: community.slug,
-          window,
-          now,
         },
+        nameResolver,
       );
       if (res.isOk()) {
         return {

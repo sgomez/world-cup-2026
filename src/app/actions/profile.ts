@@ -2,9 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
-import { prisma } from "@/lib/prisma";
-import { updateProfile as updateProfileUseCase } from "@/modules/user/application/update-profile";
-import { PrismaUserRepository } from "@/modules/user/infrastructure/prisma-user-repository";
+import { container } from "@/lib/container";
 import { withAuthenticatedAction } from "./authenticated-action";
 
 export type ProfileActionState = { error?: string; success?: boolean } | null;
@@ -17,8 +15,7 @@ export async function updateProfile(
     const name = formData.get("name")?.toString().trim() ?? "";
     const image = formData.get("image")?.toString().trim() || null;
 
-    const repo = new PrismaUserRepository(prisma);
-    const result = await updateProfileUseCase(repo, {
+    const result = await container.users().updateProfile({
       userId: session.user.id,
       name,
       image,
