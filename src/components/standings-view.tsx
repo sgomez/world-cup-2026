@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { KnockoutBracket } from "@/components/knockout-bracket";
 import { TeamBadge } from "@/components/team-badge";
+import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLiveRefresh } from "@/hooks/use-live-refresh";
 import { cn } from "@/lib/utils";
@@ -116,19 +117,11 @@ export function StandingsView({
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <header className="flex items-start gap-4">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary mt-0.5">
-          <Trophy className="size-6" aria-hidden="true" />
-        </div>
-        <div className="space-y-1">
-          <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
-            {t("title")}
-          </h1>
-          <p className="text-caption-md text-muted-foreground">
-            {t("description")}
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title={t("title")}
+        description={t("description")}
+        icon={<Trophy className="size-6" aria-hidden="true" />}
+      />
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

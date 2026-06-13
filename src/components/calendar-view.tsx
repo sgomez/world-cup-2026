@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import worldcupData from "@/../data/worldcup.json";
 import { MatchCard } from "@/components/match-card";
 import { placeholderLabel } from "@/components/placeholder-label";
+import { PageHeader } from "@/components/ui/page-header";
 import { useLiveRefresh } from "@/hooks/use-live-refresh";
 import { type KnockoutMatch, placeholderCodeForSlot } from "@/modules/bracket";
 import type { LiveResultState } from "@/modules/live/domain/live-result";
@@ -354,23 +355,19 @@ export function CalendarView({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <header className="flex items-start gap-4">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary mt-0.5">
-          <CalendarDays className="size-6" aria-hidden="true" />
-        </div>
-        <div className="space-y-1">
-          <h1 className="text-heading-xl font-medium uppercase tracking-tight text-foreground">
-            {tCalendar("title")}
-          </h1>
-          <p className="text-caption-md text-muted-foreground">
-            {tCalendar("description")}
-          </p>
-          <div className="text-xs text-mute dark:text-stone mt-1 flex items-center gap-1.5 font-semibold">
-            <Globe className="h-3.5 w-3.5 shrink-0" />
-            <span>{tCalendar("timezoneNote", { tz: userTimezone })}</span>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title={tCalendar("title")}
+        description={
+          <>
+            <p>{tCalendar("description")}</p>
+            <div className="text-xs text-mute dark:text-stone mt-1 flex items-center gap-1.5 font-semibold">
+              <Globe className="h-3.5 w-3.5 shrink-0" />
+              <span>{tCalendar("timezoneNote", { tz: userTimezone })}</span>
+            </div>
+          </>
+        }
+        icon={<CalendarDays className="size-6" aria-hidden="true" />}
+      />
 
       {/* Sticky Controls Bar */}
       <div className="sticky top-14 z-40 flex flex-wrap items-center justify-between gap-4 border-b border-hairline bg-soft-cloud/95 py-4 backdrop-blur-md dark:border-ash dark:bg-ink/95">
