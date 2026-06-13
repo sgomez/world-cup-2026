@@ -34,12 +34,14 @@ import rawTeamsEn from "../../../../data/worldcup.teams.en.json";
 import {
   computeGroupStanding,
   DEFAULT_TIEBREAK_CHAIN,
+  deriveStandingsTable,
   detectGroupTies,
   detectThirdsTies,
   type GroupMatch,
   getAdvancement,
   makeManualFactorCriterion,
   rankThirds,
+  type StandingsTable,
   stableCriterion,
   type TeamId,
   type ThirdPlaceEntry,
@@ -57,6 +59,8 @@ export type DerivedResult = {
   knockoutWinners: Record<string, string>;
   /** Which R32 slot references are Advanced (e.g. "1A", "2A", "3rd-1A"). */
   advancement: string[];
+  /** The full standings table derived from live results. */
+  standingsTable: StandingsTable;
 };
 
 export type DeriveOptions = {
@@ -433,11 +437,20 @@ export function deriveResult(
     provisional,
   );
 
+  const standingsTable = deriveStandingsTable({
+    groups,
+    tieBreakChain: DEFAULT_TIEBREAK_CHAIN,
+    manualTieBreaks: fullManualTieBreaks,
+    finishedOnly,
+    provisional,
+  });
+
   return {
     groupOrders,
     thirdPlaceOrder,
     knockoutWinners,
     advancement: advancementRefs,
+    standingsTable,
   };
 }
 

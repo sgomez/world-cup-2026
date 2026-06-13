@@ -76,6 +76,7 @@ export default async function StandingsPage({
       <StandingsView
         defaultTab={defaultTab}
         locale={locale}
+        standingsTable={derived.standingsTable}
         liveTeamIds={liveTeamIds}
         liveResults={liveResultsData}
         savedPredictions={savedPredictions}

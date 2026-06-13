@@ -4,6 +4,10 @@ import { useRouter } from "@/i18n/navigation";
 import { KNOCKOUT_MATCH_IDS } from "@/modules/bracket";
 import { getAllTeamsLookup } from "@/modules/bracket/prediction-ui";
 import { computeTournamentBracket } from "@/modules/tournament/domain/derive-result";
+import {
+  DEFAULT_TIEBREAK_CHAIN,
+  deriveStandingsTable,
+} from "@/modules/tournament/domain/standings";
 import { StandingsView } from "./standings-view";
 
 vi.mock("next-intl", () => ({
@@ -22,6 +26,7 @@ vi.mock("next-intl", () => ({
         ga: "GA",
         gd: "GD",
         bestThirds: "Best Third-place Teams",
+        bestThirdsQualifies: "Top 8 qualify",
         liveMarker: "LIVE",
         liveMarkerLegend: "Team is currently playing a live match",
         group: `Group ${params?.letter ?? ""}`,
@@ -157,6 +162,111 @@ vi.mock("@/modules/tournament/domain/derive-result", () => ({
 }));
 
 describe("StandingsView", () => {
+  const defaultStandingsTable = {
+    groups: {
+      A: {
+        rows: [
+          {
+            teamId: "mex",
+            position: 1,
+            pts: 0,
+            gf: 0,
+            ga: 0,
+            gd: 0,
+            qualified: true,
+          },
+          {
+            teamId: "rsa",
+            position: 2,
+            pts: 0,
+            gf: 0,
+            ga: 0,
+            gd: 0,
+            qualified: true,
+          },
+          {
+            teamId: "kor",
+            position: 3,
+            pts: 0,
+            gf: 0,
+            ga: 0,
+            gd: 0,
+            qualified: true,
+          },
+          {
+            teamId: "cze",
+            position: 4,
+            pts: 0,
+            gf: 0,
+            ga: 0,
+            gd: 0,
+            qualified: true,
+          },
+        ],
+      },
+      B: {
+        rows: [
+          {
+            teamId: "arg",
+            position: 1,
+            pts: 0,
+            gf: 0,
+            ga: 0,
+            gd: 0,
+            qualified: true,
+          },
+          {
+            teamId: "bra",
+            position: 2,
+            pts: 0,
+            gf: 0,
+            ga: 0,
+            gd: 0,
+            qualified: true,
+          },
+          {
+            teamId: "uru",
+            position: 3,
+            pts: 0,
+            gf: 0,
+            ga: 0,
+            gd: 0,
+            qualified: true,
+          },
+          {
+            teamId: "par",
+            position: 4,
+            pts: 0,
+            gf: 0,
+            ga: 0,
+            gd: 0,
+            qualified: true,
+          },
+        ],
+      },
+    },
+    bestThirds: [
+      {
+        teamId: "kor",
+        position: 1,
+        pts: 0,
+        gf: 0,
+        ga: 0,
+        gd: 0,
+        qualified: true,
+      },
+      {
+        teamId: "uru",
+        position: 2,
+        pts: 0,
+        gf: 0,
+        ga: 0,
+        gd: 0,
+        qualified: true,
+      },
+    ],
+  };
+
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -174,7 +284,12 @@ describe("StandingsView", () => {
 
   it("renders group stage tab by default when not all R32 settled", () => {
     render(
-      <StandingsView defaultTab="groups" locale="en" liveTeamIds={new Set()} />,
+      <StandingsView
+        defaultTab="groups"
+        locale="en"
+        standingsTable={defaultStandingsTable}
+        liveTeamIds={new Set()}
+      />,
     );
     // Group tab should be visible and active
     expect(screen.getByText("Group Stage")).toBeInTheDocument();
@@ -185,6 +300,7 @@ describe("StandingsView", () => {
       <StandingsView
         defaultTab="knockout"
         locale="en"
+        standingsTable={defaultStandingsTable}
         liveTeamIds={new Set()}
       />,
     );
@@ -193,7 +309,12 @@ describe("StandingsView", () => {
 
   it("does not show live marker when no teams are live", () => {
     render(
-      <StandingsView defaultTab="groups" locale="en" liveTeamIds={new Set()} />,
+      <StandingsView
+        defaultTab="groups"
+        locale="en"
+        standingsTable={defaultStandingsTable}
+        liveTeamIds={new Set()}
+      />,
     );
     // The live marker text should not appear
     expect(screen.queryByText("LIVE")).not.toBeInTheDocument();
@@ -204,6 +325,7 @@ describe("StandingsView", () => {
       <StandingsView
         defaultTab="groups"
         locale="en"
+        standingsTable={defaultStandingsTable}
         liveTeamIds={new Set(["mex"])}
       />,
     );
@@ -216,6 +338,7 @@ describe("StandingsView", () => {
       <StandingsView
         defaultTab="groups"
         locale="en"
+        standingsTable={defaultStandingsTable}
         liveTeamIds={new Set(["mex"])}
       />,
     );
@@ -226,7 +349,12 @@ describe("StandingsView", () => {
 
   it("does not show live legend when no teams are live", () => {
     render(
-      <StandingsView defaultTab="groups" locale="en" liveTeamIds={new Set()} />,
+      <StandingsView
+        defaultTab="groups"
+        locale="en"
+        standingsTable={defaultStandingsTable}
+        liveTeamIds={new Set()}
+      />,
     );
     expect(
       screen.queryByText("Team is currently playing a live match"),
@@ -238,6 +366,7 @@ describe("StandingsView", () => {
       <StandingsView
         defaultTab="groups"
         locale="en"
+        standingsTable={defaultStandingsTable}
         liveTeamIds={new Set(["mex", "rsa"])}
       />,
     );
@@ -252,7 +381,12 @@ describe("StandingsView", () => {
     } as unknown as ReturnType<typeof useRouter>);
 
     render(
-      <StandingsView defaultTab="groups" locale="en" liveTeamIds={new Set()} />,
+      <StandingsView
+        defaultTab="groups"
+        locale="en"
+        standingsTable={defaultStandingsTable}
+        liveTeamIds={new Set()}
+      />,
     );
 
     // No refresh yet at t=0
@@ -268,16 +402,37 @@ describe("StandingsView", () => {
   });
 
   it("computes and displays actual group team statistics when liveResults are provided", () => {
-    const liveResults = [
-      { num: 1, status: "finished", goals1: 2, goals2: 1 }, // South Africa 2 - 1 Mexico
-    ] as any;
+    const standingsTable = deriveStandingsTable({
+      groups: {
+        A: {
+          teams: ["mex", "rsa", "kor", "cze"],
+          matches: [
+            {
+              num: 1,
+              team1: "rsa",
+              team2: "mex",
+              goals1: 2,
+              goals2: 1,
+              status: "finished",
+            },
+          ],
+        },
+        B: {
+          teams: ["arg", "bra", "uru", "par"],
+          matches: [],
+        },
+      },
+      tieBreakChain: DEFAULT_TIEBREAK_CHAIN,
+      manualTieBreaks: {},
+      finishedOnly: false,
+    });
 
     render(
       <StandingsView
         defaultTab="groups"
         locale="en"
+        standingsTable={standingsTable}
         liveTeamIds={new Set()}
-        liveResults={liveResults}
       />,
     );
 
@@ -331,6 +486,7 @@ describe("StandingsView", () => {
       <StandingsView
         defaultTab="knockout"
         locale="en"
+        standingsTable={defaultStandingsTable}
         liveTeamIds={new Set(["mex", "rsa"])}
         liveResults={liveResults}
       />,

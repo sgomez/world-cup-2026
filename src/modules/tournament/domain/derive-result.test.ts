@@ -315,6 +315,7 @@ describe("computeTournamentBracket — third-place R32 slots", () => {
       thirdPlaceOrder,
       knockoutWinners: {},
       advancement,
+      standingsTable: { groups: {}, bestThirds: [] },
     };
 
     const bracket = computeTournamentBracket(derived);
