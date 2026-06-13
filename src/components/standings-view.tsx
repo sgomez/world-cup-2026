@@ -8,14 +8,9 @@ import { TeamBadge } from "@/components/team-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import {
-  KNOCKOUT_MATCH_IDS,
-  type KnockoutMatch,
-  matchProgression,
-  R32_MATCHUPS,
-} from "@/modules/bracket";
+import { KNOCKOUT_MATCH_IDS, placeholderCodeForSlot } from "@/modules/bracket";
 import { getAllTeamsLookup } from "@/modules/bracket/prediction-ui";
-import { getAllMatches } from "@/modules/schedule";
+import { getAllMatches, matchScore, matchStatus } from "@/modules/schedule";
 import { getGroups, getTeamByName, type Team } from "@/modules/teams";
 import { computeTournamentBracket } from "@/modules/tournament/domain/derive-result";
 
@@ -35,49 +30,6 @@ type MockStats = {
   gd: number;
   qualified: boolean;
 };
-
-function _getMockGroupStats(index: number, _groupLetter: string): MockStats {
-  // Clean all mockup values to 0 points/goals and set qualified to true as tournament hasn't started
-  return {
-    position: index + 1,
-    pts: 0,
-    gf: 0,
-    ga: 0,
-    gd: 0,
-    qualified: true,
-  };
-}
-
-// Generate the placeholder code for any knockout match slot
-function getKnockoutPlaceholder(matchId: string, slot: 1 | 2): string {
-  if (matchId.startsWith("R32-")) {
-    const num = parseInt(matchId.replace("R32-", ""), 10);
-    const matchup = R32_MATCHUPS.find((m) => m.num === num);
-    if (matchup) {
-      const ref = slot === 1 ? matchup.team1 : matchup.team2;
-      return ref || `3rd-${matchup.team1}`;
-    }
-  }
-
-  // Reverse lookup matchProgression to see which match feeds this slot
-  const entry = Object.entries(matchProgression).find(
-    ([_, val]) => val.nextMatch === matchId && val.slot === slot,
-  );
-  if (entry) {
-    const sourceMatchId = entry[0];
-    const sourceNum = sourceMatchId.split("-")[1];
-    return `W${sourceNum}`;
-  }
-
-  if (matchId === "3RD") {
-    return slot === 1 ? "L101" : "L102";
-  }
-  if (matchId === "F") {
-    return slot === 1 ? "W101" : "W102";
-  }
-
-  return "TBD";
-}
 
 export function StandingsView({
   defaultTab,
@@ -340,184 +292,6 @@ export function StandingsView({
       advancement: savedAdvancement,
     });
   }, [groups, savedPredictions, savedKnockoutWinners, savedAdvancement]);
-
-  // Match scores mapping from liveResults
-  const matchScores = useMemo(() => {
-    const scoresMap: Record<
-      string,
-      {
-        score1: string;
-        score2: string;
-        score1Pen?: string;
-        score2Pen?: string;
-      }
-    > = {};
-
-    const liveMap = new Map((liveResults || []).map((lr) => [lr.num, lr]));
-
-    // R32 matches
-    for (const { num } of R32_MATCHUPS) {
-      const lr = liveMap.get(num);
-      if (lr && lr.status !== "upcoming") {
-        scoresMap[`R32-${num}`] = {
-          score1: String(lr.goals1),
-          score2: String(lr.goals2),
-          score1Pen:
-            lr.penalties1 !== undefined ? String(lr.penalties1) : undefined,
-          score2Pen:
-            lr.penalties2 !== undefined ? String(lr.penalties2) : undefined,
-        };
-      }
-    }
-
-    // R16 matches
-    for (let n = 89; n <= 96; n++) {
-      const lr = liveMap.get(n);
-      if (lr && lr.status !== "upcoming") {
-        scoresMap[`R16-${n}`] = {
-          score1: String(lr.goals1),
-          score2: String(lr.goals2),
-          score1Pen:
-            lr.penalties1 !== undefined ? String(lr.penalties1) : undefined,
-          score2Pen:
-            lr.penalties2 !== undefined ? String(lr.penalties2) : undefined,
-        };
-      }
-    }
-
-    // QF matches
-    for (let n = 97; n <= 100; n++) {
-      const lr = liveMap.get(n);
-      if (lr && lr.status !== "upcoming") {
-        scoresMap[`QF-${n}`] = {
-          score1: String(lr.goals1),
-          score2: String(lr.goals2),
-          score1Pen:
-            lr.penalties1 !== undefined ? String(lr.penalties1) : undefined,
-          score2Pen:
-            lr.penalties2 !== undefined ? String(lr.penalties2) : undefined,
-        };
-      }
-    }
-
-    // SF matches
-    for (const n of [101, 102]) {
-      const lr = liveMap.get(n);
-      if (lr && lr.status !== "upcoming") {
-        scoresMap[`SF-${n}`] = {
-          score1: String(lr.goals1),
-          score2: String(lr.goals2),
-          score1Pen:
-            lr.penalties1 !== undefined ? String(lr.penalties1) : undefined,
-          score2Pen:
-            lr.penalties2 !== undefined ? String(lr.penalties2) : undefined,
-        };
-      }
-    }
-
-    // 3RD match
-    const lr103 = liveMap.get(103);
-    if (lr103 && lr103.status !== "upcoming") {
-      scoresMap["3RD"] = {
-        score1: String(lr103.goals1),
-        score2: String(lr103.goals2),
-        score1Pen:
-          lr103.penalties1 !== undefined ? String(lr103.penalties1) : undefined,
-        score2Pen:
-          lr103.penalties2 !== undefined ? String(lr103.penalties2) : undefined,
-      };
-    }
-
-    // F match
-    const lr104 = liveMap.get(104);
-    if (lr104 && lr104.status !== "upcoming") {
-      scoresMap.F = {
-        score1: String(lr104.goals1),
-        score2: String(lr104.goals2),
-        score1Pen:
-          lr104.penalties1 !== undefined ? String(lr104.penalties1) : undefined,
-        score2Pen:
-          lr104.penalties2 !== undefined ? String(lr104.penalties2) : undefined,
-      };
-    }
-
-    return scoresMap;
-  }, [liveResults]);
-
-  // Check if a match is finished
-  const isMatchFinished = (matchId: string, _match: KnockoutMatch) => {
-    let num: number | undefined;
-    if (matchId.startsWith("R32-")) {
-      num = parseInt(matchId.replace("R32-", ""), 10);
-    } else if (matchId.startsWith("R16-")) {
-      num = parseInt(matchId.replace("R16-", ""), 10);
-    } else if (matchId.startsWith("QF-")) {
-      num = parseInt(matchId.replace("QF-", ""), 10);
-    } else if (matchId.startsWith("SF-")) {
-      num = parseInt(matchId.replace("SF-", ""), 10);
-    } else if (matchId === "3RD") {
-      num = 103;
-    } else if (matchId === "F") {
-      num = 104;
-    }
-
-    if (num !== undefined) {
-      const lr = (liveResults || []).find((r) => r.num === num);
-      return lr?.status === "finished";
-    }
-    return false;
-  };
-
-  // Check if a match is live
-  const isMatchLive = (matchId: string, _match: KnockoutMatch) => {
-    let num: number | undefined;
-    if (matchId.startsWith("R32-")) {
-      num = parseInt(matchId.replace("R32-", ""), 10);
-    } else if (matchId.startsWith("R16-")) {
-      num = parseInt(matchId.replace("R16-", ""), 10);
-    } else if (matchId.startsWith("QF-")) {
-      num = parseInt(matchId.replace("QF-", ""), 10);
-    } else if (matchId.startsWith("SF-")) {
-      num = parseInt(matchId.replace("SF-", ""), 10);
-    } else if (matchId === "3RD") {
-      num = 103;
-    } else if (matchId === "F") {
-      num = 104;
-    }
-
-    if (num !== undefined) {
-      const lr = (liveResults || []).find((r) => r.num === num);
-      return lr?.status === "live";
-    }
-    return false;
-  };
-
-  // Check if a match is upcoming (i.e. participants resolved, but not finished/live)
-  const isMatchUpcoming = (match: KnockoutMatch) => {
-    let num: number | undefined;
-    const matchId = match.id;
-    if (matchId.startsWith("R32-")) {
-      num = parseInt(matchId.replace("R32-", ""), 10);
-    } else if (matchId.startsWith("R16-")) {
-      num = parseInt(matchId.replace("R16-", ""), 10);
-    } else if (matchId.startsWith("QF-")) {
-      num = parseInt(matchId.replace("QF-", ""), 10);
-    } else if (matchId.startsWith("SF-")) {
-      num = parseInt(matchId.replace("SF-", ""), 10);
-    } else if (matchId === "3RD") {
-      num = 103;
-    } else if (matchId === "F") {
-      num = 104;
-    }
-
-    if (num !== undefined) {
-      const lr = (liveResults || []).find((r) => r.num === num);
-      return (
-        !!match.team1Id && !!match.team2Id && (!lr || lr.status === "upcoming")
-      );
-    }
-    return false;
-  };
 
   return (
     <div className="space-y-6">
@@ -874,17 +648,21 @@ export function StandingsView({
                         winnerId,
                         matchObj,
                       }) => {
-                        const scores = matchScores[matchId];
-                        const finished = isMatchFinished(matchId, matchObj);
-                        const live = isMatchLive(matchId, matchObj);
-                        const upcoming = isMatchUpcoming(matchObj);
+                        const scores = matchScore(matchNumber, liveResults);
+                        const status = matchStatus(matchNumber, liveResults);
+                        const finished = status === "finished";
+                        const live = status === "live";
+                        const upcoming =
+                          status === "upcoming" &&
+                          !!matchObj?.team1Id &&
+                          !!matchObj?.team2Id;
 
                         const team1Code = team1
                           ? team1.id
-                          : getKnockoutPlaceholder(matchId, 1);
+                          : placeholderCodeForSlot(matchId, 1);
                         const team2Code = team2
                           ? team2.id
-                          : getKnockoutPlaceholder(matchId, 2);
+                          : placeholderCodeForSlot(matchId, 2);
 
                         const team1Label = team1
                           ? team1.name
@@ -894,12 +672,14 @@ export function StandingsView({
                           : placeholderLabel(team2Code, tCalendar);
 
                         // Penalties displays
-                        const pen1 = scores?.score1Pen
-                          ? `(${scores.score1Pen})`
-                          : "";
-                        const pen2 = scores?.score2Pen
-                          ? `(${scores.score2Pen})`
-                          : "";
+                        const pen1 =
+                          scores?.penalties1 !== undefined
+                            ? `(${scores.penalties1})`
+                            : "";
+                        const pen2 =
+                          scores?.penalties2 !== undefined
+                            ? `(${scores.penalties2})`
+                            : "";
 
                         return (
                           <div
@@ -961,7 +741,7 @@ export function StandingsView({
                                                 : "text-ink dark:text-canvas",
                                             )}
                                           >
-                                            <span>{scores.score1}</span>
+                                            <span>{scores.goals1}</span>
                                             {pen1 && (
                                               <span className="text-[10px] text-mute dark:text-stone font-semibold">
                                                 {pen1}
@@ -1013,7 +793,7 @@ export function StandingsView({
                                                 : "text-ink dark:text-canvas",
                                             )}
                                           >
-                                            <span>{scores.score2}</span>
+                                            <span>{scores.goals2}</span>
                                             {pen2 && (
                                               <span className="text-[10px] text-mute dark:text-stone font-semibold">
                                                 {pen2}

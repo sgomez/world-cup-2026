@@ -106,6 +106,21 @@ vi.mock("@/modules/schedule", () => ({
       round: "Group Stage",
     },
   ]),
+  matchStatus: vi.fn((num, liveResults) => {
+    const result = (liveResults || []).find((r: any) => r.num === num);
+    if (!result || result.status === "upcoming") return "upcoming";
+    return result.status;
+  }),
+  matchScore: vi.fn((num, liveResults) => {
+    const result = (liveResults || []).find((r: any) => r.num === num);
+    if (!result || result.status === "upcoming") return undefined;
+    return {
+      goals1: result.goals1,
+      goals2: result.goals2,
+      penalties1: result.penalties1,
+      penalties2: result.penalties2,
+    };
+  }),
 }));
 
 // Mock modules/bracket (core engine)
@@ -116,6 +131,7 @@ vi.mock("@/modules/bracket", () => ({
   applyWinnerToMatches: vi.fn((matches: Record<string, unknown>) => matches),
   createEmptyKnockoutMatches: vi.fn(() => ({})),
   getTeamIdFromPosition: vi.fn(() => null),
+  placeholderCodeForSlot: vi.fn(() => "TBD"),
   KNOCKOUT_MATCH_IDS: {
     R32: [],
     R16: [],
