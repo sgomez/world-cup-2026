@@ -6,14 +6,10 @@ import { LocalDate } from "@/components/local-date";
 import { ScoreTab } from "@/components/score-tab";
 import { PageHeader } from "@/components/ui/page-header";
 import { Link, redirect } from "@/i18n/navigation";
-import { BET_DEADLINE } from "@/lib/bet-constants";
+import { container } from "@/lib/container";
 import { prisma } from "@/lib/prisma";
 import { toScoreableContentArrays } from "@/lib/scoring";
 import { getSession } from "@/lib/session";
-import { getPeerBet } from "@/modules/bet/application/get-peer-bet";
-import { BettingWindow } from "@/modules/bet/domain/betting-window";
-import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
-import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
 import { hasLiveMatch } from "@/modules/live/domain/live-result";
 import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
 import { getActualScoreableContent } from "@/modules/tournament/application/get-actual-scoreable-content";
@@ -30,25 +26,10 @@ export default async function PeerBetPage({
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
 
-  const betRepo = new PrismaBetRepository(prisma);
-  const communityRepo = new PrismaCommunityRepository(prisma);
-  const window = new BettingWindow(BET_DEADLINE);
-  const now = new Date();
-
-  const getUserName = async (userId: string) => {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true },
-    });
-    return user?.name ?? null;
-  };
-
-  const result = await getPeerBet(betRepo, communityRepo, getUserName, {
+  const result = await container.bets().getPeerBet({
     viewerId: session.user.id,
     communitySlug: slug,
     betId,
-    window,
-    now,
   });
 
   if (result.isErr()) {
@@ -100,7 +81,7 @@ export default async function PeerBetPage({
             </h2>
             <p className="text-body-md text-muted-foreground">
               {t.rich("gateMessage", {
-                date: () => <LocalDate date={BET_DEADLINE} />,
+                date: () => <LocalDate date={container.bets().deadline} />,
               })}
             </p>
           </div>

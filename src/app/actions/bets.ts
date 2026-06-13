@@ -3,19 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
-import { BET_DEADLINE, MAX_BETS_PER_USER } from "@/lib/bet-constants";
+import { MAX_BETS_PER_USER } from "@/lib/bet-constants";
+import { container } from "@/lib/container";
 import type { TournamentState } from "@/lib/prediction-state";
-import { prisma } from "@/lib/prisma";
-import { closeBet as closeBetUseCase } from "@/modules/bet/application/close-bet";
-import { copyBet as copyBetUseCase } from "@/modules/bet/application/copy-bet";
-import { createBet as createBetUseCase } from "@/modules/bet/application/create-bet";
-import { removeBet as removeBetUseCase } from "@/modules/bet/application/remove-bet";
-import { renameBet as renameBetUseCase } from "@/modules/bet/application/rename-bet";
-import { reopenBet as reopenBetUseCase } from "@/modules/bet/application/reopen-bet";
-import { updateBetPredictions as updateBetPredictionsUseCase } from "@/modules/bet/application/update-bet-predictions";
-import { BettingWindow } from "@/modules/bet/domain/betting-window";
 import type { DomainErrorCode } from "@/modules/bet/domain/errors";
-import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 import { withAuthenticatedAction } from "./authenticated-action";
 
 async function betErrorMessage(code: DomainErrorCode): Promise<string> {
@@ -33,13 +24,10 @@ export async function createBet(
   return withAuthenticatedAction(async (session) => {
     const label = formData.get("label")?.toString().trim() ?? "";
 
-    const repo = new PrismaBetRepository(prisma);
-    const result = await createBetUseCase(repo, {
+    const result = await container.bets().create({
       userId: session.user.id,
       label,
       limit: MAX_BETS_PER_USER,
-      window: new BettingWindow(BET_DEADLINE),
-      now: new Date(),
     });
 
     if (result.isErr()) {
@@ -55,12 +43,9 @@ export async function createBet(
 
 export async function removeBet(betId: string): Promise<BetActionState> {
   return withAuthenticatedAction(async (session) => {
-    const repo = new PrismaBetRepository(prisma);
-    const result = await removeBetUseCase(repo, {
+    const result = await container.bets().remove({
       betId,
       userId: session.user.id,
-      window: new BettingWindow(BET_DEADLINE),
-      now: new Date(),
     });
 
     if (result.isErr()) {
@@ -74,12 +59,9 @@ export async function removeBet(betId: string): Promise<BetActionState> {
 
 export async function closeBet(betId: string): Promise<BetActionState> {
   return withAuthenticatedAction(async (session) => {
-    const repo = new PrismaBetRepository(prisma);
-    const result = await closeBetUseCase(repo, {
+    const result = await container.bets().close({
       betId,
       userId: session.user.id,
-      window: new BettingWindow(BET_DEADLINE),
-      now: new Date(),
     });
 
     if (result.isErr()) {
@@ -94,12 +76,9 @@ export async function closeBet(betId: string): Promise<BetActionState> {
 
 export async function reopenBet(betId: string): Promise<BetActionState> {
   return withAuthenticatedAction(async (session) => {
-    const repo = new PrismaBetRepository(prisma);
-    const result = await reopenBetUseCase(repo, {
+    const result = await container.bets().reopen({
       betId,
       userId: session.user.id,
-      window: new BettingWindow(BET_DEADLINE),
-      now: new Date(),
     });
 
     if (result.isErr()) {
@@ -114,13 +93,10 @@ export async function reopenBet(betId: string): Promise<BetActionState> {
 
 export async function copyBet(betId: string): Promise<BetActionState> {
   return withAuthenticatedAction(async (session) => {
-    const repo = new PrismaBetRepository(prisma);
-    const result = await copyBetUseCase(repo, {
+    const result = await container.bets().copy({
       betId,
       userId: session.user.id,
       limit: MAX_BETS_PER_USER,
-      window: new BettingWindow(BET_DEADLINE),
-      now: new Date(),
     });
 
     if (result.isErr()) {
@@ -149,14 +125,11 @@ export async function updateBetPredictions(
       if (match.winnerId) knockoutWinners[matchId] = match.winnerId;
     }
 
-    const repo = new PrismaBetRepository(prisma);
-    const result = await updateBetPredictionsUseCase(repo, {
+    const result = await container.bets().updatePredictions({
       betId,
       userId: session.user.id,
       groupPredictions,
       knockoutWinners,
-      window: new BettingWindow(BET_DEADLINE),
-      now: new Date(),
     });
 
     if (result.isErr()) {
@@ -172,13 +145,10 @@ export async function renameBet(
   label: string,
 ): Promise<BetActionState> {
   return withAuthenticatedAction(async (session) => {
-    const repo = new PrismaBetRepository(prisma);
-    const result = await renameBetUseCase(repo, {
+    const result = await container.bets().rename({
       betId,
       userId: session.user.id,
       label,
-      window: new BettingWindow(BET_DEADLINE),
-      now: new Date(),
     });
 
     if (result.isErr()) {

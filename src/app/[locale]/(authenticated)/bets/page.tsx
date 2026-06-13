@@ -5,12 +5,9 @@ import { CreateBetForm } from "@/components/create-bet-form";
 import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
 import { redirect } from "@/i18n/navigation";
-import { BET_DEADLINE, MAX_BETS_PER_USER } from "@/lib/bet-constants";
-import { prisma } from "@/lib/prisma";
+import { MAX_BETS_PER_USER } from "@/lib/bet-constants";
+import { container } from "@/lib/container";
 import { getSession } from "@/lib/session";
-import { listSummaries } from "@/modules/bet/application/list-summaries";
-import { BettingWindow } from "@/modules/bet/domain/betting-window";
-import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 
 export default async function BetsPage({
   params,
@@ -24,11 +21,9 @@ export default async function BetsPage({
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
 
-  const repo = new PrismaBetRepository(prisma);
-  const enrichedBets = await listSummaries(repo, session.user.id);
+  const enrichedBets = await container.bets().listSummaries(session.user.id);
 
-  const window = new BettingWindow(BET_DEADLINE);
-  const isPastDeadline = window.isClosed(new Date());
+  const isPastDeadline = container.bets().isPastDeadline();
   const isAtLimit = enrichedBets.length >= MAX_BETS_PER_USER;
   const showCopyButtons = !isPastDeadline && !isAtLimit;
 
