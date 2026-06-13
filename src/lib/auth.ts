@@ -3,6 +3,8 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin } from "better-auth/plugins";
 import { createAccessControl } from "better-auth/plugins/access";
 import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
+import { promoteFirstRegistrant } from "@/modules/user/application/promote-first-registrant";
+import { PrismaUserRepository } from "@/modules/user/infrastructure/prisma-user-repository";
 import { prisma } from "./prisma";
 
 const ac = createAccessControl(defaultStatements);
@@ -56,12 +58,14 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          const count = await prisma.user.count();
-          if (count === 1) {
-            await prisma.user.update({
-              where: { id: user.id },
-              data: { role: "super_admin" },
-            });
+          const repo = new PrismaUserRepository(prisma);
+          const result = await promoteFirstRegistrant(repo, {
+            userId: user.id,
+          });
+          if (result.isErr()) {
+            throw new Error(
+              `Failed to promote first registrant: ${result.error.code}`,
+            );
           }
         },
       },

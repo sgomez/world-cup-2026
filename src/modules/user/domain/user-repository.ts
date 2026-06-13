@@ -6,6 +6,7 @@ export interface UserRepository {
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
   count(): Promise<number>;
+  countByRole(role: string): Promise<number>;
   save(user: User): ResultAsync<void, DomainError>;
   delete(id: string): ResultAsync<void, DomainError>;
 }

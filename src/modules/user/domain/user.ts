@@ -137,4 +137,11 @@ export class User {
       }),
     );
   }
+
+  promoteToSuperAdmin(): User {
+    return new User({
+      ...this.state,
+      role: "super_admin",
+    });
+  }
 }

@@ -26,6 +26,11 @@ export class InMemoryUserRepository implements UserRepository {
     return this.store.size;
   }
 
+  async countByRole(role: string): Promise<number> {
+    return Array.from(this.store.values()).filter((u) => u.role === role)
+      .length;
+  }
+
   save(user: User): ResultAsync<void, DomainError> {
     this.store.set(user.id, user);
     return okAsync(undefined);
