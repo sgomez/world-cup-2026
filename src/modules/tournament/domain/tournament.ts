@@ -1,5 +1,5 @@
 import { ok, type Result } from "neverthrow";
-import type { KnockoutMatch } from "@/lib/bracket-core";
+import type { KnockoutMatch } from "@/modules/bracket";
 import type { LiveResult } from "@/modules/live/domain/live-result";
 import {
   buildBracketView,

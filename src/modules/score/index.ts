@@ -1,4 +1,4 @@
-import { KNOCKOUT_MATCH_IDS, type KnockoutMatch } from "@/lib/bracket-core";
+import { KNOCKOUT_MATCH_IDS, type KnockoutMatch } from "@/modules/bracket";
 
 // ---------------------------------------------------------------------------
 // Types

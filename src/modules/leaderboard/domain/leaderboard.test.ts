@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { createInitialState } from "@/lib/prediction-state";
 import { Bet } from "@/modules/bet/domain/bet";
 import { BettingWindow } from "@/modules/bet/domain/betting-window";
+import { createInitialState } from "@/modules/bracket";
 import {
   extractScoreableContent,
   type ScoreableContentArrays,

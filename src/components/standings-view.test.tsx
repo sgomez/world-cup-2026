@@ -108,18 +108,14 @@ vi.mock("@/lib/matches", () => ({
   ]),
 }));
 
-// Mock bracket-core to avoid complex bracket logic
-vi.mock("@/lib/bracket-core", () => ({
+// Mock modules/bracket (core engine)
+vi.mock("@/modules/bracket", () => ({
   matchProgression: {},
   R32_MATCHUPS: [],
   ROUND_ORDER: ["R32", "R16", "QF", "SF", "3RD", "F"],
   applyWinnerToMatches: vi.fn((matches: Record<string, unknown>) => matches),
   createEmptyKnockoutMatches: vi.fn(() => ({})),
   getTeamIdFromPosition: vi.fn(() => null),
-}));
-
-// Mock modules/bracket (core engine)
-vi.mock("@/modules/bracket", () => ({
   KNOCKOUT_MATCH_IDS: {
     R32: [],
     R16: [],

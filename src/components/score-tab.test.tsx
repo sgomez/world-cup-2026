@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { createInitialState } from "@/lib/prediction-state";
+import { createInitialState } from "@/modules/bracket";
 import {
   extractScoreableContent,
   toScoreableContentArrays,

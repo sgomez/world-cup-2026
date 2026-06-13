@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { err, ok, type Result } from "neverthrow";
 import { computeSignatureFromContent } from "@/lib/bet-signature";
-import { createInitialState } from "@/lib/prediction-state";
 import { getGroups } from "@/lib/teams";
+import { createInitialState } from "@/modules/bracket";
 import {
   extractScoreableContent,
   type ScoreableContent,
