@@ -300,6 +300,7 @@ export type RankedThird = ThirdPlaceEntry & {
 
 export type ThirdsResult = {
   ranked: RankedThird[];
+  allRanked: TeamId[]; // all 12 thirds in tie-break order (same sort, full list)
   slotAssignments: Record<string, TeamId>; // R32 slot label → teamId
 };
 
@@ -391,7 +392,7 @@ export function rankThirds(
     rank: i + 1,
   }));
 
-  return { ranked: rankedResult, slotAssignments };
+  return { ranked: rankedResult, allRanked: ranked, slotAssignments };
 }
 
 // ---------------------------------------------------------------------------
@@ -657,4 +658,180 @@ function computeThirdStats(
     ga += goalsAgainst(team, m);
   }
   return { points, goalDiff: gf - ga, goals: gf };
+}
+
+// ---------------------------------------------------------------------------
+// Standings table derivation
+// ---------------------------------------------------------------------------
+
+/**
+ * A single row in the standings table, ready for rendering.
+ * Rows carry `teamId` only (locale-agnostic); localisation stays in the
+ * component layer per ADR 0004.
+ */
+export type StandingRow = {
+  teamId: TeamId;
+  position: number;
+  pts: number;
+  gf: number;
+  ga: number;
+  gd: number;
+  qualified: boolean;
+};
+
+/**
+ * The per-group result of the standings-table derivation.
+ * `cut` is 2 for groups whose top-2 advance (if no best-thirds for this group),
+ * but since all groups may contribute a third, we always expose 2 here for
+ * the top-2 advancement position (rows carry the qualified flag directly).
+ */
+export type GroupStandingsEntry = {
+  rows: StandingRow[];
+};
+
+/**
+ * The full standings table derived from live results.
+ */
+export type StandingsTable = {
+  /** Per-group standings, keyed by uppercase group letter (e.g. "A"). */
+  groups: Record<string, GroupStandingsEntry>;
+  /**
+   * Ranked best-thirds rows (all 12 when all groups have started matches;
+   * empty otherwise). Top 8 are flagged qualified.
+   */
+  bestThirds: StandingRow[];
+};
+
+/**
+ * Input shape for `deriveStandingsTable` — same as `AdvancementInput`.
+ */
+export type StandingsTableInput = AdvancementInput;
+
+/**
+ * Computes per-team points, goals-for, goals-against, goal-difference, and
+ * qualified flag for every group, and ranks the 12 third-placed teams.
+ *
+ * Reuses `computeGroupStanding`, `rankThirds`, and the internal
+ * `matchPoints` / `goalsFor` / `goalsAgainst` helpers — no shadow tally.
+ *
+ * The `finishedOnly: false` provisional mode is used for display standings so
+ * live matches move the table (ADR 0020). Manual tie-breaks (ADR 0016) are
+ * threaded through via `manualTieBreaks`.
+ *
+ * Qualified semantics:
+ * - Before any match is played in a group → all rows qualified.
+ * - Once any match is played → pos 1–2 qualify, pos 3 qualifies iff in the
+ *   best-eight thirds, pos 4 does not qualify.
+ */
+export function deriveStandingsTable(
+  input: StandingsTableInput,
+): StandingsTable {
+  // ------------------------------------------------------------------
+  // Step 1: compute per-group ordered rows with stats
+  // ------------------------------------------------------------------
+  const groupsResult: Record<string, GroupStandingsEntry> = {};
+  const thirdsEntries: ThirdPlaceEntry[] = [];
+
+  for (const [groupLetter, { teams, matches }] of Object.entries(
+    input.groups,
+  )) {
+    // When finishedOnly is true, exclude live matches from stats and standing computation
+    const effectiveMatches = input.finishedOnly
+      ? matches.filter((m) => m.status === "finished")
+      : matches;
+    const isAnyMatchPlayed = effectiveMatches.length > 0;
+
+    // Build criteria chain, inserting manual factor criterion if provided
+    const manualFactors = input.manualTieBreaks[groupLetter];
+    const chain: TieBreakCriterion[] = manualFactors
+      ? [
+          ...input.tieBreakChain.slice(0, -1), // drop stable
+          makeManualFactorCriterion(manualFactors),
+          stableCriterion,
+        ]
+      : input.tieBreakChain;
+
+    // Get ordered team IDs from the tie-break engine
+    const ordered = computeGroupStanding(teams, effectiveMatches, chain);
+
+    // Compute per-team stats
+    const rows: StandingRow[] = ordered.map((teamId, idx) => {
+      const teamMatches = effectiveMatches.filter(
+        (m) => m.team1 === teamId || m.team2 === teamId,
+      );
+      let pts = 0;
+      let gf = 0;
+      let ga = 0;
+      for (const m of teamMatches) {
+        pts += matchPoints(teamId, m);
+        gf += goalsFor(teamId, m);
+        ga += goalsAgainst(teamId, m);
+      }
+      const position = idx + 1;
+
+      // Qualified defaults to true before any match; after the first match
+      // top-2 qualify, pos-4 does not, pos-3 depends on thirds ranking (resolved below).
+      const qualified = isAnyMatchPlayed
+        ? position <= 2
+          ? true
+          : false // pos 3 will be re-evaluated; pos 4 stays false
+        : true;
+
+      return { teamId, position, pts, gf, ga, gd: gf - ga, qualified };
+    });
+
+    groupsResult[groupLetter] = { rows };
+
+    // Collect third-place team for cross-group ranking
+    if (ordered.length >= 3) {
+      const third = ordered[2];
+      const stats = computeThirdStats(third, effectiveMatches);
+      thirdsEntries.push({
+        group: groupLetter.toLowerCase(),
+        teamId: third,
+        points: stats.points,
+        goalDiff: stats.goalDiff,
+        goals: stats.goals,
+      });
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Step 2: rank thirds and resolve pos-3 qualified flags
+  // ------------------------------------------------------------------
+  let bestThirdsRows: StandingRow[] = [];
+
+  if (thirdsEntries.length === 12) {
+    const thirdsResult = rankThirds(thirdsEntries, input.manualTieBreaks);
+    const qualifiedThirdIds = new Set(thirdsResult.ranked.map((r) => r.teamId));
+
+    // Build bestThirds rows from the full ranked list (all 12 thirds in tie-break order)
+    // thirdsResult.allRanked contains all 12 in the same order produced by refineCluster,
+    // so bottom-4 are also sorted — not in arbitrary insertion order.
+    const allRanked = thirdsResult.allRanked;
+
+    bestThirdsRows = allRanked.map((teamId, idx) => {
+      const entry = thirdsEntries.find((t) => t.teamId === teamId)!;
+      const qualified = idx < 8;
+      return {
+        teamId,
+        position: idx + 1,
+        pts: entry.points,
+        gf: entry.goals,
+        ga: entry.goals - entry.goalDiff, // ga = gf - gd → ga = goals - goalDiff
+        gd: entry.goalDiff,
+        qualified,
+      };
+    });
+
+    // Update pos-3 qualified flags in per-group rows
+    for (const groupEntry of Object.values(groupsResult)) {
+      const pos3Row = groupEntry.rows.find((r) => r.position === 3);
+      if (pos3Row) {
+        pos3Row.qualified = qualifiedThirdIds.has(pos3Row.teamId);
+      }
+    }
+  }
+
+  return { groups: groupsResult, bestThirds: bestThirdsRows };
 }
