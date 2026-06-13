@@ -300,6 +300,7 @@ export type RankedThird = ThirdPlaceEntry & {
 
 export type ThirdsResult = {
   ranked: RankedThird[];
+  allRanked: TeamId[]; // all 12 thirds in tie-break order (same sort, full list)
   slotAssignments: Record<string, TeamId>; // R32 slot label → teamId
 };
 
@@ -391,7 +392,7 @@ export function rankThirds(
     rank: i + 1,
   }));
 
-  return { ranked: rankedResult, slotAssignments };
+  return { ranked: rankedResult, allRanked: ranked, slotAssignments };
 }
 
 // ---------------------------------------------------------------------------
@@ -734,7 +735,11 @@ export function deriveStandingsTable(
   for (const [groupLetter, { teams, matches }] of Object.entries(
     input.groups,
   )) {
-    const isAnyMatchPlayed = matches.length > 0;
+    // When finishedOnly is true, exclude live matches from stats and standing computation
+    const effectiveMatches = input.finishedOnly
+      ? matches.filter((m) => m.status === "finished")
+      : matches;
+    const isAnyMatchPlayed = effectiveMatches.length > 0;
 
     // Build criteria chain, inserting manual factor criterion if provided
     const manualFactors = input.manualTieBreaks[groupLetter];
@@ -747,11 +752,11 @@ export function deriveStandingsTable(
       : input.tieBreakChain;
 
     // Get ordered team IDs from the tie-break engine
-    const ordered = computeGroupStanding(teams, matches, chain);
+    const ordered = computeGroupStanding(teams, effectiveMatches, chain);
 
     // Compute per-team stats
     const rows: StandingRow[] = ordered.map((teamId, idx) => {
-      const teamMatches = matches.filter(
+      const teamMatches = effectiveMatches.filter(
         (m) => m.team1 === teamId || m.team2 === teamId,
       );
       let pts = 0;
@@ -780,7 +785,7 @@ export function deriveStandingsTable(
     // Collect third-place team for cross-group ranking
     if (ordered.length >= 3) {
       const third = ordered[2];
-      const stats = computeThirdStats(third, matches);
+      const stats = computeThirdStats(third, effectiveMatches);
       thirdsEntries.push({
         group: groupLetter.toLowerCase(),
         teamId: third,
@@ -800,16 +805,10 @@ export function deriveStandingsTable(
     const thirdsResult = rankThirds(thirdsEntries, input.manualTieBreaks);
     const qualifiedThirdIds = new Set(thirdsResult.ranked.map((r) => r.teamId));
 
-    // Build bestThirds rows from the ranked result (all 12 thirds)
-    // ranked only contains top-8; we need all 12 for display
-    // Reconstruct full ranking: top-8 from ranked, rest from thirdsEntries
-    const rankedIds = thirdsResult.ranked.map((r) => r.teamId);
-    const top8Set = new Set(rankedIds);
-    const bottom4 = thirdsEntries
-      .filter((t) => !top8Set.has(t.teamId))
-      .map((t) => t.teamId);
-
-    const allRanked = [...rankedIds, ...bottom4];
+    // Build bestThirds rows from the full ranked list (all 12 thirds in tie-break order)
+    // thirdsResult.allRanked contains all 12 in the same order produced by refineCluster,
+    // so bottom-4 are also sorted — not in arbitrary insertion order.
+    const allRanked = thirdsResult.allRanked;
 
     bestThirdsRows = allRanked.map((teamId, idx) => {
       const entry = thirdsEntries.find((t) => t.teamId === teamId)!;
