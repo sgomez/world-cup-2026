@@ -6,6 +6,7 @@ import {
   type CommunityActionState,
   regenerateInviteToken,
 } from "@/app/actions/communities";
+import { Button } from "@/components/ui/button";
 
 interface RegenerateInviteTokenFormProps {
   slug: string;
@@ -32,9 +33,9 @@ export function RegenerateInviteTokenForm({
         </p>
       )}
       <form action={action}>
-        <button type="submit" disabled={pending} className="button-secondary">
-          {pending ? t("regenerating") : t("regenerateInviteLink")}
-        </button>
+        <Button type="submit" loading={pending} variant="secondary">
+          {t("regenerateInviteLink")}
+        </Button>
       </form>
     </div>
   );

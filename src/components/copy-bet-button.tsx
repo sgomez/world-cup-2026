@@ -4,6 +4,7 @@ import { Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { copyBet } from "@/app/actions/bets";
+import { Button } from "@/components/ui/button";
 
 export function CopyBetButton({ betId }: { betId: string }) {
   const t = useTranslations("bets");
@@ -22,15 +23,16 @@ export function CopyBetButton({ betId }: { betId: string }) {
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <button
+      <Button
         type="button"
-        disabled={pending}
+        variant="outline"
+        size="xs"
+        loading={pending}
         onClick={handleCopy}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-hairline bg-canvas px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-soft-cloud dark:bg-ink dark:hover:bg-charcoal"
       >
         <Copy className="size-3.5" aria-hidden="true" />
-        {pending ? t("copying") : t("copy")}
-      </button>
+        {t("copy")}
+      </Button>
       {error && <p className="text-caption-sm text-sale">{error}</p>}
     </div>
   );

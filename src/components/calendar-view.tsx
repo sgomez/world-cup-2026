@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import worldcupData from "@/../data/worldcup.json";
 import { MatchCard } from "@/components/match-card";
 import { placeholderLabel } from "@/components/placeholder-label";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { useLiveRefresh } from "@/hooks/use-live-refresh";
 import { type KnockoutMatch, placeholderCodeForSlot } from "@/modules/bracket";
@@ -419,14 +420,15 @@ export function CalendarView({
         </div>
 
         {/* Jump to Today Button */}
-        <button
+        <Button
           type="button"
           onClick={jumpToToday}
-          className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-canvas transition-all hover:opacity-90 dark:bg-canvas dark:text-ink shadow-sm cursor-pointer active:scale-95"
+          size="sm"
+          className="shadow-sm"
         >
           <CalendarDays className="h-4 w-4" />
           {tCalendar("jumpToToday")}
-        </button>
+        </Button>
       </div>
 
       {/* Calendar Grid */}

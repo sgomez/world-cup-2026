@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { type BetActionState, createBet } from "@/app/actions/bets";
+import { Button } from "@/components/ui/button";
 
 export function CreateBetForm() {
   const t = useTranslations("bets");
@@ -22,14 +23,15 @@ export function CreateBetForm() {
           placeholder={t("addBetPlaceholder")}
           className="h-12 w-full sm:flex-1 rounded-xl border border-hairline bg-canvas px-4 text-foreground placeholder:text-muted-foreground text-body-md focus:border-ink outline-none transition-colors dark:bg-ink dark:focus:border-canvas"
         />
-        <button
+        <Button
           type="submit"
-          disabled={pending}
-          className="button-primary rounded-xl flex items-center gap-2 whitespace-nowrap"
+          loading={pending}
+          rounded="xl"
+          className="flex items-center gap-2 whitespace-nowrap"
         >
           <Plus className="size-4" aria-hidden="true" />
-          {pending ? t("adding") : t("addBet")}
-        </button>
+          {t("addBet")}
+        </Button>
       </div>
       {state?.error && (
         <p className="text-caption-sm text-sale">{state.error}</p>

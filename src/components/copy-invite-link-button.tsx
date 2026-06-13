@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface CopyInviteLinkButtonProps {
   url: string;
@@ -18,8 +19,8 @@ export function CopyInviteLinkButton({ url }: CopyInviteLinkButtonProps) {
   }
 
   return (
-    <button type="button" onClick={handleCopy} className="button-secondary">
+    <Button type="button" onClick={handleCopy} variant="secondary">
       {copied ? t("copied") : t("copyInviteLink")}
-    </button>
+    </Button>
   );
 }

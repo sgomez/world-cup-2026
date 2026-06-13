@@ -6,6 +6,7 @@ import {
   type CommunityActionState,
   leaveCommunity,
 } from "@/app/actions/communities";
+import { Button } from "@/components/ui/button";
 
 interface LeaveCommunityFormProps {
   slug: string;
@@ -25,9 +26,9 @@ export function LeaveCommunityForm({ slug }: LeaveCommunityFormProps) {
         <p className="mb-3 text-caption-sm text-sale">{state.error}</p>
       )}
       <form action={action}>
-        <button type="submit" disabled={pending} className="button-danger">
-          {pending ? t("leaving") : t("leaveCommunity")}
-        </button>
+        <Button type="submit" loading={pending} variant="destructive">
+          {t("leaveCommunity")}
+        </Button>
       </form>
     </div>
   );

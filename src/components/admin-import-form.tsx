@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useActionState, useState } from "react";
 import { importDirectBetsAction } from "@/app/actions/communities";
+import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
 export function AdminImportForm({
@@ -119,17 +120,17 @@ export function AdminImportForm({
 
         {state?.error && <p className="text-sm text-sale">{state.error}</p>}
 
-        <button
+        <Button
           type="submit"
+          loading={pending}
           disabled={
-            pending ||
             (mode === "create" && !communityName.trim()) ||
             (mode === "reuse" && !communityId)
           }
-          className="button-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full"
         >
-          {pending ? t("importFormImporting") : t("importFormSubmit")}
-        </button>
+          {t("importFormSubmit")}
+        </Button>
       </form>
 
       {state?.success && (

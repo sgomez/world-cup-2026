@@ -5,6 +5,7 @@ import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { renameBet } from "@/app/actions/bets";
+import { Button } from "@/components/ui/button";
 
 interface RenameBetButtonProps {
   betId: string;
@@ -124,23 +125,26 @@ export function RenameBetButton({
 
             <div className="flex justify-end gap-3">
               <Dialog.Close
-                type="button"
-                className="button-secondary text-button-sm !h-9 !py-1 !px-4"
-                disabled={pending}
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
+                render={
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm-compact"
+                    disabled={pending}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                }
               >
                 {t("cancel")}
               </Dialog.Close>
-              <button
+              <Button
                 type="submit"
-                disabled={pending}
-                className="button-primary text-button-sm !h-9 !py-1 !px-4"
+                loading={pending}
+                size="sm-compact"
                 onClick={(e) => e.stopPropagation()}
               >
-                {pending ? t("saving") : t("save")}
-              </button>
+                {t("save")}
+              </Button>
             </div>
           </form>
         </Dialog.Popup>

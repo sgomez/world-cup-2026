@@ -6,6 +6,7 @@ import {
   type CommunityActionState,
   createCommunity,
 } from "@/app/actions/communities";
+import { Button } from "@/components/ui/button";
 
 export function CreateCommunityForm() {
   const t = useTranslations("communities");
@@ -46,13 +47,14 @@ export function CreateCommunityForm() {
 
       {state?.error && <p className="text-sm text-sale">{state.error}</p>}
 
-      <button
+      <Button
         type="submit"
-        disabled={pending || !name.trim()}
-        className="button-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
+        loading={pending}
+        disabled={!name.trim()}
+        className="w-full"
       >
-        {pending ? t("creating") : t("createCommunityButton")}
-      </button>
+        {t("createCommunityButton")}
+      </Button>
     </form>
   );
 }
