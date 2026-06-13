@@ -7,6 +7,7 @@ import { computeTournamentBracket } from "@/modules/tournament/domain/derive-res
 import { StandingsView } from "./standings-view";
 
 vi.mock("next-intl", () => ({
+  useLocale: vi.fn(() => "en"),
   useTranslations: vi.fn(
     () => (key: string, params?: Record<string, unknown>) => {
       const map: Record<string, string> = {

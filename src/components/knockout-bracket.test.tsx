@@ -17,6 +17,14 @@ vi.mock("next-intl", () => ({
         final: "Final",
         match: `Match ${params?.number ?? ""}`,
         matchCount: `${params?.count ?? ""} matches`,
+        finished: "Finished",
+        live: "LIVE",
+        upcoming: "Upcoming",
+        winnerGroup: `Winner Group ${params?.group ?? ""}`,
+        runnerUpGroup: `Runner-up Group ${params?.group ?? ""}`,
+        bestThird: `Best 3rd ${params?.groups ?? ""}`,
+        winnerMatch: `Winner Match ${params?.num ?? ""}`,
+        loserMatch: `Loser Match ${params?.num ?? ""}`,
       };
       return map[key] ?? key;
     },
@@ -156,5 +164,95 @@ describe("KnockoutBracket - editable mode", () => {
     // TBD slots should be rendered (non-button divs or elements with TBD text)
     const tbdElements = screen.getAllByText("TBD");
     expect(tbdElements.length).toBeGreaterThan(0);
+  });
+});
+
+describe("KnockoutBracket - scored mode", () => {
+  it("renders status variants, score + penalty display, winner/loser emphasis, and non-interactive slots", () => {
+    // Construct a minimal bracketMatches Record
+    const bracketMatches: Record<string, any> = {};
+
+    // R32-73: Argentina vs TBD (Runner-up Group B), not started (will render as TBD status badge)
+    bracketMatches["R32-73"] = {
+      id: "R32-73",
+      round: "R32",
+      team1Id: "arg",
+      team2Id: null,
+      winnerId: null,
+      loserId: null,
+    };
+
+    // R32-74: Argentina vs Brazil, Argentina won
+    bracketMatches["R32-74"] = {
+      id: "R32-74",
+      round: "R32",
+      team1Id: "arg",
+      team2Id: "bra",
+      winnerId: "arg",
+      loserId: "bra",
+    };
+
+    // R32-75: Mexico vs Canada, live
+    bracketMatches["R32-75"] = {
+      id: "R32-75",
+      round: "R32",
+      team1Id: "mex",
+      team2Id: "can",
+      winnerId: null,
+      loserId: null,
+    };
+
+    // R32-76: USA vs Canada, upcoming (both teams resolved, will render as Upcoming status badge)
+    bracketMatches["R32-76"] = {
+      id: "R32-76",
+      round: "R32",
+      team1Id: "usa",
+      team2Id: "can",
+      winnerId: null,
+      loserId: null,
+    };
+
+    const liveResults = [
+      { num: 73, status: "upcoming" },
+      {
+        num: 74,
+        status: "finished",
+        goals1: 2,
+        goals2: 1,
+        penalties1: 3,
+        penalties2: 1,
+      },
+      { num: 75, status: "live", goals1: 3, goals2: 2 },
+      { num: 76, status: "upcoming" },
+    ];
+
+    render(
+      <KnockoutBracket
+        mode="scored"
+        bracketMatches={bracketMatches}
+        liveResults={liveResults}
+      />,
+    );
+
+    // 1. Verify Status variants
+    expect(screen.getByText("Finished")).toBeInTheDocument();
+    expect(screen.getByText("LIVE")).toBeInTheDocument();
+    expect(screen.getByText("Upcoming")).toBeInTheDocument();
+
+    // 2. Verify Score + Penalty display
+    expect(screen.getAllByText("2").length).toBeGreaterThan(0);
+    expect(screen.getByText("(3)")).toBeInTheDocument();
+    expect(screen.getAllByText("1").length).toBeGreaterThan(0);
+    expect(screen.getByText("(1)")).toBeInTheDocument();
+
+    expect(screen.getAllByText("3").length).toBeGreaterThan(0);
+
+    // 3. Verify Placeholder labels render for unresolved slot in R32-73 (side 2 / 2B)
+    expect(screen.getByText("Runner-up Group B")).toBeInTheDocument();
+
+    // 4. Verify winner/loser emphasis and non-interactive slots
+    // Buttons for choosing winners should not exist
+    const buttons = screen.queryAllByRole("button");
+    expect(buttons.length).toBe(0);
   });
 });
