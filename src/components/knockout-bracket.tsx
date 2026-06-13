@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { Dispatch } from "react";
 import { placeholderLabel } from "@/components/placeholder-label";
 import { TeamBadge } from "@/components/team-badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   KNOCKOUT_MATCH_IDS,
@@ -168,17 +169,18 @@ export function MatchTeamRow({
   }
 
   return (
-    <button
+    <Button
       onClick={onSelect}
       disabled={!canSelect}
       type="button"
+      variant="ghost"
       className={cn(
-        "relative block w-full text-left transition-all duration-200 focus:outline-none rounded-md",
+        "relative block w-full text-left transition-all duration-200 focus:outline-none rounded-md h-auto p-0 hover:bg-transparent",
         "cursor-pointer hover:opacity-90 active:scale-[0.99]",
       )}
     >
       {rowContent}
-    </button>
+    </Button>
   );
 }
 

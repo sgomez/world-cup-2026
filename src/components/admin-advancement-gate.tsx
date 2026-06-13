@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { TeamBadge } from "@/components/team-badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { GroupOrders, ThirdPlaceOrder } from "@/modules/bracket";
 import { getAllTeamsLookup } from "@/modules/bracket/prediction-ui";
@@ -79,13 +80,14 @@ function SlotRow({
   ) : null;
 
   return (
-    <button
+    <Button
       id={`slot-${refCode}`}
       onClick={onToggle}
       disabled={!canToggle}
       type="button"
+      variant="ghost"
       className={cn(
-        "relative block w-full text-left transition-all duration-200 focus:outline-none rounded-lg p-2 bg-canvas/90 shadow-sm dark:bg-ink/90 border border-hairline dark:border-ash",
+        "relative block w-full text-left transition-all duration-200 focus:outline-none rounded-lg p-2 bg-canvas/90 shadow-sm dark:bg-ink/90 border border-hairline dark:border-ash h-auto hover:bg-canvas/90 dark:hover:bg-ink/90 p-2",
         canToggle && "cursor-pointer hover:opacity-90 active:scale-[0.99]",
         !canToggle && "cursor-default opacity-80",
       )}
@@ -103,7 +105,7 @@ function SlotRow({
         rightAddon={checkmark}
         border={false}
       />
-    </button>
+    </Button>
   );
 }
 

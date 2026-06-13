@@ -6,6 +6,7 @@ import {
   type JoinCommunityState,
   joinCommunity,
 } from "@/app/actions/communities";
+import { Button } from "@/components/ui/button";
 
 interface JoinCommunityFormProps {
   token: string;
@@ -37,9 +38,9 @@ export function JoinCommunityForm({
       )}
 
       <form action={action} className="mt-6">
-        <button type="submit" disabled={pending} className="button-primary">
-          {pending ? t("joining") : t("joinCommunityButton")}
-        </button>
+        <Button type="submit" loading={pending}>
+          {t("joinCommunityButton")}
+        </Button>
       </form>
     </div>
   );

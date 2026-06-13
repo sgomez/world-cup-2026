@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
 
@@ -15,9 +16,11 @@ export function ImpersonateButton({
   const [loading, setLoading] = useState(false);
 
   return (
-    <button
+    <Button
       type="button"
-      disabled={loading}
+      variant="secondary"
+      size="xs"
+      loading={loading}
       onClick={async (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -30,9 +33,8 @@ export function ImpersonateButton({
         router.push("/");
         router.refresh();
       }}
-      className="button-secondary !h-8 !py-1 !px-3 text-button-sm disabled:opacity-50"
     >
       {label}
-    </button>
+    </Button>
   );
 }

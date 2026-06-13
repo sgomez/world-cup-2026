@@ -6,6 +6,7 @@ import {
   type CommunityActionState,
   deleteCommunity,
 } from "@/app/actions/communities";
+import { Button } from "@/components/ui/button";
 
 interface DeleteCommunityFormProps {
   slug: string;
@@ -35,9 +36,9 @@ export function DeleteCommunityForm({
         <p className="mb-3 text-caption-sm text-sale">{state.error}</p>
       )}
       <form action={action} onSubmit={handleSubmit}>
-        <button type="submit" disabled={pending} className="button-danger">
-          {pending ? t("deleting") : t("deleteCommunityButton")}
-        </button>
+        <Button type="submit" loading={pending} variant="destructive">
+          {t("deleteCommunityButton")}
+        </Button>
       </form>
     </div>
   );

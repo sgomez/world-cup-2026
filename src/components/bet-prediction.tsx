@@ -15,6 +15,7 @@ import { GroupStage } from "@/components/group-stage";
 import { KnockoutStage } from "@/components/knockout-stage";
 import { RenameBetButton } from "@/components/rename-bet-button";
 import { ScoreTab } from "@/components/score-tab";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createInitialState, type PredictionState } from "@/modules/bracket";
@@ -163,14 +164,14 @@ export function BetPrediction({
   const actionContent =
     isOwner && !isPastDeadline ? (
       <div className="flex flex-col items-end gap-1">
-        <button
+        <Button
           type="button"
           onClick={isClosed ? handleReopenClick : handleCloseClick}
-          disabled={isPending}
-          className="button-primary whitespace-nowrap"
+          loading={isPending}
+          className="whitespace-nowrap"
         >
           {isClosed ? t("reopenBet") : t("closeBet")}
-        </button>
+        </Button>
         {error && (
           <p role="alert" className="text-caption-sm text-sale">
             {error}

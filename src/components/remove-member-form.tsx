@@ -6,6 +6,7 @@ import {
   type CommunityActionState,
   removeMember,
 } from "@/app/actions/communities";
+import { Button } from "@/components/ui/button";
 
 interface RemoveMemberFormProps {
   slug: string;
@@ -31,14 +32,15 @@ export function RemoveMemberForm({
         <p className="mt-1 text-caption-sm text-sale">{state.error}</p>
       )}
       <form action={action}>
-        <button
+        <Button
           type="submit"
-          disabled={pending}
+          variant="link"
+          loading={pending}
           aria-label={t("removeUser", { name: userName })}
-          className="text-caption-sm text-sale hover:underline disabled:opacity-50"
+          className="text-caption-sm text-sale hover:underline h-auto p-0"
         >
-          {pending ? t("removing") : t("remove")}
-        </button>
+          {t("remove")}
+        </Button>
       </form>
     </div>
   );

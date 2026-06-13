@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { type ProfileActionState, updateProfile } from "@/app/actions/profile";
+import { Button } from "@/components/ui/button";
 
 interface ProfileFormProps {
   name: string;
@@ -79,13 +80,9 @@ export function ProfileForm({ name, email, image }: ProfileFormProps) {
         <p className="text-body-strong text-success">{t("profileUpdated")}</p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="button-primary w-full"
-      >
-        {pending ? t("saving") : t("saveChanges")}
-      </button>
+      <Button type="submit" loading={pending} className="w-full">
+        {t("saveChanges")}
+      </Button>
     </form>
   );
 }
