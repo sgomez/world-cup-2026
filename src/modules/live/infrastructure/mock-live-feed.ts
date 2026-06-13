@@ -1,5 +1,5 @@
 import { err, ok, type Result } from "neverthrow";
-import { getKickoffInstant, type Match } from "@/lib/matches";
+import { getKickoffInstant, type Match } from "@/modules/schedule";
 import type { Clock } from "../domain/clock";
 import type { LiveFeed, LiveFeedSnapshot } from "../domain/live-feed";
 import type { LiveResult } from "../domain/live-result";

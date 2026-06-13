@@ -23,7 +23,7 @@ vi.mock("next-intl/server", () => ({
   ),
 }));
 vi.mock("@/i18n/navigation", () => ({ redirect: vi.fn() }));
-vi.mock("@/lib/bet-constants", () => ({
+vi.mock("@/config/bet", () => ({
   BET_DEADLINE: new Date("2026-06-11T19:00:00Z"),
   MAX_BETS_PER_USER: 3,
 }));
@@ -40,7 +40,7 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 vi.mock("@/lib/session", () => ({ getSession: vi.fn() }));
-vi.mock("@/lib/bet-constants", () => ({
+vi.mock("@/config/bet", () => ({
   BET_DEADLINE: new Date("2026-06-11T19:00:00Z"),
   MAX_BETS_PER_USER: 3,
 }));
@@ -340,7 +340,7 @@ describe("updateBetPredictions", () => {
   });
 
   it("returns error when deadline has passed (regression: post-deadline edit bug)", async () => {
-    const { BET_DEADLINE } = await import("@/lib/bet-constants");
+    const { BET_DEADLINE } = await import("@/config/bet");
     const spy = vi
       .spyOn(BET_DEADLINE, "getTime")
       .mockReturnValue(Date.now() - 1000);
@@ -422,7 +422,7 @@ describe("closeBet", () => {
   });
 
   it("returns error when deadline has passed", async () => {
-    const { BET_DEADLINE } = await import("@/lib/bet-constants");
+    const { BET_DEADLINE } = await import("@/config/bet");
     const spy = vi
       .spyOn(BET_DEADLINE, "getTime")
       .mockReturnValue(Date.now() - 1000);
@@ -499,7 +499,7 @@ describe("reopenBet", () => {
   });
 
   it("returns error when deadline has passed", async () => {
-    const { BET_DEADLINE } = await import("@/lib/bet-constants");
+    const { BET_DEADLINE } = await import("@/config/bet");
     const spy = vi
       .spyOn(BET_DEADLINE, "getTime")
       .mockReturnValue(Date.now() - 1000);
@@ -728,7 +728,7 @@ describe("renameBet", () => {
   it("returns error when deadline has passed", async () => {
     mockSession();
     mockBet();
-    const { BET_DEADLINE } = await import("@/lib/bet-constants");
+    const { BET_DEADLINE } = await import("@/config/bet");
     const spy = vi
       .spyOn(BET_DEADLINE, "getTime")
       .mockReturnValue(Date.now() - 1000);

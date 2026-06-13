@@ -49,7 +49,7 @@ vi.mock("@/i18n/navigation", () => ({
 }));
 
 // Minimal teams/groups mock
-vi.mock("@/lib/teams", () => {
+vi.mock("@/modules/teams", () => {
   const mockGroups = [
     {
       group: "A",
@@ -96,7 +96,7 @@ vi.mock("@/lib/teams", () => {
   };
 });
 
-vi.mock("@/lib/matches", () => ({
+vi.mock("@/modules/schedule", () => ({
   getAllMatches: vi.fn(() => [
     {
       num: 1,

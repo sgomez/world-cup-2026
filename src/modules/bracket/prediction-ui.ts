@@ -7,7 +7,7 @@
  * on it.
  */
 
-import { getGroups, type Team } from "@/lib/teams";
+import { getGroups, type Team } from "@/modules/teams";
 import combinationsData from "../../../data/worldcup.combinations.json";
 import {
   extractWinners,

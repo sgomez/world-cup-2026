@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getLocale, getTranslations } from "next-intl/server";
+import { MAX_BETS_PER_USER } from "@/config/bet";
 import { redirect } from "@/i18n/navigation";
-import { MAX_BETS_PER_USER } from "@/lib/bet-constants";
 import { container } from "@/lib/container";
 import type { DomainErrorCode } from "@/modules/bet/domain/errors";
 import type { TournamentState } from "@/modules/bracket";

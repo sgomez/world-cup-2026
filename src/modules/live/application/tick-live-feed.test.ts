@@ -1,6 +1,6 @@
 import { err, ok } from "neverthrow";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Match } from "@/lib/matches";
+import type { Match } from "@/modules/schedule";
 import type { Clock } from "../domain/clock";
 import type { LiveFeed } from "../domain/live-feed";
 import { LiveResult } from "../domain/live-result";
@@ -32,9 +32,11 @@ class StubLiveFeed implements LiveFeed {
 
 let mockMatches: Match[] = [];
 
-vi.mock("@/lib/matches", async () => {
+vi.mock("@/modules/schedule", async () => {
   const actual =
-    await vi.importActual<typeof import("@/lib/matches")>("@/lib/matches");
+    await vi.importActual<typeof import("@/modules/schedule")>(
+      "@/modules/schedule",
+    );
   return {
     ...actual,
     getAllMatches: () => mockMatches,

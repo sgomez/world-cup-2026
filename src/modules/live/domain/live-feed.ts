@@ -1,5 +1,5 @@
 import type { Result } from "neverthrow";
-import type { Match } from "@/lib/matches";
+import type { Match } from "@/modules/schedule";
 import type { LiveResult } from "./live-result";
 
 export type LiveFeedSnapshot = {

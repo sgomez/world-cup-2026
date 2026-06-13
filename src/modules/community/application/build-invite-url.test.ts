@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildInviteUrl } from "./communities";
+import { buildInviteUrl } from "./build-invite-url";
 
 describe("buildInviteUrl", () => {
   const originalEnv = process.env;

@@ -15,8 +15,6 @@
  * - Competition End: matches 103 and 104 are both finished
  */
 
-import { getAllMatches } from "@/lib/matches";
-import { getGroups } from "@/lib/teams";
 import {
   applyWinnerToMatches,
   createEmptyKnockoutMatches,
@@ -29,6 +27,8 @@ import {
   type ThirdPlaceOrder,
 } from "@/modules/bracket";
 import type { LiveResult } from "@/modules/live/domain/live-result";
+import { getAllMatches } from "@/modules/schedule";
+import { getGroups } from "@/modules/teams";
 import combinationsData from "../../../../data/worldcup.combinations.json";
 import rawTeamsEn from "../../../../data/worldcup.teams.en.json";
 import {

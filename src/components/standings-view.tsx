@@ -6,8 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 import { TeamBadge } from "@/components/team-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "@/i18n/navigation";
-import { getAllMatches } from "@/lib/matches";
-import { getGroups, getTeamByName, type Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import {
   KNOCKOUT_MATCH_IDS,
@@ -16,6 +14,8 @@ import {
   R32_MATCHUPS,
 } from "@/modules/bracket";
 import { getAllTeamsLookup } from "@/modules/bracket/prediction-ui";
+import { getAllMatches } from "@/modules/schedule";
+import { getGroups, getTeamByName, type Team } from "@/modules/teams";
 import { computeTournamentBracket } from "@/modules/tournament/domain/derive-result";
 
 const REFRESH_INTERVAL =

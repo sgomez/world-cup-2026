@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { getGroups } from "@/lib/teams";
 import {
   createInitialState,
   KNOCKOUT_MATCH_IDS,
@@ -13,6 +12,7 @@ import {
   toScoreableContentArrays,
 } from "@/modules/score";
 import { signature as computeSignatureFromContent } from "@/modules/score/server";
+import { getGroups } from "@/modules/teams";
 import { Bet, type BetState } from "./bet";
 import { BettingWindow } from "./betting-window";
 

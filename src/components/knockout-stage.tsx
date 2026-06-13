@@ -3,7 +3,6 @@
 import { useLocale, useTranslations } from "next-intl";
 import type { Dispatch } from "react";
 import { TeamBadge } from "@/components/team-badge";
-import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import {
   KNOCKOUT_MATCH_IDS,
@@ -14,6 +13,7 @@ import {
   getAllTeamsLookup,
   type TournamentAction,
 } from "@/modules/bracket/prediction-ui";
+import type { Team } from "@/modules/teams";
 
 function EmptySlot() {
   return (

@@ -6,9 +6,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import worldcupData from "@/../data/worldcup.json";
 import { MatchCard } from "@/components/match-card";
 import { useRouter } from "@/i18n/navigation";
-import { getGroups, getTeamById, getTeamByName } from "@/lib/teams";
 import type { KnockoutMatch } from "@/modules/bracket";
 import type { LiveResultState } from "@/modules/live/domain/live-result";
+import { getGroups, getTeamById, getTeamByName } from "@/modules/teams";
 
 const REFRESH_INTERVAL =
   parseInt(process.env.NEXT_PUBLIC_REFRESH_INTERVAL ?? "", 10) || 30_000;

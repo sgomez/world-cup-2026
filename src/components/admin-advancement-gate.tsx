@@ -2,10 +2,10 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { TeamBadge } from "@/components/team-badge";
-import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import type { GroupOrders, ThirdPlaceOrder } from "@/modules/bracket";
 import { getAllTeamsLookup } from "@/modules/bracket/prediction-ui";
+import type { Team } from "@/modules/teams";
 import {
   getR32SlotOccupants,
   VALID_ADVANCEMENT_REFS,

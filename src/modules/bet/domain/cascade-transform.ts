@@ -1,6 +1,6 @@
 import { err, ok, type Result } from "neverthrow";
-import { getGroups } from "@/lib/teams";
 import type { ScoreableContentArrays } from "@/modules/score";
+import { getGroups } from "@/modules/teams";
 import type { ParsedRow } from "./sheet-parser";
 
 export type SkipReason = {

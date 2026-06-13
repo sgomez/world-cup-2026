@@ -4,8 +4,8 @@ import { BetList } from "@/components/bet-list";
 import { CreateBetForm } from "@/components/create-bet-form";
 import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
+import { MAX_BETS_PER_USER } from "@/config/bet";
 import { redirect } from "@/i18n/navigation";
-import { MAX_BETS_PER_USER } from "@/lib/bet-constants";
 import { container } from "@/lib/container";
 import { getSession } from "@/lib/session";
 

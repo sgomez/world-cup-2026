@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { BET_DEADLINE } from "@/lib/bet-constants";
+import { BET_DEADLINE } from "@/config/bet";
 import { prisma } from "@/lib/prisma";
 import { closeBet as closeBetUseCase } from "@/modules/bet/application/close-bet";
 import { copyBet as copyBetUseCase } from "@/modules/bet/application/copy-bet";

@@ -6,8 +6,8 @@ import { AdminMatchScoreEditor } from "@/components/admin-match-score-editor";
 import { AdminTieBreakPanel } from "@/components/admin-tie-break-panel";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Match } from "@/lib/matches";
 import type { LiveResultState } from "@/modules/live/domain/live-result";
+import type { Match } from "@/modules/schedule";
 import type { GroupTieInfo } from "@/modules/tournament/domain/derive-result";
 
 export function AdminResultEditor({
