@@ -321,7 +321,9 @@
   },
   "actionErrors": {
     "NOT_AUTHENTICATED": "No autenticado",
-    "NAME_REQUIRED": "El nombre es obligatorio"
+    "NAME_REQUIRED": "El nombre es obligatorio",
+    "NOT_FOUND": "Usuario no encontrado",
+    "SAVE_FAILED": "No se pudo guardar el perfil. Inténtalo de nuevo"
   },
   "liveErrors": {
     "FORBIDDEN": "No tienes autorización para modificar resultados de partidos.",
