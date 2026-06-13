@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { createInitialState } from "@/modules/bracket";
+import type { LiveMatchResult } from "@/modules/schedule";
 import { KnockoutBracket } from "./knockout-bracket";
 
 vi.mock("next-intl", () => ({
@@ -212,8 +213,8 @@ describe("KnockoutBracket - scored mode", () => {
       loserId: null,
     };
 
-    const liveResults = [
-      { num: 73, status: "upcoming" },
+    const liveResults: LiveMatchResult[] = [
+      { num: 73, status: "upcoming", goals1: 0, goals2: 0 },
       {
         num: 74,
         status: "finished",
@@ -223,7 +224,7 @@ describe("KnockoutBracket - scored mode", () => {
         penalties2: 1,
       },
       { num: 75, status: "live", goals1: 3, goals2: 2 },
-      { num: 76, status: "upcoming" },
+      { num: 76, status: "upcoming", goals1: 0, goals2: 0 },
     ];
 
     render(
