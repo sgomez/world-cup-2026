@@ -595,7 +595,9 @@ export function StandingsView({
                   matchId,
                   matchNumber: matchId.includes("-")
                     ? parseInt(matchId.split("-")[1], 10)
-                    : 103, // 103 for 3RD, 104 for F
+                    : matchId === "F"
+                      ? 104
+                      : 103,
                   team1: match?.team1Id
                     ? (teamsLookup.get(match.team1Id) ?? null)
                     : null,

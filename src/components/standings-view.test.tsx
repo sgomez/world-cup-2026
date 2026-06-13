@@ -1,6 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useRouter } from "@/i18n/navigation";
+import { KNOCKOUT_MATCH_IDS } from "@/modules/bracket";
+import { getAllTeamsLookup } from "@/modules/bracket/prediction-ui";
+import { computeTournamentBracket } from "@/modules/tournament/domain/derive-result";
 import { StandingsView } from "./standings-view";
 
 vi.mock("next-intl", () => ({
@@ -160,6 +163,12 @@ describe("StandingsView", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
+    KNOCKOUT_MATCH_IDS.R32 = [];
+    KNOCKOUT_MATCH_IDS.R16 = [];
+    KNOCKOUT_MATCH_IDS.QF = [];
+    KNOCKOUT_MATCH_IDS.SF = [];
+    KNOCKOUT_MATCH_IDS["3RD"] = [];
+    KNOCKOUT_MATCH_IDS.F = [];
   });
 
   it("renders group stage tab by default when not all R32 settled", () => {
@@ -278,5 +287,66 @@ describe("StandingsView", () => {
     expect(screen.getAllByText("1").length).toBeGreaterThan(0);
     expect(screen.getAllByText("+1").length).toBeGreaterThan(0);
     expect(screen.getAllByText("-1").length).toBeGreaterThan(0);
+  });
+
+  it("renders knockout stage matches, their scores, and statuses when KNOCKOUT_MATCH_IDS is populated", () => {
+    KNOCKOUT_MATCH_IDS.F = ["F"];
+    KNOCKOUT_MATCH_IDS["3RD"] = ["3RD"];
+
+    vi.mocked(computeTournamentBracket).mockReturnValue({
+      F: {
+        team1Id: "mex",
+        team2Id: "rsa",
+        winnerId: null,
+      },
+      "3RD": {
+        team1Id: "arg",
+        team2Id: "bra",
+        winnerId: "arg",
+      },
+    } as any);
+
+    vi.mocked(getAllTeamsLookup).mockReturnValue(
+      new Map([
+        ["mex", { id: "mex", name: "Mexico", flag: "🇲🇽", code: "mx" } as any],
+        [
+          "rsa",
+          { id: "rsa", name: "South Africa", flag: "🇿🇦", code: "za" } as any,
+        ],
+        [
+          "arg",
+          { id: "arg", name: "Argentina", flag: "🇦🇷", code: "ar" } as any,
+        ],
+        ["bra", { id: "bra", name: "Brazil", flag: "🇧🇷", code: "br" } as any],
+      ]),
+    );
+
+    const liveResults = [
+      { num: 104, status: "live", goals1: 3, goals2: 2 },
+      { num: 103, status: "finished", goals1: 1, goals2: 0 },
+    ] as any;
+
+    render(
+      <StandingsView
+        defaultTab="knockout"
+        locale="en"
+        liveTeamIds={new Set(["mex", "rsa"])}
+        liveResults={liveResults}
+      />,
+    );
+
+    // Verify Final match elements
+    expect(screen.getByText("Final")).toBeInTheDocument();
+    expect(screen.getByText("Mexico")).toBeInTheDocument();
+    expect(screen.getByText("South Africa")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+
+    // Verify Third Place Match elements
+    expect(screen.getByText("3rd Place Match")).toBeInTheDocument();
+    expect(screen.getByText("Argentina")).toBeInTheDocument();
+    expect(screen.getByText("Brazil")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.getByText("0")).toBeInTheDocument();
   });
 });
