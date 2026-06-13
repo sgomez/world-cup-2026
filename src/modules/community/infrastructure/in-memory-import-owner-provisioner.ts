@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { okAsync, type ResultAsync } from "neverthrow";
 import type { DomainError } from "../domain/errors";
 import type {
@@ -12,9 +13,9 @@ export class InMemoryImportOwnerProvisioner implements ImportOwnerProvisioner {
 
   provision(communityName: string): ResultAsync<ProvisionedOwner, DomainError> {
     const owner: ProvisionedOwner = {
-      id: this.nextOwner?.id ?? `owner-${Date.now()}`,
+      id: this.nextOwner?.id ?? `owner-${randomUUID()}`,
       name: this.nextOwner?.name ?? communityName,
-      email: this.nextOwner?.email ?? `owner-${Date.now()}@example.com`,
+      email: this.nextOwner?.email ?? `owner-${randomUUID()}@example.com`,
     };
     this.provisioned.push(owner);
     return okAsync(owner);
