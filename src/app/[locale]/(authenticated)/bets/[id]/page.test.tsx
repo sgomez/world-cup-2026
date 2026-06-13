@@ -14,7 +14,9 @@ vi.mock("@/lib/session", () => ({
 vi.mock("@/modules/bet/infrastructure/prisma-bet-repository", () => {
   return {
     PrismaBetRepository: class {
-      findById = mockFindById;
+      findById(...args: any[]) {
+        return mockFindById(...args);
+      }
     },
   };
 });

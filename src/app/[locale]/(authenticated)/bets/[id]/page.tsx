@@ -2,11 +2,9 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { BetPrediction } from "@/components/bet-prediction";
 import { redirect } from "@/i18n/navigation";
-import { BET_DEADLINE } from "@/lib/bet-constants";
+import { container } from "@/lib/container";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { BettingWindow } from "@/modules/bet/domain/betting-window";
-import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
 import { hasLiveMatch } from "@/modules/live/domain/live-result";
 import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
 import { getActualScoreableContent } from "@/modules/tournament/application/get-actual-scoreable-content";
@@ -23,8 +21,7 @@ export default async function BetPage({
   const session = await getSession();
   if (!session) redirect({ href: "/login", locale });
 
-  const repo = new PrismaBetRepository(prisma);
-  const bet = await repo.findById(id);
+  const bet = await container.bets().findById(id);
 
   if (!bet?.isOwnedBy(session.user.id)) {
     notFound();
@@ -34,8 +31,7 @@ export default async function BetPage({
   const savedPredictions = bet.groupPredictions;
   const savedKnockoutWinners = bet.knockoutWinners;
   const isClosed = bet.status === "closed";
-  const window = new BettingWindow(BET_DEADLINE);
-  const isPastDeadline = window.isClosed(new Date());
+  const isPastDeadline = container.bets().isPastDeadline();
 
   const tournamentRepo = new PrismaTournamentRepository(prisma);
   const liveResultRepo = new PrismaLiveResultRepository(prisma);
