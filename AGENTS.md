@@ -23,6 +23,10 @@ Single-context: `CONTEXT.md` + `docs/adr/` at repo root. See `docs/agents/domain
 
 The agent MUST read and adhere to all design tokens, spacing scales, typography styles, and component guidelines in `DESIGN.md` when writing UI code or editing `src/app/globals.css`.
 
+Additionally, follow the UI primitive adoption rules (ADR 0026):
+- **UI Primitives vs. Clickable Domain Elements:** Do not use UI primitives (like `<Button>`) for custom domain clickable elements (such as team selectors, bracket slots, or tab triggers) or inline list text links. Keep these as raw `<button>` elements.
+- **Strict Customization:** Do not override a UI primitive's visual styling (e.g., background, custom padding, border radius) using `className`. Layout adjustments (e.g. `w-full`, margins, or `gap`) are allowed. Stylistic variations must be defined as variants or sizes in the primitive's CVA definition.
+
 ### implement-issue
 
 Local issue implementation — replaces sandcastle. No API key, no containers. See `.agents/skills/implement-issue/SKILL.md`.
