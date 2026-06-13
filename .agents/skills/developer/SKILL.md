@@ -71,6 +71,28 @@ another review pass unless the user asks. One review + one fix per run.
 Summarise to the user: sub-issue delivered, PR url, review verdict, and whether
 a fix pass ran. Include the PR url so they can open it.
 
+### 5. Merge & Cleanup (optional)
+
+Ask the user if they want to merge the PR (no squash), pull the changes to `main`, and clean up the local merged branch.
+
+If the user confirms, run the following:
+1. Merge the PR on GitHub without squashing:
+   ```bash
+   gh pr merge <PR> --merge
+   ```
+2. Switch to the `main` branch and pull the latest changes:
+   ```bash
+   git checkout main && git pull origin main
+   ```
+3. Delete the local merged branch. To find the branch name, you can run:
+   ```bash
+   gh pr view <PR> --json headRefName --jq .headRefName
+   ```
+   Then delete the branch locally:
+   ```bash
+   git branch -d <branch-name>
+   ```
+
 ## Rules
 
 - One sub-issue per invocation.
