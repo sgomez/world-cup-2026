@@ -38,18 +38,20 @@ describe("auth first registrant promotion integration", () => {
       banned: false,
       banReason: null,
       banExpires: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     // 1. repo.findById queries user
     mockUserFindUnique.mockResolvedValue(newUser);
 
     // 2. repo.countByRole("super_admin") queries count of super admins
-    mockUserCount.mockImplementation(async (args?: any) => {
+    mockUserCount.mockImplementation((async (args?: any) => {
       if (args?.where?.role === "super_admin") {
         return 0; // No super_admin exists yet!
       }
       return 1; // e.g. total user count is 1 (the Import Owner)
-    });
+    }) as any);
 
     // 3. Mock save (upsert)
     mockUserUpsert.mockResolvedValue(newUser);
@@ -91,14 +93,16 @@ describe("auth first registrant promotion integration", () => {
       banned: false,
       banReason: null,
       banExpires: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
     mockUserFindUnique.mockResolvedValue(firstUser);
-    mockUserCount.mockImplementation(async (args?: any) => {
+    mockUserCount.mockImplementation((async (args?: any) => {
       if (args?.where?.role === "super_admin") {
         return 0; // No super admin
       }
       return 0;
-    });
+    }) as any);
     mockUserUpsert.mockResolvedValue(firstUser);
 
     await hook({ id: "human-1" });
@@ -125,14 +129,16 @@ describe("auth first registrant promotion integration", () => {
       banned: false,
       banReason: null,
       banExpires: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
     mockUserFindUnique.mockResolvedValue(secondUser);
-    mockUserCount.mockImplementation(async (args?: any) => {
+    mockUserCount.mockImplementation((async (args?: any) => {
       if (args?.where?.role === "super_admin") {
         return 1; // 1 super admin exists now!
       }
       return 1;
-    });
+    }) as any);
 
     await hook({ id: "human-2" });
 

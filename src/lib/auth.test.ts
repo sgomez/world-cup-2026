@@ -1,3 +1,4 @@
+import { okAsync } from "neverthrow";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { promoteFirstRegistrant } from "@/modules/user/application/promote-first-registrant";
 import { PrismaUserRepository } from "@/modules/user/infrastructure/prisma-user-repository";
@@ -12,6 +13,7 @@ describe("auth database hooks", () => {
   });
 
   it("invokes promoteFirstRegistrant service in afterCreate hook", async () => {
+    vi.mocked(promoteFirstRegistrant).mockReturnValue(okAsync({} as any));
     const hook = (auth as any).options?.databaseHooks?.user?.create?.after;
     expect(hook).toBeDefined();
 

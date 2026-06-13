@@ -59,7 +59,14 @@ export const auth = betterAuth({
       create: {
         after: async (user) => {
           const repo = new PrismaUserRepository(prisma);
-          await promoteFirstRegistrant(repo, { userId: user.id });
+          const result = await promoteFirstRegistrant(repo, {
+            userId: user.id,
+          });
+          if (result.isErr()) {
+            throw new Error(
+              `Failed to promote first registrant: ${result.error.code}`,
+            );
+          }
         },
       },
     },
