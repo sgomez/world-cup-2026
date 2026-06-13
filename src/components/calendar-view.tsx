@@ -5,30 +5,20 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import worldcupData from "@/../data/worldcup.json";
 import { MatchCard } from "@/components/match-card";
+import { placeholderLabel } from "@/components/placeholder-label";
 import { useRouter } from "@/i18n/navigation";
-import type { KnockoutMatch } from "@/modules/bracket";
+import { type KnockoutMatch, placeholderCodeForSlot } from "@/modules/bracket";
 import type { LiveResultState } from "@/modules/live/domain/live-result";
+import {
+  getKickoffInstant,
+  matchScore,
+  matchStatus,
+  slotForNum,
+} from "@/modules/schedule";
 import { getGroups, getTeamById, getTeamByName } from "@/modules/teams";
 
 const REFRESH_INTERVAL =
   parseInt(process.env.NEXT_PUBLIC_REFRESH_INTERVAL ?? "", 10) || 30_000;
-
-// Match number to bracket match ID map for knockout rounds
-const NUM_TO_BRACKET_ID: Record<number, string> = {
-  ...Object.fromEntries(
-    [73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88].map(
-      (n) => [n, `R32-${n}`],
-    ),
-  ),
-  ...Object.fromEntries(
-    [89, 90, 91, 92, 93, 94, 95, 96].map((n) => [n, `R16-${n}`]),
-  ),
-  ...Object.fromEntries([97, 98, 99, 100].map((n) => [n, `QF-${n}`])),
-  101: "SF-101",
-  102: "SF-102",
-  103: "3RD",
-  104: "F",
-};
 
 type Match = {
   round: string;
@@ -41,39 +31,11 @@ type Match = {
   num?: number;
 };
 
-// Helper to parse date & time to a Date object (outside component)
-const parseMatchDateTime = (dateStr: string, timeStr: string): Date | null => {
-  const offsetMatch = timeStr.match(/UTC([-+]\d+)/);
-  let parsedOffset = "";
-  if (offsetMatch) {
-    const val = parseInt(offsetMatch[1], 10);
-    const sign = val >= 0 ? "+" : "-";
-    const absVal = Math.abs(val);
-    const padded = String(absVal).padStart(2, "0");
-    parsedOffset = `${sign}${padded}:00`;
-  } else {
-    parsedOffset = "Z";
-  }
-
-  const timePortionMatch = timeStr.match(/^(\d{2}:\d{2})/);
-  const timePortion = timePortionMatch ? timePortionMatch[1] : "00:00";
-
-  try {
-    const isoStr = `${dateStr}T${timePortion}${parsedOffset}`;
-    const dateObj = new Date(isoStr);
-    if (!Number.isNaN(dateObj.getTime())) {
-      return dateObj;
-    }
-  } catch {
-    // ignore
-  }
-  return null;
-};
-
 // Helper to convert date & time to local YYYY-MM-DD (outside component)
 const getLocalDateString = (dateStr: string, timeStr: string) => {
-  const dateObj = parseMatchDateTime(dateStr, timeStr);
-  if (!dateObj) return dateStr;
+  const result = getKickoffInstant({ date: dateStr, time: timeStr });
+  if (result.isErr()) return dateStr;
+  const dateObj = result.value;
 
   const yyyy = dateObj.getFullYear();
   const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
@@ -109,15 +71,6 @@ export function CalendarView({
   const [selectedPhase, setSelectedPhase] = useState<string>("");
   const [isMounted, setIsMounted] = useState(false);
   const [userTimezone, setUserTimezone] = useState("");
-
-  // Build a map of num → LiveResult for fast lookup
-  const liveByNum = useMemo(() => {
-    const map = new Map<number, LiveResultState>();
-    for (const lr of liveResults) {
-      map.set(lr.num, lr);
-    }
-    return map;
-  }, [liveResults]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -204,8 +157,10 @@ export function CalendarView({
         ? getLocalDateString(match.date, match.time)
         : match.date;
 
-      const dateObj = parseMatchDateTime(match.date, match.time);
-      const timestamp = dateObj ? dateObj.getTime() : 0;
+      const kickoffResult = getKickoffInstant(match);
+      const timestamp = kickoffResult.isOk()
+        ? kickoffResult.value.getTime()
+        : 0;
 
       return {
         ...match,
@@ -238,7 +193,7 @@ export function CalendarView({
         // Also check bracket-resolved IDs for knockout matches
         const num = match.num;
         if (num) {
-          const bracketId = NUM_TO_BRACKET_ID[num];
+          const bracketId = slotForNum(num);
           if (bracketId) {
             const bracketMatch = bracketView[bracketId];
             const resolved1 = bracketMatch?.team1Id ?? t1Id;
@@ -398,7 +353,7 @@ export function CalendarView({
    *
    * For knockout matches: looks up the settled team from bracketView. If the slot
    * has a resolved team ID, returns the localised team name. Otherwise falls back
-   * to the raw bracket code (e.g. "2A", "W73") which MatchCard renders as TBD.
+   * to the bracket placeholder code resolved to a translated string.
    *
    * For group-stage matches: returns the raw name as-is (it's always a real team).
    */
@@ -409,64 +364,25 @@ export function CalendarView({
   ): string => {
     if (!num) return rawCode;
 
-    const bracketId = NUM_TO_BRACKET_ID[num];
+    const bracketId = slotForNum(num);
     if (!bracketId) return rawCode;
 
     const bracketMatch = bracketView[bracketId];
-    if (!bracketMatch) return rawCode;
+    const side = slot === "team1" ? 1 : 2;
+    const resolvedId = bracketMatch
+      ? side === 1
+        ? bracketMatch.team1Id
+        : bracketMatch.team2Id
+      : undefined;
 
-    const resolvedId =
-      slot === "team1" ? bracketMatch.team1Id : bracketMatch.team2Id;
-    if (!resolvedId) return rawCode;
-
-    // Resolve team ID to locale-specific team name
-    const team = getTeamById(resolvedId, locale);
-    return team ? team.name : rawCode;
-  };
-
-  /**
-   * Returns the status and score display for a match card.
-   *
-   * - No LiveResult → UPCOMING, no scores
-   * - live → LIVE with current goals
-   * - finished → FINISHED with final score (or penalty score if penalties exist)
-   */
-  const getMatchDisplay = (
-    match: Match,
-  ): {
-    status: "LIVE" | "FINISHED" | "UPCOMING";
-    score1?: string;
-    score2?: string;
-  } => {
-    const num = match.num;
-    if (!num) return { status: "UPCOMING" };
-
-    const lr = liveByNum.get(num);
-    if (!lr || lr.status === "upcoming") return { status: "UPCOMING" };
-
-    if (lr.status === "live") {
-      return {
-        status: "LIVE",
-        score1: String(lr.goals1),
-        score2: String(lr.goals2),
-      };
+    if (resolvedId) {
+      // Resolve team ID to locale-specific team name
+      const team = getTeamById(resolvedId, locale);
+      if (team) return team.name;
     }
 
-    // finished
-    if (lr.penalties1 !== undefined && lr.penalties2 !== undefined) {
-      // Show penalty score for knockout penalty shootout deciders
-      return {
-        status: "FINISHED",
-        score1: String(lr.penalties1),
-        score2: String(lr.penalties2),
-      };
-    }
-
-    return {
-      status: "FINISHED",
-      score1: String(lr.goals1),
-      score2: String(lr.goals2),
-    };
+    const placeholderCode = placeholderCodeForSlot(bracketId, side);
+    return placeholderLabel(placeholderCode, tCalendar);
   };
 
   if (!isMounted) {
@@ -595,8 +511,36 @@ export function CalendarView({
                         {/* Matches grid */}
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                           {groupedMatches[phase][date].map((match) => {
-                            const { status, score1, score2 } =
-                              getMatchDisplay(match);
+                            const num = match.num;
+                            const rawStatus = num
+                              ? matchStatus(num, liveResults)
+                              : "upcoming";
+                            const status =
+                              rawStatus === "live"
+                                ? "LIVE"
+                                : rawStatus === "finished"
+                                  ? "FINISHED"
+                                  : "UPCOMING";
+
+                            let score1: string | undefined;
+                            let score2: string | undefined;
+
+                            if (num) {
+                              const score = matchScore(num, liveResults);
+                              if (score) {
+                                if (
+                                  score.penalties1 !== undefined &&
+                                  score.penalties2 !== undefined
+                                ) {
+                                  // Show penalty score for knockout penalty shootout deciders
+                                  score1 = String(score.penalties1);
+                                  score2 = String(score.penalties2);
+                                } else {
+                                  score1 = String(score.goals1);
+                                  score2 = String(score.goals2);
+                                }
+                              }
+                            }
 
                             const team1 = resolveTeamLabel(
                               match.team1,
