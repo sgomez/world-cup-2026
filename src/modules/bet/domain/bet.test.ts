@@ -1,12 +1,42 @@
 import { describe, expect, it } from "vitest";
-import { computeSignatureFromContent } from "@/lib/bet-signature";
 import { getGroups } from "@/lib/teams";
+import {
+  createInitialState,
+  KNOCKOUT_MATCH_IDS,
+  type KnockoutRound,
+  type PredictionState,
+} from "@/modules/bracket";
+import { tournamentReducer } from "@/modules/bracket/prediction-ui";
 import {
   type ScoreableContentArrays,
   toScoreableContent,
+  toScoreableContentArrays,
 } from "@/modules/score";
+import { signature as computeSignatureFromContent } from "@/modules/score/server";
 import { Bet, type BetState } from "./bet";
 import { BettingWindow } from "./betting-window";
+
+function buildTeam1WinsWinners(
+  groupPredictions: PredictionState | null,
+): Record<string, string> {
+  let state = createInitialState(groupPredictions);
+  const winners: Record<string, string> = {};
+  const roundOrder: KnockoutRound[] = ["R32", "R16", "QF", "SF", "F", "3RD"];
+  for (const round of roundOrder) {
+    for (const matchId of KNOCKOUT_MATCH_IDS[round]) {
+      const match = state.knockoutMatches[matchId];
+      if (match.team1Id) {
+        winners[matchId] = match.team1Id;
+        state = tournamentReducer(state, {
+          type: "SET_KNOCKOUT_WINNER",
+          matchId,
+          winnerId: match.team1Id,
+        });
+      }
+    }
+  }
+  return winners;
+}
 
 const DEADLINE = new Date("2026-06-11T19:00:00Z");
 const BEFORE = new Date("2026-06-10T00:00:00Z");
@@ -502,5 +532,118 @@ describe("Direct Bets", () => {
     expect(
       Bet.createDirect("Direct Bet", "user-1", invalidPreds2).isErr(),
     ).toBe(true);
+  });
+});
+
+describe("Bet.signature", () => {
+  it("returns undefined for non-closed bets", () => {
+    const bet = Bet.fromState(
+      betState({ status: "draft", knockoutWinners: completeWinners() }),
+    );
+    expect(bet.signature).toBeUndefined();
+  });
+
+  it("produces identical signatures for a Bracket Bet and a Direct Bet with same predictions", () => {
+    const state = createInitialState(null);
+    const preds: PredictionState = {
+      groupOrders: state.groupOrders,
+      thirdPlaceOrder: state.thirdPlaceOrder,
+    };
+    const winners = buildTeam1WinsWinners(preds);
+    const bracketBet = Bet.fromState({
+      id: "bracket-bet",
+      userId: "user-1",
+      label: "bracket",
+      status: "closed",
+      groupPredictions: preds,
+      knockoutWinners: winners,
+    });
+
+    const arrays = toScoreableContentArrays(bracketBet.scoreableContent());
+    const directBet = Bet.createDirect(
+      "direct",
+      "user-1",
+      arrays,
+    )._unsafeUnwrap();
+
+    expect(directBet.signature).toBe(bracketBet.signature);
+  });
+
+  it("Direct Bet signature is case-insensitive in the input team ids", () => {
+    const state = createInitialState(null);
+    const preds: PredictionState = {
+      groupOrders: state.groupOrders,
+      thirdPlaceOrder: state.thirdPlaceOrder,
+    };
+    const winners = buildTeam1WinsWinners(preds);
+    const bracketBet = Bet.fromState({
+      id: "bracket-bet",
+      userId: "user-1",
+      label: "bracket",
+      status: "closed",
+      groupPredictions: preds,
+      knockoutWinners: winners,
+    });
+    const base = toScoreableContentArrays(bracketBet.scoreableContent());
+
+    const toCase = (transform: (id: string) => string) => ({
+      R32: base.R32.map(transform),
+      R16: base.R16.map(transform),
+      QF: base.QF.map(transform),
+      SF: base.SF.map(transform),
+      F: base.F.map(transform),
+      champion: base.champion ? transform(base.champion) : null,
+      thirdPlace: base.thirdPlace ? transform(base.thirdPlace) : null,
+    });
+
+    const upper = Bet.createDirect(
+      "upper",
+      "user-1",
+      toCase((id) => id.toUpperCase()),
+    )._unsafeUnwrap();
+    const lower = Bet.createDirect(
+      "lower",
+      "user-1",
+      toCase((id) => id.toLowerCase()),
+    )._unsafeUnwrap();
+
+    expect(lower.signature).toBe(upper.signature);
+  });
+
+  it("Direct Bet signature is independent of the input team order within each round", () => {
+    const state = createInitialState(null);
+    const preds: PredictionState = {
+      groupOrders: state.groupOrders,
+      thirdPlaceOrder: state.thirdPlaceOrder,
+    };
+    const winners = buildTeam1WinsWinners(preds);
+    const bracketBet = Bet.fromState({
+      id: "bracket-bet",
+      userId: "user-1",
+      label: "bracket",
+      status: "closed",
+      groupPredictions: preds,
+      knockoutWinners: winners,
+    });
+    const base = toScoreableContentArrays(bracketBet.scoreableContent());
+
+    const reversed = {
+      R32: [...base.R32].reverse(),
+      R16: [...base.R16].reverse(),
+      QF: [...base.QF].reverse(),
+      SF: [...base.SF].reverse(),
+      F: [...base.F].reverse(),
+      champion: base.champion,
+      thirdPlace: base.thirdPlace,
+    };
+
+    const ordered = Bet.createDirect("ordered", "user-1", base)._unsafeUnwrap();
+    const shuffled = Bet.createDirect(
+      "shuffled",
+      "user-1",
+      reversed,
+    )._unsafeUnwrap();
+
+    expect(shuffled.signature).toBe(ordered.signature);
   });
 });

@@ -47,7 +47,7 @@ R32:ARG,BRA,…,USA|R16:…|QF:…|SF:…|F:ESP,FRA|C:ESP|3RD:CRO
 
 **Never persisted — always computed on read.** The Signature is derived data, so it is *not* stored in the database (consistent with ADR 0006: the database holds only user intent, never derived state). There is no `signature` column, no migration, and no backfill. It is recomputed from the stored prediction whenever it is displayed.
 
-Computation lives in one pure module, `src/lib/bet-signature.ts` — `computeBetSignature(groupPredictions, knockoutWinners)` — the single source of truth wherever a Signature is shown.
+Computation lives in the Score module's server sub-path, `src/modules/score/server.ts` — `signature(content: ScoreableContent)` — the single source of truth wherever a Signature is shown. *(Originally `src/lib/bet-signature.ts`; relocated in issue #273 to eliminate the redundant raw-prediction derivation path.)*
 
 **Shown for closed Bets only.** A Signature is rendered only when the Bet's `status` is `closed`. A closeable Bet always has all 32 knockout winners, so all seven components resolve. Draft Bets show no Signature. Because it is computed on read, it always reflects the Bet's *current* prediction — there is no stale snapshot to reconcile after a reopen/edit.
 

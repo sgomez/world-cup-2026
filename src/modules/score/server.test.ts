@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { Bet } from "@/modules/bet/domain/bet";
 import {
   createInitialState,
   KNOCKOUT_MATCH_IDS,
@@ -7,8 +6,8 @@ import {
   type PredictionState,
 } from "@/modules/bracket";
 import { tournamentReducer } from "@/modules/bracket/prediction-ui";
-import { toScoreableContentArrays } from "@/modules/score";
-import { computeBetSignature } from "./bet-signature";
+import { extractScoreableContent } from "./index";
+import { signature } from "./server";
 
 function buildTeam1WinsWinners(
   groupPredictions: PredictionState | null,
@@ -32,7 +31,18 @@ function buildTeam1WinsWinners(
   return winners;
 }
 
-describe("computeBetSignature", () => {
+function contentFromPredictions(
+  groupPredictions: PredictionState | null,
+  knockoutWinners: Record<string, string> | null,
+) {
+  const { knockoutMatches } = createInitialState(
+    groupPredictions,
+    knockoutWinners ?? {},
+  );
+  return extractScoreableContent(knockoutMatches);
+}
+
+describe("signature", () => {
   it("returns a 64-char lowercase hex string for a complete prediction", () => {
     const state = createInitialState(null);
     const preds: PredictionState = {
@@ -40,7 +50,8 @@ describe("computeBetSignature", () => {
       thirdPlaceOrder: state.thirdPlaceOrder,
     };
     const winners = buildTeam1WinsWinners(preds);
-    const sig = computeBetSignature(preds, winners);
+    const content = contentFromPredictions(preds, winners);
+    const sig = signature(content);
     expect(sig).toMatch(/^[0-9a-f]{64}$/);
   });
 
@@ -51,9 +62,8 @@ describe("computeBetSignature", () => {
       thirdPlaceOrder: state.thirdPlaceOrder,
     };
     const winners = buildTeam1WinsWinners(preds);
-    expect(computeBetSignature(preds, winners)).toBe(
-      computeBetSignature(preds, winners),
-    );
+    const content = contentFromPredictions(preds, winners);
+    expect(signature(content)).toBe(signature(content));
   });
 
   it("same round-sets from different group orders produce the same signature", () => {
@@ -65,7 +75,7 @@ describe("computeBetSignature", () => {
       thirdPlaceOrder: state.thirdPlaceOrder,
     };
     const winnersA = buildTeam1WinsWinners(predsA);
-    const sigA = computeBetSignature(predsA, winnersA);
+    const sigA = signature(contentFromPredictions(predsA, winnersA));
 
     // Swap 1A and 2A — same 32 teams qualify, just different match slots
     const predsB: PredictionState = {
@@ -73,7 +83,7 @@ describe("computeBetSignature", () => {
       thirdPlaceOrder: state.thirdPlaceOrder,
     };
     const winnersB = buildTeam1WinsWinners(predsB);
-    const sigB = computeBetSignature(predsB, winnersB);
+    const sigB = signature(contentFromPredictions(predsB, winnersB));
 
     expect(sigA).toBe(sigB);
   });
@@ -85,9 +95,7 @@ describe("computeBetSignature", () => {
       thirdPlaceOrder: state.thirdPlaceOrder,
     };
     const winners = buildTeam1WinsWinners(preds);
-
-    // Compute baseline
-    const sigA = computeBetSignature(preds, winners);
+    const sigA = signature(contentFromPredictions(preds, winners));
 
     // Change the champion: find both finalists and swap the winner
     const finalState = createInitialState(preds, winners);
@@ -98,7 +106,7 @@ describe("computeBetSignature", () => {
         : finalMatch.team1Id!;
 
     const altWinners = { ...winners, F: altChampion };
-    const sigB = computeBetSignature(preds, altWinners);
+    const sigB = signature(contentFromPredictions(preds, altWinners));
 
     expect(sigA).not.toBe(sigB);
   });
@@ -112,53 +120,25 @@ describe("computeBetSignature", () => {
       thirdPlaceOrder: state.thirdPlaceOrder,
     };
     const winnersA = buildTeam1WinsWinners(predsA);
-    const sigA = computeBetSignature(predsA, winnersA);
+    const sigA = signature(contentFromPredictions(predsA, winnersA));
 
-    // Move a3 into 1A position — changes R32 participant set (a3 now qualifies as 1A, a0 drops to 4th)
+    // Move a3 into 1A position — changes R32 participant set
     const predsB: PredictionState = {
       groupOrders: { ...state.groupOrders, A: [a3, a1, a2, a0] },
       thirdPlaceOrder: state.thirdPlaceOrder,
     };
     const winnersB = buildTeam1WinsWinners(predsB);
-    const sigB = computeBetSignature(predsB, winnersB);
+    const sigB = signature(contentFromPredictions(predsB, winnersB));
 
     expect(sigA).not.toBe(sigB);
   });
 
-  it("input order of knockoutWinners does not affect the signature", () => {
-    const state = createInitialState(null);
-    const preds: PredictionState = {
-      groupOrders: state.groupOrders,
-      thirdPlaceOrder: state.thirdPlaceOrder,
-    };
-    const winners = buildTeam1WinsWinners(preds);
-
-    // Reverse the key order
-    const reversedWinners = Object.fromEntries(
-      Object.entries(winners).reverse(),
-    );
-
-    expect(computeBetSignature(preds, winners)).toBe(
-      computeBetSignature(preds, reversedWinners),
-    );
-  });
-
   it("null groupPredictions and null knockoutWinners produces a consistent signature", () => {
-    const sig1 = computeBetSignature(null, null);
-    const sig2 = computeBetSignature(null, null);
+    const content = contentFromPredictions(null, null);
+    const sig1 = signature(content);
+    const sig2 = signature(content);
     expect(sig1).toMatch(/^[0-9a-f]{64}$/);
     expect(sig1).toBe(sig2);
-  });
-
-  it("returns valid hex for default prediction", () => {
-    const stateEn = createInitialState(null);
-    const preds: PredictionState = {
-      groupOrders: stateEn.groupOrders,
-      thirdPlaceOrder: stateEn.thirdPlaceOrder,
-    };
-    const winners = buildTeam1WinsWinners(preds);
-    const sig = computeBetSignature(preds, winners);
-    expect(sig).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it("changing the 3rd-place winner produces a different signature", () => {
@@ -168,8 +148,7 @@ describe("computeBetSignature", () => {
       thirdPlaceOrder: state.thirdPlaceOrder,
     };
     const winners = buildTeam1WinsWinners(preds);
-
-    const sigA = computeBetSignature(preds, winners);
+    const sigA = signature(contentFromPredictions(preds, winners));
 
     const fullState = createInitialState(preds, winners);
     const thirdMatch = fullState.knockoutMatches["3RD"];
@@ -179,7 +158,7 @@ describe("computeBetSignature", () => {
         : thirdMatch.team1Id!;
 
     const altWinners = { ...winners, "3RD": alt3rd };
-    const sigB = computeBetSignature(preds, altWinners);
+    const sigB = signature(contentFromPredictions(preds, altWinners));
 
     expect(sigA).not.toBe(sigB);
   });
@@ -204,9 +183,10 @@ describe("computeBetSignature", () => {
         thirdPlaceOrder: state.thirdPlaceOrder,
       };
       const winners = buildTeam1WinsWinners(preds);
+      const content = contentFromPredictions(preds, winners);
 
-      const sig1 = computeBetSignature(preds, winners);
-      const sig2 = computeBetSignature(preds, winners);
+      const sig1 = signature(content);
+      const sig2 = signature(content);
 
       expect(sig1).toMatch(/^[0-9a-f]{64}$/);
       expect(sig1).toBe(sig2);
@@ -219,15 +199,16 @@ describe("computeBetSignature", () => {
         thirdPlaceOrder: state.thirdPlaceOrder,
       };
       const winners = buildTeam1WinsWinners(preds);
+      const content = contentFromPredictions(preds, winners);
 
       process.env.BET_SIGNATURE_SALT = "salt-a";
-      const sigA = computeBetSignature(preds, winners);
+      const sigA = signature(content);
 
       process.env.BET_SIGNATURE_SALT = "salt-b";
-      const sigB = computeBetSignature(preds, winners);
+      const sigB = signature(content);
 
       process.env.BET_SIGNATURE_SALT = "";
-      const sigNoSalt = computeBetSignature(preds, winners);
+      const sigNoSalt = signature(content);
 
       expect(sigA).not.toBe(sigB);
       expect(sigA).not.toBe(sigNoSalt);
@@ -245,7 +226,7 @@ describe("computeBetSignature", () => {
         thirdPlaceOrder: state.thirdPlaceOrder,
       };
       const winnersA = buildTeam1WinsWinners(predsA);
-      const sigA = computeBetSignature(predsA, winnersA);
+      const sigA = signature(contentFromPredictions(predsA, winnersA));
 
       // Swap 1A and 2A — same 32 teams qualify, just different match slots
       const predsB: PredictionState = {
@@ -253,145 +234,9 @@ describe("computeBetSignature", () => {
         thirdPlaceOrder: state.thirdPlaceOrder,
       };
       const winnersB = buildTeam1WinsWinners(predsB);
-      const sigB = computeBetSignature(predsB, winnersB);
+      const sigB = signature(contentFromPredictions(predsB, winnersB));
 
       expect(sigA).toBe(sigB);
     });
-  });
-});
-
-describe("Bet aggregate signature equivalence", () => {
-  it("produces a signature byte-identical to computeBetSignature for closed bets", () => {
-    const state = createInitialState(null);
-    const preds = {
-      groupOrders: state.groupOrders,
-      thirdPlaceOrder: state.thirdPlaceOrder,
-    };
-    const winners = buildTeam1WinsWinners(preds);
-    const bet = Bet.fromState({
-      id: "1",
-      userId: "user-1",
-      label: "test",
-      status: "closed",
-      groupPredictions: preds,
-      knockoutWinners: winners,
-    });
-    expect(bet.signature).toBe(computeBetSignature(preds, winners));
-  });
-
-  it("returns undefined signature for non-closed bets", () => {
-    const bet = Bet.fromState({
-      id: "2",
-      userId: "user-1",
-      label: "draft",
-      status: "draft",
-      groupPredictions: null,
-      knockoutWinners: {},
-    });
-    expect(bet.signature).toBeUndefined();
-  });
-
-  it("produces identical signatures for a Direct Bet and a Bracket Bet with same predictions", () => {
-    const state = createInitialState(null);
-    const preds = {
-      groupOrders: state.groupOrders,
-      thirdPlaceOrder: state.thirdPlaceOrder,
-    };
-    const winners = buildTeam1WinsWinners(preds);
-    const bracketBet = Bet.fromState({
-      id: "bracket-bet",
-      userId: "user-1",
-      label: "bracket",
-      status: "closed",
-      groupPredictions: preds,
-      knockoutWinners: winners,
-    });
-
-    const arrays = toScoreableContentArrays(bracketBet.scoreableContent());
-    const directBet = Bet.createDirect(
-      "direct",
-      "user-1",
-      arrays,
-    )._unsafeUnwrap();
-
-    expect(directBet.signature).toBe(bracketBet.signature);
-  });
-
-  it("Direct Bet signature is case-insensitive in the input team ids", () => {
-    const state = createInitialState(null);
-    const preds = {
-      groupOrders: state.groupOrders,
-      thirdPlaceOrder: state.thirdPlaceOrder,
-    };
-    const winners = buildTeam1WinsWinners(preds);
-    const bracketBet = Bet.fromState({
-      id: "bracket-bet",
-      userId: "user-1",
-      label: "bracket",
-      status: "closed",
-      groupPredictions: preds,
-      knockoutWinners: winners,
-    });
-    const base = toScoreableContentArrays(bracketBet.scoreableContent());
-
-    const toCase = (transform: (id: string) => string) => ({
-      R32: base.R32.map(transform),
-      R16: base.R16.map(transform),
-      QF: base.QF.map(transform),
-      SF: base.SF.map(transform),
-      F: base.F.map(transform),
-      champion: base.champion ? transform(base.champion) : null,
-      thirdPlace: base.thirdPlace ? transform(base.thirdPlace) : null,
-    });
-
-    const upper = Bet.createDirect(
-      "upper",
-      "user-1",
-      toCase((id) => id.toUpperCase()),
-    )._unsafeUnwrap();
-    const lower = Bet.createDirect(
-      "lower",
-      "user-1",
-      toCase((id) => id.toLowerCase()),
-    )._unsafeUnwrap();
-
-    expect(lower.signature).toBe(upper.signature);
-  });
-
-  it("Direct Bet signature is independent of the input team order within each round", () => {
-    const state = createInitialState(null);
-    const preds = {
-      groupOrders: state.groupOrders,
-      thirdPlaceOrder: state.thirdPlaceOrder,
-    };
-    const winners = buildTeam1WinsWinners(preds);
-    const bracketBet = Bet.fromState({
-      id: "bracket-bet",
-      userId: "user-1",
-      label: "bracket",
-      status: "closed",
-      groupPredictions: preds,
-      knockoutWinners: winners,
-    });
-    const base = toScoreableContentArrays(bracketBet.scoreableContent());
-
-    const reversed = {
-      R32: [...base.R32].reverse(),
-      R16: [...base.R16].reverse(),
-      QF: [...base.QF].reverse(),
-      SF: [...base.SF].reverse(),
-      F: [...base.F].reverse(),
-      champion: base.champion,
-      thirdPlace: base.thirdPlace,
-    };
-
-    const ordered = Bet.createDirect("ordered", "user-1", base)._unsafeUnwrap();
-    const shuffled = Bet.createDirect(
-      "shuffled",
-      "user-1",
-      reversed,
-    )._unsafeUnwrap();
-
-    expect(shuffled.signature).toBe(ordered.signature);
   });
 });
