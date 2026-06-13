@@ -41,8 +41,8 @@ type Match = {
   num?: number;
 };
 
-// Helper to convert date & time to local YYYY-MM-DD (outside component)
-const getLocalDateString = (dateStr: string, timeStr: string) => {
+// Helper to parse date & time to a Date object (outside component)
+const parseMatchDateTime = (dateStr: string, timeStr: string): Date | null => {
   const offsetMatch = timeStr.match(/UTC([-+]\d+)/);
   let parsedOffset = "";
   if (offsetMatch) {
@@ -61,15 +61,24 @@ const getLocalDateString = (dateStr: string, timeStr: string) => {
   try {
     const isoStr = `${dateStr}T${timePortion}${parsedOffset}`;
     const dateObj = new Date(isoStr);
-    if (Number.isNaN(dateObj.getTime())) return dateStr;
-
-    const yyyy = dateObj.getFullYear();
-    const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
-    const dd = String(dateObj.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
+    if (!Number.isNaN(dateObj.getTime())) {
+      return dateObj;
+    }
   } catch {
-    return dateStr;
+    // ignore
   }
+  return null;
+};
+
+// Helper to convert date & time to local YYYY-MM-DD (outside component)
+const getLocalDateString = (dateStr: string, timeStr: string) => {
+  const dateObj = parseMatchDateTime(dateStr, timeStr);
+  if (!dateObj) return dateStr;
+
+  const yyyy = dateObj.getFullYear();
+  const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const dd = String(dateObj.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 };
 
 // Helper to get today's YYYY-MM-DD (outside component)
@@ -195,10 +204,14 @@ export function CalendarView({
         ? getLocalDateString(match.date, match.time)
         : match.date;
 
+      const dateObj = parseMatchDateTime(match.date, match.time);
+      const timestamp = dateObj ? dateObj.getTime() : 0;
+
       return {
         ...match,
         phase,
         localDate,
+        timestamp,
       };
     });
   }, [isMounted]);
@@ -261,6 +274,13 @@ export function CalendarView({
         groups[phase][date] = [];
       }
       groups[phase][date].push(match);
+    }
+
+    // Sort the matches chronologically by timestamp within each day
+    for (const phase of Object.keys(groups)) {
+      for (const date of Object.keys(groups[phase])) {
+        groups[phase][date].sort((a, b) => a.timestamp - b.timestamp);
+      }
     }
 
     return groups;

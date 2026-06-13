@@ -43,11 +43,21 @@ vi.mock("@/../data/worldcup.json", () => ({
         round: "Matchday 1",
         num: 1,
         date: "2026-06-11",
-        time: "13:00 UTC-6",
+        time: "14:00 UTC-6",
         team1: "Mexico",
         team2: "South Africa",
         group: "Group A",
         ground: "Mexico City",
+      },
+      {
+        round: "Matchday 1",
+        num: 2,
+        date: "2026-06-11",
+        time: "12:00 UTC-6",
+        team1: "South Korea",
+        team2: "Czech Republic",
+        group: "Group A",
+        ground: "Guadalajara (Zapopan)",
       },
       {
         round: "Round of 32",
@@ -170,5 +180,26 @@ describe("CalendarView", () => {
     // Korea Republic is the normalised name for South Korea (kor)
     // It may appear multiple times (match card + team filter option)
     expect(screen.getAllByText("Korea Republic").length).toBeGreaterThan(0);
+  });
+
+  it("sorts matches chronologically by time within each day", () => {
+    render(
+      <CalendarView liveResults={[]} bracketView={emptyBracket} locale="en" />,
+    );
+
+    // Get the container for the day's matches
+    const allMatchesContainer = screen.getByText(
+      "Thursday, June 11, 2026",
+    ).parentElement;
+    expect(allMatchesContainer).toBeInTheDocument();
+
+    const textContent = allMatchesContainer?.textContent || "";
+    const koreaIndex = textContent.indexOf("Korea Republic");
+    const mexicoIndex = textContent.indexOf("Mexico");
+
+    // "Korea Republic" (13:00 UTC-6 kickoff) must appear before "Mexico" (20:00 UTC-6 kickoff)
+    expect(koreaIndex).toBeGreaterThan(-1);
+    expect(mexicoIndex).toBeGreaterThan(-1);
+    expect(koreaIndex).toBeLessThan(mexicoIndex);
   });
 });
