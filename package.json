@@ -10,6 +10,8 @@
     "format": "biome format --write",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
@@ -54,6 +56,8 @@
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
     "@dotenvx/dotenvx": "^1.61.1",
+    "@storybook/nextjs-vite": "^10.0.0",
+    "@storybook/react": "^10.0.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -69,8 +73,10 @@
     "happy-dom": "^20.10.1",
     "lefthook": "^2.1.9",
     "prisma": "^7.8.0",
+    "storybook": "^10.0.0",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.9.3",
+    "vite": "^8.0.16",
     "vitest": "^4.1.8"
   },
   "packageManager": "pnpm@11.5.1+sha512.93f7b57422ea7068257235b4c16eb60762eb68e1dc23723199cc739043ea9be2c4143274a399d8c6defa2b1176226d9ca1c4b63482d6200c1a8fbaa78c1d1485"

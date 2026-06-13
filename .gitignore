@@ -44,3 +44,7 @@ next-env.d.ts
 
 # override global *.sql ignore for Prisma migrations
 !prisma/migrations/**/*.sql
+
+# storybook
+/storybook-static
+
