@@ -32,13 +32,13 @@ function getSlotLabel(
 function EmptySlot({ label, refCode }: { label: string; refCode: string }) {
   const t = useTranslations("admin");
   return (
-    <div className="flex flex-col rounded-lg border border-dashed border-slate-300 bg-slate-100/50 p-3 dark:border-slate-600 dark:bg-slate-800/50">
-      <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+    <div className="flex flex-col rounded-lg border border-dashed border-hairline bg-soft-cloud/50 p-3 dark:border-ash dark:bg-ink/50">
+      <span className="text-[10px] font-bold uppercase tracking-wide text-stone dark:text-mute">
         {label} ({refCode})
       </span>
       <div className="flex items-center gap-2 mt-2 py-1.5 h-11">
-        <div className="h-4 w-4 rounded-sm bg-slate-200 dark:bg-slate-700" />
-        <span className="text-sm font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+        <div className="h-4 w-4 rounded-sm bg-hairline dark:bg-charcoal" />
+        <span className="text-sm font-semibold text-stone dark:text-mute uppercase tracking-wider">
           {t("tbd")}
         </span>
       </div>
@@ -85,13 +85,13 @@ function SlotRow({
       disabled={!canToggle}
       type="button"
       className={cn(
-        "relative block w-full text-left transition-all duration-200 focus:outline-none rounded-lg p-2 bg-white/90 shadow-sm dark:bg-slate-800/90 border border-hairline dark:border-ash",
+        "relative block w-full text-left transition-all duration-200 focus:outline-none rounded-lg p-2 bg-canvas/90 shadow-sm dark:bg-ink/90 border border-hairline dark:border-ash",
         canToggle && "cursor-pointer hover:opacity-90 active:scale-[0.99]",
         !canToggle && "cursor-default opacity-80",
       )}
     >
       <div className="px-2 pt-0.5 pb-1 flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <span className="text-[10px] font-bold uppercase tracking-wide text-stone dark:text-mute">
           {label} ({refCode})
         </span>
       </div>
@@ -165,7 +165,7 @@ export function AdminAdvancementGate({
         {/* Group Winners */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 border-b border-hairline pb-2 dark:border-ash">
-            <h3 className="font-bold text-sm uppercase tracking-wider text-slate-900 dark:text-white">
+            <h3 className="font-bold text-sm uppercase tracking-wider text-ink dark:text-canvas">
               {t("groupWinners")}
             </h3>
           </div>
@@ -175,7 +175,7 @@ export function AdminAdvancementGate({
         {/* Group Runners-up */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 border-b border-hairline pb-2 dark:border-ash">
-            <h3 className="font-bold text-sm uppercase tracking-wider text-slate-900 dark:text-white">
+            <h3 className="font-bold text-sm uppercase tracking-wider text-ink dark:text-canvas">
               {t("groupRunnersUp")}
             </h3>
           </div>
@@ -185,7 +185,7 @@ export function AdminAdvancementGate({
         {/* Best Thirds */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 border-b border-hairline pb-2 dark:border-ash">
-            <h3 className="font-bold text-sm uppercase tracking-wider text-slate-900 dark:text-white">
+            <h3 className="font-bold text-sm uppercase tracking-wider text-ink dark:text-canvas">
               {t("bestThirds")}
             </h3>
           </div>

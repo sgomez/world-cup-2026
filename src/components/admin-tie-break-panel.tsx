@@ -278,7 +278,7 @@ export function AdminTieBreakPanel({
                           className={cn(
                             "text-xs font-semibold transition-colors duration-200 border-l-2",
                             isTied
-                              ? "bg-amber-500/5 dark:bg-amber-500/10 border-l-amber-500"
+                              ? "bg-late-rounds/5 dark:bg-late-rounds/10 border-l-late-rounds"
                               : "border-l-transparent",
                           )}
                         >
@@ -374,7 +374,7 @@ export function AdminTieBreakPanel({
                     className={cn(
                       "text-xs font-semibold transition-colors duration-200 border-l-2",
                       isThirdTied
-                        ? "bg-amber-500/5 dark:bg-amber-500/10 border-l-amber-500"
+                        ? "bg-late-rounds/5 dark:bg-late-rounds/10 border-l-late-rounds"
                         : "border-l-transparent",
                     )}
                   >
