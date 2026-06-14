@@ -672,6 +672,7 @@ function computeThirdStats(
 export type StandingRow = {
   teamId: TeamId;
   position: number;
+  mp: number;
   pts: number;
   gf: number;
   ga: number;
@@ -768,6 +769,7 @@ export function deriveStandingsTable(
         ga += goalsAgainst(teamId, m);
       }
       const position = idx + 1;
+      const mp = teamMatches.length;
 
       // Qualified defaults to true before any match; after the first match
       // top-2 qualify, pos-4 does not, pos-3 depends on thirds ranking (resolved below).
@@ -777,7 +779,7 @@ export function deriveStandingsTable(
           : false // pos 3 will be re-evaluated; pos 4 stays false
         : true;
 
-      return { teamId, position, pts, gf, ga, gd: gf - ga, qualified };
+      return { teamId, position, mp, pts, gf, ga, gd: gf - ga, qualified };
     });
 
     groupsResult[groupLetter] = { rows };
@@ -813,9 +815,13 @@ export function deriveStandingsTable(
     bestThirdsRows = allRanked.map((teamId, idx) => {
       const entry = thirdsEntries.find((t) => t.teamId === teamId)!;
       const qualified = idx < 8;
+      const groupRow = groupsResult[entry.group.toUpperCase()]?.rows.find(
+        (r) => r.teamId === teamId,
+      );
       return {
         teamId,
         position: idx + 1,
+        mp: groupRow?.mp ?? 0,
         pts: entry.points,
         gf: entry.goals,
         ga: entry.goals - entry.goalDiff, // ga = gf - gd → ga = goals - goalDiff

@@ -13,6 +13,7 @@ vi.mock("next-intl", () => ({
     const map: Record<string, string> = {
       pos: "#",
       team: "Team",
+      mp: "MP",
       pts: "PTS",
       gf: "GF",
       ga: "GA",
@@ -31,6 +32,7 @@ const mockRow = (
 ): GroupStandingsRow => ({
   teamId: "arg",
   position: 1,
+  mp: 3,
   pts: 9,
   gf: 7,
   ga: 2,
@@ -78,6 +80,20 @@ describe("GroupStandingsCard", () => {
     );
     expect(screen.getByText("Argentina")).toBeInTheDocument();
     expect(screen.getByText("Brazil")).toBeInTheDocument();
+  });
+
+  it("renders MP column header", () => {
+    render(
+      <GroupStandingsCard
+        title="Group A"
+        qualifyLabel="3 qualify from 4"
+        rows={mockRows}
+        liveTeamIds={new Set()}
+      />,
+    );
+    expect(
+      screen.getByRole("columnheader", { name: "MP" }),
+    ).toBeInTheDocument();
   });
 
   it("renders LIVE marker for teams in liveTeamIds", () => {

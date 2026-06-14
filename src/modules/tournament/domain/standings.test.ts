@@ -917,6 +917,7 @@ describe("deriveStandingsTable", () => {
       expect(row.gf).toBe(0);
       expect(row.ga).toBe(0);
       expect(row.gd).toBe(0);
+      expect(row.mp).toBe(0);
       expect(row.qualified).toBe(true);
     }
     expect(result.bestThirds).toHaveLength(0);
@@ -945,6 +946,7 @@ describe("deriveStandingsTable", () => {
     expect(rowA1?.gf).toBe(2);
     expect(rowA1?.ga).toBe(0);
     expect(rowA1?.gd).toBe(2);
+    expect(rowA1?.mp).toBe(1);
     expect(rowA1?.position).toBe(1);
 
     const rowA2 = groupA.rows.find((r) => r.teamId === "A2");

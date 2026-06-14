@@ -7,6 +7,7 @@ const mockRows = [
   {
     teamId: "arg",
     position: 1,
+    mp: 3,
     pts: 9,
     gf: 7,
     ga: 2,
@@ -17,6 +18,7 @@ const mockRows = [
   {
     teamId: "bra",
     position: 2,
+    mp: 3,
     pts: 6,
     gf: 5,
     ga: 3,
@@ -27,6 +29,7 @@ const mockRows = [
   {
     teamId: "mex",
     position: 3,
+    mp: 3,
     pts: 3,
     gf: 2,
     ga: 4,
@@ -37,6 +40,7 @@ const mockRows = [
   {
     teamId: "uru",
     position: 4,
+    mp: 3,
     pts: 0,
     gf: 1,
     ga: 6,
@@ -94,6 +98,7 @@ export const BestThirdsVariant: Story = {
       {
         teamId: "mex",
         position: 1,
+        mp: 3,
         pts: 5,
         gf: 3,
         ga: 2,
@@ -104,6 +109,7 @@ export const BestThirdsVariant: Story = {
       {
         teamId: "uru",
         position: 2,
+        mp: 3,
         pts: 4,
         gf: 2,
         ga: 2,
@@ -141,6 +147,7 @@ export const UnqualifiedRowsGrayscale: Story = {
       {
         teamId: "arg",
         position: 1,
+        mp: 3,
         pts: 9,
         gf: 7,
         ga: 2,
@@ -151,6 +158,7 @@ export const UnqualifiedRowsGrayscale: Story = {
       {
         teamId: "mex",
         position: 2,
+        mp: 3,
         pts: 0,
         gf: 0,
         ga: 5,

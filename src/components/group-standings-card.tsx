@@ -10,6 +10,7 @@ import type { Team } from "@/modules/teams";
 export type GroupStandingsRow = {
   teamId: string;
   position: number;
+  mp: number;
   pts: number;
   gf: number;
   ga: number;
@@ -55,10 +56,11 @@ export function GroupStandingsCard({
             <tr className="text-[10px] font-bold uppercase tracking-wider text-mute dark:text-stone border-b border-hairline/30 dark:border-ash/30">
               <th className="py-1 px-1 text-left w-6">{t("pos")}</th>
               <th className="py-1 px-2 text-left">{t("team")}</th>
-              <th className="py-1 px-1.5 text-center w-10">{t("pts")}</th>
+              <th className="py-1 px-1 text-center w-7">{t("mp")}</th>
+              <th className="py-1 px-1 text-center w-7">{t("pts")}</th>
               <th className="py-1 px-1 text-center w-7">{t("gf")}</th>
               <th className="py-1 px-1 text-center w-7">{t("ga")}</th>
-              <th className="py-1 px-1.5 text-center w-8">{t("gd")}</th>
+              <th className="py-1 px-1 text-center w-7">{t("gd")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-hairline/10 dark:divide-ash/10 select-none">
@@ -91,13 +93,16 @@ export function GroupStandingsCard({
                       {rowSuffix?.(row)}
                     </div>
                   </td>
-                  <td className="py-1.5 px-1.5 text-center font-[family-name:var(--font-oswald)] text-xs text-ink dark:text-canvas">
+                  <td className="py-1.5 px-1 text-center font-[family-name:var(--font-oswald)] text-xs text-mute dark:text-stone">
+                    {row.mp}
+                  </td>
+                  <td className="py-1.5 px-1 text-center font-[family-name:var(--font-oswald)] text-xs text-mute dark:text-canvas">
                     {row.pts}
                   </td>
-                  <td className="py-1.5 px-1 text-center font-[family-name:var(--font-oswald)] text-xs text-ink dark:text-canvas">
+                  <td className="py-1.5 px-1 text-center font-[family-name:var(--font-oswald)] text-xs text-mute dark:text-canvas">
                     {row.gf}
                   </td>
-                  <td className="py-1.5 px-1 text-center font-[family-name:var(--font-oswald)] text-xs text-ink dark:text-canvas">
+                  <td className="py-1.5 px-1 text-center font-[family-name:var(--font-oswald)] text-xs text-mute dark:text-canvas">
                     {row.ga}
                   </td>
                   <td
@@ -107,7 +112,7 @@ export function GroupStandingsCard({
                         ? "text-success dark:text-success-bright"
                         : row.gd < 0
                           ? "text-sale"
-                          : "text-ink dark:text-canvas",
+                          : "text-mute dark:text-canvas",
                     )}
                   >
                     {gdSign}

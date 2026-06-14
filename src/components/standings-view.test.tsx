@@ -169,6 +169,7 @@ describe("StandingsView", () => {
           {
             teamId: "mex",
             position: 1,
+            mp: 0,
             pts: 0,
             gf: 0,
             ga: 0,
@@ -178,6 +179,7 @@ describe("StandingsView", () => {
           {
             teamId: "rsa",
             position: 2,
+            mp: 0,
             pts: 0,
             gf: 0,
             ga: 0,
@@ -187,6 +189,7 @@ describe("StandingsView", () => {
           {
             teamId: "kor",
             position: 3,
+            mp: 0,
             pts: 0,
             gf: 0,
             ga: 0,
@@ -196,6 +199,7 @@ describe("StandingsView", () => {
           {
             teamId: "cze",
             position: 4,
+            mp: 0,
             pts: 0,
             gf: 0,
             ga: 0,
@@ -209,6 +213,7 @@ describe("StandingsView", () => {
           {
             teamId: "arg",
             position: 1,
+            mp: 0,
             pts: 0,
             gf: 0,
             ga: 0,
@@ -218,6 +223,7 @@ describe("StandingsView", () => {
           {
             teamId: "bra",
             position: 2,
+            mp: 0,
             pts: 0,
             gf: 0,
             ga: 0,
@@ -227,6 +233,7 @@ describe("StandingsView", () => {
           {
             teamId: "uru",
             position: 3,
+            mp: 0,
             pts: 0,
             gf: 0,
             ga: 0,
@@ -236,6 +243,7 @@ describe("StandingsView", () => {
           {
             teamId: "par",
             position: 4,
+            mp: 0,
             pts: 0,
             gf: 0,
             ga: 0,
@@ -249,6 +257,7 @@ describe("StandingsView", () => {
       {
         teamId: "kor",
         position: 1,
+        mp: 0,
         pts: 0,
         gf: 0,
         ga: 0,
@@ -258,6 +267,7 @@ describe("StandingsView", () => {
       {
         teamId: "uru",
         position: 2,
+        mp: 0,
         pts: 0,
         gf: 0,
         ga: 0,
