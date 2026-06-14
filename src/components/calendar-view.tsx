@@ -8,6 +8,7 @@ import { MatchCard } from "@/components/match-card";
 import { placeholderLabel } from "@/components/placeholder-label";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { Select } from "@/components/ui/select";
 import { useLiveRefresh } from "@/hooks/use-live-refresh";
 import { type KnockoutMatch, placeholderCodeForSlot } from "@/modules/bracket";
 import type { LiveResultState } from "@/modules/live/domain/live-result";
@@ -374,49 +375,39 @@ export function CalendarView({
       <div className="sticky top-14 z-40 flex flex-wrap items-center justify-between gap-4 border-b border-hairline bg-soft-cloud/95 py-4 backdrop-blur-md dark:border-ash dark:bg-ink/95">
         <div className="flex flex-wrap items-center gap-3">
           {/* Team Filter */}
-          <div className="relative">
-            <select
-              value={selectedTeam}
-              onChange={(e) => setSelectedTeam(e.target.value)}
-              className="appearance-none rounded-lg border border-hairline bg-canvas pl-4 pr-10 py-2 text-sm font-semibold text-ink dark:border-ash dark:bg-charcoal dark:text-canvas outline-none focus:border-ink dark:focus:border-canvas transition-colors"
-            >
-              <option value="">{tCalendar("allTeams")}</option>
-              {allTeams.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.name}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-mute dark:text-stone">
-              <Filter className="h-3.5 w-3.5" />
-            </div>
-          </div>
+          <Select
+            value={selectedTeam}
+            onChange={(e) => setSelectedTeam(e.target.value)}
+            icon={<Filter className="h-3.5 w-3.5" />}
+          >
+            <option value="">{tCalendar("allTeams")}</option>
+            {allTeams.map((team) => (
+              <option key={team.id} value={team.id}>
+                {team.name}
+              </option>
+            ))}
+          </Select>
 
           {/* Phase Filter */}
-          <div className="relative">
-            <select
-              value={selectedPhase}
-              onChange={(e) => setSelectedPhase(e.target.value)}
-              className="appearance-none rounded-lg border border-hairline bg-canvas pl-4 pr-10 py-2 text-sm font-semibold text-ink dark:border-ash dark:bg-charcoal dark:text-canvas outline-none focus:border-ink dark:focus:border-canvas transition-colors"
-            >
-              <option value="">{tCalendar("allPhases")}</option>
-              {availableGroups.map((g) => (
-                <option key={g} value={g}>
-                  {tCalendar("groupLabel", { group: g.replace("Group ", "") })}
+          <Select
+            value={selectedPhase}
+            onChange={(e) => setSelectedPhase(e.target.value)}
+            icon={<Filter className="h-3.5 w-3.5" />}
+          >
+            <option value="">{tCalendar("allPhases")}</option>
+            {availableGroups.map((g) => (
+              <option key={g} value={g}>
+                {tCalendar("groupLabel", { group: g.replace("Group ", "") })}
+              </option>
+            ))}
+            {phases
+              .filter((p) => p !== "Group Stage")
+              .map((p) => (
+                <option key={p} value={p}>
+                  {getPhaseTranslation(p)}
                 </option>
               ))}
-              {phases
-                .filter((p) => p !== "Group Stage")
-                .map((p) => (
-                  <option key={p} value={p}>
-                    {getPhaseTranslation(p)}
-                  </option>
-                ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-mute dark:text-stone">
-              <Filter className="h-3.5 w-3.5" />
-            </div>
-          </div>
+          </Select>
         </div>
 
         {/* Jump to Today Button */}
