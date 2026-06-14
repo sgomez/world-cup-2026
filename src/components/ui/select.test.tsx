@@ -1,7 +1,8 @@
 import { composeStories } from "@storybook/react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
+import { Select } from "./select";
 import * as stories from "./select.stories";
 
 const { Default, WithFilterIcon, WithFilterIconPlay } = composeStories(stories);
@@ -43,5 +44,25 @@ describe("Select Composed Stories", () => {
 
   it("runs the play function for WithFilterIconPlay", async () => {
     await WithFilterIconPlay.run();
+  });
+
+  it("applies h-12 class when size='lg'", () => {
+    const { container } = render(
+      <Select size="lg">
+        <option value="a">Option A</option>
+      </Select>,
+    );
+    const select = within(container).getByRole("combobox");
+    expect(select.className).toContain("h-12");
+  });
+
+  it("does not apply h-12 class by default", () => {
+    const { container } = render(
+      <Select>
+        <option value="a">Option A</option>
+      </Select>,
+    );
+    const select = within(container).getByRole("combobox");
+    expect(select.className).not.toContain("h-12");
   });
 });

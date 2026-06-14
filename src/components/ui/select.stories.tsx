@@ -43,6 +43,20 @@ export const WithFilterIcon: Story = {
   },
 };
 
+export const SizeLg: Story = {
+  args: {
+    size: "lg",
+    defaultValue: "",
+    children: (
+      <>
+        <option value="">Select a community</option>
+        <option value="alpha">Alpha</option>
+        <option value="beta">Beta</option>
+      </>
+    ),
+  },
+};
+
 export const WithFilterIconPlay: Story = {
   args: {
     icon: <Filter className="h-3.5 w-3.5" />,

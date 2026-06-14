@@ -88,7 +88,8 @@ export function AdminImportForm({
               required
               value={communityId}
               onChange={(e) => setCommunityId(e.target.value)}
-              className="h-12 w-full"
+              size="lg"
+              className="w-full"
             >
               <option value="" disabled>
                 {t("importFormSelectPlaceholder")}
