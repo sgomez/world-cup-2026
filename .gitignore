@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files — .env (template), .env.production (encrypted), .env.test are safe to commit
 .env.*
+!.env.example
 !.env.production
 !.env.test
 
