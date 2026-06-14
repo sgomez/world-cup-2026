@@ -9,6 +9,7 @@ const ROW = {
   goals2: 1,
   penalties1: null,
   penalties2: null,
+  link: null,
   createdAt: new Date("2026-06-11T20:00:00Z"),
   updatedAt: new Date("2026-06-11T21:00:00Z"),
 };
@@ -20,6 +21,7 @@ const KNOCKOUT_ROW = {
   goals2: 1,
   penalties1: 5,
   penalties2: 4,
+  link: null,
   createdAt: new Date("2026-06-30T20:00:00Z"),
   updatedAt: new Date("2026-06-30T21:00:00Z"),
 };
@@ -28,7 +30,9 @@ function fakePrisma() {
   return {
     liveResult: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
       upsert: vi.fn().mockResolvedValue({}),
+      update: vi.fn().mockResolvedValue({}),
     },
   };
 }
@@ -47,11 +51,25 @@ describe("PrismaLiveResultRepository.findByNum", () => {
     expect(lr?.goals2).toBe(1);
     expect(lr?.penalties1).toBeUndefined();
     expect(lr?.penalties2).toBeUndefined();
+    expect(lr?.link).toBeUndefined();
     expect(lr?.createdAt).toEqual(ROW.createdAt);
     expect(lr?.updatedAt).toEqual(ROW.updatedAt);
     expect(prisma.liveResult.findUnique).toHaveBeenCalledWith({
       where: { num: 1 },
     });
+  });
+
+  it("maps link from a row with a link", async () => {
+    const prisma = fakePrisma();
+    prisma.liveResult.findUnique.mockResolvedValue({
+      ...ROW,
+      link: "https://example.com/match/1",
+    });
+    const repo = new PrismaLiveResultRepository(prisma as never);
+
+    const lr = await repo.findByNum(1);
+
+    expect(lr?.link).toBe("https://example.com/match/1");
   });
 
   it("maps penalties from a knockout row", async () => {
@@ -97,6 +115,7 @@ describe("PrismaLiveResultRepository.save", () => {
         goals2: 1,
         penalties1: null,
         penalties2: null,
+        link: null,
       },
       update: {
         status: "finished",
@@ -106,6 +125,28 @@ describe("PrismaLiveResultRepository.save", () => {
         penalties2: null,
       },
     });
+  });
+
+  it("includes link in create clause when entity has a link", async () => {
+    const prisma = fakePrisma();
+    const repo = new PrismaLiveResultRepository(prisma as never);
+    const lr = LiveResult.fromState({
+      num: 1,
+      status: "upcoming",
+      goals1: 0,
+      goals2: 0,
+      link: "https://example.com/match/1",
+    });
+
+    await repo.save(lr);
+
+    expect(prisma.liveResult.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          link: "https://example.com/match/1",
+        }),
+      }),
+    );
   });
 
   it("upserts a knockout row with penalties", async () => {
@@ -143,6 +184,32 @@ describe("PrismaLiveResultRepository.save", () => {
     });
 
     const result = await repo.save(lr);
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("SAVE_FAILED");
+  });
+});
+
+describe("PrismaLiveResultRepository.saveLink", () => {
+  it("updates only the link column", async () => {
+    const prisma = fakePrisma();
+    const repo = new PrismaLiveResultRepository(prisma as never);
+
+    const result = await repo.saveLink(1, "https://example.com/match/1");
+
+    expect(result.isOk()).toBe(true);
+    expect(prisma.liveResult.update).toHaveBeenCalledWith({
+      where: { num: 1 },
+      data: { link: "https://example.com/match/1" },
+    });
+  });
+
+  it("maps any persistence failure to SAVE_FAILED", async () => {
+    const prisma = fakePrisma();
+    prisma.liveResult.update.mockRejectedValue(new Error("db down"));
+    const repo = new PrismaLiveResultRepository(prisma as never);
+
+    const result = await repo.saveLink(1, "https://example.com/match/1");
 
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().code).toBe("SAVE_FAILED");

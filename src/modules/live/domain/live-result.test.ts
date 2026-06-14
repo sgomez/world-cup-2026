@@ -398,3 +398,46 @@ describe("hasLiveMatch predicate", () => {
     expect(hasLiveMatch(results as any)).toBe(true);
   });
 });
+
+describe("LiveResult.withLink", () => {
+  it("returns a new instance with link set", () => {
+    const lr = LiveResult.fromState({
+      num: 1,
+      status: "upcoming",
+      goals1: 0,
+      goals2: 0,
+    });
+    const linked = lr.withLink("https://example.com/match/1");
+    expect(linked.link).toBe("https://example.com/match/1");
+    expect(linked.num).toBe(1);
+    expect(linked.status).toBe("upcoming");
+  });
+
+  it("does not mutate the original", () => {
+    const lr = LiveResult.fromState({
+      num: 1,
+      status: "upcoming",
+      goals1: 0,
+      goals2: 0,
+    });
+    lr.withLink("https://example.com/match/1");
+    expect(lr.link).toBeUndefined();
+  });
+
+  it("link is carried forward through reconcile", () => {
+    const existing = LiveResult.fromState({
+      num: 1,
+      status: "upcoming",
+      goals1: 0,
+      goals2: 0,
+      link: "https://example.com/match/1",
+    });
+    const [result] = LiveResult.reconcile(existing, {
+      num: 1,
+      status: "live",
+      goals1: 1,
+      goals2: 0,
+    });
+    expect(result._unsafeUnwrap().link).toBe("https://example.com/match/1");
+  });
+});

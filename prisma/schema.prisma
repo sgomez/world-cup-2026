@@ -132,6 +132,7 @@ model LiveResult {
   goals2      Int
   penalties1  Int?
   penalties2  Int?
+  link        String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

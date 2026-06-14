@@ -11,6 +11,7 @@ export type LiveResultState = {
   goals2: number;
   penalties1?: number;
   penalties2?: number;
+  link?: string;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -92,6 +93,10 @@ export class LiveResult {
     return this.state.penalties2;
   }
 
+  get link(): string | undefined {
+    return this.state.link;
+  }
+
   get createdAt(): Date | undefined {
     return this.state.createdAt;
   }
@@ -102,6 +107,10 @@ export class LiveResult {
 
   toState(): LiveResultState {
     return { ...this.state };
+  }
+
+  withLink(link: string): LiveResult {
+    return new LiveResult({ ...this.state, link });
   }
 
   /**
@@ -228,6 +237,7 @@ export class LiveResult {
       ...(target.status !== "upcoming" && target.penalties2 !== undefined
         ? { penalties2: target.penalties2 }
         : {}),
+      link: current?.link,
       createdAt: current?.createdAt,
       updatedAt: current?.updatedAt,
     };

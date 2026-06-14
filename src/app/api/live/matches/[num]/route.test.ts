@@ -263,3 +263,62 @@ describe("PATCH /api/live/matches/[num]", () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe("PATCH /api/live/matches/[num] — link update", () => {
+  beforeEach(() => {
+    sharedRepo = new InMemoryLiveResultRepository();
+    vi.stubEnv("LIVE_FEED_TOKEN", VALID_TOKEN);
+  });
+
+  it("returns 200 when link is set on an existing row", async () => {
+    const { PUT, PATCH } = await import("./route");
+
+    // Ensure num 7 exists (use a num no other test in this suite creates)
+    const putReq = makeRequest(
+      "PUT",
+      { status: "upcoming", goals1: 0, goals2: 0 },
+      VALID_TOKEN,
+    );
+    await PUT(putReq, { params: makeParams("7") });
+
+    const patchReq = new Request("http://localhost/api/live/matches/7", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${VALID_TOKEN}`,
+      },
+      body: JSON.stringify({ link: "https://example.com/match/7" }),
+    });
+    const res = await PATCH(patchReq, { params: makeParams("7") });
+    expect(res.status).toBe(200);
+  });
+
+  it("returns 404 when link PATCH targets non-existent row", async () => {
+    const { PATCH } = await import("./route");
+    // num 88 is never created by any other test in this suite
+    const req = new Request("http://localhost/api/live/matches/88", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${VALID_TOKEN}`,
+      },
+      body: JSON.stringify({ link: "https://example.com/match/88" }),
+    });
+    const res = await PATCH(req, { params: makeParams("88") });
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 422 when link is not a valid URL", async () => {
+    const { PATCH } = await import("./route");
+    const req = new Request("http://localhost/api/live/matches/1", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${VALID_TOKEN}`,
+      },
+      body: JSON.stringify({ link: "not-a-url" }),
+    });
+    const res = await PATCH(req, { params: makeParams("1") });
+    expect(res.status).toBe(422);
+  });
+});
