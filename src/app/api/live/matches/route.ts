@@ -108,6 +108,7 @@ export async function POST(request: Request) {
       status: liveResult.status,
       goals1: liveResult.goals1,
       goals2: liveResult.goals2,
+      link: liveResult.link,
     },
     { status: 201 },
   );

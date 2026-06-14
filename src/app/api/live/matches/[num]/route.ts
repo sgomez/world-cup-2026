@@ -88,12 +88,10 @@ async function parseBody(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  if (
-    body !== null &&
-    typeof body === "object" &&
-    "link" in body &&
-    !("status" in body)
-  ) {
+  if (body !== null && typeof body === "object" && "link" in body) {
+    if ("status" in body) {
+      return NextResponse.json({ error: "Invalid body" }, { status: 422 });
+    }
     const result = LinkPatchSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 422 });
