@@ -9,6 +9,9 @@ const ROW = {
   goals2: 1,
   penalties1: null,
   penalties2: null,
+  phase: null,
+  minute: null,
+  inStoppage: null,
   createdAt: new Date("2026-06-11T20:00:00Z"),
   updatedAt: new Date("2026-06-11T21:00:00Z"),
 };
@@ -20,6 +23,9 @@ const KNOCKOUT_ROW = {
   goals2: 1,
   penalties1: 5,
   penalties2: 4,
+  phase: null,
+  minute: null,
+  inStoppage: null,
   createdAt: new Date("2026-06-30T20:00:00Z"),
   updatedAt: new Date("2026-06-30T21:00:00Z"),
 };
@@ -47,6 +53,9 @@ describe("PrismaLiveResultRepository.findByNum", () => {
     expect(lr?.goals2).toBe(1);
     expect(lr?.penalties1).toBeUndefined();
     expect(lr?.penalties2).toBeUndefined();
+    expect(lr?.phase).toBeNull();
+    expect(lr?.minute).toBeNull();
+    expect(lr?.inStoppage).toBeNull();
     expect(lr?.createdAt).toEqual(ROW.createdAt);
     expect(lr?.updatedAt).toEqual(ROW.updatedAt);
     expect(prisma.liveResult.findUnique).toHaveBeenCalledWith({
@@ -63,6 +72,24 @@ describe("PrismaLiveResultRepository.findByNum", () => {
 
     expect(lr?.penalties1).toBe(5);
     expect(lr?.penalties2).toBe(4);
+  });
+
+  it("maps phase/minute/inStoppage from a live row", async () => {
+    const prisma = fakePrisma();
+    prisma.liveResult.findUnique.mockResolvedValue({
+      ...ROW,
+      status: "live",
+      phase: "first_half",
+      minute: 23,
+      inStoppage: false,
+    });
+    const repo = new PrismaLiveResultRepository(prisma as never);
+
+    const lr = await repo.findByNum(1);
+
+    expect(lr?.phase).toBe("first_half");
+    expect(lr?.minute).toBe(23);
+    expect(lr?.inStoppage).toBe(false);
   });
 
   it("returns null when row is absent", async () => {
@@ -97,6 +124,9 @@ describe("PrismaLiveResultRepository.save", () => {
         goals2: 1,
         penalties1: null,
         penalties2: null,
+        phase: null,
+        minute: null,
+        inStoppage: null,
       },
       update: {
         status: "finished",
@@ -104,6 +134,9 @@ describe("PrismaLiveResultRepository.save", () => {
         goals2: 1,
         penalties1: null,
         penalties2: null,
+        phase: null,
+        minute: null,
+        inStoppage: null,
       },
     });
   });

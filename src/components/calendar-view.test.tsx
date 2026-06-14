@@ -182,6 +182,80 @@ describe("CalendarView", () => {
     expect(screen.getAllByText("Korea Republic").length).toBeGreaterThan(0);
   });
 
+  it("shows estimated live minute in LIVE badge when phase/minute are set", () => {
+    // Set fake time to a known point so estimation is deterministic
+    vi.setSystemTime(new Date("2026-06-11T22:00:00Z"));
+
+    const updatedAt = new Date("2026-06-11T21:58:00Z"); // 2 min ago
+    const liveResult: LiveResultState = {
+      num: 1,
+      status: "live",
+      goals1: 1,
+      goals2: 0,
+      phase: "second_half",
+      minute: 70,
+      inStoppage: false,
+      updatedAt,
+    };
+    render(
+      <CalendarView
+        liveResults={[liveResult]}
+        bracketView={emptyBracket}
+        locale="en"
+      />,
+    );
+    // 70 stored + 2 min elapsed = 72' — should appear in the badge
+    expect(screen.getByText("72'")).toBeInTheDocument();
+  });
+
+  it("shows '45+' stoppage marker when minute reaches first-half ceiling", () => {
+    vi.setSystemTime(new Date("2026-06-11T22:00:00Z"));
+
+    const updatedAt = new Date("2026-06-11T21:55:00Z"); // 5 min ago
+    const liveResult: LiveResultState = {
+      num: 1,
+      status: "live",
+      goals1: 0,
+      goals2: 0,
+      phase: "first_half",
+      minute: 43,
+      inStoppage: false,
+      updatedAt,
+    };
+    render(
+      <CalendarView
+        liveResults={[liveResult]}
+        bracketView={emptyBracket}
+        locale="en"
+      />,
+    );
+    // 43 + 5 = 48 → clamped at 45 → "45+"
+    expect(screen.getByText("45+")).toBeInTheDocument();
+  });
+
+  it("shows no minute for LIVE badge when phase is null", () => {
+    const liveResult: LiveResultState = {
+      num: 1,
+      status: "live",
+      goals1: 0,
+      goals2: 0,
+      phase: null,
+      minute: null,
+      inStoppage: null,
+    };
+    render(
+      <CalendarView
+        liveResults={[liveResult]}
+        bracketView={emptyBracket}
+        locale="en"
+      />,
+    );
+    // Should still show LIVE badge, no minute text
+    expect(screen.getByText("LIVE")).toBeInTheDocument();
+    // No minute pattern like "0'" or "45+" should appear in the badge
+    expect(screen.queryByText(/^\d+'$/)).not.toBeInTheDocument();
+  });
+
   it("sorts matches chronologically by time within each day", () => {
     render(
       <CalendarView liveResults={[]} bracketView={emptyBracket} locale="en" />,

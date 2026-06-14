@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { placeholderLabel } from "@/components/placeholder-label";
 import { TeamBadge } from "@/components/team-badge";
+import type { MatchPhase } from "@/modules/live/domain/live-feed";
+import { estimateLiveMinute } from "@/modules/live/domain/live-minute";
 import { getKickoffInstant } from "@/modules/schedule";
 import { getTeamByName } from "@/modules/teams";
 
@@ -20,6 +22,14 @@ export type MatchCardProps = {
   status: "LIVE" | "FINISHED" | "UPCOMING";
   score1?: string;
   score2?: string;
+  /** Live match phase for minute estimation (display only) */
+  livePhase?: MatchPhase | null;
+  /** Persisted minute from feed (display only) */
+  liveMinute?: number | null;
+  /** Whether the feed reported stoppage time */
+  liveInStoppage?: boolean | null;
+  /** When the live result was last updated (for client estimation) */
+  liveUpdatedAt?: Date;
 };
 
 function PlaceholderRow({ label, score }: { label: string; score?: string }) {
@@ -61,10 +71,15 @@ export function MatchCard({
   status,
   score1,
   score2,
+  livePhase,
+  liveMinute,
+  liveInStoppage,
+  liveUpdatedAt,
 }: MatchCardProps) {
   const t = useTranslations("calendar");
 
   const [localTime, setLocalTime] = useState(time);
+  const [displayMinute, setDisplayMinute] = useState<string | null>(null);
 
   useEffect(() => {
     getKickoffInstant({ date, time }).match(
@@ -81,6 +96,28 @@ export function MatchCard({
       },
     );
   }, [time, date, locale]);
+
+  // Client-side live minute estimation, advancing every 30 seconds
+  useEffect(() => {
+    if (status !== "LIVE" || !livePhase) {
+      setDisplayMinute(null);
+      return;
+    }
+    const update = () => {
+      setDisplayMinute(
+        estimateLiveMinute(
+          livePhase,
+          liveMinute,
+          liveInStoppage,
+          liveUpdatedAt,
+          new Date(),
+        ),
+      );
+    };
+    update();
+    const interval = setInterval(update, 30_000);
+    return () => clearInterval(interval);
+  }, [status, livePhase, liveMinute, liveInStoppage, liveUpdatedAt]);
 
   const t1 = getTeamByName(team1, locale);
   const t2 = getTeamByName(team2, locale);
@@ -113,6 +150,9 @@ export function MatchCard({
             <span className="inline-flex items-center gap-1 rounded bg-sale/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-sale uppercase animate-pulse">
               <span className="h-1.5 w-1.5 rounded-full bg-sale" />
               {t("live")}
+              {displayMinute !== null && (
+                <span className="ml-0.5">{displayMinute}</span>
+              )}
             </span>
           ) : status === "FINISHED" ? (
             <span className="rounded bg-soft-cloud px-2 py-0.5 text-[10px] font-bold tracking-wider text-mute uppercase dark:bg-charcoal dark:text-stone">

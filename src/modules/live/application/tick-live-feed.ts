@@ -50,6 +50,9 @@ function pollMatch(
       goals2: snapshot.goals2,
       penalties1: snapshot.penalties1,
       penalties2: snapshot.penalties2,
+      phase: snapshot.phase ?? null,
+      minute: snapshot.minute ?? null,
+      inStoppage: snapshot.inStoppage ?? null,
       allowCreate: true,
     })
       .mapErr(

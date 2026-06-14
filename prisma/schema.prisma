@@ -132,6 +132,9 @@ model LiveResult {
   goals2      Int
   penalties1  Int?
   penalties2  Int?
+  phase       String?
+  minute      Int?
+  inStoppage  Boolean?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
