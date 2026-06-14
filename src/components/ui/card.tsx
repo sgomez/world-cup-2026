@@ -12,7 +12,7 @@ const cardVariants = cva(
       },
       variant: {
         default: "shadow-sm",
-        interactive: "shadow-sm transition-all hover:shadow-md",
+        interactive: "shadow-sm transition-all duration-200 hover:shadow-md",
       },
     },
     defaultVariants: {
@@ -22,23 +22,11 @@ const cardVariants = cva(
   },
 );
 
-const cardHeaderVariants = cva("border-b border-hairline dark:border-ash", {
+const cardHeaderVariants = cva("border-b", {
   variants: {
     size: {
-      default: "pb-2",
+      default: "pb-2 border-hairline dark:border-ash",
       compact: "pb-1 border-hairline/25 dark:border-ash/25",
-    },
-  },
-  defaultVariants: {
-    size: "default",
-  },
-});
-
-const cardBodyVariants = cva("", {
-  variants: {
-    size: {
-      default: "",
-      compact: "",
     },
   },
   defaultVariants: {
@@ -96,13 +84,9 @@ function CardHeader({ className, size, children, ...props }: CardPartProps) {
   );
 }
 
-function CardBody({ className, size, children, ...props }: CardPartProps) {
+function CardBody({ className, children, ...props }: CardPartProps) {
   return (
-    <div
-      data-slot="card-body"
-      className={cn(cardBodyVariants({ size }), className)}
-      {...props}
-    >
+    <div data-slot="card-body" className={cn(className)} {...props}>
       {children}
     </div>
   );
