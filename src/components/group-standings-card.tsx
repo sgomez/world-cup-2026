@@ -88,7 +88,7 @@ export function GroupStandingsCard({
                           {t("liveMarker")}
                         </span>
                       )}
-                      {rowSuffix && rowSuffix(row)}
+                      {rowSuffix?.(row)}
                     </div>
                   </td>
                   <td className="py-1.5 px-1.5 text-center font-[family-name:var(--font-oswald)] text-xs text-ink dark:text-canvas">
