@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { upsertLiveResultAction } from "@/app/actions/live";
 import { placeholderLabel } from "@/components/placeholder-label";
+import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import type {
@@ -277,10 +278,9 @@ export function AdminMatchScoreEditor({
         </div>
 
         {/* Phase Filter */}
-        <select
+        <Select
           value={selectedPhase}
           onChange={(e) => setSelectedPhase(e.target.value)}
-          className="h-9 rounded-md border border-hairline bg-soft-cloud px-3 text-xs font-medium text-ink focus:border-info focus:outline-none dark:border-ash dark:bg-charcoal dark:text-canvas"
         >
           <option value="">{tCalendar("allPhases")}</option>
           {availableGroups.map((g) => (
@@ -295,13 +295,12 @@ export function AdminMatchScoreEditor({
                 {getPhaseTranslation(p)}
               </option>
             ))}
-        </select>
+        </Select>
 
         {/* Team Filter */}
-        <select
+        <Select
           value={selectedTeam}
           onChange={(e) => setSelectedTeam(e.target.value)}
-          className="h-9 rounded-md border border-hairline bg-soft-cloud px-3 text-xs font-medium text-ink focus:border-info focus:outline-none dark:border-ash dark:bg-charcoal dark:text-canvas"
         >
           <option value="">{tCalendar("allTeams")}</option>
           {allTeams.map((t) => (
@@ -309,7 +308,7 @@ export function AdminMatchScoreEditor({
               {t.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {/* Matches editor list */}

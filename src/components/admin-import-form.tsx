@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useActionState, useState } from "react";
 import { importDirectBetsAction } from "@/app/actions/communities";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { Link } from "@/i18n/navigation";
 
 export function AdminImportForm({
@@ -81,13 +82,14 @@ export function AdminImportForm({
             >
               {t("importFormSelectCommunity")}
             </label>
-            <select
+            <Select
               id="communityId"
               name="communityId"
               required
               value={communityId}
               onChange={(e) => setCommunityId(e.target.value)}
-              className="h-12 w-full rounded-md border border-hairline bg-soft-cloud px-4 text-foreground text-body-md focus:border-ink focus:bg-canvas outline-none transition-colors dark:bg-charcoal dark:focus:bg-ink dark:focus:border-canvas"
+              size="lg"
+              className="w-full"
             >
               <option value="" disabled>
                 {t("importFormSelectPlaceholder")}
@@ -97,7 +99,7 @@ export function AdminImportForm({
                   {comm.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         )}
 
