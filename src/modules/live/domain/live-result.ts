@@ -1,7 +1,6 @@
 import { err, ok, type Result } from "neverthrow";
 import { type LiveDomainError, liveDomainError } from "./errors";
 import type { LiveDomainEvent } from "./events";
-import type { MatchPhase } from "./live-feed";
 
 export type LiveStatus = "upcoming" | "live" | "finished";
 
@@ -12,9 +11,6 @@ export type LiveResultState = {
   goals2: number;
   penalties1?: number;
   penalties2?: number;
-  phase?: MatchPhase | null;
-  minute?: number | null;
-  inStoppage?: boolean | null;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -26,9 +22,6 @@ export type ReconcileTarget = {
   goals2: number;
   penalties1?: number;
   penalties2?: number;
-  phase?: MatchPhase | null;
-  minute?: number | null;
-  inStoppage?: boolean | null;
 };
 
 /** Match numbers >= 73 are knockout matches; penalties are only valid for those. */
@@ -97,18 +90,6 @@ export class LiveResult {
 
   get penalties2(): number | undefined {
     return this.state.penalties2;
-  }
-
-  get phase(): MatchPhase | null | undefined {
-    return this.state.phase;
-  }
-
-  get minute(): number | null | undefined {
-    return this.state.minute;
-  }
-
-  get inStoppage(): boolean | null | undefined {
-    return this.state.inStoppage;
   }
 
   get createdAt(): Date | undefined {
@@ -231,19 +212,8 @@ export class LiveResult {
 
     // No-op check — if nothing changed and we produced no events
     // (excluding MatchStarted/status change case), return current unchanged
-    // Also check phase/minute/inStoppage — display fields that need persisting
     const statusChanged = current !== null && current.status !== target.status;
-    const phaseChanged =
-      current !== null &&
-      (current.phase !== (target.phase ?? null) ||
-        current.minute !== (target.minute ?? null) ||
-        current.inStoppage !== (target.inStoppage ?? null));
-    if (
-      events.length === 0 &&
-      current !== null &&
-      !statusChanged &&
-      !phaseChanged
-    ) {
+    if (events.length === 0 && current !== null && !statusChanged) {
       return [ok(current), []];
     }
 
@@ -258,9 +228,6 @@ export class LiveResult {
       ...(target.status !== "upcoming" && target.penalties2 !== undefined
         ? { penalties2: target.penalties2 }
         : {}),
-      phase: target.phase ?? null,
-      minute: target.minute ?? null,
-      inStoppage: target.inStoppage ?? null,
       createdAt: current?.createdAt,
       updatedAt: current?.updatedAt,
     };

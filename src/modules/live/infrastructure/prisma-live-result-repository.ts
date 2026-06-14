@@ -1,7 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { ResultAsync } from "neverthrow";
 import { type LiveDomainError, liveDomainError } from "../domain/errors";
-import type { MatchPhase } from "../domain/live-feed";
 import { LiveResult, type LiveStatus } from "../domain/live-result";
 import type { LiveResultRepository } from "../domain/live-result-repository";
 
@@ -23,9 +22,6 @@ export class PrismaLiveResultRepository implements LiveResultRepository {
       goals2: row.goals2,
       penalties1: row.penalties1 ?? undefined,
       penalties2: row.penalties2 ?? undefined,
-      phase: (row.phase as MatchPhase | null) ?? null,
-      minute: row.minute ?? null,
-      inStoppage: row.inStoppage ?? null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });
@@ -41,9 +37,6 @@ export class PrismaLiveResultRepository implements LiveResultRepository {
         goals2: row.goals2,
         penalties1: row.penalties1 ?? undefined,
         penalties2: row.penalties2 ?? undefined,
-        phase: (row.phase as MatchPhase | null) ?? null,
-        minute: row.minute ?? null,
-        inStoppage: row.inStoppage ?? null,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       }),
@@ -63,9 +56,6 @@ export class PrismaLiveResultRepository implements LiveResultRepository {
             goals2: state.goals2,
             penalties1: state.penalties1 ?? null,
             penalties2: state.penalties2 ?? null,
-            phase: state.phase ?? null,
-            minute: state.minute ?? null,
-            inStoppage: state.inStoppage ?? null,
           },
           update: {
             status: state.status,
@@ -73,9 +63,6 @@ export class PrismaLiveResultRepository implements LiveResultRepository {
             goals2: state.goals2,
             penalties1: state.penalties1 ?? null,
             penalties2: state.penalties2 ?? null,
-            phase: state.phase ?? null,
-            minute: state.minute ?? null,
-            inStoppage: state.inStoppage ?? null,
           },
         })
         .then(() => {}),

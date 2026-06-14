@@ -34,10 +34,6 @@ export const Live: Story = {
     status: "LIVE",
     score1: "1",
     score2: "0",
-    livePhase: "first_half",
-    liveMinute: 23,
-    liveInStoppage: false,
-    liveUpdatedAt: new Date(),
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -45,23 +41,6 @@ export const Live: Story = {
     await expect(liveLabel).toBeInTheDocument();
     const score = canvas.getByText("1");
     await expect(score).toBeInTheDocument();
-  },
-};
-
-export const LiveSecondHalf: Story = {
-  args: {
-    status: "LIVE",
-    score1: "1",
-    score2: "1",
-    livePhase: "second_half",
-    liveMinute: 45,
-    liveInStoppage: true,
-    liveUpdatedAt: new Date(),
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const liveLabel = canvas.getByText("LIVE", { exact: false });
-    await expect(liveLabel).toBeInTheDocument();
   },
 };
 
