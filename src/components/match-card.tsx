@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { placeholderLabel } from "@/components/placeholder-label";
 import { TeamBadge } from "@/components/team-badge";
+import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
 import { getKickoffInstant } from "@/modules/schedule";
 import { getTeamByName } from "@/modules/teams";
 
@@ -92,86 +93,84 @@ export function MatchCard({
   const t2Label = isT2Placeholder ? placeholderLabel(team2, t) : t2.name;
 
   return (
-    <div className="rounded-xl border border-hairline bg-canvas p-4 shadow-sm transition-all duration-200 hover:shadow-md dark:border-ash dark:bg-ink flex flex-col justify-between">
-      <div>
-        {/* Header Info */}
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-2 dark:border-ash">
-          <div className="flex items-center gap-2 text-xs font-semibold text-mute dark:text-stone">
-            <span>{localTime}</span>
-            {group && (
-              <>
-                <span className="opacity-40">•</span>
-                <span className="uppercase tracking-wider text-ink dark:text-canvas">
-                  {group}
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Status Badge */}
-          {status === "LIVE" ? (
-            <span className="inline-flex items-center gap-1 rounded bg-sale/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-sale uppercase animate-pulse">
-              <span className="h-1.5 w-1.5 rounded-full bg-sale" />
-              {t("live")}
-            </span>
-          ) : status === "FINISHED" ? (
-            <span className="rounded bg-soft-cloud px-2 py-0.5 text-[10px] font-bold tracking-wider text-mute uppercase dark:bg-charcoal dark:text-stone">
-              {t("finished")}
-            </span>
-          ) : (
-            <span className="rounded bg-soft-cloud/50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-mute/60 uppercase dark:bg-charcoal/50 dark:text-stone/50">
-              {t("upcoming")}
-            </span>
+    <Card variant="interactive" className="flex flex-col justify-between">
+      {/* Header Info */}
+      <CardHeader className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-xs font-semibold text-mute dark:text-stone">
+          <span>{localTime}</span>
+          {group && (
+            <>
+              <span className="opacity-40">•</span>
+              <span className="uppercase tracking-wider text-ink dark:text-canvas">
+                {group}
+              </span>
+            </>
           )}
         </div>
 
-        {/* Teams Stack */}
-        <div className="flex flex-col gap-2">
-          {isT1Placeholder ? (
-            <PlaceholderRow label={t1Label} score={score1} />
-          ) : (
-            <TeamBadge
-              team={t1}
-              size="default"
-              border={true}
-              showGrip={false}
-              rightAddon={
-                score1 !== undefined ? (
-                  <div className="flex h-7 w-8 items-center justify-center rounded bg-soft-cloud dark:bg-charcoal text-sm font-bold text-ink dark:text-canvas border border-hairline dark:border-ash shrink-0 z-20">
-                    {score1}
-                  </div>
-                ) : null
-              }
-            />
-          )}
+        {/* Status Badge */}
+        {status === "LIVE" ? (
+          <span className="inline-flex items-center gap-1 rounded bg-sale/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-sale uppercase animate-pulse">
+            <span className="h-1.5 w-1.5 rounded-full bg-sale" />
+            {t("live")}
+          </span>
+        ) : status === "FINISHED" ? (
+          <span className="rounded bg-soft-cloud px-2 py-0.5 text-[10px] font-bold tracking-wider text-mute uppercase dark:bg-charcoal dark:text-stone">
+            {t("finished")}
+          </span>
+        ) : (
+          <span className="rounded bg-soft-cloud/50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-mute/60 uppercase dark:bg-charcoal/50 dark:text-stone/50">
+            {t("upcoming")}
+          </span>
+        )}
+      </CardHeader>
 
-          {isT2Placeholder ? (
-            <PlaceholderRow label={t2Label} score={score2} />
-          ) : (
-            <TeamBadge
-              team={t2}
-              size="default"
-              border={true}
-              showGrip={false}
-              rightAddon={
-                score2 !== undefined ? (
-                  <div className="flex h-7 w-8 items-center justify-center rounded bg-soft-cloud dark:bg-charcoal text-sm font-bold text-ink dark:text-canvas border border-hairline dark:border-ash shrink-0 z-20">
-                    {score2}
-                  </div>
-                ) : null
-              }
-            />
-          )}
-        </div>
-      </div>
+      {/* Teams Stack */}
+      <CardBody className="flex flex-col gap-2 mt-3">
+        {isT1Placeholder ? (
+          <PlaceholderRow label={t1Label} score={score1} />
+        ) : (
+          <TeamBadge
+            team={t1}
+            size="default"
+            border={true}
+            showGrip={false}
+            rightAddon={
+              score1 !== undefined ? (
+                <div className="flex h-7 w-8 items-center justify-center rounded bg-soft-cloud dark:bg-charcoal text-sm font-bold text-ink dark:text-canvas border border-hairline dark:border-ash shrink-0 z-20">
+                  {score1}
+                </div>
+              ) : null
+            }
+          />
+        )}
+
+        {isT2Placeholder ? (
+          <PlaceholderRow label={t2Label} score={score2} />
+        ) : (
+          <TeamBadge
+            team={t2}
+            size="default"
+            border={true}
+            showGrip={false}
+            rightAddon={
+              score2 !== undefined ? (
+                <div className="flex h-7 w-8 items-center justify-center rounded bg-soft-cloud dark:bg-charcoal text-sm font-bold text-ink dark:text-canvas border border-hairline dark:border-ash shrink-0 z-20">
+                  {score2}
+                </div>
+              ) : null
+            }
+          />
+        )}
+      </CardBody>
 
       {/* Venue (Ground) at bottom */}
-      <div className="mt-3 pt-2 border-t border-hairline/50 dark:border-ash/50 flex items-center gap-1.5 text-[11px] font-semibold text-mute dark:text-stone">
+      <CardFooter className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-mute dark:text-stone">
         <MapPin className="h-3.5 w-3.5 shrink-0 text-mute dark:text-stone" />
         <span className="truncate" title={ground}>
           {ground}
         </span>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 }

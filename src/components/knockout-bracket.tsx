@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { Dispatch } from "react";
 import { placeholderLabel } from "@/components/placeholder-label";
 import { TeamBadge } from "@/components/team-badge";
+import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   KNOCKOUT_MATCH_IDS,
@@ -296,8 +297,11 @@ function MatchCard(props: MatchCardProps) {
       ) : null;
 
     return (
-      <div className="rounded-lg bg-canvas p-3 border border-hairline shadow-sm dark:border-ash dark:bg-ink flex flex-col justify-between">
-        <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-mute dark:text-stone border-b border-hairline/25 pb-1 dark:border-ash/25 flex items-center justify-between">
+      <Card size="compact" className="flex flex-col justify-between">
+        <CardHeader
+          size="compact"
+          className="mb-2 text-[10px] font-bold uppercase tracking-wider text-mute dark:text-stone flex items-center justify-between"
+        >
           <span>{t("match", { number: matchNumber })}</span>
           {finished ? (
             <span className="text-mute/70 dark:text-stone/70 font-semibold">
@@ -318,9 +322,12 @@ function MatchCard(props: MatchCardProps) {
               TBD
             </span>
           )}
-        </div>
+        </CardHeader>
 
-        <div className="flex flex-col gap-1.5 select-none">
+        <CardBody
+          size="compact"
+          className="flex flex-col gap-1.5 select-none mt-2"
+        >
           <MatchTeamRow
             team={team1}
             isWinner={finished && winnerId === team1?.id}
@@ -337,8 +344,8 @@ function MatchCard(props: MatchCardProps) {
             rightAddon={rightAddon2}
             placeholderLabelText={team2Label}
           />
-        </div>
-      </div>
+        </CardBody>
+      </Card>
     );
   }
 }
