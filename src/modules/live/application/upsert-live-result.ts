@@ -1,7 +1,6 @@
 import { errAsync, ResultAsync } from "neverthrow";
 import { type LiveDomainError, liveDomainError } from "../domain/errors";
 import type { LiveDomainEvent } from "../domain/events";
-import type { MatchPhase } from "../domain/live-feed";
 import { LiveResult, type LiveStatus } from "../domain/live-result";
 import type { LiveResultRepository } from "../domain/live-result-repository";
 
@@ -20,9 +19,6 @@ export type UpsertLiveResultCommand = {
   goals2: number;
   penalties1?: number;
   penalties2?: number;
-  phase?: MatchPhase | null;
-  minute?: number | null;
-  inStoppage?: boolean | null;
   /**
    * true  → PUT semantics: create or replace
    * false → PATCH semantics: merge onto existing row; 404 if none
@@ -62,9 +58,6 @@ export function upsertLiveResult(
         ...(command.penalties2 !== undefined
           ? { penalties2: command.penalties2 }
           : {}),
-        phase: command.phase ?? null,
-        minute: command.minute ?? null,
-        inStoppage: command.inStoppage ?? null,
       };
 
       const [reconcileResult, events] = LiveResult.reconcile(
@@ -82,17 +75,7 @@ export function upsertLiveResult(
       // No-op: nothing changed, skip persistence
       const statusChanged =
         existing !== null && existing.status !== newLiveResult.status;
-      const phaseChanged =
-        existing !== null &&
-        (existing.phase !== newLiveResult.phase ||
-          existing.minute !== newLiveResult.minute ||
-          existing.inStoppage !== newLiveResult.inStoppage);
-      if (
-        events.length === 0 &&
-        existing !== null &&
-        !statusChanged &&
-        !phaseChanged
-      ) {
+      if (events.length === 0 && existing !== null && !statusChanged) {
         return ResultAsync.fromSafePromise(
           Promise.resolve({ liveResult: newLiveResult, events }),
         );
