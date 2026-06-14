@@ -243,6 +243,35 @@ describe("upsertLiveResult application service", () => {
     expect(saved?.goals2).toBe(0);
   });
 
+  it("persists when only minute changes — no score or status change", async () => {
+    const existing = LiveResult.fromState({
+      num: 1,
+      status: "live",
+      goals1: 1,
+      goals2: 0,
+      phase: "first_half",
+      minute: 30,
+      inStoppage: false,
+    });
+    const repo = new InMemoryLiveResultRepository([existing]);
+
+    const result = await upsertLiveResult(repo, {
+      num: 1,
+      status: "live",
+      goals1: 1,
+      goals2: 0,
+      phase: "first_half",
+      minute: 35,
+      inStoppage: false,
+      allowCreate: true,
+    });
+
+    expect(result.isOk()).toBe(true);
+    const saved = await repo.findByNum(1);
+    // Minute must be persisted even though score and status are unchanged
+    expect(saved?.minute).toBe(35);
+  });
+
   it("fails validation for upcoming status with goals or penalties", async () => {
     const repo = new InMemoryLiveResultRepository();
 

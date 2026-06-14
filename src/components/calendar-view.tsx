@@ -510,6 +510,11 @@ export function CalendarView({
                               "team2",
                             );
 
+                            // Look up live phase/minute for client-side estimation
+                            const liveResult = num
+                              ? liveResults.find((r) => r.num === num)
+                              : undefined;
+
                             return (
                               <MatchCard
                                 key={
@@ -526,6 +531,10 @@ export function CalendarView({
                                 status={status}
                                 score1={score1}
                                 score2={score2}
+                                livePhase={liveResult?.phase}
+                                liveMinute={liveResult?.minute}
+                                liveInStoppage={liveResult?.inStoppage}
+                                liveUpdatedAt={liveResult?.updatedAt}
                               />
                             );
                           })}
