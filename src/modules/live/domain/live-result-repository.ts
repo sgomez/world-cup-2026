@@ -6,4 +6,5 @@ export interface LiveResultRepository {
   findByNum(num: number): Promise<LiveResult | null>;
   findAll(): Promise<LiveResult[]>;
   save(liveResult: LiveResult): ResultAsync<void, LiveDomainError>;
+  saveLink(num: number, link: string): ResultAsync<void, LiveDomainError>;
 }

@@ -108,6 +108,7 @@ describe("upsertLiveResultAction", () => {
       goals2: 0,
       penalties1: null,
       penalties2: null,
+      link: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -133,6 +134,7 @@ describe("upsertLiveResultAction", () => {
       goals2: 0,
       penalties1: null,
       penalties2: null,
+      link: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -203,6 +205,7 @@ describe("upsertLiveResultAction", () => {
       goals2: 1,
       penalties1: null,
       penalties2: null,
+      link: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

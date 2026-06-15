@@ -1,5 +1,5 @@
-import { okAsync, type ResultAsync } from "neverthrow";
-import type { LiveDomainError } from "../domain/errors";
+import { errAsync, okAsync, type ResultAsync } from "neverthrow";
+import { type LiveDomainError, liveDomainError } from "../domain/errors";
 import type { LiveResult } from "../domain/live-result";
 import type { LiveResultRepository } from "../domain/live-result-repository";
 
@@ -22,6 +22,13 @@ export class InMemoryLiveResultRepository implements LiveResultRepository {
 
   save(liveResult: LiveResult): ResultAsync<void, LiveDomainError> {
     this.store.set(liveResult.num, liveResult);
+    return okAsync(undefined);
+  }
+
+  saveLink(num: number, link: string): ResultAsync<void, LiveDomainError> {
+    const existing = this.store.get(num);
+    if (!existing) return errAsync(liveDomainError("SAVE_FAILED"));
+    this.store.set(num, existing.withLink(link));
     return okAsync(undefined);
   }
 

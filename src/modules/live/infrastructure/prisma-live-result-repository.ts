@@ -22,6 +22,7 @@ export class PrismaLiveResultRepository implements LiveResultRepository {
       goals2: row.goals2,
       penalties1: row.penalties1 ?? undefined,
       penalties2: row.penalties2 ?? undefined,
+      link: row.link ?? undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });
@@ -37,6 +38,7 @@ export class PrismaLiveResultRepository implements LiveResultRepository {
         goals2: row.goals2,
         penalties1: row.penalties1 ?? undefined,
         penalties2: row.penalties2 ?? undefined,
+        link: row.link ?? undefined,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       }),
@@ -56,6 +58,7 @@ export class PrismaLiveResultRepository implements LiveResultRepository {
             goals2: state.goals2,
             penalties1: state.penalties1 ?? null,
             penalties2: state.penalties2 ?? null,
+            link: state.link ?? null,
           },
           update: {
             status: state.status,
@@ -68,6 +71,21 @@ export class PrismaLiveResultRepository implements LiveResultRepository {
         .then(() => {}),
       (error) => {
         console.error("Failed to save LiveResult:", error);
+        return liveDomainError("SAVE_FAILED");
+      },
+    );
+  }
+
+  saveLink(num: number, link: string): ResultAsync<void, LiveDomainError> {
+    return ResultAsync.fromPromise(
+      this.client.liveResult
+        .update({
+          where: { num },
+          data: { link },
+        })
+        .then(() => {}),
+      (error) => {
+        console.error("Failed to save link for LiveResult:", error);
         return liveDomainError("SAVE_FAILED");
       },
     );

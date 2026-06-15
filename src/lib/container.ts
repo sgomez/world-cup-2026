@@ -33,6 +33,8 @@ import { PrismaCommunityRepository } from "@/modules/community/infrastructure/pr
 import { PrismaImportOwnerProvisioner } from "@/modules/community/infrastructure/prisma-import-owner-provisioner";
 
 import { getLeaderboard as getLeaderboardUseCase } from "@/modules/leaderboard/application/get-leaderboard";
+import { createLiveResult as createLiveResultUseCase } from "@/modules/live/application/create-live-result";
+import { setLiveResultLink as setLiveResultLinkUseCase } from "@/modules/live/application/set-live-result-link";
 import { tickLiveFeed as tickLiveFeedUseCase } from "@/modules/live/application/tick-live-feed";
 import { upsertLiveResult as upsertLiveResultUseCase } from "@/modules/live/application/upsert-live-result";
 import type { Clock as LiveClock } from "@/modules/live/domain/clock";
@@ -270,6 +272,12 @@ export function createBaseContainer(deps: BaseContainerDeps) {
           adminOverride?: boolean;
         }) {
           return upsertLiveResultUseCase(deps.liveResultRepo, args);
+        },
+        create(args: { num: number; link?: string }) {
+          return createLiveResultUseCase(deps.liveResultRepo, args);
+        },
+        setLink(args: { num: number; link: string }) {
+          return setLiveResultLinkUseCase(deps.liveResultRepo, args);
         },
         tick(feed: LiveFeed, clock: LiveClock) {
           return tickLiveFeedUseCase(deps.liveResultRepo, feed, clock);

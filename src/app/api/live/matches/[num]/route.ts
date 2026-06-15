@@ -9,7 +9,7 @@ type RouteContext = {
   params: Promise<{ num: string }>;
 };
 
-const RequestBodySchema = z.object({
+const ScorePatchSchema = z.object({
   status: z.enum(["upcoming", "live", "finished"]),
   goals1: z.number(),
   goals2: z.number(),
@@ -17,7 +17,12 @@ const RequestBodySchema = z.object({
   penalties2: z.number().optional(),
 });
 
-type RequestBody = z.infer<typeof RequestBodySchema>;
+const LinkPatchSchema = z.object({
+  link: z.url(),
+});
+
+type ScorePatch = z.infer<typeof ScorePatchSchema>;
+type LinkPatch = z.infer<typeof LinkPatchSchema>;
 
 function authenticate(request: Request): Response | null {
   const tokenEnv = process.env.LIVE_FEED_TOKEN;
@@ -73,17 +78,36 @@ function mapErrorToResponse(code: string): Response {
   }
 }
 
-async function parseBody(request: Request): Promise<RequestBody | Response> {
+async function parseBody(
+  request: Request,
+): Promise<ScorePatch | LinkPatch | Response> {
+  let body: unknown;
   try {
-    const body = await request.json();
-    const result = RequestBodySchema.safeParse(body);
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  if (body !== null && typeof body === "object" && "link" in body) {
+    if ("status" in body) {
+      return NextResponse.json({ error: "Invalid body" }, { status: 422 });
+    }
+    const result = LinkPatchSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 422 });
     }
     return result.data;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
+
+  const result = ScorePatchSchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json({ error: "Invalid body" }, { status: 422 });
+  }
+  return result.data;
+}
+
+function isLinkPatch(body: ScorePatch | LinkPatch): body is LinkPatch {
+  return "link" in body;
 }
 
 export async function PUT(request: Request, context: RouteContext) {
@@ -93,16 +117,29 @@ export async function PUT(request: Request, context: RouteContext) {
   const { num: numStr } = await context.params;
   const num = Number(numStr);
 
-  const body = await parseBody(request);
-  if (body instanceof Response) return body;
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const parsed = ScorePatchSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid body" }, { status: 422 });
+  }
 
   const result = await container.live().upsert({
     num,
-    status: body.status,
-    goals1: body.goals1,
-    goals2: body.goals2,
-    ...(body.penalties1 !== undefined ? { penalties1: body.penalties1 } : {}),
-    ...(body.penalties2 !== undefined ? { penalties2: body.penalties2 } : {}),
+    status: parsed.data.status,
+    goals1: parsed.data.goals1,
+    goals2: parsed.data.goals2,
+    ...(parsed.data.penalties1 !== undefined
+      ? { penalties1: parsed.data.penalties1 }
+      : {}),
+    ...(parsed.data.penalties2 !== undefined
+      ? { penalties2: parsed.data.penalties2 }
+      : {}),
     allowCreate: true,
   });
 
@@ -132,6 +169,14 @@ export async function PATCH(request: Request, context: RouteContext) {
   const body = await parseBody(request);
   if (body instanceof Response) return body;
 
+  if (isLinkPatch(body)) {
+    const result = await container.live().setLink({ num, link: body.link });
+    if (result.isErr()) {
+      return mapErrorToResponse(result.error.code);
+    }
+    return NextResponse.json({ num });
+  }
+
   const result = await container.live().upsert({
     num,
     status: body.status,
@@ -139,7 +184,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     goals2: body.goals2,
     ...(body.penalties1 !== undefined ? { penalties1: body.penalties1 } : {}),
     ...(body.penalties2 !== undefined ? { penalties2: body.penalties2 } : {}),
-    allowCreate: false, // PATCH never creates
+    allowCreate: false,
   });
 
   if (result.isErr()) {

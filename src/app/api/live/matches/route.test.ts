@@ -21,6 +21,20 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {},
 }));
 
+const VALID_TOKEN = "test-live-feed-token";
+
+function makePostRequest(body: unknown, token?: string): Request {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token !== undefined) headers.Authorization = `Bearer ${token}`;
+  return new Request("http://localhost/api/live/matches", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+}
+
 function makeLr(
   num: number,
   status: "upcoming" | "live" | "finished",
@@ -98,5 +112,70 @@ describe("GET /api/live/matches", () => {
     });
     expect(match.penalties1).toBeUndefined();
     expect(match.penalties2).toBeUndefined();
+  });
+});
+
+describe("POST /api/live/matches", () => {
+  beforeEach(() => {
+    sharedRepo.setData(new Map());
+    vi.stubEnv("LIVE_FEED_TOKEN", VALID_TOKEN);
+  });
+
+  it("returns 201 and creates a new LiveResult", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(makePostRequest({ num: 1 }, VALID_TOKEN));
+    expect(res.status).toBe(201);
+    const data = await res.json();
+    expect(data.num).toBe(1);
+    expect(data.status).toBe("upcoming");
+    expect(data.goals1).toBe(0);
+    expect(data.goals2).toBe(0);
+  });
+
+  it("returns 409 when match already exists", async () => {
+    await sharedRepo.save(makeLr(1, "live", 1, 0));
+    const { POST } = await import("./route");
+    const res = await POST(makePostRequest({ num: 1 }, VALID_TOKEN));
+    expect(res.status).toBe(409);
+  });
+
+  it("returns 401 when token is missing", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(makePostRequest({ num: 1 }));
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 422 when num is missing", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(makePostRequest({}, VALID_TOKEN));
+    expect(res.status).toBe(422);
+  });
+
+  it("returns 422 when link is not a valid URL", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(
+      makePostRequest({ num: 1, link: "not-a-url" }, VALID_TOKEN),
+    );
+    expect(res.status).toBe(422);
+  });
+
+  it("accepts an optional link", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(
+      makePostRequest(
+        { num: 2, link: "https://example.com/match/2" },
+        VALID_TOKEN,
+      ),
+    );
+    expect(res.status).toBe(201);
+    const saved = await sharedRepo.findByNum(2);
+    expect(saved?.link).toBe("https://example.com/match/2");
+  });
+
+  it("returns 503 when LIVE_FEED_TOKEN is unset", async () => {
+    vi.stubEnv("LIVE_FEED_TOKEN", "");
+    const { POST } = await import("./route");
+    const res = await POST(makePostRequest({ num: 1 }, VALID_TOKEN));
+    expect(res.status).toBe(503);
   });
 });
