@@ -1,5 +1,7 @@
+import fs from "fs";
 import { ImageResponse } from "next/og";
 import { getTranslations } from "next-intl/server";
+import path from "path";
 import { container } from "@/lib/container";
 
 export const alt = "Community Ranking";
@@ -67,14 +69,12 @@ export default async function Image({
   const card = result._unsafeUnwrap();
 
   // Fetch fonts: Oswald (display name) + Inter (body/scores)
-  const [oswaldFont, interFont] = await Promise.all([
-    fetch(
-      "https://fonts.gstatic.com/s/oswald/v53/TK3iWkUHHAIjg752HT8Gl-1PKw.woff2",
-    ).then((res) => res.arrayBuffer()),
-    fetch(
-      "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2",
-    ).then((res) => res.arrayBuffer()),
-  ]);
+  const oswaldFont = fs.readFileSync(
+    path.join(process.cwd(), "public/fonts/Oswald-Bold.ttf"),
+  );
+  const interFont = fs.readFileSync(
+    path.join(process.cwd(), "public/fonts/Inter-Regular.ttf"),
+  );
 
   const { isSingle, displayBest, displayWorst } = prepareCardEntries(
     card.entries,
