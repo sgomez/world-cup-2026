@@ -24,7 +24,7 @@ export async function register() {
     const feed = createLiveFeed(config, clock);
 
     console.log(
-      `[LiveFeedPoller] Using feed: ${config.liveFeedSource ?? "mock (default)"}`,
+      `[LiveFeedPoller] LIVE_FEED_SOURCE=${config.liveFeedSource ?? "mock (default)"}`,
     );
 
     const cronPattern = process.env.LIVE_TICK_CRON || "*/5 * * * *";
