@@ -192,7 +192,14 @@
     "memberCount": "{count, plural, one {# miembro} other {# miembros}}",
     "you": "Tú",
     "view": "Ver",
-    "viewLeaderboard": "Ver Clasificación"
+    "viewLeaderboard": "Ver Clasificación",
+    "shareRanking": "Compartir clasificación",
+    "shareLink": "Copiar enlace para compartir",
+    "shareLinkCopied": "¡Copiado!",
+    "shareDescription": "Consulta la clasificación en directo de {name} en el Mundial 2026."
+  },
+  "share": {
+    "ogDescription": "Consulta la clasificación en directo de {name} en el Mundial 2026."
   },
   "joinCommunity": {
     "invalidInviteTitle": "Invitación Inválida",

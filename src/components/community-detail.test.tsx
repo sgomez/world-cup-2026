@@ -57,6 +57,15 @@ vi.mock("@/components/leave-community-form", () => ({
   LeaveCommunityForm: () => <button type="button">Leave</button>,
 }));
 
+// Mock CopyShareLinkButton
+vi.mock("@/components/copy-share-link-button", () => ({
+  CopyShareLinkButton: ({ url }: { url: string }) => (
+    <button type="button" data-share-url={url}>
+      Share
+    </button>
+  ),
+}));
+
 describe("CommunityDetail", () => {
   const mockCommunity = {
     id: "community-1",
@@ -65,6 +74,7 @@ describe("CommunityDetail", () => {
     ownerId: "user-1",
     owner: { name: "Owner Name" },
     currentUserId: "user-1",
+    imported: false,
     members: [
       {
         userId: "user-1",
@@ -111,5 +121,49 @@ describe("CommunityDetail", () => {
 
     const link = screen.getByText("View Leaderboard").closest("a");
     expect(link).toHaveAttribute("href", "/leaderboard#test-community");
+  });
+
+  it("shows the Share button for a member of a native community", () => {
+    const memberCommunity = { ...mockCommunity, currentUserId: "user-2" };
+    render(
+      <CommunityDetail
+        community={memberCommunity}
+        shareUrl="http://example.com/share/test-community?t=123"
+      />,
+    );
+
+    expect(screen.getByText("Share")).toBeInTheDocument();
+  });
+
+  it("shows the Share button for the owner of a native community", () => {
+    render(
+      <CommunityDetail
+        community={mockCommunity}
+        shareUrl="http://example.com/share/test-community?t=123"
+      />,
+    );
+
+    expect(screen.getByText("Share")).toBeInTheDocument();
+  });
+
+  it("hides the Share button when the community is imported", () => {
+    const importedCommunity = {
+      ...mockCommunity,
+      imported: true,
+    };
+    render(
+      <CommunityDetail
+        community={importedCommunity}
+        shareUrl="http://example.com/share/test-community?t=123"
+      />,
+    );
+
+    expect(screen.queryByText("Share")).toBeNull();
+  });
+
+  it("hides the Share button when no shareUrl is provided", () => {
+    render(<CommunityDetail community={mockCommunity} />);
+
+    expect(screen.queryByText("Share")).toBeNull();
   });
 });

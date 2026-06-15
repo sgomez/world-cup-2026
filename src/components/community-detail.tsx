@@ -1,8 +1,17 @@
 "use client";
 
-import { ArrowLeft, Crown, Link2, Settings, Trophy, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Crown,
+  Link2,
+  Settings,
+  Share2,
+  Trophy,
+  Users,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { CopyInviteLinkButton } from "@/components/copy-invite-link-button";
+import { CopyShareLinkButton } from "@/components/copy-share-link-button";
 import { LeaveCommunityForm } from "@/components/leave-community-form";
 import { Link } from "@/i18n/navigation";
 
@@ -25,16 +34,19 @@ interface Community {
   };
   members: Member[];
   currentUserId: string;
+  imported?: boolean;
 }
 
 interface CommunityDetailProps {
   community: Community;
   inviteUrl?: string;
+  shareUrl?: string;
 }
 
 export function CommunityDetail({
   community,
   inviteUrl,
+  shareUrl,
 }: CommunityDetailProps) {
   const t = useTranslations("communities");
 
@@ -87,6 +99,26 @@ export function CommunityDetail({
               </Link>
             </div>
           )}
+        </section>
+      )}
+
+      {/* Share link — all members, native communities only */}
+      {shareUrl && !community.imported && (
+        <section className="space-y-3 rounded-xl border bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Share2 className="size-4 text-primary" aria-hidden="true" />
+            <h2 className="text-caption-md font-medium text-foreground">
+              {t("shareRanking")}
+            </h2>
+          </div>
+          <div className="flex flex-col gap-3">
+            <code className="block w-full truncate rounded-md border border-hairline bg-soft-cloud px-4 py-3 font-mono text-xs text-muted-foreground">
+              {shareUrl}
+            </code>
+            <div className="flex flex-wrap items-center gap-2">
+              <CopyShareLinkButton url={shareUrl} />
+            </div>
+          </div>
         </section>
       )}
 

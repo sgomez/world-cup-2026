@@ -5,6 +5,7 @@ import { CommunityDetail } from "@/components/community-detail";
 import { redirect } from "@/i18n/navigation";
 import { getSession } from "@/lib/session";
 import { buildInviteUrl } from "@/modules/community/application/build-invite-url";
+import { buildShareUrl } from "@/modules/community/application/build-share-url";
 
 export default async function CommunityPage({
   params,
@@ -25,9 +26,18 @@ export default async function CommunityPage({
   const { inviteToken, ...communityForClient } = community;
   const inviteUrl = isOwner ? buildInviteUrl(inviteToken) : undefined;
 
+  // Share URL is available to all members of native communities.
+  const shareUrl = community.imported
+    ? undefined
+    : buildShareUrl({ slug: community.slug, locale });
+
   return (
     <div className="mx-auto max-w-5xl">
-      <CommunityDetail community={communityForClient} inviteUrl={inviteUrl} />
+      <CommunityDetail
+        community={communityForClient}
+        inviteUrl={inviteUrl}
+        shareUrl={shareUrl}
+      />
     </div>
   );
 }

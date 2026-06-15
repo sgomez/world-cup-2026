@@ -192,7 +192,14 @@
     "memberCount": "{count, plural, one {# member} other {# members}}",
     "you": "You",
     "view": "View",
-    "viewLeaderboard": "View Leaderboard"
+    "viewLeaderboard": "View Leaderboard",
+    "shareRanking": "Share ranking",
+    "shareLink": "Copy share link",
+    "shareLinkCopied": "Copied!",
+    "shareDescription": "See the live standings for {name} on World Cup 2026."
+  },
+  "share": {
+    "ogDescription": "See the live standings for {name} on World Cup 2026."
   },
   "joinCommunity": {
     "invalidInviteTitle": "Invalid Invite",
