@@ -68,12 +68,22 @@ export default async function Image({
 
   const card = result._unsafeUnwrap();
 
-  // Fetch fonts: Oswald (display name) + Inter (body/scores)
-  const oswaldFont = fs.readFileSync(
+  // Fetch fonts: Oswald Bold + Inter static weights (each weight is a separate file
+  // so satori can actually render different stroke widths)
+  const oswaldBold = fs.readFileSync(
     path.join(process.cwd(), "public/fonts/Oswald-Bold.ttf"),
   );
-  const interFont = fs.readFileSync(
+  const interRegular = fs.readFileSync(
     path.join(process.cwd(), "public/fonts/Inter-Regular.ttf"),
+  );
+  const interMedium = fs.readFileSync(
+    path.join(process.cwd(), "public/fonts/Inter-Medium.ttf"),
+  );
+  const interSemiBold = fs.readFileSync(
+    path.join(process.cwd(), "public/fonts/Inter-SemiBold.ttf"),
+  );
+  const interBold = fs.readFileSync(
+    path.join(process.cwd(), "public/fonts/Inter-Bold.ttf"),
   );
 
   const { isSingle, displayBest, displayWorst } = prepareCardEntries(
@@ -92,12 +102,12 @@ export default async function Image({
         display: "flex",
         fontFamily: "Inter",
         fontWeight: 700,
-        fontSize: 15,
+        fontSize: 20,
         lineHeight: 1,
-        letterSpacing: "0.14em",
+        letterSpacing: "0.12em",
         textTransform: "uppercase",
         color,
-        marginBottom: 16,
+        marginBottom: 20,
       }}
     >
       {text}
@@ -112,7 +122,7 @@ export default async function Image({
       key={key}
       style={{
         display: "flex",
-        alignItems: "baseline",
+        alignItems: "center",
         gap: 18,
         padding: "11px 0",
         borderBottom: `1px solid ${colors.hairlineSoft}`,
@@ -121,8 +131,10 @@ export default async function Image({
       <span
         style={{
           display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           fontFamily: "Oswald",
-          fontWeight: 600,
+          fontWeight: 700,
           fontSize: 28,
           width: 40,
           flex: "none",
@@ -134,13 +146,16 @@ export default async function Image({
       <span
         style={{
           display: "flex",
+          alignItems: "center",
           flex: 1,
           minWidth: 0,
           fontFamily: "Inter",
           fontWeight: 600,
-          fontSize: 23,
+          fontSize: 28,
           lineHeight: 1.2,
           overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
           color: colors.ink,
         }}
       >
@@ -149,11 +164,12 @@ export default async function Image({
       <span
         style={{
           display: "flex",
-          alignItems: "baseline",
+          alignItems: "center",
+          gap: 3,
           flex: "none",
           fontFamily: "Inter",
           fontWeight: 700,
-          fontSize: 24,
+          fontSize: 28,
           lineHeight: 1,
           color: colors.ink,
         }}
@@ -215,7 +231,7 @@ export default async function Image({
           style={{
             fontFamily: "Oswald",
             fontWeight: 600,
-            fontSize: 80,
+            fontSize: 72,
             lineHeight: 0.86,
             textTransform: "uppercase",
             letterSpacing: "-0.02em",
@@ -283,31 +299,31 @@ export default async function Image({
       fonts: [
         {
           name: "Oswald",
-          data: oswaldFont,
+          data: oswaldBold,
           style: "normal",
-          weight: 600,
+          weight: 700,
         },
         {
           name: "Inter",
-          data: interFont,
+          data: interRegular,
           style: "normal",
           weight: 400,
         },
         {
           name: "Inter",
-          data: interFont,
+          data: interMedium,
           style: "normal",
           weight: 500,
         },
         {
           name: "Inter",
-          data: interFont,
+          data: interSemiBold,
           style: "normal",
           weight: 600,
         },
         {
           name: "Inter",
-          data: interFont,
+          data: interBold,
           style: "normal",
           weight: 700,
         },
