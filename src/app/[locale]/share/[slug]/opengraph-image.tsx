@@ -86,6 +86,24 @@ export default async function Image({
   const bestLabel = t("ogCardBest");
   const worstLabel = t("ogCardWorst");
 
+  const renderLabel = (text: string, color: string) => (
+    <div
+      style={{
+        display: "flex",
+        fontFamily: "Inter",
+        fontWeight: 700,
+        fontSize: 15,
+        lineHeight: 1,
+        letterSpacing: "0.14em",
+        textTransform: "uppercase",
+        color,
+        marginBottom: 16,
+      }}
+    >
+      {text}
+    </div>
+  );
+
   const renderRow = (
     entry: { label: string; points: number; rank: number },
     key: string,
@@ -102,6 +120,7 @@ export default async function Image({
     >
       <span
         style={{
+          display: "flex",
           fontFamily: "Oswald",
           fontWeight: 600,
           fontSize: 28,
@@ -114,15 +133,14 @@ export default async function Image({
       </span>
       <span
         style={{
+          display: "flex",
           flex: 1,
           minWidth: 0,
           fontFamily: "Inter",
           fontWeight: 600,
           fontSize: 23,
           lineHeight: 1.2,
-          whiteSpace: "nowrap",
           overflow: "hidden",
-          textOverflow: "ellipsis",
           color: colors.ink,
         }}
       >
@@ -130,6 +148,8 @@ export default async function Image({
       </span>
       <span
         style={{
+          display: "flex",
+          alignItems: "baseline",
           flex: "none",
           fontFamily: "Inter",
           fontWeight: 700,
@@ -141,6 +161,7 @@ export default async function Image({
         {entry.points}
         <span
           style={{
+            display: "flex",
             fontFamily: "Inter",
             fontWeight: 500,
             fontSize: 13,
@@ -233,40 +254,14 @@ export default async function Image({
         {isSingle ? (
           // Single unified list (≤6 bets)
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div
-              style={{
-                fontFamily: "Inter",
-                fontWeight: 700,
-                fontSize: 15,
-                lineHeight: 1,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                color: colors.success,
-                marginBottom: 16,
-              }}
-            >
-              {bestLabel}
-            </div>
+            {renderLabel(bestLabel, colors.success)}
             {displayBest.map((entry, i) => renderRow(entry, `row-${i}`))}
           </div>
         ) : (
-          // Two groups: best + worst
-          <>
+          // Two groups: best + worst, stacked vertically
+          <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", flexDirection: "column" }}>
-              <div
-                style={{
-                  fontFamily: "Inter",
-                  fontWeight: 700,
-                  fontSize: 15,
-                  lineHeight: 1,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: colors.success,
-                  marginBottom: 16,
-                }}
-              >
-                {bestLabel}
-              </div>
+              {renderLabel(bestLabel, colors.success)}
               {displayBest.map((entry, i) => renderRow(entry, `best-${i}`))}
             </div>
             <div
@@ -276,23 +271,10 @@ export default async function Image({
                 marginTop: 28,
               }}
             >
-              <div
-                style={{
-                  fontFamily: "Inter",
-                  fontWeight: 700,
-                  fontSize: 15,
-                  lineHeight: 1,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: colors.sale,
-                  marginBottom: 16,
-                }}
-              >
-                {worstLabel}
-              </div>
+              {renderLabel(worstLabel, colors.sale)}
               {displayWorst.map((entry, i) => renderRow(entry, `worst-${i}`))}
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>,
