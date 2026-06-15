@@ -152,36 +152,4 @@ export class Leaderboard {
     }
     return groups;
   }
-
-  /**
-   * Returns the top-n and bottom-n entries by existing rank order for use in
-   * OG share-card rendering. When the total number of entries is ≤ 2n, a single
-   * flat list is returned to avoid showing the same entry in both groups.
-   *
-   * - `best` and `worst` are populated when entries.length > 2n.
-   * - `single` is populated when entries.length <= 2n (best/worst are empty arrays).
-   * - Ties are taken in existing sort order (no expansion).
-   * - Zero-point bets are eligible as worst entries.
-   */
-  bestAndWorst(n: number):
-    | {
-        best: LeaderboardEntry[];
-        worst: LeaderboardEntry[];
-        single?: undefined;
-      }
-    | {
-        best: LeaderboardEntry[];
-        worst: LeaderboardEntry[];
-        single: LeaderboardEntry[];
-      } {
-    const entries = this.rankedEntries;
-
-    if (entries.length <= 2 * n) {
-      return { best: [], worst: [], single: entries };
-    }
-
-    const best = entries.slice(0, n);
-    const worst = entries.slice(entries.length - n);
-    return { best, worst };
-  }
 }
