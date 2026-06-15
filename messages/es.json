@@ -195,8 +195,7 @@
     "viewLeaderboard": "Ver Clasificación",
     "shareRanking": "Compartir clasificación",
     "shareLink": "Copiar enlace para compartir",
-    "shareLinkCopied": "¡Copiado!",
-    "shareDescription": "Consulta la clasificación en directo de {name} en el Mundial 2026."
+    "shareLinkCopied": "¡Copiado!"
   },
   "share": {
     "ogDescription": "Consulta la clasificación en directo de {name} en el Mundial 2026."

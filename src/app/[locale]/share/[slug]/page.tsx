@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { resolveShareRedirect } from "@/modules/community/application/resolve-share-redirect";
@@ -10,12 +11,12 @@ interface SharePageProps {
   params: Promise<{ locale: string; slug: string }>;
 }
 
-async function getCommunityForShare(slug: string) {
+const getCommunityForShare = cache(async (slug: string) => {
   return prisma.community.findUnique({
     where: { slug },
     select: { name: true, imported: true },
   });
-}
+});
 
 export async function generateMetadata({
   params,

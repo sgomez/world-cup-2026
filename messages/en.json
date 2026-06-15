@@ -195,8 +195,7 @@
     "viewLeaderboard": "View Leaderboard",
     "shareRanking": "Share ranking",
     "shareLink": "Copy share link",
-    "shareLinkCopied": "Copied!",
-    "shareDescription": "See the live standings for {name} on World Cup 2026."
+    "shareLinkCopied": "Copied!"
   },
   "share": {
     "ogDescription": "See the live standings for {name} on World Cup 2026."
