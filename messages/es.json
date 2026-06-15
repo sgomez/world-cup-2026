@@ -198,7 +198,11 @@
     "shareLinkCopied": "¡Copiado!"
   },
   "share": {
-    "ogDescription": "Consulta la clasificación en directo de {name} en el Mundial 2026."
+    "ogDescription": "Consulta la clasificación en directo de {name} en el Mundial 2026.",
+    "ogCardTag": "Mundial 2026 · Clasificación",
+    "ogCardFoot": "{count, plural, one {# apuesta} other {# apuestas}} · clasificación en directo",
+    "ogCardBest": "▲ Top 3",
+    "ogCardWorst": "▼ Peores 3"
   },
   "joinCommunity": {
     "invalidInviteTitle": "Invitación Inválida",

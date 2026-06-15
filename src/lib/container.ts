@@ -33,6 +33,7 @@ import { PrismaCommunityRepository } from "@/modules/community/infrastructure/pr
 import { PrismaImportOwnerProvisioner } from "@/modules/community/infrastructure/prisma-import-owner-provisioner";
 
 import { getLeaderboard as getLeaderboardUseCase } from "@/modules/leaderboard/application/get-leaderboard";
+import { getShareCard as getShareCardUseCase } from "@/modules/leaderboard/application/get-share-card";
 import { createLiveResult as createLiveResultUseCase } from "@/modules/live/application/create-live-result";
 import { setLiveResultLink as setLiveResultLinkUseCase } from "@/modules/live/application/set-live-result-link";
 import { tickLiveFeed as tickLiveFeedUseCase } from "@/modules/live/application/tick-live-feed";
@@ -332,6 +333,19 @@ export function createBaseContainer(deps: BaseContainerDeps) {
             },
           );
         },
+        shareCard(query: { communitySlug: string }) {
+          return getShareCardUseCase(
+            deps.communityRepo,
+            deps.betRepo,
+            deps.tournamentRepo,
+            deps.liveResultRepo,
+            {
+              communitySlug: query.communitySlug,
+              window,
+              now: deps.clock(),
+            },
+          );
+        },
       };
     },
   };
@@ -391,6 +405,7 @@ export function createBaseContainer(deps: BaseContainerDeps) {
  *
  * - **`leaderboard()`**: Calculates rankings.
  *   - `get(query, nameResolver)`: Gets the community leaderboard.
+ *   - `shareCard({ communitySlug })`: Gets share-card data for OG image (native communities only).
  *
  * Other Core Accessors & Seams:
  * - **`getNameResolver(initialCache?)`**: Returns a memoized name resolver.
