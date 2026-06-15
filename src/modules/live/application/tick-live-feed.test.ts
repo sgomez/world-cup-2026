@@ -253,4 +253,144 @@ describe("tickLiveFeed application service", () => {
     expect(res2?.goals1).toBe(2);
     expect(res2?.goals2).toBe(0);
   });
+
+  describe("processed count reports only polled live matches", () => {
+    it("counts a live match that stays live after polling once", async () => {
+      mockMatches = [mockMatch1];
+      const repo = new InMemoryLiveResultRepository();
+      await repo.save(
+        LiveResult.fromState({
+          num: 1,
+          status: "live",
+          goals1: 0,
+          goals2: 0,
+        }),
+      );
+
+      const clock = new FakeClock(new Date("2026-06-11T20:00:00Z"));
+      const feed = new StubLiveFeed();
+      feed.snapshot = { goals1: 1, goals2: 0, finished: false };
+
+      const result = await tickLiveFeed(repo, feed, clock);
+      expect(result._unsafeUnwrap().processed).toBe(1);
+    });
+
+    it("counts an auto-started match polled in the same tick", async () => {
+      mockMatches = [mockMatch1];
+      const repo = new InMemoryLiveResultRepository();
+
+      const clock = new FakeClock(new Date("2026-06-11T19:00:00Z"));
+      const feed = new StubLiveFeed();
+      feed.snapshot = { goals1: 0, goals2: 0, finished: false };
+
+      const result = await tickLiveFeed(repo, feed, clock);
+      expect(result._unsafeUnwrap().processed).toBe(1);
+    });
+
+    it("counts a match that goes live to finished within the same tick", async () => {
+      mockMatches = [mockMatch1];
+      const repo = new InMemoryLiveResultRepository();
+      await repo.save(
+        LiveResult.fromState({
+          num: 1,
+          status: "live",
+          goals1: 2,
+          goals2: 1,
+        }),
+      );
+
+      const clock = new FakeClock(new Date("2026-06-11T21:05:00Z"));
+      const feed = new StubLiveFeed();
+      feed.snapshot = { goals1: 2, goals2: 1, finished: true };
+
+      const result = await tickLiveFeed(repo, feed, clock);
+      expect(result._unsafeUnwrap().processed).toBe(1);
+
+      const res1 = await repo.findByNum(1);
+      expect(res1?.status).toBe("finished");
+    });
+
+    it("does not count a match already finished from a prior cycle", async () => {
+      mockMatches = [mockMatch1];
+      const repo = new InMemoryLiveResultRepository();
+      await repo.save(
+        LiveResult.fromState({
+          num: 1,
+          status: "finished",
+          goals1: 1,
+          goals2: 0,
+        }),
+      );
+
+      const clock = new FakeClock(new Date("2026-06-11T21:30:00Z"));
+      const feed = new StubLiveFeed();
+      feed.snapshot = { goals1: 1, goals2: 0, finished: true };
+
+      const result = await tickLiveFeed(repo, feed, clock);
+      expect(result._unsafeUnwrap().processed).toBe(0);
+    });
+
+    it("does not count a match before its kickoff", async () => {
+      mockMatches = [mockMatch1];
+      const repo = new InMemoryLiveResultRepository();
+
+      const clock = new FakeClock(new Date("2026-06-11T18:59:59Z"));
+      const feed = new StubLiveFeed();
+      feed.snapshot = { goals1: 0, goals2: 0, finished: false };
+
+      const result = await tickLiveFeed(repo, feed, clock);
+      expect(result._unsafeUnwrap().processed).toBe(0);
+    });
+
+    it("does not count a match whose poll errored (it lands in errors)", async () => {
+      mockMatches = [mockMatch1];
+      const repo = new InMemoryLiveResultRepository();
+      await repo.save(
+        LiveResult.fromState({
+          num: 1,
+          status: "live",
+          goals1: 0,
+          goals2: 0,
+        }),
+      );
+
+      const clock = new FakeClock(new Date("2026-06-11T20:00:00Z"));
+      const feed = new StubLiveFeed();
+      feed.error = new Error("poll failed");
+
+      const result = await tickLiveFeed(repo, feed, clock);
+      const summary = result._unsafeUnwrap();
+      expect(summary.processed).toBe(0);
+      expect(summary.errors).toHaveLength(1);
+    });
+
+    it("counts only polled matches across a mixed batch", async () => {
+      // match1 live (polled, counts), match2 finished prior cycle (not counted)
+      mockMatches = [mockMatch1, mockMatch2];
+      const repo = new InMemoryLiveResultRepository();
+      await repo.save(
+        LiveResult.fromState({
+          num: 1,
+          status: "live",
+          goals1: 0,
+          goals2: 0,
+        }),
+      );
+      await repo.save(
+        LiveResult.fromState({
+          num: 2,
+          status: "finished",
+          goals1: 1,
+          goals2: 1,
+        }),
+      );
+
+      const clock = new FakeClock(new Date("2026-06-11T20:00:00Z"));
+      const feed = new StubLiveFeed();
+      feed.snapshot = { goals1: 1, goals2: 0, finished: false };
+
+      const result = await tickLiveFeed(repo, feed, clock);
+      expect(result._unsafeUnwrap().processed).toBe(1);
+    });
+  });
 });

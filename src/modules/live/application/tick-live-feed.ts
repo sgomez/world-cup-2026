@@ -49,11 +49,20 @@ function pollMatch(
   });
 }
 
+/**
+ * Processes a single match for a Tick.
+ *
+ * Resolves to `true` when the Feed was actually polled this cycle
+ * (auto-started-then-polled, or already-`live`-then-polled, including a
+ * match the Feed reports `finished` in the same cycle), and `false` when
+ * the match was skipped (already `finished` from a prior cycle). A poll
+ * error rejects with the error and is recorded in the Tick's `errors`.
+ */
 function processMatch(
   match: Match,
   repo: LiveResultRepository,
   feed: LiveFeed,
-): ResultAsync<void, Error> {
+): ResultAsync<boolean, Error> {
   return ResultAsync.fromPromise(repo.findByNum(match.num), (e) =>
     e instanceof Error
       ? e
@@ -71,16 +80,17 @@ function processMatch(
           (e) =>
             new Error(`Failed to auto-start match ${match.num}: ${e.code}`),
         )
-        .andThen((startOutput) => {
-          return pollMatch(match, startOutput.liveResult, repo, feed);
-        });
+        .andThen((startOutput) =>
+          pollMatch(match, startOutput.liveResult, repo, feed),
+        )
+        .map(() => true);
     }
 
     if (existing.status === "live") {
-      return pollMatch(match, existing, repo, feed);
+      return pollMatch(match, existing, repo, feed).map(() => true);
     }
 
-    return okAsync<void, Error>(undefined);
+    return okAsync<boolean, Error>(false);
   });
 }
 
@@ -109,7 +119,7 @@ export function tickLiveFeed(
       const res = await processMatch(match, repo, feed);
       if (res.isErr()) {
         errors.push(res.error);
-      } else {
+      } else if (res.value) {
         processed++;
       }
     }
