@@ -198,7 +198,11 @@
     "shareLinkCopied": "Copied!"
   },
   "share": {
-    "ogDescription": "See the live standings for {name} on World Cup 2026."
+    "ogDescription": "See the live standings for {name} on World Cup 2026.",
+    "ogCardTag": "World Cup 2026 · Ranking",
+    "ogCardFoot": "{count, plural, one {# bet} other {# bets}} · live standings",
+    "ogCardBest": "▲ Top 3",
+    "ogCardWorst": "▼ Bottom 3"
   },
   "joinCommunity": {
     "invalidInviteTitle": "Invalid Invite",

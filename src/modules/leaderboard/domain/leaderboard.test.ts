@@ -535,6 +535,160 @@ describe("Leaderboard Bounded Context - Domain Aggregate Root", () => {
     });
   });
 
+  describe("bestAndWorst(n)", () => {
+    const window = new BettingWindow(new Date("2026-06-11T19:00:00Z"));
+    const afterDeadline = new Date("2026-06-16T12:00:00Z");
+
+    function makeBet(
+      id: string,
+      createdOffset = 0,
+    ): { bet: Bet; ownerName: string } {
+      const bet = Bet.fromState({
+        id,
+        userId: `user-${id}`,
+        label: `Bet ${id}`,
+        status: "closed",
+        groupPredictions: null,
+        knockoutWinners: {},
+        createdAt: new Date(
+          new Date("2026-06-08T12:00:00Z").getTime() + createdOffset * 1000,
+        ),
+      });
+      return { bet, ownerName: `Owner ${id}` };
+    }
+
+    function makeLeaderboard(bets: { bet: Bet; ownerName: string }[]) {
+      return Leaderboard.create(bets, null, window, afterDeadline, null, false);
+    }
+
+    it("should return empty arrays for an empty leaderboard", () => {
+      const lb = Leaderboard.create(
+        [],
+        null,
+        window,
+        afterDeadline,
+        null,
+        false,
+      );
+      const result = lb.bestAndWorst(3);
+      expect(result.best).toEqual([]);
+      expect(result.worst).toEqual([]);
+    });
+
+    it("should return single list when 1 bet exists (≤2n)", () => {
+      const bets = [makeBet("a")];
+      const lb = makeLeaderboard(bets);
+      const result = lb.bestAndWorst(3);
+      expect(result.best).toHaveLength(0);
+      expect(result.worst).toHaveLength(0);
+      expect(result.single).toHaveLength(1);
+      expect(result.single![0].betId).toBe("a");
+    });
+
+    it("should return single list when total bets ≤ 2n (no duplication)", () => {
+      const bets = [makeBet("a"), makeBet("b"), makeBet("c"), makeBet("d")];
+      const lb = makeLeaderboard(bets);
+      const result = lb.bestAndWorst(3); // 4 bets ≤ 6
+      expect(result.best).toHaveLength(0);
+      expect(result.worst).toHaveLength(0);
+      expect(result.single).toHaveLength(4);
+    });
+
+    it("should return single list when total bets exactly = 2n (no duplication)", () => {
+      const bets = [
+        makeBet("a"),
+        makeBet("b"),
+        makeBet("c"),
+        makeBet("d"),
+        makeBet("e"),
+        makeBet("f"),
+      ];
+      const lb = makeLeaderboard(bets);
+      const result = lb.bestAndWorst(3); // 6 bets = 6 = 2*3
+      expect(result.single).toHaveLength(6);
+    });
+
+    it("should return disjoint top-n and bottom-n when bets > 2n", () => {
+      const bets = [
+        makeBet("a", 0), // will all be 0 points since no actualResult
+        makeBet("b", 1),
+        makeBet("c", 2),
+        makeBet("d", 3),
+        makeBet("e", 4),
+        makeBet("f", 5),
+        makeBet("g", 6),
+      ];
+      const lb = makeLeaderboard(bets);
+      // all same points, so ranked 1..7 by createdAt order
+      const result = lb.bestAndWorst(3); // 7 bets > 6
+      expect(result.single).toBeUndefined();
+      expect(result.best).toHaveLength(3);
+      expect(result.worst).toHaveLength(3);
+      // Best are first 3 (ranked 1,2,3), worst are last 3 (ranks 5,6,7)
+      expect(result.best[0].betId).toBe("a");
+      expect(result.best[1].betId).toBe("b");
+      expect(result.best[2].betId).toBe("c");
+      expect(result.worst[0].betId).toBe("e");
+      expect(result.worst[1].betId).toBe("f");
+      expect(result.worst[2].betId).toBe("g");
+    });
+
+    it("should not include the same entry in both best and worst", () => {
+      const bets = [
+        makeBet("a", 0),
+        makeBet("b", 1),
+        makeBet("c", 2),
+        makeBet("d", 3),
+        makeBet("e", 4),
+        makeBet("f", 5),
+        makeBet("g", 6),
+      ];
+      const lb = makeLeaderboard(bets);
+      const result = lb.bestAndWorst(3);
+      const bestIds = new Set(result.best.map((e) => e.betId));
+      const worstIds = new Set(result.worst.map((e) => e.betId));
+      for (const id of bestIds) {
+        expect(worstIds.has(id)).toBe(false);
+      }
+    });
+
+    it("should include zero-point bets as eligible worst entries", () => {
+      const bets = [
+        makeBet("a", 0),
+        makeBet("b", 1),
+        makeBet("c", 2),
+        makeBet("d", 3),
+        makeBet("e", 4),
+        makeBet("f", 5),
+        makeBet("g", 6),
+      ];
+      const lb = makeLeaderboard(bets);
+      const result = lb.bestAndWorst(3);
+      // Zero-point bets appear in worst
+      for (const entry of result.worst!) {
+        expect(entry.points).toBe(0);
+      }
+    });
+
+    it("should take ties in existing sort order", () => {
+      // All have same points (null actualResult → 0 pts), tiebreak by createdAt
+      const bets = [
+        makeBet("a", 0),
+        makeBet("b", 1),
+        makeBet("c", 2),
+        makeBet("d", 3),
+        makeBet("e", 4),
+        makeBet("f", 5),
+        makeBet("g", 6),
+      ];
+      const lb = makeLeaderboard(bets);
+      const result = lb.bestAndWorst(3);
+      // Existing sort order: a, b, c, d, e, f, g
+      expect(result.best!.map((e) => e.betId)).toEqual(["a", "b", "c"]);
+      expect(result.worst!.map((e) => e.betId)).toEqual(["e", "f", "g"]);
+    });
+  });
+
   describe("Label Obfuscation in Leaderboard", () => {
     const testBet = Bet.fromState({
       id: "bet-1",
