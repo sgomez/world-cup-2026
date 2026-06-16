@@ -1,7 +1,7 @@
-import fs from "fs";
+import fs from "node:fs";
+import path from "node:path";
 import { ImageResponse } from "next/og";
 import { getTranslations } from "next-intl/server";
-import path from "path";
 import { container } from "@/lib/container";
 
 export const alt = "Community Ranking";

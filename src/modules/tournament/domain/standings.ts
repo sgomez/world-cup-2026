@@ -774,9 +774,7 @@ export function deriveStandingsTable(
       // Qualified defaults to true before any match; after the first match
       // top-2 qualify, pos-4 does not, pos-3 depends on thirds ranking (resolved below).
       const qualified = isAnyMatchPlayed
-        ? position <= 2
-          ? true
-          : false // pos 3 will be re-evaluated; pos 4 stays false
+        ? position <= 2 // pos 3 will be re-evaluated; pos 4 stays false
         : true;
 
       return { teamId, position, mp, pts, gf, ga, gd: gf - ga, qualified };
