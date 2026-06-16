@@ -314,7 +314,7 @@ export function RankHistoryChartView({
                 return (
                   <React.Fragment key={bet.id}>
                     <Line
-                      type="monotone"
+                      type="linear"
                       dataKey={bet.id}
                       stroke={color}
                       strokeWidth={isViewer ? 3 : 1.5}
@@ -324,7 +324,7 @@ export function RankHistoryChartView({
                     />
                     {hasLiveStep && steps.length >= 2 && (
                       <Line
-                        type="monotone"
+                        type="linear"
                         dataKey={`${bet.id}_live`}
                         stroke={color}
                         strokeWidth={isViewer ? 3 : 1.5}
