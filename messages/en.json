@@ -390,7 +390,12 @@
     "noBets": "No participants have closed bets yet in this community.",
     "betsCount": "{count, plural, one {# Bet} other {# Bets}}",
     "view": "View",
-    "provisionalWarning": "Points and rankings are provisional projections from live matches and can still change."
+    "provisionalWarning": "Points and rankings are provisional projections from live matches and can still change.",
+    "rankHistory": "Rank History",
+    "noRankHistory": "No rank history available yet.",
+    "start": "Start",
+    "matchLabel": "Match {num}",
+    "liveMarker": "LIVE"
   },
   "tournament": {
     "title": "Tournament Standings",
