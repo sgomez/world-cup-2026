@@ -4,6 +4,7 @@ import { Trophy, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { LeaderboardTable } from "@/components/leaderboard-table";
+import { RankHistoryChart } from "@/components/rank-history-chart";
 import { Banner } from "@/components/ui/banner";
 import { PageHeader } from "@/components/ui/page-header";
 import { useLiveRefresh } from "@/hooks/use-live-refresh";
@@ -120,14 +121,20 @@ export function Leaderboard({
         })}
       </div>
 
-      {/* Table */}
+      {/* Chart & Table */}
       {active && (
-        <LeaderboardTable
-          entries={active.entries}
-          currentUserId={currentUserId}
-          tournamentEnded={tournamentEnded}
-          communitySlug={active.id}
-        />
+        <div className="space-y-6">
+          <RankHistoryChart
+            communitySlug={active.id}
+            currentUserId={currentUserId}
+          />
+          <LeaderboardTable
+            entries={active.entries}
+            currentUserId={currentUserId}
+            tournamentEnded={tournamentEnded}
+            communitySlug={active.id}
+          />
+        </div>
       )}
     </section>
   );

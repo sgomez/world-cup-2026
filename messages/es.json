@@ -390,7 +390,9 @@
     "noBets": "Ningún participante tiene apuestas cerradas en esta comunidad.",
     "betsCount": "{count, plural, one {# apuesta} other {# apuestas}}",
     "view": "Ver",
-    "provisionalWarning": "Los puntos y clasificaciones son proyecciones provisionales de partidos en vivo y aún pueden cambiar."
+    "provisionalWarning": "Los puntos y clasificaciones son proyecciones provisionales de partidos en vivo y aún pueden cambiar.",
+    "rankHistory": "Historial de Clasificación",
+    "noRankHistory": "Aún no hay historial de clasificación disponible."
   },
   "tournament": {
     "title": "Clasificación del Torneo",
