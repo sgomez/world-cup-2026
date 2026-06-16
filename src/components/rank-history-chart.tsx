@@ -382,19 +382,19 @@ export function RankHistoryChartView({
         <h3 className="text-body-strong font-semibold text-foreground">
           {t("rankHistory")}
         </h3>
-        {hasHighlight && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveBetId(null);
-              setHoveredBetId(null);
-            }}
-            className="flex items-center gap-1 px-3 py-1 rounded-md border border-dashed border-hairline text-caption-sm text-muted-foreground hover:text-foreground hover:border-hairline hover:bg-soft-cloud/10 transition-all duration-200 cursor-pointer"
-          >
-            {t("resetHighlight") || "Reset"}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setActiveBetId(null);
+            setHoveredBetId(null);
+          }}
+          className={`flex items-center gap-1 px-3 py-1 rounded-md border border-dashed border-hairline text-caption-sm text-muted-foreground hover:text-foreground hover:border-hairline hover:bg-soft-cloud/10 transition-all duration-200 cursor-pointer ${
+            hasHighlight ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        >
+          {t("resetHighlight") || "Reset"}
+        </button>
       </CardHeader>
       <CardBody size="large">
         <div className="w-full h-[350px] relative">
