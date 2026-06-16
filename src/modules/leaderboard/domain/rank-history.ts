@@ -53,7 +53,7 @@ export function calculateRankHistory(
       (lr) => lr.status === "finished" && lr.num <= k,
     );
     const bracketView = activeTournament.bracketView(slice, {
-      finishedOnly: true,
+      provisional: true,
     });
     const answerKey = extractScoreableContent(bracketView);
 

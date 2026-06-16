@@ -264,21 +264,23 @@ describe("getRankHistory Application Service Integration Tests", () => {
     expect(result.isOk()).toBe(true);
     const response = result._unsafeUnwrap();
 
-    // Verify bets returned (should be 11: bet-1 to bet-10 plus bet-12)
+    // Verify bets returned (should be 10: bet-1 to bet-9 plus bet-12, replacing bet-10)
     const returnedBetIds = response.bets.map((b) => b.id);
-    expect(returnedBetIds).toHaveLength(11);
+    expect(returnedBetIds).toHaveLength(10);
     expect(returnedBetIds).toContain("bet-1");
-    expect(returnedBetIds).toContain("bet-10");
+    expect(returnedBetIds).toContain("bet-9");
     expect(returnedBetIds).toContain("bet-12");
+    expect(returnedBetIds).not.toContain("bet-10");
     expect(returnedBetIds).not.toContain("bet-11");
     expect(returnedBetIds).not.toContain("bet-draft");
 
-    // Verify steps ranks are also filtered to only include those 11 bets
+    // Verify steps ranks are also filtered to only include those 10 bets
     for (const step of response.steps) {
       const rankKeys = Object.keys(step.ranks);
-      expect(rankKeys).toHaveLength(11);
+      expect(rankKeys).toHaveLength(10);
       expect(rankKeys).toContain("bet-1");
       expect(rankKeys).toContain("bet-12");
+      expect(rankKeys).not.toContain("bet-10");
       expect(rankKeys).not.toContain("bet-11");
       expect(rankKeys).not.toContain("bet-draft");
     }

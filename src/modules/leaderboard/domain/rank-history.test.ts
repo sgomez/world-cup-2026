@@ -149,13 +149,15 @@ describe("calculateRankHistory", () => {
     // Step 0 + 6 finished matches = 7 steps
     expect(steps).toHaveLength(7);
 
-    // Steps 1 to 5 (match 1, 2, 25, 26, 49) - Group A not fully finished, so no teams advance yet, 0 points
-    for (let i = 0; i < 6; i++) {
-      expect(steps[i].ranks["bet-alice"].points).toBe(0);
-      expect(steps[i].ranks["bet-bob"].points).toBe(0);
-      // Tied at 0 points, they share rank 1
-      expect(steps[i].ranks["bet-alice"].rank).toBe(1);
-      expect(steps[i].ranks["bet-bob"].rank).toBe(1);
+    // Step 0 (initial state, Match 0) - 0 points, tied at rank 1
+    expect(steps[0].ranks["bet-alice"]).toEqual({ rank: 1, points: 0 });
+    expect(steps[0].ranks["bet-bob"]).toEqual({ rank: 1, points: 0 });
+
+    // Steps 1 to 5 (matches 1, 2, 25, 26, 49) - Group A in progress. MEX advances provisionally.
+    // Alice gets 3 points (rank 1), Bob gets 0 points (rank 2).
+    for (let i = 1; i <= 5; i++) {
+      expect(steps[i].ranks["bet-alice"]).toEqual({ rank: 1, points: 3 });
+      expect(steps[i].ranks["bet-bob"]).toEqual({ rank: 2, points: 0 });
     }
 
     // Step 6 (match 50) - Group A finished. MEX advances (1st). Alice gets 3 points. Bob gets 0 points.
