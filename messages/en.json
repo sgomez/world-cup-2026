@@ -392,7 +392,10 @@
     "view": "View",
     "provisionalWarning": "Points and rankings are provisional projections from live matches and can still change.",
     "rankHistory": "Rank History",
-    "noRankHistory": "No rank history available yet."
+    "noRankHistory": "No rank history available yet.",
+    "start": "Start",
+    "matchLabel": "Match {num}",
+    "liveMarker": "LIVE"
   },
   "tournament": {
     "title": "Tournament Standings",

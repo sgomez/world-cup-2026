@@ -392,7 +392,10 @@
     "view": "Ver",
     "provisionalWarning": "Los puntos y clasificaciones son proyecciones provisionales de partidos en vivo y aún pueden cambiar.",
     "rankHistory": "Historial de Clasificación",
-    "noRankHistory": "Aún no hay historial de clasificación disponible."
+    "noRankHistory": "Aún no hay historial de clasificación disponible.",
+    "start": "Inicio",
+    "matchLabel": "Partido {num}",
+    "liveMarker": "EN DIRECTO"
   },
   "tournament": {
     "title": "Clasificación del Torneo",

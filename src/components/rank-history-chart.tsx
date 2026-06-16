@@ -68,7 +68,9 @@ export function RankHistoryChartView({
             {t("rankHistory")}
           </h3>
         </CardHeader>
-        <CardBody className="h-[350px] flex items-center justify-center bg-soft-cloud/10 dark:bg-charcoal/10 animate-pulse rounded-b-xl" />
+        <CardBody className="h-[350px] w-full flex items-center justify-center">
+          <div className="w-full h-full bg-soft-cloud/10 dark:bg-charcoal/10 animate-pulse rounded-b-xl" />
+        </CardBody>
       </Card>
     );
   }
@@ -94,7 +96,7 @@ export function RankHistoryChartView({
 
   // Construct chartData matching the Recharts line format
   const chartData = steps.map((step, idx) => {
-    const name = step.matchNum === 0 ? "Inicio" : `M${step.matchNum}`;
+    const name = step.matchNum === 0 ? t("start") : `M${step.matchNum}`;
     const isLast = idx === steps.length - 1;
     const isPenultimate = idx === steps.length - 2;
 
@@ -168,7 +170,10 @@ export function RankHistoryChartView({
     if (active && payload?.length) {
       const stepMatchNum = payload[0].payload.matchNum;
       const isLive = payload[0].payload.isLive;
-      const stepLabel = stepMatchNum === 0 ? "Inicio" : `Match ${stepMatchNum}`;
+      const stepLabel =
+        stepMatchNum === 0
+          ? t("start")
+          : t("matchLabel", { num: stepMatchNum });
 
       const ranksMap = new Map<
         string,
@@ -207,7 +212,7 @@ export function RankHistoryChartView({
             <span>{stepLabel}</span>
             {isLive && (
               <span className="rounded bg-sale/5 px-1.5 py-0.5 text-caption-sm text-sale animate-pulse border border-sale/30">
-                {t("liveMarker") || "LIVE"}
+                {t("liveMarker")}
               </span>
             )}
           </div>
@@ -278,7 +283,7 @@ export function RankHistoryChartView({
           {t("rankHistory")}
         </h3>
       </CardHeader>
-      <CardBody className="p-4 sm:p-6">
+      <CardBody size="large">
         <div className="w-full h-[350px] relative">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
@@ -392,7 +397,9 @@ export function RankHistoryChart({
             {t("rankHistory")}
           </h3>
         </CardHeader>
-        <CardBody className="h-[350px] flex items-center justify-center bg-soft-cloud/10 dark:bg-charcoal/10 animate-pulse rounded-b-xl" />
+        <CardBody className="h-[350px] w-full flex items-center justify-center">
+          <div className="w-full h-full bg-soft-cloud/10 dark:bg-charcoal/10 animate-pulse rounded-b-xl" />
+        </CardBody>
       </Card>
     );
   }

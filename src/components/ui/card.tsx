@@ -9,6 +9,7 @@ const cardVariants = cva(
       size: {
         default: "rounded-xl p-4",
         compact: "rounded-lg p-3",
+        large: "rounded-xl p-4 sm:p-6",
       },
       variant: {
         default: "shadow-sm",
@@ -27,6 +28,20 @@ const cardHeaderVariants = cva("border-b", {
     size: {
       default: "pb-2 border-hairline dark:border-ash",
       compact: "pb-1 border-hairline/25 dark:border-ash/25",
+      large: "pb-3 border-hairline dark:border-ash",
+    },
+  },
+  defaultVariants: {
+    size: "default",
+  },
+});
+
+const cardBodyVariants = cva("", {
+  variants: {
+    size: {
+      default: "",
+      compact: "",
+      large: "p-4 sm:p-6",
     },
   },
   defaultVariants: {
@@ -41,6 +56,7 @@ const cardFooterVariants = cva(
       size: {
         default: "pt-2",
         compact: "pt-1",
+        large: "pt-3",
       },
     },
     defaultVariants: {
@@ -49,7 +65,7 @@ const cardFooterVariants = cva(
   },
 );
 
-type CardSize = "default" | "compact";
+type CardSize = "default" | "compact" | "large";
 type CardVariant = "default" | "interactive";
 
 interface CardProps
@@ -84,9 +100,13 @@ function CardHeader({ className, size, children, ...props }: CardPartProps) {
   );
 }
 
-function CardBody({ className, children, ...props }: CardPartProps) {
+function CardBody({ className, size, children, ...props }: CardPartProps) {
   return (
-    <div data-slot="card-body" className={cn(className)} {...props}>
+    <div
+      data-slot="card-body"
+      className={cn(cardBodyVariants({ size }), className)}
+      {...props}
+    >
       {children}
     </div>
   );
