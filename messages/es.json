@@ -395,7 +395,8 @@
     "noRankHistory": "Aún no hay historial de clasificación disponible.",
     "start": "Inicio",
     "matchLabel": "Partido {num}",
-    "liveMarker": "EN DIRECTO"
+    "liveMarker": "EN DIRECTO",
+    "resetHighlight": "Restablecer"
   },
   "tournament": {
     "title": "Clasificación del Torneo",

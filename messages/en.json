@@ -395,7 +395,8 @@
     "noRankHistory": "No rank history available yet.",
     "start": "Start",
     "matchLabel": "Match {num}",
-    "liveMarker": "LIVE"
+    "liveMarker": "LIVE",
+    "resetHighlight": "Reset Focus"
   },
   "tournament": {
     "title": "Tournament Standings",

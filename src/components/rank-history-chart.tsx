@@ -55,6 +55,8 @@ export function RankHistoryChartView({
 }: RankHistoryChartViewProps) {
   const t = useTranslations("leaderboard");
   const [isMounted, setIsMounted] = useState(false);
+  const [hoveredBetId, setHoveredBetId] = useState<string | null>(null);
+  const [activeBetId, setActiveBetId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -93,12 +95,34 @@ export function RankHistoryChartView({
   }
 
   const hasLiveStep = steps[steps.length - 1]?.isLive;
+  const highlightedBetId = activeBetId || hoveredBetId;
+  const hasHighlight = highlightedBetId !== null;
 
-  // Construct chartData matching the Recharts line format
-  const chartData = steps.map((step, idx) => {
+  // Construct chartData matching the Recharts line format with a small dynamic jitter to avoid overlapping lines
+  const betIdToIdx = new Map(bets.map((b, idx) => [b.id, idx]));
+
+  const chartData = steps.map((step, stepIdx) => {
     const name = step.matchNum === 0 ? t("start") : `M${step.matchNum}`;
-    const isLast = idx === steps.length - 1;
-    const isPenultimate = idx === steps.length - 2;
+    const isLast = stepIdx === steps.length - 1;
+    const isPenultimate = stepIdx === steps.length - 2;
+
+    // Group bets by their rank at this step to calculate offset
+    const rankGroups: Record<number, string[]> = {};
+    for (const [betId, rankInfo] of Object.entries(step.ranks)) {
+      const r = rankInfo.rank;
+      if (!rankGroups[r]) {
+        rankGroups[r] = [];
+      }
+      rankGroups[r].push(betId);
+    }
+
+    // Sort each group by the index of the bet in the bets array to keep offsets consistent
+    for (const r of Object.keys(rankGroups)) {
+      const numR = Number(r);
+      rankGroups[numR].sort(
+        (a, b) => (betIdToIdx.get(a) ?? 0) - (betIdToIdx.get(b) ?? 0),
+      );
+    }
 
     // biome-ignore lint/suspicious/noExplicitAny: Recharts chart data requires dynamic keys for line series
     const dataPoint: any = {
@@ -108,24 +132,31 @@ export function RankHistoryChartView({
     };
 
     for (const [betId, rankInfo] of Object.entries(step.ranks)) {
+      const group = rankGroups[rankInfo.rank];
+      const rankIdx = group.indexOf(betId);
+      const n = group.length;
+      // Symmetric jitter spacing of 0.12. Max offset for 5 tied users is -0.24 to +0.24.
+      const jitter = n > 1 ? (rankIdx - (n - 1) / 2) * 0.12 : 0;
+      const jitteredRank = rankInfo.rank + jitter;
+
       if (hasLiveStep && steps.length >= 2) {
         if (isLast) {
-          dataPoint[`${betId}_live`] = rankInfo.rank;
+          dataPoint[`${betId}_live`] = jitteredRank;
         } else if (isPenultimate) {
-          dataPoint[betId] = rankInfo.rank;
-          dataPoint[`${betId}_live`] = rankInfo.rank;
+          dataPoint[betId] = jitteredRank;
+          dataPoint[`${betId}_live`] = jitteredRank;
         } else {
-          dataPoint[betId] = rankInfo.rank;
+          dataPoint[betId] = jitteredRank;
         }
       } else {
-        dataPoint[betId] = rankInfo.rank;
+        dataPoint[betId] = jitteredRank;
       }
     }
 
     return dataPoint;
   });
 
-  // Calculate maximum rank dynamically to size the YAxis domain
+  // Calculate maximum rank dynamically to size the YAxis domain (using real integer ranks)
   let maxRank = 1;
   for (const step of steps) {
     for (const rankInfo of Object.values(step.ranks)) {
@@ -138,25 +169,40 @@ export function RankHistoryChartView({
   // Custom live dot component for the pulsing live marker
   // biome-ignore lint/suspicious/noExplicitAny: Recharts dot props are untyped
   const renderLiveDot = (props: any) => {
-    const { cx, cy, payload, index, stroke } = props;
+    const { cx, cy, payload, index, stroke, dataKey } = props;
     if (index === chartData.length - 1) {
+      const betId = dataKey.replace("_live", "");
+      const isHighlighted = highlightedBetId === betId;
+      const isViewer =
+        bets.find((b) => b.id === betId)?.userId === currentUserId;
+
+      let dotOpacity = 0.75;
+      if (hasHighlight) {
+        dotOpacity = isHighlighted ? 1 : 0.15;
+      } else if (isViewer) {
+        dotOpacity = 1;
+      }
+
       return (
-        <g key={`live-dot-${payload.name}`}>
+        <g key={`live-dot-${payload.name}-${betId}`}>
+          {(!hasHighlight || isHighlighted) && (
+            <circle
+              cx={cx}
+              cy={cy}
+              r={isViewer ? 7 : 5}
+              fill={stroke}
+              className="animate-ping"
+              opacity={dotOpacity * 0.65}
+            />
+          )}
           <circle
             cx={cx}
             cy={cy}
-            r={6}
-            fill={stroke}
-            className="animate-ping"
-            opacity={0.65}
-          />
-          <circle
-            cx={cx}
-            cy={cy}
-            r={4}
+            r={isViewer ? 5 : 3.5}
             fill={stroke}
             stroke="var(--color-canvas)"
             strokeWidth={1}
+            opacity={dotOpacity}
           />
         </g>
       );
@@ -180,11 +226,14 @@ export function RankHistoryChartView({
         {
           id: string;
           rank: number;
+          points: number;
           color: string;
           label: SerializedBetLabel;
           isViewer: boolean;
         }
       >();
+
+      const currentStep = steps.find((s) => s.matchNum === stepMatchNum);
 
       // biome-ignore lint/suspicious/noExplicitAny: Recharts tooltip item is untyped
       payload.forEach((item: any) => {
@@ -192,9 +241,14 @@ export function RankHistoryChartView({
         const betId = item.dataKey.replace("_live", "");
         const bet = bets.find((b) => b.id === betId);
         if (bet) {
+          const rankInfo = currentStep?.ranks[betId];
+          const realRank = rankInfo?.rank ?? Math.round(item.value);
+          const points = rankInfo?.points ?? 0;
+
           ranksMap.set(betId, {
             id: betId,
-            rank: item.value,
+            rank: realRank,
+            points: points,
             color: item.stroke,
             label: bet.label,
             isViewer: bet.userId === currentUserId,
@@ -202,13 +256,16 @@ export function RankHistoryChartView({
         }
       });
 
-      const sortedRanks = Array.from(ranksMap.values()).sort(
-        (a, b) => a.rank - b.rank,
-      );
+      const sortedRanks = Array.from(ranksMap.values()).sort((a, b) => {
+        if (a.rank !== b.rank) {
+          return a.rank - b.rank;
+        }
+        return b.points - a.points;
+      });
 
       return (
-        <div className="rounded-lg border border-hairline bg-canvas p-3 shadow-md dark:border-ash dark:bg-ink text-caption-md">
-          <div className="font-semibold mb-2 flex items-center justify-between gap-4">
+        <div className="rounded-lg border border-hairline bg-canvas p-3 shadow-md dark:border-ash dark:bg-ink text-caption-md min-w-[220px]">
+          <div className="font-semibold mb-2 flex items-center justify-between gap-4 border-b border-hairline-soft dark:border-ash/30 pb-1.5">
             <span>{stepLabel}</span>
             {isLive && (
               <span className="rounded bg-sale/5 px-1.5 py-0.5 text-caption-sm text-sale animate-pulse border border-sale/30">
@@ -220,21 +277,36 @@ export function RankHistoryChartView({
             {sortedRanks.map((rankInfo) => (
               <div
                 key={rankInfo.id}
-                className="flex items-center justify-between gap-6"
+                className={`flex items-center justify-between gap-4 px-1.5 py-0.5 rounded transition-colors ${
+                  rankInfo.isViewer ? "bg-info/5 font-semibold" : ""
+                } ${
+                  highlightedBetId === rankInfo.id
+                    ? "bg-soft-cloud dark:bg-charcoal/30"
+                    : ""
+                }`}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 overflow-hidden">
                   <span
-                    className="inline-block size-2.5 rounded-full"
+                    className="inline-block size-2.5 rounded-full shrink-0"
                     style={{ backgroundColor: rankInfo.color }}
                   />
                   <BetLabelView
                     label={rankInfo.label}
-                    className={rankInfo.isViewer ? "font-semibold" : ""}
+                    className={
+                      rankInfo.isViewer
+                        ? "font-semibold text-foreground truncate"
+                        : "text-muted-foreground truncate"
+                    }
                   />
                 </div>
-                <span className="font-mono font-semibold">
-                  #{rankInfo.rank}
-                </span>
+                <div className="flex items-center gap-1.5 font-mono shrink-0">
+                  <span className="text-foreground font-semibold">
+                    #{rankInfo.rank}
+                  </span>
+                  <span className="text-[10px] text-mute">
+                    ({rankInfo.points} {t("pts")})
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -244,11 +316,12 @@ export function RankHistoryChartView({
     return null;
   };
 
-  // Custom legend showing formatted participant bet labels
+  // Custom legend showing formatted participant bet labels as interactive chips
+  // Custom legend showing formatted participant bet labels as interactive chips
   // biome-ignore lint/suspicious/noExplicitAny: Recharts legend props are untyped
   const CustomLegend = ({ payload }: any) => {
     return (
-      <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-caption-sm text-muted-foreground">
+      <div className="flex flex-wrap justify-center gap-2 mt-6 text-caption-sm">
         {/* biome-ignore lint/suspicious/noExplicitAny: Recharts legend entry is untyped */}
         {payload.map((entry: any) => {
           if (entry.dataKey.endsWith("_live")) return null;
@@ -258,18 +331,45 @@ export function RankHistoryChartView({
           if (!bet) return null;
 
           const isViewer = bet.userId === currentUserId;
+          const isHighlighted = highlightedBetId === bet.id;
+          const isDimmed = hasHighlight && !isHighlighted;
 
           return (
-            <div key={bet.id} className="flex items-center gap-1.5">
+            <button
+              key={bet.id}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveBetId((prev) => (prev === bet.id ? null : bet.id));
+              }}
+              onMouseEnter={() => setHoveredBetId(bet.id)}
+              onMouseLeave={() => setHoveredBetId(null)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 cursor-pointer ${
+                isViewer
+                  ? "bg-info/5 border-info/20 text-foreground font-semibold"
+                  : "bg-soft-cloud/40 dark:bg-charcoal/20 border-hairline-soft dark:border-ash/20 text-muted-foreground hover:text-foreground hover:border-hairline hover:bg-soft-cloud/80 dark:hover:bg-charcoal/40"
+              } ${
+                isHighlighted
+                  ? "ring-1 ring-foreground border-transparent opacity-100 scale-100 font-semibold text-foreground shadow-sm"
+                  : isDimmed
+                    ? "opacity-35 scale-95"
+                    : "opacity-100 scale-100"
+              }`}
+              style={{
+                borderColor: isHighlighted ? undefined : `${entry.color}40`,
+              }}
+            >
               <span
-                className="inline-block w-3 h-1 rounded"
+                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: entry.color }}
               />
               <BetLabelView
                 label={bet.label}
-                className={isViewer ? "font-semibold text-foreground" : ""}
+                className={
+                  isViewer ? "font-semibold text-foreground" : "text-caption-sm"
+                }
               />
-            </div>
+            </button>
           );
         })}
       </div>
@@ -278,10 +378,23 @@ export function RankHistoryChartView({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <h3 className="text-body-strong font-semibold text-foreground">
           {t("rankHistory")}
         </h3>
+        {hasHighlight && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveBetId(null);
+              setHoveredBetId(null);
+            }}
+            className="flex items-center gap-1 px-3 py-1 rounded-md border border-dashed border-hairline text-caption-sm text-muted-foreground hover:text-foreground hover:border-hairline hover:bg-soft-cloud/10 transition-all duration-200 cursor-pointer"
+          >
+            {t("resetHighlight") || "Reset"}
+          </button>
+        )}
       </CardHeader>
       <CardBody size="large">
         <div className="w-full h-[350px] relative">
@@ -289,50 +402,94 @@ export function RankHistoryChartView({
             <LineChart
               data={chartData}
               margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
+              onClick={() => {
+                setActiveBetId(null);
+              }}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="var(--color-hairline)"
-                opacity={0.3}
+                opacity={0.25}
               />
               <XAxis
                 dataKey="name"
-                tick={{ fill: "var(--color-mute)", fontSize: 12 }}
+                tick={{ fill: "var(--color-mute)", fontSize: 11 }}
                 stroke="var(--color-hairline)"
+                axisLine={false}
+                tickLine={false}
               />
               <YAxis
                 reversed
                 allowDecimals={false}
                 domain={[1, Math.max(5, maxRank)]}
-                tick={{ fill: "var(--color-mute)", fontSize: 12 }}
+                tick={{ fill: "var(--color-mute)", fontSize: 11 }}
+                tickFormatter={(value) => `#${value}`}
                 stroke="var(--color-hairline)"
+                axisLine={false}
+                tickLine={false}
               />
               <Tooltip content={<CustomTooltip />} />
               {bets.map((bet, idx) => {
                 const isViewer = bet.userId === currentUserId;
                 const color = getBetColor(bet.id, isViewer, idx);
+                const isHighlighted = highlightedBetId === bet.id;
+
+                let opacity = 0.7;
+                let strokeWidth = 1.5;
+
+                if (hasHighlight) {
+                  if (isHighlighted) {
+                    opacity = 1;
+                    strokeWidth = isViewer ? 4.5 : 3.5;
+                  } else {
+                    opacity = 0.15;
+                    strokeWidth = isViewer ? 1.5 : 1;
+                  }
+                } else {
+                  if (isViewer) {
+                    opacity = 1;
+                    strokeWidth = 3;
+                  }
+                }
+
                 return (
                   <React.Fragment key={bet.id}>
                     <Line
                       type="linear"
                       dataKey={bet.id}
                       stroke={color}
-                      strokeWidth={isViewer ? 3 : 1.5}
+                      strokeWidth={strokeWidth}
+                      strokeOpacity={opacity}
                       dot={false}
-                      activeDot={{ r: isViewer ? 6 : 4 }}
+                      activeDot={
+                        hasHighlight
+                          ? isHighlighted
+                            ? { r: isViewer ? 7 : 5 }
+                            : false
+                          : { r: isViewer ? 6 : 4 }
+                      }
                       connectNulls={false}
+                      style={{ transition: "all 0.2s ease-in-out" }}
                     />
                     {hasLiveStep && steps.length >= 2 && (
                       <Line
                         type="linear"
                         dataKey={`${bet.id}_live`}
                         stroke={color}
-                        strokeWidth={isViewer ? 3 : 1.5}
+                        strokeWidth={strokeWidth}
+                        strokeOpacity={opacity}
                         strokeDasharray="4 4"
                         dot={renderLiveDot}
-                        activeDot={{ r: isViewer ? 6 : 4 }}
+                        activeDot={
+                          hasHighlight
+                            ? isHighlighted
+                              ? { r: isViewer ? 7 : 5 }
+                              : false
+                            : { r: isViewer ? 6 : 4 }
+                        }
                         legendType="none"
                         connectNulls={false}
+                        style={{ transition: "all 0.2s ease-in-out" }}
                       />
                     )}
                   </React.Fragment>
