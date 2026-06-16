@@ -33,6 +33,7 @@ import { PrismaCommunityRepository } from "@/modules/community/infrastructure/pr
 import { PrismaImportOwnerProvisioner } from "@/modules/community/infrastructure/prisma-import-owner-provisioner";
 
 import { getLeaderboard as getLeaderboardUseCase } from "@/modules/leaderboard/application/get-leaderboard";
+import { getRankHistory as getRankHistoryUseCase } from "@/modules/leaderboard/application/get-rank-history";
 import { getShareCard as getShareCardUseCase } from "@/modules/leaderboard/application/get-share-card";
 import { createLiveResult as createLiveResultUseCase } from "@/modules/live/application/create-live-result";
 import { setLiveResultLink as setLiveResultLinkUseCase } from "@/modules/live/application/set-live-result-link";
@@ -344,6 +345,23 @@ export function createBaseContainer(deps: BaseContainerDeps) {
               window,
               now: deps.clock(),
             },
+          );
+        },
+        rankHistory(
+          query: {
+            viewerId: string;
+            communitySlug: string;
+          },
+          nameResolver?: (userId: string) => Promise<string | null>,
+        ) {
+          const resolver = nameResolver ?? defaultNameResolver;
+          return getRankHistoryUseCase(
+            deps.communityRepo,
+            deps.betRepo,
+            deps.tournamentRepo,
+            deps.liveResultRepo,
+            resolver,
+            query,
           );
         },
       };

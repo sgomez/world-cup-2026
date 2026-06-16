@@ -908,7 +908,7 @@ describe("deriveStandingsTable", () => {
       finishedOnly: false,
     });
 
-    const groupA = result.groups["A"];
+    const groupA = result.groups.A;
     expect(groupA).toBeDefined();
     expect(groupA.rows).toHaveLength(4);
 
@@ -938,7 +938,7 @@ describe("deriveStandingsTable", () => {
       finishedOnly: false,
     });
 
-    const groupA = result.groups["A"];
+    const groupA = result.groups.A;
     expect(groupA).toBeDefined();
 
     const rowA1 = groupA.rows.find((r) => r.teamId === "A1");
@@ -987,7 +987,7 @@ describe("deriveStandingsTable", () => {
       finishedOnly: false,
     });
 
-    const rows = result.groups["A"].rows;
+    const rows = result.groups.A.rows;
     expect(rows[0].teamId).toBe("A");
     expect(rows[0].position).toBe(1);
     expect(rows[1].teamId).toBe("C");
@@ -1017,7 +1017,7 @@ describe("deriveStandingsTable", () => {
       finishedOnly: false,
     });
 
-    const rows = result.groups["A"].rows;
+    const rows = result.groups.A.rows;
     expect(rows[0].teamId).toBe("A");
     const bPos = rows.findIndex((r) => r.teamId === "B");
     const cPos = rows.findIndex((r) => r.teamId === "C");
@@ -1044,7 +1044,7 @@ describe("deriveStandingsTable", () => {
       finishedOnly: false,
     });
 
-    const rows = result.groups["A"].rows;
+    const rows = result.groups.A.rows;
     expect(rows[0].qualified).toBe(true); // pos 1
     expect(rows[1].qualified).toBe(true); // pos 2
     // pos 3: not in best-8 thirds yet (no cross-group data), so not qualified
@@ -1136,7 +1136,7 @@ describe("deriveStandingsTable", () => {
     });
 
     // L3 should be flagged not qualified (worst third)
-    const groupL = result.groups["L"];
+    const groupL = result.groups.L;
     const rowL3 = groupL.rows.find((r) => r.teamId === "L3");
     expect(rowL3?.qualified).toBe(false); // L3 is outside top-8 thirds
 
@@ -1178,9 +1178,7 @@ describe("deriveStandingsTable", () => {
     });
 
     // A3 should have 3 pts (from live match)
-    const rowA3 = resultWithLive.groups["A"].rows.find(
-      (r) => r.teamId === "A3",
-    );
+    const rowA3 = resultWithLive.groups.A.rows.find((r) => r.teamId === "A3");
     expect(rowA3?.pts).toBe(3);
   });
 
@@ -1214,13 +1212,13 @@ describe("deriveStandingsTable", () => {
     });
 
     // A3 should have 0 pts because its only match is live and excluded
-    const rowA3 = resultFinishedOnly.groups["A"].rows.find(
+    const rowA3 = resultFinishedOnly.groups.A.rows.find(
       (r) => r.teamId === "A3",
     );
     expect(rowA3?.pts).toBe(0);
 
     // A1 should still have 3 pts (finished match)
-    const rowA1 = resultFinishedOnly.groups["A"].rows.find(
+    const rowA1 = resultFinishedOnly.groups.A.rows.find(
       (r) => r.teamId === "A1",
     );
     expect(rowA1?.pts).toBe(3);
