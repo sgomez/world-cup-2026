@@ -398,6 +398,20 @@
     "liveMarker": "LIVE",
     "resetHighlight": "Reset Focus"
   },
+  "arcade": {
+    "title": "Arcade Ranking",
+    "description": "Global ranking of Penguin Run daily high scores.",
+    "playButton": "Play Penguin Run",
+    "alreadyPlayedToday": "Already played today",
+    "resetsAt": "Resets at 00:00 UTC",
+    "starting": "Starting…",
+    "startError": "Could not start a run. Please try again.",
+    "rank": "#",
+    "player": "Player",
+    "score": "Score",
+    "you": "You",
+    "noScores": "No scores yet — be the first to play!"
+  },
   "tournament": {
     "title": "Tournament Standings",
     "description": "Follow the live standings and tournament bracket.",

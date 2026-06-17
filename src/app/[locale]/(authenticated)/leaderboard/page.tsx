@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { ArcadeStart } from "@/components/arcade-start";
 import { Leaderboard } from "@/components/leaderboard";
 import { redirect } from "@/i18n/navigation";
 import { container } from "@/lib/container";
@@ -78,8 +79,24 @@ export default async function LeaderboardPage({
     (s): s is NonNullable<typeof s> => s !== null,
   );
 
+  // Check if the logged-in user has already played Penguin Run today.
+  const todayPlayDay = container.arcade().todayPlayDay;
+  const hasPlayedToday =
+    (await prisma.penguinRun.findUnique({
+      where: {
+        userId_playDay: {
+          userId: session.user.id,
+          playDay: todayPlayDay,
+        },
+      },
+      select: { id: true },
+    })) !== null;
+
   return (
     <div className="max-w-5xl">
+      <div className="mb-6 flex justify-end">
+        <ArcadeStart hasPlayedToday={hasPlayedToday} />
+      </div>
       <Leaderboard
         scopes={scopes}
         currentUserId={session.user.id}
