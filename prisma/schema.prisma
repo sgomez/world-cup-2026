@@ -23,6 +23,7 @@ model User {
   bets          Bet[]
   ownedCommunities  Community[]       @relation("CommunityOwner")
   communityMemberships CommunityMember[]
+  penguinRuns   PenguinRun[]
 
   @@unique([email])
   @@map("user")
@@ -137,5 +138,27 @@ model LiveResult {
   updatedAt   DateTime @updatedAt
 
   @@map("live_result")
+}
+
+/**
+ * A PenguinRun is a User's daily arcade attempt (ADR 0033).
+ * At most one run per User per Play Day (UTC calendar date string).
+ * The unique constraint on (userId, playDay) enforces the once-per-day rule
+ * at the database level.
+ */
+model PenguinRun {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playDay     String
+  startedAt   DateTime
+  lastSeenAt  DateTime
+  status      String   @default("in_progress")
+  bestScore   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, playDay])
+  @@map("penguin_run")
 }
 

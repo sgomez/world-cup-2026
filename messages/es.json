@@ -398,6 +398,20 @@
     "liveMarker": "EN DIRECTO",
     "resetHighlight": "Restablecer"
   },
+  "arcade": {
+    "title": "Ranking Arcade",
+    "description": "Clasificación global de las mejores puntuaciones diarias de Penguin Run.",
+    "playButton": "Jugar Penguin Run",
+    "alreadyPlayedToday": "Ya has jugado hoy",
+    "resetsAt": "Se reinicia a las 00:00 UTC",
+    "starting": "Iniciando…",
+    "startError": "No se pudo iniciar la partida. Inténtalo de nuevo.",
+    "rank": "#",
+    "player": "Jugador",
+    "score": "Puntuación",
+    "you": "Tú",
+    "noScores": "¡Sin puntuaciones todavía — sé el primero en jugar!"
+  },
   "tournament": {
     "title": "Clasificación del Torneo",
     "description": "Sigue las clasificaciones en directo y el cuadro del torneo.",

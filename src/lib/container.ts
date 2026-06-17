@@ -1,6 +1,11 @@
 import type { PrismaClient } from "@prisma/client";
 import { BET_DEADLINE } from "@/config/bet";
 import { prisma } from "@/lib/prisma";
+import { startPenguinRun as startPenguinRunUseCase } from "@/modules/arcade/application/start-penguin-run";
+import type { ArcadeRunRepository } from "@/modules/arcade/domain/arcade-run-repository";
+import { toPlayDay } from "@/modules/arcade/domain/penguin-run";
+import { InMemoryArcadeRunRepository } from "@/modules/arcade/infrastructure/in-memory-arcade-run-repository";
+import { PrismaArcadeRunRepository } from "@/modules/arcade/infrastructure/prisma-arcade-run-repository";
 import { closeBet as closeBetUseCase } from "@/modules/bet/application/close-bet";
 import { copyBet as copyBetUseCase } from "@/modules/bet/application/copy-bet";
 import { createBet as createBetUseCase } from "@/modules/bet/application/create-bet";
@@ -18,7 +23,6 @@ import type { SheetParser } from "@/modules/bet/domain/sheet-parser";
 import { ExceljsSheetParser } from "@/modules/bet/infrastructure/exceljs-sheet-parser";
 import { InMemoryBetRepository } from "@/modules/bet/infrastructure/in-memory-bet-repository";
 import { PrismaBetRepository } from "@/modules/bet/infrastructure/prisma-bet-repository";
-
 import { createCommunity as createCommunityUseCase } from "@/modules/community/application/create-community";
 import { deleteCommunity as deleteCommunityUseCase } from "@/modules/community/application/delete-community";
 import { joinCommunity as joinCommunityUseCase } from "@/modules/community/application/join-community";
@@ -31,7 +35,6 @@ import { InMemoryCommunityRepository } from "@/modules/community/infrastructure/
 import { InMemoryImportOwnerProvisioner } from "@/modules/community/infrastructure/in-memory-import-owner-provisioner";
 import { PrismaCommunityRepository } from "@/modules/community/infrastructure/prisma-community-repository";
 import { PrismaImportOwnerProvisioner } from "@/modules/community/infrastructure/prisma-import-owner-provisioner";
-
 import { getLeaderboard as getLeaderboardUseCase } from "@/modules/leaderboard/application/get-leaderboard";
 import { getRankHistory as getRankHistoryUseCase } from "@/modules/leaderboard/application/get-rank-history";
 import { getShareCard as getShareCardUseCase } from "@/modules/leaderboard/application/get-share-card";
@@ -45,12 +48,10 @@ import type { LiveResult } from "@/modules/live/domain/live-result";
 import type { LiveResultRepository } from "@/modules/live/domain/live-result-repository";
 import { InMemoryLiveResultRepository } from "@/modules/live/infrastructure/in-memory-live-result-repository";
 import { PrismaLiveResultRepository } from "@/modules/live/infrastructure/prisma-live-result-repository";
-
 import type { Tournament } from "@/modules/tournament/domain/tournament";
 import type { TournamentRepository } from "@/modules/tournament/domain/tournament-repository";
 import { InMemoryTournamentRepository } from "@/modules/tournament/infrastructure/in-memory-tournament-repository";
 import { PrismaTournamentRepository } from "@/modules/tournament/infrastructure/prisma-tournament-repository";
-
 import { changeRole as changeRoleUseCase } from "@/modules/user/application/change-role";
 import { promoteFirstRegistrant as promoteFirstRegistrantUseCase } from "@/modules/user/application/promote-first-registrant";
 import { updateProfile as updateProfileUseCase } from "@/modules/user/application/update-profile";
@@ -65,6 +66,7 @@ type BaseContainerDeps = {
   tournamentRepo: TournamentRepository;
   liveResultRepo: LiveResultRepository;
   ownerProvisioner: ImportOwnerProvisioner;
+  arcadeRunRepo: ArcadeRunRepository;
   clock: () => Date;
   betDeadline: Date;
   sheetParser: SheetParser;
@@ -366,6 +368,29 @@ export function createBaseContainer(deps: BaseContainerDeps) {
         },
       };
     },
+    arcade() {
+      return {
+        startRun(args: { userId: string }) {
+          return startPenguinRunUseCase(deps.arcadeRunRepo, {
+            userId: args.userId,
+            clock: deps.clock,
+          });
+        },
+        /** Returns true if the user has already played Penguin Run today (UTC). */
+        async hasPlayedToday(userId: string): Promise<boolean> {
+          const playDay = toPlayDay(deps.clock());
+          const run = await deps.arcadeRunRepo.findByUserAndPlayDay(
+            userId,
+            playDay,
+          );
+          return run !== null;
+        },
+        /** The current Play Day (UTC calendar date string) derived from the container clock. */
+        get todayPlayDay(): string {
+          return toPlayDay(deps.clock());
+        },
+      };
+    },
   };
 }
 
@@ -458,6 +483,7 @@ export function createContainer(deps: {
   const tournamentRepo = new PrismaTournamentRepository(deps.prisma);
   const liveResultRepo = new PrismaLiveResultRepository(deps.prisma);
   const ownerProvisioner = new PrismaImportOwnerProvisioner(deps.prisma);
+  const arcadeRunRepo = new PrismaArcadeRunRepository(deps.prisma);
   const sheetParser = new ExceljsSheetParser();
 
   const baseContainer = createBaseContainer({
@@ -467,6 +493,7 @@ export function createContainer(deps: {
     tournamentRepo,
     liveResultRepo,
     ownerProvisioner,
+    arcadeRunRepo,
     clock: deps.clock,
     betDeadline: deps.betDeadline,
     sheetParser,
@@ -487,6 +514,7 @@ export function createContainer(deps: {
           tournamentRepo: new PrismaTournamentRepository(tx),
           liveResultRepo: new PrismaLiveResultRepository(tx),
           ownerProvisioner: new PrismaImportOwnerProvisioner(tx),
+          arcadeRunRepo: new PrismaArcadeRunRepository(tx),
           clock: deps.clock,
           betDeadline: deps.betDeadline,
           sheetParser,
@@ -510,6 +538,7 @@ export function createTestContainer(deps?: {
   tournamentRepo?: InMemoryTournamentRepository;
   liveResultRepo?: InMemoryLiveResultRepository;
   ownerProvisioner?: InMemoryImportOwnerProvisioner;
+  arcadeRunRepo?: InMemoryArcadeRunRepository;
   clock?: () => Date;
   betDeadline?: Date;
   sheetParser?: SheetParser;
@@ -533,6 +562,8 @@ export function createTestContainer(deps?: {
     deps?.liveResultRepo ?? new InMemoryLiveResultRepository();
   const ownerProvisioner =
     deps?.ownerProvisioner ?? new InMemoryImportOwnerProvisioner();
+  const arcadeRunRepo =
+    deps?.arcadeRunRepo ?? new InMemoryArcadeRunRepository();
   const sheetParser = deps?.sheetParser ?? { parse: async () => [] };
 
   const baseContainer = createBaseContainer({
@@ -542,6 +573,7 @@ export function createTestContainer(deps?: {
     tournamentRepo,
     liveResultRepo,
     ownerProvisioner,
+    arcadeRunRepo,
     clock,
     betDeadline,
     sheetParser,
@@ -560,6 +592,7 @@ export function createTestContainer(deps?: {
       const tournamentBackup = tournamentRepo.getData();
       const liveResultBackup = liveResultRepo.getData();
       const ownerProvisionerBackup = ownerProvisioner.getData();
+      const arcadeRunBackup = arcadeRunRepo.getData();
 
       try {
         const txContainer = createTestContainer({
@@ -569,6 +602,7 @@ export function createTestContainer(deps?: {
           tournamentRepo,
           liveResultRepo,
           ownerProvisioner,
+          arcadeRunRepo,
           clock,
           betDeadline,
           sheetParser,
@@ -581,6 +615,7 @@ export function createTestContainer(deps?: {
         tournamentRepo.setData(tournamentBackup);
         liveResultRepo.setData(liveResultBackup);
         ownerProvisioner.setData(ownerProvisionerBackup);
+        arcadeRunRepo.setData(arcadeRunBackup);
         throw error;
       }
     },
