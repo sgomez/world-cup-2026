@@ -138,3 +138,25 @@ The single placeholder **User** that owns all Bets of an **Imported Community** 
 
 ### Label Obfuscation
 The visibility rule that hides a participant's real-world name when an **Imported Community**'s Bet **label** is shown to anyone other than its **Community Owner**. A label reads `<NUM> | <name>`; the `<NUM>` prefix is always shown verbatim, but to a non-owner viewer the `<name>` is reduced to the first two and last two **alphanumeric** characters of its first and last whitespace-delimited tokens (so a trailing `CASA 1` exposes `1`, not `A1`), with the middle hidden behind a blurred censure banner — and a name of four or fewer alphanumeric characters is hidden entirely. Only the Community Owner (the **Import Owner**, reached via impersonation) ever sees the full name; fellow Members, and Admins browsing ordinary (non-admin) pages, see it obfuscated. It applies **only** to Imported Communities — native Community labels are always shown in full — and only on member-facing surfaces (the **Leaderboard** and the peer Bet view); the admin panel is exempt and shows full labels.
+
+## Penguin Run (Arcade)
+
+A side attraction, fully separate from betting. It exists to drive return visits and shares nothing with the **Bet**, **Score**, or **Leaderboard** model beyond living next to it in the UI.
+
+### Penguin Run
+A single arcade game session belonging to one **User** on one **Play Day**. A User may begin **at most one** Penguin Run per Play Day; starting one consumes that day's play, whether or not it is completed. A Penguin Run consists of exactly three **Rounds** (the three **Lives**). Its outcome is a single number — the highest of its three Round scores — which is the only value that feeds the **Arcade Ranking**.
+
+### Round
+One **Life** within a **Penguin Run**: the penguin runs and jumps until it collides with a **Snowman**, which ends the Round. A Round's score is the time survived (a known function of elapsed real time). When a Round ends, its score is captured and the running score resets to zero for the next Round. **Snowmen score nothing** — they are obstacles, not point sources.
+
+### Life
+One of the three chances within a **Penguin Run**. Losing a Life ends the current **Round**; the third loss ends the Penguin Run. "Losing" a Life carries no penalty to past Rounds — only the **best** Round score survives.
+
+### Play Day
+The boundary of the once-per-day rule for **Penguin Run**, defined as the **UTC calendar day** (00:00–24:00 UTC), consistent with the platform's UTC-everywhere timekeeping. A User's eligibility to start a new Penguin Run resets at 00:00 UTC.
+
+### Arcade Ranking
+A **global**, cross-everyone ranking of Users by their best **Penguin Run** score, displayed as a sibling tab to the **Leaderboard**. It is **not** a Leaderboard: it is keyed by **User** (one row per User, their all-time best score), spans all Users rather than a single Community, and has **no bearing on bet standings** — it never breaks ties in the betting **Leaderboard**. Ties share a position and are broken by who reached the score first.
+
+### Heartbeat
+A periodic client-to-server signal proving a **Penguin Run** is still being played live. Its absence beyond a tolerance is treated as the player having left; the Run is then finalized server-side with the best Round score recorded so far, and the **Play Day** stays consumed. The Heartbeat, together with server-stamped Round timings and a score ceiling derived from elapsed time, is what keeps a reported score honest — the server never trusts a client clock or an impossible score.
