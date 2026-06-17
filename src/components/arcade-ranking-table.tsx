@@ -8,7 +8,7 @@ export type ArcadeRankingEntry = {
   userId: string;
   userName: string;
   bestScore: number;
-  achievedAt: Date;
+  achievedAt: string;
 };
 
 interface ArcadeRankingTableProps {

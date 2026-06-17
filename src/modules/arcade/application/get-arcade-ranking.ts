@@ -1,4 +1,3 @@
-import { ResultAsync } from "neverthrow";
 import type { ArcadeRunRepository } from "../domain/arcade-run-repository";
 
 export type ArcadeRankingEntry = {
@@ -47,11 +46,9 @@ export async function getArcadeRanking(
   // Finalise each stale run sequentially (errors are swallowed — best effort).
   for (const run of stale) {
     const finalised = run.finalise(now);
-    await ResultAsync.fromSafePromise(
-      repo.save(finalised).match(
-        () => undefined,
-        () => undefined, // persist error is non-fatal for ranking read
-      ),
+    await repo.save(finalised).match(
+      () => undefined,
+      () => undefined, // persist error is non-fatal for ranking read
     );
   }
 

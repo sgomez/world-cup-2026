@@ -76,54 +76,42 @@ export class PrismaArcadeRunRepository implements ArcadeRunRepository {
   }
 
   async findAllTimeRanking(): Promise<ArcadeRankingRow[]> {
-    // Fetch all non-in_progress runs with a positive score,
-    // then compute per-user best in application code.
-    const rows = await this.client.penguinRun.findMany({
+    // Step 1: aggregate best score per user in the DB (avoids full-table scan
+    // in application code for large datasets).
+    const grouped = await this.client.penguinRun.groupBy({
+      by: ["userId"],
       where: {
         status: { in: ["finished", "finalised"] },
         bestScore: { gt: 0 },
       },
-      select: {
-        userId: true,
-        bestScore: true,
-        startedAt: true,
-      },
+      _max: { bestScore: true },
     });
 
-    const bestByUser = new Map<
-      string,
-      { bestScore: number; achievedAt: Date }
-    >();
+    if (grouped.length === 0) return [];
 
-    for (const row of rows as Array<{
-      userId: string;
-      bestScore: number;
-      startedAt: Date;
-    }>) {
-      const existing = bestByUser.get(row.userId);
-      if (!existing || row.bestScore > existing.bestScore) {
-        bestByUser.set(row.userId, {
-          bestScore: row.bestScore,
-          achievedAt: row.startedAt,
+    // Step 2: for each user, find the earliest run that achieved their best
+    // score (tie-break: earliest startedAt wins, per ADR 0033).
+    const results = await Promise.all(
+      grouped.map(async (agg) => {
+        const userBest = agg._max.bestScore!;
+        const earliest = await this.client.penguinRun.findFirst({
+          where: {
+            userId: agg.userId,
+            bestScore: userBest,
+            status: { in: ["finished", "finalised"] },
+          },
+          orderBy: { startedAt: "asc" },
+          select: { startedAt: true },
         });
-      } else if (
-        row.bestScore === existing.bestScore &&
-        row.startedAt < existing.achievedAt
-      ) {
-        bestByUser.set(row.userId, {
-          bestScore: row.bestScore,
-          achievedAt: row.startedAt,
-        });
-      }
-    }
-
-    return [...bestByUser.entries()].map(
-      ([userId, { bestScore, achievedAt }]) => ({
-        userId,
-        bestScore,
-        achievedAt,
+        return {
+          userId: agg.userId,
+          bestScore: userBest,
+          achievedAt: earliest!.startedAt,
+        };
       }),
     );
+
+    return results;
   }
 
   save(run: PenguinRun): ResultAsync<void, DomainError> {

@@ -104,7 +104,7 @@ export default async function LeaderboardPage({
     userId: entry.userId,
     userName: arcadeNameCache.get(entry.userId) ?? entry.userId,
     bestScore: entry.bestScore,
-    achievedAt: entry.achievedAt,
+    achievedAt: entry.achievedAt.toISOString(),
   }));
 
   return (
