@@ -1,6 +1,9 @@
 import type { PrismaClient } from "@prisma/client";
 import { ResultAsync } from "neverthrow";
-import type { ArcadeRunRepository } from "../domain/arcade-run-repository";
+import type {
+  ArcadeRankingRow,
+  ArcadeRunRepository,
+} from "../domain/arcade-run-repository";
 import type { DomainError } from "../domain/errors";
 import { domainError } from "../domain/errors";
 import {
@@ -69,6 +72,57 @@ export class PrismaArcadeRunRepository implements ArcadeRunRepository {
     });
     return rows.map((row: unknown) =>
       PenguinRun.fromState(rowToState(row as unknown as PenguinRunRow)),
+    );
+  }
+
+  async findAllTimeRanking(): Promise<ArcadeRankingRow[]> {
+    // Fetch all non-in_progress runs with a positive score,
+    // then compute per-user best in application code.
+    const rows = await this.client.penguinRun.findMany({
+      where: {
+        status: { in: ["finished", "finalised"] },
+        bestScore: { gt: 0 },
+      },
+      select: {
+        userId: true,
+        bestScore: true,
+        startedAt: true,
+      },
+    });
+
+    const bestByUser = new Map<
+      string,
+      { bestScore: number; achievedAt: Date }
+    >();
+
+    for (const row of rows as Array<{
+      userId: string;
+      bestScore: number;
+      startedAt: Date;
+    }>) {
+      const existing = bestByUser.get(row.userId);
+      if (!existing || row.bestScore > existing.bestScore) {
+        bestByUser.set(row.userId, {
+          bestScore: row.bestScore,
+          achievedAt: row.startedAt,
+        });
+      } else if (
+        row.bestScore === existing.bestScore &&
+        row.startedAt < existing.achievedAt
+      ) {
+        bestByUser.set(row.userId, {
+          bestScore: row.bestScore,
+          achievedAt: row.startedAt,
+        });
+      }
+    }
+
+    return [...bestByUser.entries()].map(
+      ([userId, { bestScore, achievedAt }]) => ({
+        userId,
+        bestScore,
+        achievedAt,
+      }),
     );
   }
 

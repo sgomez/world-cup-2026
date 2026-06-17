@@ -396,7 +396,8 @@
     "start": "Inicio",
     "matchLabel": "Partido {num}",
     "liveMarker": "EN DIRECTO",
-    "resetHighlight": "Restablecer"
+    "resetHighlight": "Restablecer",
+    "topLevelTabsLabel": "Navegación de clasificaciones"
   },
   "arcade": {
     "title": "Ranking Arcade",

@@ -1,7 +1,12 @@
 import type { PrismaClient } from "@prisma/client";
+import { ARCADE_STALE_TOLERANCE_MS } from "@/config/arcade";
 import { BET_DEADLINE } from "@/config/bet";
 import { prisma } from "@/lib/prisma";
 import { finishPenguinRun as finishPenguinRunUseCase } from "@/modules/arcade/application/finish-penguin-run";
+import {
+  type ArcadeRankingEntry,
+  getArcadeRanking as getArcadeRankingUseCase,
+} from "@/modules/arcade/application/get-arcade-ranking";
 import { recordHeartbeat as recordHeartbeatUseCase } from "@/modules/arcade/application/record-heartbeat";
 import { recordRound as recordRoundUseCase } from "@/modules/arcade/application/record-round";
 import { startPenguinRun as startPenguinRunUseCase } from "@/modules/arcade/application/start-penguin-run";
@@ -404,6 +409,13 @@ export function createBaseContainer(deps: BaseContainerDeps) {
           return finishPenguinRunUseCase(deps.arcadeRunRepo, {
             runId: args.runId,
             userId: args.userId,
+          });
+        },
+        /** Returns the global Arcade Ranking, lazily finalising stale runs. */
+        getRanking(): Promise<ArcadeRankingEntry[]> {
+          return getArcadeRankingUseCase(deps.arcadeRunRepo, {
+            clock: deps.clock,
+            staleTolerance: ARCADE_STALE_TOLERANCE_MS,
           });
         },
         /** Returns true if the user has already played Penguin Run today (UTC). */
