@@ -93,7 +93,9 @@ export class PrismaArcadeRunRepository implements ArcadeRunRepository {
     // score (tie-break: earliest startedAt wins, per ADR 0033).
     const results = await Promise.all(
       grouped.map(async (agg) => {
-        const userBest = agg._max.bestScore!;
+        // _max.bestScore is always a number here: the WHERE clause filters
+        // bestScore > 0, so null is not possible.
+        const userBest = agg._max.bestScore ?? 0;
         const earliest = await this.client.penguinRun.findFirst({
           where: {
             userId: agg.userId,
@@ -103,15 +105,18 @@ export class PrismaArcadeRunRepository implements ArcadeRunRepository {
           orderBy: { startedAt: "asc" },
           select: { startedAt: true },
         });
-        return {
-          userId: agg.userId,
-          bestScore: userBest,
-          achievedAt: earliest!.startedAt,
-        };
+        // earliest is always found: we grouped on matching rows above.
+        return earliest
+          ? {
+              userId: agg.userId,
+              bestScore: userBest,
+              achievedAt: earliest.startedAt,
+            }
+          : null;
       }),
     );
 
-    return results;
+    return results.filter((r): r is ArcadeRankingRow => r !== null);
   }
 
   save(run: PenguinRun): ResultAsync<void, DomainError> {
