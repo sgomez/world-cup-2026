@@ -1,6 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { ArcadeStart } from "@/components/arcade-start";
-import { Leaderboard } from "@/components/leaderboard";
+import { LeaderboardTabs } from "@/components/leaderboard-tabs";
 import { redirect } from "@/i18n/navigation";
 import { container } from "@/lib/container";
 import { prisma } from "@/lib/prisma";
@@ -79,18 +79,42 @@ export default async function LeaderboardPage({
     (s): s is NonNullable<typeof s> => s !== null,
   );
 
-  // Check if the logged-in user has already played Penguin Run today.
-  const hasPlayedToday = await container
-    .arcade()
-    .hasPlayedToday(session.user.id);
+  // Fetch arcade ranking and resolve user names.
+  const [arcadeRankingRaw, hasPlayedToday] = await Promise.all([
+    container.arcade().getRanking(),
+    container.arcade().hasPlayedToday(session.user.id),
+  ]);
+
+  // Resolve names for all arcade ranking users (may include users outside
+  // the current user's communities — query Prisma directly for those).
+  const arcadeUserIds = arcadeRankingRaw.map((e) => e.userId);
+  const arcadeUsers =
+    arcadeUserIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: arcadeUserIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+  const arcadeNameCache = new Map(
+    arcadeUsers.map((u) => [u.id, u.name ?? u.id]),
+  );
+
+  const arcadeEntries = arcadeRankingRaw.map((entry) => ({
+    rank: entry.rank,
+    userId: entry.userId,
+    userName: arcadeNameCache.get(entry.userId) ?? entry.userId,
+    bestScore: entry.bestScore,
+    achievedAt: entry.achievedAt.toISOString(),
+  }));
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <div className="mb-6 flex justify-end">
         <ArcadeStart hasPlayedToday={hasPlayedToday} />
       </div>
-      <Leaderboard
+      <LeaderboardTabs
         scopes={scopes}
+        arcadeEntries={arcadeEntries}
         currentUserId={session.user.id}
         tournamentEnded={tournamentEnded}
         hasLiveMatch={liveMatchActive}

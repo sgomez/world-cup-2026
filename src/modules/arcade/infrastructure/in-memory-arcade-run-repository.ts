@@ -1,5 +1,8 @@
 import { okAsync, type ResultAsync } from "neverthrow";
-import type { ArcadeRunRepository } from "../domain/arcade-run-repository";
+import type {
+  ArcadeRankingRow,
+  ArcadeRunRepository,
+} from "../domain/arcade-run-repository";
 import type { DomainError } from "../domain/errors";
 import type { PenguinRun, PlayDay } from "../domain/penguin-run";
 
@@ -34,6 +37,43 @@ export class InMemoryArcadeRunRepository implements ArcadeRunRepository {
 
   async findAllInProgress(): Promise<PenguinRun[]> {
     return [...this.store.values()].filter((r) => r.status === "in_progress");
+  }
+
+  async findAllTimeRanking(): Promise<ArcadeRankingRow[]> {
+    // Collect the best score per user across finished/finalised runs.
+    const bestByUser = new Map<
+      string,
+      { bestScore: number; achievedAt: Date }
+    >();
+
+    for (const run of this.store.values()) {
+      if (run.status === "in_progress") continue;
+      if (run.bestScore === 0) continue;
+      const existing = bestByUser.get(run.userId);
+      if (!existing || run.bestScore > existing.bestScore) {
+        bestByUser.set(run.userId, {
+          bestScore: run.bestScore,
+          achievedAt: run.startedAt,
+        });
+      } else if (
+        run.bestScore === existing.bestScore &&
+        run.startedAt < existing.achievedAt
+      ) {
+        // Earlier run wins the tie-break.
+        bestByUser.set(run.userId, {
+          bestScore: run.bestScore,
+          achievedAt: run.startedAt,
+        });
+      }
+    }
+
+    return [...bestByUser.entries()].map(
+      ([userId, { bestScore, achievedAt }]) => ({
+        userId,
+        bestScore,
+        achievedAt,
+      }),
+    );
   }
 
   save(run: PenguinRun): ResultAsync<void, DomainError> {

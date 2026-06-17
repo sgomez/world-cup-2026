@@ -1,6 +1,9 @@
 import type { PrismaClient } from "@prisma/client";
 import { ResultAsync } from "neverthrow";
-import type { ArcadeRunRepository } from "../domain/arcade-run-repository";
+import type {
+  ArcadeRankingRow,
+  ArcadeRunRepository,
+} from "../domain/arcade-run-repository";
 import type { DomainError } from "../domain/errors";
 import { domainError } from "../domain/errors";
 import {
@@ -70,6 +73,50 @@ export class PrismaArcadeRunRepository implements ArcadeRunRepository {
     return rows.map((row: unknown) =>
       PenguinRun.fromState(rowToState(row as unknown as PenguinRunRow)),
     );
+  }
+
+  async findAllTimeRanking(): Promise<ArcadeRankingRow[]> {
+    // Step 1: aggregate best score per user in the DB (avoids full-table scan
+    // in application code for large datasets).
+    const grouped = await this.client.penguinRun.groupBy({
+      by: ["userId"],
+      where: {
+        status: { in: ["finished", "finalised"] },
+        bestScore: { gt: 0 },
+      },
+      _max: { bestScore: true },
+    });
+
+    if (grouped.length === 0) return [];
+
+    // Step 2: for each user, find the earliest run that achieved their best
+    // score (tie-break: earliest startedAt wins, per ADR 0033).
+    const results = await Promise.all(
+      grouped.map(async (agg) => {
+        // _max.bestScore is always a number here: the WHERE clause filters
+        // bestScore > 0, so null is not possible.
+        const userBest = agg._max.bestScore ?? 0;
+        const earliest = await this.client.penguinRun.findFirst({
+          where: {
+            userId: agg.userId,
+            bestScore: userBest,
+            status: { in: ["finished", "finalised"] },
+          },
+          orderBy: { startedAt: "asc" },
+          select: { startedAt: true },
+        });
+        // earliest is always found: we grouped on matching rows above.
+        return earliest
+          ? {
+              userId: agg.userId,
+              bestScore: userBest,
+              achievedAt: earliest.startedAt,
+            }
+          : null;
+      }),
+    );
+
+    return results.filter((r): r is ArcadeRankingRow => r !== null);
   }
 
   save(run: PenguinRun): ResultAsync<void, DomainError> {
