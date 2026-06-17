@@ -60,6 +60,20 @@ describe("finishPenguinRun application service", () => {
     expect(result._unsafeUnwrapErr().code).toBe("RUN_NOT_FOUND");
   });
 
+  it("returns RUN_NOT_FOUND if the userId does not own the run", async () => {
+    const startedAt = new Date("2026-06-17T10:00:00Z");
+    const run = makeRun(startedAt);
+    const repo = new InMemoryArcadeRunRepository([run]);
+
+    const result = await finishPenguinRun(repo, {
+      runId: run.id,
+      userId: "user-bob", // wrong owner
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("RUN_NOT_FOUND");
+  });
+
   it("returns RUN_NOT_IN_PROGRESS if already finished", async () => {
     const startedAt = new Date("2026-06-17T10:00:00Z");
     const run = makeRun(startedAt).finish();

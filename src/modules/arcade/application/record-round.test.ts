@@ -73,6 +73,46 @@ describe("recordRound application service", () => {
     expect(stored?.rounds[0].endedAt).toEqual(serverTime);
   });
 
+  it("returns RUN_NOT_FOUND if the userId does not own the run", async () => {
+    const startedAt = new Date("2026-06-17T10:00:00Z");
+    const run = makeRun(startedAt);
+    const repo = new InMemoryArcadeRunRepository([run]);
+
+    const result = await recordRound(repo, {
+      runId: run.id,
+      userId: "user-bob", // wrong owner
+      roundStartedAt: new Date("2026-06-17T10:00:05Z"),
+      reportedScore: 50,
+      clock: () => new Date("2026-06-17T10:01:05Z"),
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().code).toBe("RUN_NOT_FOUND");
+  });
+
+  it("clamps roundStartedAt to no earlier than run.startedAt", async () => {
+    const startedAt = new Date("2026-06-17T10:00:00Z");
+    const run = makeRun(startedAt);
+    const repo = new InMemoryArcadeRunRepository([run]);
+
+    // Client sends an artificially early timestamp (before the run started)
+    const earlyRoundStart = new Date("2026-06-17T09:00:00Z"); // 1h before run
+    const serverNow = new Date("2026-06-17T10:00:10Z"); // 10s after run start
+
+    const result = await recordRound(repo, {
+      runId: run.id,
+      userId,
+      roundStartedAt: earlyRoundStart,
+      reportedScore: 99999,
+      clock: () => serverNow,
+    });
+
+    expect(result.isOk()).toBe(true);
+    const stored = await repo.findById(run.id);
+    // Ceiling is computed from clamped start (run.startedAt) to serverNow = 10s
+    expect(stored?.rounds[0].score).toBe(10);
+  });
+
   it("returns RUN_NOT_FOUND if run does not exist", async () => {
     const repo = new InMemoryArcadeRunRepository([]);
 

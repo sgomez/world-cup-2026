@@ -7,8 +7,8 @@ import type { PenguinRun } from "../domain/penguin-run";
 export type RecordRoundCommand = {
   runId: string;
   userId: string;
-  /** Server-stamped start of this Round. The client may send this but the
-   *  server validates it against the run's startedAt. */
+  /** Client-supplied start of this Round. The server clamps it to no earlier
+   *  than `run.startedAt` to prevent artificially widening the score ceiling. */
   roundStartedAt: Date;
   /** The score the client reports for this Round. Capped by the server-derived
    *  ceiling (ADR 0034). */
@@ -46,8 +46,18 @@ export function recordRound(
         return errAsync(domainError("RUN_NOT_FOUND"));
       }
 
+      if (!run.isOwnedBy(command.userId)) {
+        return errAsync(domainError("RUN_NOT_FOUND")); // do not leak existence
+      }
+
+      // Clamp client-supplied roundStartedAt: prevent an artificially early
+      // timestamp from widening the elapsed-seconds window (and thus the ceiling).
+      const clampedStart = new Date(
+        Math.max(command.roundStartedAt.getTime(), run.startedAt.getTime()),
+      );
+
       const updated = run.recordRound({
-        roundStartedAt: command.roundStartedAt,
+        roundStartedAt: clampedStart,
         roundEndedAt: now,
         reportedScore: command.reportedScore,
       });

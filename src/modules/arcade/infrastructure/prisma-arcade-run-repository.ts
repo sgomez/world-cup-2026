@@ -67,7 +67,7 @@ export class PrismaArcadeRunRepository implements ArcadeRunRepository {
     const rows = await this.client.penguinRun.findMany({
       where: { status: "in_progress" },
     });
-    return rows.map((row) =>
+    return rows.map((row: unknown) =>
       PenguinRun.fromState(rowToState(row as unknown as PenguinRunRow)),
     );
   }

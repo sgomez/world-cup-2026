@@ -33,6 +33,10 @@ export function recordHeartbeat(
         return errAsync(domainError("RUN_NOT_FOUND"));
       }
 
+      if (!run.isOwnedBy(command.userId)) {
+        return errAsync(domainError("RUN_NOT_FOUND")); // do not leak existence
+      }
+
       const updated = run.recordHeartbeat(now);
       if ("code" in updated) {
         return errAsync(updated);

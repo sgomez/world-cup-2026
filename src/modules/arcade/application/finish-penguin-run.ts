@@ -28,6 +28,10 @@ export function finishPenguinRun(
         return errAsync(domainError("RUN_NOT_FOUND"));
       }
 
+      if (!run.isOwnedBy(command.userId)) {
+        return errAsync(domainError("RUN_NOT_FOUND")); // do not leak existence
+      }
+
       if (run.status !== "in_progress") {
         return errAsync(domainError("RUN_NOT_IN_PROGRESS"));
       }
