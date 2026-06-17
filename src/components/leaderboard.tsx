@@ -124,10 +124,12 @@ export function Leaderboard({
       {/* Chart & Table */}
       {active && (
         <div className="space-y-6">
-          <RankHistoryChart
-            communitySlug={active.id}
-            currentUserId={currentUserId}
-          />
+          <div className="hidden sm:block">
+            <RankHistoryChart
+              communitySlug={active.id}
+              currentUserId={currentUserId}
+            />
+          </div>
           <LeaderboardTable
             entries={active.entries}
             currentUserId={currentUserId}

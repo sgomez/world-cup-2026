@@ -71,6 +71,14 @@ export function CommunityDetail({
         </div>
       </header>
 
+      <Link
+        href="/communities"
+        className="inline-flex items-center gap-1.5 text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        {t("backToCommunities")}
+      </Link>
+
       {/* Invite link — owner only */}
       {inviteUrl && (
         <section className="space-y-3 rounded-xl border bg-card p-5 shadow-sm">
@@ -156,24 +164,15 @@ export function CommunityDetail({
         </ul>
       </section>
 
-      <div className="flex items-center justify-between pt-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-4">
         <Link
-          href="/communities"
-          className="inline-flex items-center gap-1.5 text-caption-md text-muted-foreground underline hover:text-foreground transition-colors"
+          href={`/leaderboard#${community.slug}`}
+          className="button-primary inline-flex items-center justify-center gap-1.5"
         >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          {t("backToCommunities")}
+          <Trophy className="size-4" aria-hidden="true" />
+          {t("viewLeaderboard")}
         </Link>
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/leaderboard#${community.slug}`}
-            className="button-primary inline-flex items-center gap-1.5"
-          >
-            <Trophy className="size-4" aria-hidden="true" />
-            {t("viewLeaderboard")}
-          </Link>
-          {!isOwner && <LeaveCommunityForm slug={community.slug} />}
-        </div>
+        {!isOwner && <LeaveCommunityForm slug={community.slug} />}
       </div>
     </div>
   );

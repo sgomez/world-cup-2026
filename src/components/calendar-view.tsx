@@ -372,13 +372,14 @@ export function CalendarView({
       />
 
       {/* Sticky Controls Bar */}
-      <div className="sticky top-14 z-40 flex flex-wrap items-center justify-between gap-4 border-b border-hairline bg-soft-cloud/95 py-4 backdrop-blur-md dark:border-ash dark:bg-ink/95">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="sticky top-14 z-40 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between border-b border-hairline bg-soft-cloud/95 py-4 backdrop-blur-md dark:border-ash dark:bg-ink/95">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
           {/* Team Filter */}
           <Select
             value={selectedTeam}
             onChange={(e) => setSelectedTeam(e.target.value)}
             icon={<Filter className="h-3.5 w-3.5" />}
+            className="w-full"
           >
             <option value="">{tCalendar("allTeams")}</option>
             {allTeams.map((team) => (
@@ -393,6 +394,7 @@ export function CalendarView({
             value={selectedPhase}
             onChange={(e) => setSelectedPhase(e.target.value)}
             icon={<Filter className="h-3.5 w-3.5" />}
+            className="w-full"
           >
             <option value="">{tCalendar("allPhases")}</option>
             {availableGroups.map((g) => (
@@ -415,7 +417,7 @@ export function CalendarView({
           type="button"
           onClick={jumpToToday}
           size="sm"
-          className="shadow-sm"
+          className="w-full shadow-sm sm:w-auto"
         >
           <CalendarDays className="h-4 w-4" />
           {tCalendar("jumpToToday")}
