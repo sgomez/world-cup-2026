@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import type { DomainError } from "./errors";
+import { domainError } from "./errors";
 
 /**
  * The status of a PenguinRun lifecycle.
@@ -16,6 +18,16 @@ export type PenguinRunStatus = "in_progress" | "finished" | "finalised";
 export type PlayDay = string;
 
 /**
+ * A recorded Round within a PenguinRun.
+ */
+export type RoundRecord = {
+  roundNumber: number;
+  startedAt: Date;
+  endedAt: Date;
+  score: number;
+};
+
+/**
  * Converts a timestamp to a Play Day string (UTC calendar date).
  *
  * This is the canonical function for deriving Play Day from a Date — always
@@ -23,6 +35,28 @@ export type PlayDay = string;
  */
 export function toPlayDay(date: Date): PlayDay {
   return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Points awarded per second of survival time.
+ * This is the single monotonic function that maps elapsed time → score ceiling.
+ * A client-reported score cannot exceed elapsedSeconds * POINTS_PER_SECOND.
+ */
+export const POINTS_PER_SECOND = 1;
+
+/**
+ * Maximum number of Rounds (Lives) in a single PenguinRun.
+ */
+export const MAX_ROUNDS = 3;
+
+/**
+ * Derives the score ceiling for a Round given its server-stamped start and end times.
+ * A reported score above this is capped. ADR 0034.
+ */
+export function computeScoreCeiling(startedAt: Date, endedAt: Date): number {
+  const elapsedMs = endedAt.getTime() - startedAt.getTime();
+  const elapsedSeconds = Math.max(0, elapsedMs / 1000);
+  return Math.floor(elapsedSeconds * POINTS_PER_SECOND);
 }
 
 export type PenguinRunState = {
@@ -33,6 +67,7 @@ export type PenguinRunState = {
   lastSeenAt: Date;
   status: PenguinRunStatus;
   bestScore: number;
+  rounds: RoundRecord[];
 };
 
 /**
@@ -43,9 +78,9 @@ export type PenguinRunState = {
  * - Starting a run immediately consumes that User's daily play.
  * - A run holds up to three Rounds (Lives); the best Round score is kept.
  * - The server clock is authoritative; client timestamps are never trusted.
- *
- * This slice covers only the lifecycle start; round recording and score
- * ceiling enforcement are added in later slices.
+ * - A reported score above the time-derived ceiling is capped (ADR 0034).
+ * - A periodic Heartbeat proves the run is live; if it lapses beyond tolerance,
+ *   the run is finalised server-side with the best Round score so far.
  */
 export class PenguinRun {
   private constructor(private readonly state: PenguinRunState) {}
@@ -64,6 +99,7 @@ export class PenguinRun {
       lastSeenAt: args.startedAt,
       status: "in_progress",
       bestScore: 0,
+      rounds: [],
     });
   }
 
@@ -102,11 +138,98 @@ export class PenguinRun {
     return this.state.bestScore;
   }
 
+  get rounds(): ReadonlyArray<RoundRecord> {
+    return this.state.rounds;
+  }
+
   isOwnedBy(userId: string): boolean {
     return this.state.userId === userId;
   }
 
+  /**
+   * Returns whether this run's heartbeat has lapsed beyond `toleranceMs`.
+   * Used by `getArcadeRanking` to lazily finalise stale runs on read.
+   */
+  isStale(now: Date, toleranceMs: number): boolean {
+    return now.getTime() - this.state.lastSeenAt.getTime() > toleranceMs;
+  }
+
+  /**
+   * Records a Heartbeat for this run, updating `lastSeenAt` to `now`.
+   * Returns the updated run, or a DomainError if the run is not in_progress.
+   */
+  recordHeartbeat(now: Date): PenguinRun | DomainError {
+    if (this.state.status !== "in_progress") {
+      return domainError("RUN_NOT_IN_PROGRESS");
+    }
+    return new PenguinRun({ ...this.state, lastSeenAt: now });
+  }
+
+  /**
+   * Records the end of a Round (Life).
+   *
+   * - The Round's score is capped by the time-derived ceiling (ADR 0034).
+   * - Round scores are independent; each Round resets to zero.
+   * - `bestScore` is the highest of all Rounds recorded so far.
+   * - After three Rounds the run transitions to `finished`.
+   *
+   * Returns the updated run, or a DomainError if the run is not in_progress.
+   */
+  recordRound(args: {
+    roundStartedAt: Date;
+    roundEndedAt: Date;
+    reportedScore: number;
+  }): PenguinRun | DomainError {
+    if (this.state.status !== "in_progress") {
+      return domainError("RUN_NOT_IN_PROGRESS");
+    }
+
+    const ceiling = computeScoreCeiling(args.roundStartedAt, args.roundEndedAt);
+    const score = Math.min(args.reportedScore, ceiling);
+
+    const roundNumber = this.state.rounds.length + 1;
+    const newRound: RoundRecord = {
+      roundNumber,
+      startedAt: args.roundStartedAt,
+      endedAt: args.roundEndedAt,
+      score,
+    };
+
+    const updatedRounds = [...this.state.rounds, newRound];
+    const updatedBestScore = Math.max(this.state.bestScore, score);
+    const updatedStatus: PenguinRunStatus =
+      updatedRounds.length >= MAX_ROUNDS ? "finished" : "in_progress";
+
+    return new PenguinRun({
+      ...this.state,
+      rounds: updatedRounds,
+      bestScore: updatedBestScore,
+      status: updatedStatus,
+    });
+  }
+
+  /**
+   * Manually transitions an in_progress run to `finished`.
+   * Called when the player explicitly finishes before all 3 rounds,
+   * or by the `finishPenguinRun` use case after all rounds are played.
+   */
+  finish(): PenguinRun {
+    return new PenguinRun({ ...this.state, status: "finished" });
+  }
+
+  /**
+   * Finalises this run server-side (stale heartbeat / disconnect).
+   * Preserves the best Round score reached so far; Play Day stays consumed.
+   */
+  finalise(now: Date): PenguinRun {
+    return new PenguinRun({
+      ...this.state,
+      status: "finalised",
+      lastSeenAt: now,
+    });
+  }
+
   toState(): PenguinRunState {
-    return { ...this.state };
+    return { ...this.state, rounds: [...this.state.rounds] };
   }
 }

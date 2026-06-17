@@ -155,6 +155,8 @@ model PenguinRun {
   lastSeenAt  DateTime
   status      String   @default("in_progress")
   bestScore   Int      @default(0)
+  /// Ordered list of Round records — each captures roundNumber, startedAt, endedAt, score.
+  rounds      Json     @default("[]")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

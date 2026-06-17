@@ -6,7 +6,11 @@
  * entry in `messages/en.json` and `messages/es.json` under the `arcade`
  * namespace.
  */
-export type DomainErrorCode = "ALREADY_PLAYED_TODAY" | "SAVE_FAILED";
+export type DomainErrorCode =
+  | "ALREADY_PLAYED_TODAY"
+  | "RUN_NOT_IN_PROGRESS"
+  | "RUN_NOT_FOUND"
+  | "SAVE_FAILED";
 
 export type DomainError = {
   readonly code: DomainErrorCode;
