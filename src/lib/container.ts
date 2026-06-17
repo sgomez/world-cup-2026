@@ -1,6 +1,9 @@
 import type { PrismaClient } from "@prisma/client";
 import { BET_DEADLINE } from "@/config/bet";
 import { prisma } from "@/lib/prisma";
+import { finishPenguinRun as finishPenguinRunUseCase } from "@/modules/arcade/application/finish-penguin-run";
+import { recordHeartbeat as recordHeartbeatUseCase } from "@/modules/arcade/application/record-heartbeat";
+import { recordRound as recordRoundUseCase } from "@/modules/arcade/application/record-round";
 import { startPenguinRun as startPenguinRunUseCase } from "@/modules/arcade/application/start-penguin-run";
 import type { ArcadeRunRepository } from "@/modules/arcade/domain/arcade-run-repository";
 import { toPlayDay } from "@/modules/arcade/domain/penguin-run";
@@ -374,6 +377,33 @@ export function createBaseContainer(deps: BaseContainerDeps) {
           return startPenguinRunUseCase(deps.arcadeRunRepo, {
             userId: args.userId,
             clock: deps.clock,
+          });
+        },
+        recordHeartbeat(args: { runId: string; userId: string }) {
+          return recordHeartbeatUseCase(deps.arcadeRunRepo, {
+            runId: args.runId,
+            userId: args.userId,
+            clock: deps.clock,
+          });
+        },
+        recordRound(args: {
+          runId: string;
+          userId: string;
+          roundStartedAt: Date;
+          reportedScore: number;
+        }) {
+          return recordRoundUseCase(deps.arcadeRunRepo, {
+            runId: args.runId,
+            userId: args.userId,
+            roundStartedAt: args.roundStartedAt,
+            reportedScore: args.reportedScore,
+            clock: deps.clock,
+          });
+        },
+        finishRun(args: { runId: string; userId: string }) {
+          return finishPenguinRunUseCase(deps.arcadeRunRepo, {
+            runId: args.runId,
+            userId: args.userId,
           });
         },
         /** Returns true if the user has already played Penguin Run today (UTC). */

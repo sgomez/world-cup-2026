@@ -410,7 +410,18 @@
     "player": "Jugador",
     "score": "Puntuación",
     "you": "Tú",
-    "noScores": "¡Sin puntuaciones todavía — sé el primero en jugar!"
+    "noScores": "¡Sin puntuaciones todavía — sé el primero en jugar!",
+    "round": "Ronda",
+    "life": "Vida",
+    "livesRemaining": "{count, plural, one {# vida restante} other {# vidas restantes}}",
+    "bestScore": "Mejor puntuación",
+    "runFinished": "Partida terminada",
+    "runFinalised": "Partida finalizada",
+    "heartbeatError": "Conexión perdida. Tu mejor puntuación ha sido guardada.",
+    "roundError": "No se pudo registrar la ronda. Inténtalo de nuevo.",
+    "finishError": "No se pudo finalizar la partida. Inténtalo de nuevo.",
+    "runNotFound": "Partida no encontrada.",
+    "runNotInProgress": "Esta partida ya ha terminado."
   },
   "tournament": {
     "title": "Clasificación del Torneo",

@@ -410,7 +410,18 @@
     "player": "Player",
     "score": "Score",
     "you": "You",
-    "noScores": "No scores yet — be the first to play!"
+    "noScores": "No scores yet — be the first to play!",
+    "round": "Round",
+    "life": "Life",
+    "livesRemaining": "{count, plural, one {# life remaining} other {# lives remaining}}",
+    "bestScore": "Best score",
+    "runFinished": "Run finished",
+    "runFinalised": "Run finalised",
+    "heartbeatError": "Connection lost. Your best score has been saved.",
+    "roundError": "Could not record round. Please try again.",
+    "finishError": "Could not finish run. Please try again.",
+    "runNotFound": "Run not found.",
+    "runNotInProgress": "This run is already over."
   },
   "tournament": {
     "title": "Tournament Standings",

@@ -16,6 +16,10 @@ export class InMemoryArcadeRunRepository implements ArcadeRunRepository {
     }
   }
 
+  async findById(id: string): Promise<PenguinRun | null> {
+    return this.store.get(id) ?? null;
+  }
+
   async findByUserAndPlayDay(
     userId: string,
     playDay: PlayDay,
@@ -26,6 +30,10 @@ export class InMemoryArcadeRunRepository implements ArcadeRunRepository {
       }
     }
     return null;
+  }
+
+  async findAllInProgress(): Promise<PenguinRun[]> {
+    return [...this.store.values()].filter((r) => r.status === "in_progress");
   }
 
   save(run: PenguinRun): ResultAsync<void, DomainError> {
