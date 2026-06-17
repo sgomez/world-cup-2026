@@ -376,6 +376,15 @@ export function createBaseContainer(deps: BaseContainerDeps) {
             clock: deps.clock,
           });
         },
+        /** Returns true if the user has already played Penguin Run today (UTC). */
+        async hasPlayedToday(userId: string): Promise<boolean> {
+          const playDay = toPlayDay(deps.clock());
+          const run = await deps.arcadeRunRepo.findByUserAndPlayDay(
+            userId,
+            playDay,
+          );
+          return run !== null;
+        },
         /** The current Play Day (UTC calendar date string) derived from the container clock. */
         get todayPlayDay(): string {
           return toPlayDay(deps.clock());

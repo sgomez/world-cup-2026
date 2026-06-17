@@ -80,17 +80,9 @@ export default async function LeaderboardPage({
   );
 
   // Check if the logged-in user has already played Penguin Run today.
-  const todayPlayDay = container.arcade().todayPlayDay;
-  const hasPlayedToday =
-    (await prisma.penguinRun.findUnique({
-      where: {
-        userId_playDay: {
-          userId: session.user.id,
-          playDay: todayPlayDay,
-        },
-      },
-      select: { id: true },
-    })) !== null;
+  const hasPlayedToday = await container
+    .arcade()
+    .hasPlayedToday(session.user.id);
 
   return (
     <div className="max-w-5xl">

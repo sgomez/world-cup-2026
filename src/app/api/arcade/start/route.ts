@@ -22,7 +22,7 @@ export async function POST(_request: Request) {
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 
-  const { run } = result._unsafeUnwrap();
+  const { run } = result.value;
   return NextResponse.json(
     {
       id: run.id,
