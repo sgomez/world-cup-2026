@@ -15,6 +15,8 @@ type ArcadeRunState =
 interface ArcadeStartProps {
   /** Whether the logged-in user has already played today (server-determined). */
   hasPlayedToday: boolean;
+  /** Feature flag: game is playable. When false, renders a disabled button. */
+  enabled: boolean;
 }
 
 /**
@@ -25,12 +27,22 @@ interface ArcadeStartProps {
  *
  * Calls POST /api/arcade/start; server clock is authoritative.
  */
-export function ArcadeStart({ hasPlayedToday }: ArcadeStartProps) {
+export function ArcadeStart({ hasPlayedToday, enabled }: ArcadeStartProps) {
   const t = useTranslations("arcade");
-
   const [state, setState] = useState<ArcadeRunState>(
     hasPlayedToday ? { kind: "already_played" } : { kind: "idle" },
   );
+
+  if (!enabled) {
+    return (
+      <div className="flex items-center justify-center">
+        <Button variant="default" size="sm" disabled>
+          <Gamepad2 className="size-4" aria-hidden="true" />
+          {t("playButton")}
+        </Button>
+      </div>
+    );
+  }
 
   async function handleStart() {
     setState({ kind: "loading" });

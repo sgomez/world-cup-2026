@@ -11,6 +11,8 @@ type StartState = { kind: "idle" } | { kind: "loading" } | { kind: "error" };
 interface ArcadeInvitationModalProps {
   /** Whether the logged-in user has already played today (server-determined). */
   hasPlayedToday: boolean;
+  /** Feature flag: game is playable. When false, modal never opens. */
+  enabled: boolean;
 }
 
 /**
@@ -25,10 +27,11 @@ interface ArcadeInvitationModalProps {
  */
 export function ArcadeInvitationModal({
   hasPlayedToday,
+  enabled,
 }: ArcadeInvitationModalProps) {
   const t = useTranslations("arcade");
 
-  const [open, setOpen] = useState(!hasPlayedToday);
+  const [open, setOpen] = useState(enabled && !hasPlayedToday);
   const [startState, setStartState] = useState<StartState>({ kind: "idle" });
 
   async function handlePlayNow() {

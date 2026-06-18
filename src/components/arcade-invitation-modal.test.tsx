@@ -32,13 +32,18 @@ describe("ArcadeInvitationModal", () => {
     mockFetch.mockReset();
   });
 
+  it("does not open the modal when feature flag is disabled", () => {
+    render(<ArcadeInvitationModal hasPlayedToday={false} enabled={false} />);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("does not open the modal when user has already played today", () => {
-    render(<ArcadeInvitationModal hasPlayedToday={true} />);
+    render(<ArcadeInvitationModal hasPlayedToday={true} enabled={true} />);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("opens the modal automatically when user has not played today", () => {
-    render(<ArcadeInvitationModal hasPlayedToday={false} />);
+    render(<ArcadeInvitationModal hasPlayedToday={false} enabled={true} />);
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText("Play Penguin Run!")).toBeInTheDocument();
     expect(
@@ -49,7 +54,7 @@ describe("ArcadeInvitationModal", () => {
   });
 
   it("renders Play Now and Maybe Later buttons in the modal", () => {
-    render(<ArcadeInvitationModal hasPlayedToday={false} />);
+    render(<ArcadeInvitationModal hasPlayedToday={false} enabled={true} />);
     expect(
       screen.getByRole("button", { name: "Play Now" }),
     ).toBeInTheDocument();
@@ -59,7 +64,7 @@ describe("ArcadeInvitationModal", () => {
   });
 
   it("closes the modal when Maybe Later is clicked", async () => {
-    render(<ArcadeInvitationModal hasPlayedToday={false} />);
+    render(<ArcadeInvitationModal hasPlayedToday={false} enabled={true} />);
     expect(screen.getByRole("dialog")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Maybe Later" }));
@@ -72,7 +77,7 @@ describe("ArcadeInvitationModal", () => {
       json: async () => ({ id: "run-1", playDay: "2026-06-18" }),
     });
 
-    render(<ArcadeInvitationModal hasPlayedToday={false} />);
+    render(<ArcadeInvitationModal hasPlayedToday={false} enabled={true} />);
 
     await userEvent.click(screen.getByRole("button", { name: "Play Now" }));
 
@@ -85,7 +90,7 @@ describe("ArcadeInvitationModal", () => {
   it("shows error state when start fails and keeps modal open", async () => {
     mockFetch.mockResolvedValueOnce({ status: 500 });
 
-    render(<ArcadeInvitationModal hasPlayedToday={false} />);
+    render(<ArcadeInvitationModal hasPlayedToday={false} enabled={true} />);
 
     await userEvent.click(screen.getByRole("button", { name: "Play Now" }));
 
@@ -98,7 +103,7 @@ describe("ArcadeInvitationModal", () => {
   it("handles 409 (already played) response and closes the modal", async () => {
     mockFetch.mockResolvedValueOnce({ status: 409 });
 
-    render(<ArcadeInvitationModal hasPlayedToday={false} />);
+    render(<ArcadeInvitationModal hasPlayedToday={false} enabled={true} />);
 
     await userEvent.click(screen.getByRole("button", { name: "Play Now" }));
 
