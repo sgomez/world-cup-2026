@@ -331,7 +331,7 @@ export function PenguinRunGame({
         // --- walk frame animation (only while grounded) ---
         if (g.onGround) {
           g.walkFrameAccMs += dt * 1000;
-          if (g.walkFrameAccMs >= WALK_FRAME_MS) {
+          while (g.walkFrameAccMs >= WALK_FRAME_MS) {
             g.walkFrameAccMs -= WALK_FRAME_MS;
             g.walkFrame = (g.walkFrame + 1) % PENGUIN_FRAME_COUNT;
           }

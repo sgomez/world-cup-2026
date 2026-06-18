@@ -132,6 +132,9 @@ export function ArcadeSection({ hasPlayedToday, enabled }: ArcadeSectionProps) {
           />
         </div>
       )}
+      {/* Safety belt only: both refs are guaranteed non-null when state.kind === "started"
+          because handleStart is gated on spriteState === "ready", which is set only after
+          both refs are populated synchronously in the preload effect. */}
       {state.kind === "started" &&
         penguinImageRef.current &&
         obstacleImageRef.current && (
