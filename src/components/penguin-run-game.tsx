@@ -27,6 +27,7 @@ import {
   GAME_OBSTACLE_WIDTH,
   GAME_PENGUIN_DRAW_SINK,
   GAME_PENGUIN_X_FRACTION,
+  GAME_PIXEL_SPRITE_MARGIN,
   GAME_RAMP_INTERVAL_MS,
   GAME_SPEED_CAP,
   GAME_SPEED_RAMP,
@@ -468,10 +469,14 @@ export function PenguinRunGame({
         }
         g.birds = g.birds.filter((b) => b.x > -(GAME_BIRD_SIZE * 2));
 
-        // --- collision detection (forgiving 60% hitbox, centred) ---
+        // --- collision detection ---
+        // Penguin and bird hitboxes are derived from the actual 5px transparent
+        // margin in the 32×32 source frames, scaled to rendered size.
         const penguinX = canvas.width * GAME_PENGUIN_X_FRACTION;
-        const penguinHitSize = SPRITE_SIZE * GAME_HITBOX_FRACTION;
-        const penguinHitOffset = (SPRITE_SIZE - penguinHitSize) / 2;
+        const penguinMargin =
+          GAME_PIXEL_SPRITE_MARGIN * (SPRITE_SIZE / PENGUIN_FRAME_WIDTH);
+        const penguinHitOffset = penguinMargin;
+        const penguinHitSize = SPRITE_SIZE - 2 * penguinMargin;
         const penguinLeft = penguinX + penguinHitOffset;
         const penguinTop = g.penguinY + penguinHitOffset;
         const penguinRight = penguinLeft + penguinHitSize;
@@ -498,8 +503,10 @@ export function PenguinRunGame({
         }
 
         for (const bird of g.birds) {
-          const birdHitSize = GAME_BIRD_SIZE * GAME_HITBOX_FRACTION;
-          const birdHitOffset = (GAME_BIRD_SIZE - birdHitSize) / 2;
+          const birdMargin =
+            GAME_PIXEL_SPRITE_MARGIN * (GAME_BIRD_SIZE / BIRD_FRAME_WIDTH);
+          const birdHitOffset = birdMargin;
+          const birdHitSize = GAME_BIRD_SIZE - 2 * birdMargin;
           const birdLeft = bird.x + birdHitOffset;
           const birdTop = bird.y + birdHitOffset;
           const birdRight = birdLeft + birdHitSize;

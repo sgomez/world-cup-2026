@@ -4,7 +4,7 @@ import {
   GAME_BIRD_GROUND_CLEARANCE,
   GAME_BIRD_SIZE,
   GAME_BIRD_UNLOCK_PTS,
-  GAME_HITBOX_FRACTION,
+  GAME_PIXEL_SPRITE_MARGIN,
   GAME_SPRITE_SIZE,
 } from "@/config/arcade";
 import { PenguinRunGame, shouldSpawnBirds } from "./penguin-run-game";
@@ -582,16 +582,19 @@ describe("PenguinRunGame", () => {
   it("high bird AABB never overlaps grounded penguin AABB (canvas-height invariant)", () => {
     // Bird Y is computed as groundY - GAME_BIRD_GROUND_CLEARANCE - GAME_BIRD_SIZE.
     // Express both AABBs relative to groundY so the assertion holds regardless
-    // of canvas height.
-    const penguinHitSize = GAME_SPRITE_SIZE * GAME_HITBOX_FRACTION;
-    const penguinTopRelGround = (GAME_SPRITE_SIZE - penguinHitSize) / 2;
+    // of canvas height. Both sprites are 32×32 source with GAME_PIXEL_SPRITE_MARGIN
+    // transparent px on each side; hitbox is derived from that margin.
+    const SOURCE_FRAME = 32;
 
-    const birdHitSize = GAME_BIRD_SIZE * GAME_HITBOX_FRACTION;
+    const penguinMargin =
+      GAME_PIXEL_SPRITE_MARGIN * (GAME_SPRITE_SIZE / SOURCE_FRAME);
+    const penguinTopRelGround = penguinMargin; // hitbox top relative to sprite top = groundY
+
+    const birdMargin =
+      GAME_PIXEL_SPRITE_MARGIN * (GAME_BIRD_SIZE / SOURCE_FRAME);
+    const birdHitSize = GAME_BIRD_SIZE - 2 * birdMargin;
     const birdBottomRelGround =
-      -GAME_BIRD_GROUND_CLEARANCE -
-      GAME_BIRD_SIZE +
-      (GAME_BIRD_SIZE - birdHitSize) / 2 +
-      birdHitSize;
+      -GAME_BIRD_GROUND_CLEARANCE - GAME_BIRD_SIZE + birdMargin + birdHitSize;
 
     expect(birdBottomRelGround).toBeLessThan(penguinTopRelGround);
   });

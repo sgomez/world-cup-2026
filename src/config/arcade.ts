@@ -109,10 +109,17 @@ export const GAME_GROUND_HEIGHT = 8;
 export const GAME_PENGUIN_X_FRACTION = 0.2;
 
 /**
- * Forgiving hitbox fraction for both penguin and obstacle (ADR 0035).
+ * Forgiving hitbox fraction for obstacle sprites (ADR 0035).
  * Collision box = HITBOX_FRACTION × sprite size, centred on the sprite.
  */
 export const GAME_HITBOX_FRACTION = 0.6;
+
+/**
+ * Transparent margin (px) on each side of the penguin and bird 32×32 source
+ * frames. The hitbox for these sprites is derived from this margin so it
+ * matches the actual visible pixel content rather than an arbitrary fraction.
+ */
+export const GAME_PIXEL_SPRITE_MARGIN = 5;
 
 /** Total rounds (lives) per run. */
 export const GAME_TOTAL_ROUNDS = 3;
@@ -122,7 +129,7 @@ export const GAME_TOTAL_ROUNDS = 3;
 // ---------------------------------------------------------------------------
 
 /** Score (pts) at which birds start appearing. ~2.5 min at 1 pt/s. */
-export const GAME_BIRD_UNLOCK_PTS = 150;
+export const GAME_BIRD_UNLOCK_PTS = 1;
 
 /** Minimum ms between consecutive bird spawns. */
 export const GAME_BIRD_SPAWN_INTERVAL_MIN_MS = 4_000;
