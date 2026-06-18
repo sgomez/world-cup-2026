@@ -16,24 +16,200 @@ export const ARCADE_GAME_ENABLED: boolean =
   process.env.ARCADE_GAME_ENABLED === "true";
 
 // ---------------------------------------------------------------------------
-// Penguin Run canvas game — tunable physics/speed constants
+// Penguin Run — physics
 // ---------------------------------------------------------------------------
 
-/** Initial horizontal scroll speed of snowmen (px/s). */
-export const GAME_INITIAL_SPEED = 300;
+/** Penguin jump velocity (px/s, negative = up). */
+export const GAME_JUMP_VELOCITY = -700;
+
+/** Gravity (px/s²). */
+export const GAME_GRAVITY = 1800;
+
+// ---------------------------------------------------------------------------
+// Penguin Run — speed ramp
+// ---------------------------------------------------------------------------
+
+/** Initial horizontal scroll speed (px/s). */
+export const GAME_INITIAL_SPEED = 400;
 
 /** Speed increase applied every GAME_RAMP_INTERVAL_MS (px/s). */
-export const GAME_SPEED_RAMP = 20;
+export const GAME_SPEED_RAMP = 40;
 
 /** Maximum scroll speed cap (px/s). */
 export const GAME_SPEED_CAP = 800;
 
 /** Interval at which speed is ramped (ms). */
-export const GAME_RAMP_INTERVAL_MS = 5_000;
+export const GAME_RAMP_INTERVAL_MS = 4_000;
+
+// ---------------------------------------------------------------------------
+// Penguin Run — obstacle spawn model (ADR 0035)
+// ---------------------------------------------------------------------------
 
 /**
  * Width of a single obstacle sprite as rendered on the canvas (px).
- * Used by the obstacle-group planner to compute group span and assert
- * it stays within jump reach (ADR 0035).
+ * Used by the planner to compute group span vs. jump reach.
  */
-export const GAME_OBSTACLE_WIDTH = 48;
+export const GAME_OBSTACLE_WIDTH = 64;
+
+/** Safety multiplier applied to the airtime-derived minimum gap. */
+export const GAME_MIN_GAP_SAFETY = 1.3;
+
+/** Extra (random) gap beyond minGap at the start of a round, in airtime seconds. */
+export const GAME_EXTRA_RANGE_START_AIRTIME = 1.5;
+
+/** Extra gap floor — obstacle frequency stops rising once it reaches this. */
+export const GAME_EXTRA_RANGE_FLOOR_AIRTIME = 0.2;
+
+/** Elapsed ms at which extra-range shrinking reaches the floor. */
+export const GAME_EXTRA_RANGE_DECAY_MS = 45_000;
+
+/** Gap (px) between contiguous obstacles within the same group (0 = touching). */
+export const GAME_OBSTACLE_GAP_WITHIN_GROUP = 0;
+
+/**
+ * Group-size weights [size-1, size-2, size-3] at the start of a round.
+ * Interpolates toward GAME_SIZE_WEIGHTS_LATE over GAME_SIZE_WEIGHT_TRANSITION_MS.
+ */
+export const GAME_SIZE_WEIGHTS_EARLY: readonly [number, number, number] = [
+  55, 35, 10,
+];
+export const GAME_SIZE_WEIGHTS_LATE: readonly [number, number, number] = [
+  30, 40, 30,
+];
+
+/** Elapsed ms at which the size-weight distribution fully reaches LATE. */
+export const GAME_SIZE_WEIGHT_TRANSITION_MS = 60_000;
+
+// ---------------------------------------------------------------------------
+// Penguin Run — rendering
+// ---------------------------------------------------------------------------
+
+/** Rendered height/width of the penguin sprite (px). */
+export const GAME_SPRITE_SIZE = 48;
+
+/**
+ * Transparent padding (px, at dest scale) at the bottom of the penguin
+ * sprite frames. Draw is shifted down by this so visual feet touch the ground.
+ */
+export const GAME_PENGUIN_DRAW_SINK = 16;
+
+/**
+ * Transparent padding (px, at dest scale) at the bottom of the obstacle sprite.
+ * Baked into the spawn y so the visual base sits on the ground.
+ */
+export const GAME_OBS_FOOT_PAD = 12;
+
+/** Ms per penguin walk animation frame (~11 fps). */
+export const GAME_WALK_FRAME_MS = 91;
+
+/** Height of the ground strip drawn at the bottom of the canvas (px). */
+export const GAME_GROUND_HEIGHT = 8;
+
+/** Penguin horizontal position as a fraction of canvas width. */
+export const GAME_PENGUIN_X_FRACTION = 0.2;
+
+/**
+ * Forgiving hitbox fraction for obstacle sprites (ADR 0035).
+ * Collision box = HITBOX_FRACTION × sprite size, centred on the sprite.
+ */
+export const GAME_HITBOX_FRACTION = 0.6;
+
+/**
+ * Transparent insets (px) of the visible content inside the 32×32 penguin
+ * source frame, measured from penguin-walk.png. The collision AABB is built
+ * from these (scaled to render size) and anchored to the DRAWN sprite —
+ * i.e. it includes GAME_PENGUIN_DRAW_SINK — so the box matches what the
+ * player sees instead of a phantom box floating above the head.
+ */
+export const GAME_PENGUIN_SPRITE_INSET = {
+  top: 7,
+  bottom: 5,
+  left: 5,
+  right: 4,
+} as const;
+
+/**
+ * Transparent insets (px) of the visible content inside the 32×32 bat source
+ * frame, measured from bat.png. The bat is centred vertically with unequal
+ * top/bottom margins, so a centred fraction over-sizes the box downward and
+ * causes false hits when the penguin runs underneath.
+ */
+export const GAME_BIRD_SPRITE_INSET = {
+  top: 7,
+  bottom: 9,
+  left: 3,
+  right: 1,
+} as const;
+
+/** Total rounds (lives) per run. */
+export const GAME_TOTAL_ROUNDS = 3;
+
+// ---------------------------------------------------------------------------
+// Penguin Run — high birds
+// ---------------------------------------------------------------------------
+
+/** Score (pts) at which birds start appearing. ~2.5 min at 1 pt/s. */
+export const GAME_BIRD_UNLOCK_PTS = 60;
+
+/** Minimum ms between consecutive bird spawns. */
+export const GAME_BIRD_SPAWN_INTERVAL_MIN_MS = 4_000;
+
+/** Maximum ms between consecutive bird spawns. */
+export const GAME_BIRD_SPAWN_INTERVAL_MAX_MS = 8_000;
+
+/**
+ * Clearance (px) between the bird sprite bottom and the ground line.
+ * Bird sprite top Y = groundY - GAME_BIRD_GROUND_CLEARANCE - GAME_BIRD_SIZE.
+ * Canvas-height invariant: clearance holds at any canvas height.
+ * With the sprite-inset hitboxes a grounded penguin (box top = groundY + 26.5)
+ * stays ~70px clear of the bat (box bottom = groundY - 43.5), so running
+ * underneath never registers a false hit.
+ */
+export const GAME_BIRD_GROUND_CLEARANCE = 30;
+
+/** Rendered size (px) of the bird sprite. Source frame is 32×32. */
+export const GAME_BIRD_SIZE = 48;
+
+/** Ms per bird flap animation frame. */
+export const GAME_BIRD_FRAME_MS = 150;
+
+// ---------------------------------------------------------------------------
+// Penguin Run — night mode (visual distractor, pure palette flip)
+// ---------------------------------------------------------------------------
+
+/**
+ * Score interval between each night-mode window (points).
+ *
+ * With POINTS_PER_SECOND = 1, this is also the survival-seconds interval.
+ * Set to 150 so the first night fires ~2.5 min in — noticeable in a normal
+ * run but not so frequent it becomes annoying.
+ */
+export const GAME_NIGHT_INTERVAL_PTS = 150;
+
+/**
+ * Duration of each night-mode window (points / seconds).
+ *
+ * Set to 35 so the dark palette lasts ~35 s before reverting to day.
+ */
+export const GAME_NIGHT_DURATION_PTS = 35;
+
+/**
+ * Dark sky fill color for night mode.
+ * Uses `{colors.ink}` (#111111) from DESIGN.md — deep near-black that
+ * inverts the light sky without introducing an arbitrary custom color.
+ */
+export const GAME_NIGHT_SKY_COLOR = "#111111";
+
+/**
+ * Light ground strip color for night mode.
+ * Uses `{colors.soft-cloud}` (#f5f5f5) from DESIGN.md — inverts the
+ * charcoal ground strip so it remains visible against the dark sky.
+ */
+export const GAME_NIGHT_GROUND_COLOR = "#f5f5f5";
+
+/**
+ * Light HUD text color for night mode.
+ * Uses `{colors.on-primary}` (#ffffff) from DESIGN.md — pure white ink
+ * on the dark sky canvas.
+ */
+export const GAME_NIGHT_INK_COLOR = "#ffffff";

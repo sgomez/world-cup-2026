@@ -2,53 +2,114 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isNightMode } from "@/components/penguin-run-night-mode";
 import { planNextGroup } from "@/components/penguin-run-planner";
 import { Button } from "@/components/ui/button";
 import {
+  GAME_BIRD_FRAME_MS,
+  GAME_BIRD_GROUND_CLEARANCE,
+  GAME_BIRD_SIZE,
+  GAME_BIRD_SPAWN_INTERVAL_MAX_MS,
+  GAME_BIRD_SPAWN_INTERVAL_MIN_MS,
+  GAME_BIRD_SPRITE_INSET,
+  GAME_BIRD_UNLOCK_PTS,
+  GAME_GRAVITY,
+  GAME_GROUND_HEIGHT,
+  GAME_HITBOX_FRACTION,
   GAME_INITIAL_SPEED,
+  GAME_JUMP_VELOCITY,
+  GAME_NIGHT_DURATION_PTS,
+  GAME_NIGHT_GROUND_COLOR,
+  GAME_NIGHT_INK_COLOR,
+  GAME_NIGHT_INTERVAL_PTS,
+  GAME_NIGHT_SKY_COLOR,
+  GAME_OBS_FOOT_PAD,
+  GAME_OBSTACLE_GAP_WITHIN_GROUP,
   GAME_OBSTACLE_WIDTH,
+  GAME_PENGUIN_DRAW_SINK,
+  GAME_PENGUIN_SPRITE_INSET,
+  GAME_PENGUIN_X_FRACTION,
   GAME_RAMP_INTERVAL_MS,
   GAME_SPEED_CAP,
   GAME_SPEED_RAMP,
+  GAME_SPRITE_SIZE,
+  GAME_TOTAL_ROUNDS,
+  GAME_WALK_FRAME_MS,
 } from "@/config/arcade";
 import { POINTS_PER_SECOND } from "@/modules/arcade/domain/penguin-run";
 
 // ---------------------------------------------------------------------------
-// Constants
+// Constants — sprite sheet (asset-specific, not tunable)
 // ---------------------------------------------------------------------------
-
-/** Rendered size (px) for both penguin and obstacle sprites. */
-const SPRITE_SIZE = 48;
 
 /** Penguin walk sprite sheet: 4 frames, each 32×32. */
 const PENGUIN_FRAME_COUNT = 4;
 const PENGUIN_FRAME_WIDTH = 32;
 const PENGUIN_FRAME_HEIGHT = 32;
 
-/** Walk animation speed: ~11 fps = ~91 ms per frame. */
-const WALK_FRAME_MS = 91;
+/** Bat sprite sheet: 2 frames, each 32×32 (64×32 total, horizontal). */
+const BIRD_FRAME_COUNT = 2;
+const BIRD_FRAME_WIDTH = 32;
+const BIRD_FRAME_HEIGHT = 32;
 
-const GROUND_HEIGHT = 8;
-/** Penguin horizontal position as fraction of canvas width. */
-const PENGUIN_X_FRACTION = 0.2;
+// ---------------------------------------------------------------------------
+// Pure helpers (exported for unit tests)
+// ---------------------------------------------------------------------------
+
+/** Returns true once score reaches the bird unlock threshold. */
+export function shouldSpawnBirds(score: number): boolean {
+  return score >= GAME_BIRD_UNLOCK_PTS;
+}
+
+/** Axis-aligned bounding box in absolute canvas coordinates. */
+export interface Aabb {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
 
 /**
- * Forgiving hitbox: ~60% of the sprite size, centred.
- * Applies to both penguin and obstacle (ADR 0035).
+ * Penguin collision box.
+ *
+ * Anchored to the DRAWN sprite — the draw is shifted down by
+ * GAME_PENGUIN_DRAW_SINK, so the box is too — then inset by the sprite's
+ * measured transparent margins (scaled to render size). Without the sink the
+ * box floats ~16px above the visible head, producing false hits when the
+ * penguin jumps underneath a high bird.
  */
-const HITBOX_FRACTION = 0.6;
-
-const JUMP_VELOCITY = -700; // px/s (negative = up)
-const GRAVITY = 1800; // px/s²
-
-/** Total rounds (lives) per run. */
-const TOTAL_ROUNDS = 3;
+export function penguinHitbox(penguinX: number, penguinY: number): Aabb {
+  const scale = SPRITE_SIZE / PENGUIN_FRAME_WIDTH;
+  const drawTop = penguinY + GAME_PENGUIN_DRAW_SINK;
+  return {
+    left: penguinX + GAME_PENGUIN_SPRITE_INSET.left * scale,
+    right: penguinX + SPRITE_SIZE - GAME_PENGUIN_SPRITE_INSET.right * scale,
+    top: drawTop + GAME_PENGUIN_SPRITE_INSET.top * scale,
+    bottom: drawTop + SPRITE_SIZE - GAME_PENGUIN_SPRITE_INSET.bottom * scale,
+  };
+}
 
 /**
- * Gap (px) between contiguous obstacles within the same Obstacle Group.
- * Zero gap = touching edges (one uninterrupted wall the player must clear).
+ * Bird (bat) collision box. The bat is drawn at bird.y with no sink; its
+ * content sits with unequal top/bottom margins, so explicit insets keep the
+ * box off the empty space below the wings.
  */
-const OBSTACLE_GAP_WITHIN_GROUP = 0;
+export function birdHitbox(birdX: number, birdY: number): Aabb {
+  const scale = GAME_BIRD_SIZE / BIRD_FRAME_WIDTH;
+  return {
+    left: birdX + GAME_BIRD_SPRITE_INSET.left * scale,
+    right: birdX + GAME_BIRD_SIZE - GAME_BIRD_SPRITE_INSET.right * scale,
+    top: birdY + GAME_BIRD_SPRITE_INSET.top * scale,
+    bottom: birdY + GAME_BIRD_SIZE - GAME_BIRD_SPRITE_INSET.bottom * scale,
+  };
+}
+
+/** Standard AABB overlap test. */
+export function aabbOverlap(a: Aabb, b: Aabb): boolean {
+  return (
+    a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
+  );
+}
 
 // Centred play-box dimensions. On desktop the canvas is a bounded box (like
 // the classic running-dinosaur game); on narrow screens it shrinks to fit.
@@ -60,6 +121,21 @@ const GAME_MARGIN = 32;
 const SKY_COLOR = "#e8f3fb";
 const GROUND_COLOR = "#39393b"; // charcoal
 const INK_COLOR = "#1a1a1a";
+
+// ---------------------------------------------------------------------------
+// Local aliases — the arcade config exports with GAME_ prefix; the loop body
+// uses the short names for readability. These were bare names before the
+// config rename (feat: refactor arcade config) and are aliased here to fix
+// the resulting ReferenceErrors.
+// ---------------------------------------------------------------------------
+const GRAVITY = GAME_GRAVITY;
+const SPRITE_SIZE = GAME_SPRITE_SIZE;
+const TOTAL_ROUNDS = GAME_TOTAL_ROUNDS;
+const WALK_FRAME_MS = GAME_WALK_FRAME_MS;
+const PENGUIN_X_FRACTION = GAME_PENGUIN_X_FRACTION;
+const OBS_FOOT_PAD = GAME_OBS_FOOT_PAD;
+const OBSTACLE_GAP_WITHIN_GROUP = GAME_OBSTACLE_GAP_WITHIN_GROUP;
+const JUMP_VELOCITY = GAME_JUMP_VELOCITY;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -75,6 +151,13 @@ type GamePhase =
 interface Obstacle {
   x: number;
   y: number;
+}
+
+interface Bird {
+  x: number;
+  y: number;
+  frame: number;
+  frameAccMs: number;
 }
 
 interface MutableGameState {
@@ -120,6 +203,12 @@ interface MutableGameState {
   walkFrame: number;
   /** Accumulated time (ms) toward the next walk frame advance. */
   walkFrameAccMs: number;
+  /** Birds currently on screen. */
+  birds: Bird[];
+  /** Ms accumulated toward the next bird spawn. */
+  birdSpawnAccMs: number;
+  /** Ms interval before the next bird spawns (randomised after each spawn). */
+  nextBirdSpawnMs: number;
 }
 
 export interface PenguinRunGameProps {
@@ -129,6 +218,8 @@ export interface PenguinRunGameProps {
   penguinImage: HTMLImageElement;
   /** Preloaded obstacle sprite (64×64, single frame). */
   obstacleImage: HTMLImageElement;
+  /** Preloaded bat sprite sheet (64×32 = two 32×32 frames, horizontal). */
+  birdImage: HTMLImageElement;
 }
 
 // ---------------------------------------------------------------------------
@@ -136,7 +227,7 @@ export interface PenguinRunGameProps {
 // ---------------------------------------------------------------------------
 
 function getGroundY(canvas: HTMLCanvasElement): number {
-  return canvas.height - GROUND_HEIGHT - SPRITE_SIZE;
+  return canvas.height - GAME_GROUND_HEIGHT - GAME_SPRITE_SIZE;
 }
 
 // ---------------------------------------------------------------------------
@@ -156,6 +247,7 @@ export function PenguinRunGame({
   onFinished,
   penguinImage,
   obstacleImage,
+  birdImage,
 }: PenguinRunGameProps) {
   const t = useTranslations("arcade");
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -285,6 +377,9 @@ export function PenguinRunGame({
     g.lastTimestamp = 0;
     g.walkFrame = 0;
     g.walkFrameAccMs = 0;
+    g.birds = [];
+    g.birdSpawnAccMs = 0;
+    g.nextBirdSpawnMs = GAME_BIRD_SPAWN_INTERVAL_MIN_MS;
   }, []);
 
   /** Transition from "ready" to "playing" on the first input. */
@@ -364,11 +459,19 @@ export function PenguinRunGame({
             rng: Math.random,
           });
 
-          // Spawn all obstacles in this group (contiguous)
+          // Spawn all obstacles in this group (contiguous).
+          // y is shifted down by OBS_FOOT_PAD so the visible base of the
+          // sprite sits on the ground line (the sprite has transparent space
+          // at the bottom of its bounding box).
+          const obsGroundY =
+            canvas.height -
+            GAME_GROUND_HEIGHT -
+            GAME_OBSTACLE_WIDTH +
+            OBS_FOOT_PAD;
           for (let i = 0; i < plan.size; i++) {
             g.obstacles.push({
               x: spawnX + i * (GAME_OBSTACLE_WIDTH + OBSTACLE_GAP_WITHIN_GROUP),
-              y: groundY,
+              y: obsGroundY,
             });
           }
 
@@ -385,32 +488,68 @@ export function PenguinRunGame({
           (obs) => obs.x > -(GAME_OBSTACLE_WIDTH * 2),
         );
 
-        // --- collision detection (forgiving 60% hitbox, centred) ---
-        const penguinX = canvas.width * PENGUIN_X_FRACTION;
-        const penguinHitSize = SPRITE_SIZE * HITBOX_FRACTION;
-        const penguinHitOffset = (SPRITE_SIZE - penguinHitSize) / 2;
-        const penguinLeft = penguinX + penguinHitOffset;
-        const penguinTop = g.penguinY + penguinHitOffset;
-        const penguinRight = penguinLeft + penguinHitSize;
-        const penguinBottom = penguinTop + penguinHitSize;
+        // --- bird spawn (independent timer, after unlock threshold) ---
+        const hudScore = Math.floor(g.elapsedSeconds * POINTS_PER_SECOND);
+        if (shouldSpawnBirds(hudScore)) {
+          g.birdSpawnAccMs += dt * 1000;
+          if (g.birdSpawnAccMs >= g.nextBirdSpawnMs) {
+            g.birdSpawnAccMs = 0;
+            g.nextBirdSpawnMs =
+              GAME_BIRD_SPAWN_INTERVAL_MIN_MS +
+              Math.random() *
+                (GAME_BIRD_SPAWN_INTERVAL_MAX_MS -
+                  GAME_BIRD_SPAWN_INTERVAL_MIN_MS);
+            const groundY = getGroundY(canvas);
+            g.birds.push({
+              x: canvas.width + GAME_BIRD_SIZE,
+              y: groundY - GAME_BIRD_GROUND_CLEARANCE - GAME_BIRD_SIZE,
+              frame: 0,
+              frameAccMs: 0,
+            });
+          }
+        }
+
+        // --- move + animate birds ---
+        for (const bird of g.birds) {
+          bird.x -= g.scrollSpeed * dt;
+          bird.frameAccMs += dt * 1000;
+          while (bird.frameAccMs >= GAME_BIRD_FRAME_MS) {
+            bird.frameAccMs -= GAME_BIRD_FRAME_MS;
+            bird.frame = (bird.frame + 1) % BIRD_FRAME_COUNT;
+          }
+        }
+        g.birds = g.birds.filter((b) => b.x > -(GAME_BIRD_SIZE * 2));
+
+        // --- collision detection ---
+        // Penguin and bird boxes are anchored to the drawn sprites and inset
+        // by their measured transparent margins (see penguinHitbox/birdHitbox)
+        // so they match what the player sees. Obstacles keep the centred
+        // forgiving fraction — they collide on the side, where it works well.
+        const penguinX = canvas.width * GAME_PENGUIN_X_FRACTION;
+        const penguinBox = penguinHitbox(penguinX, g.penguinY);
 
         for (const obs of g.obstacles) {
-          const obsHitSize = GAME_OBSTACLE_WIDTH * HITBOX_FRACTION;
+          const obsHitSize = GAME_OBSTACLE_WIDTH * GAME_HITBOX_FRACTION;
           const obsHitOffset = (GAME_OBSTACLE_WIDTH - obsHitSize) / 2;
-          const obsLeft = obs.x + obsHitOffset;
-          const obsTop = obs.y + obsHitOffset;
-          const obsRight = obsLeft + obsHitSize;
-          const obsBottom = obsTop + obsHitSize;
+          const obsBox: Aabb = {
+            left: obs.x + obsHitOffset,
+            top: obs.y + obsHitOffset,
+            right: obs.x + obsHitOffset + obsHitSize,
+            bottom: obs.y + obsHitOffset + obsHitSize,
+          };
 
-          if (
-            penguinLeft < obsRight &&
-            penguinRight > obsLeft &&
-            penguinTop < obsBottom &&
-            penguinBottom > obsTop
-          ) {
+          if (aabbOverlap(penguinBox, obsBox)) {
             g.phase = "between-rounds"; // pause loop to prevent re-entry
             void handleCollision();
             return; // stop this frame
+          }
+        }
+
+        for (const bird of g.birds) {
+          if (aabbOverlap(penguinBox, birdHitbox(bird.x, bird.y))) {
+            g.phase = "between-rounds";
+            void handleCollision();
+            return;
           }
         }
       } else {
@@ -421,17 +560,28 @@ export function PenguinRunGame({
       // --- draw ---
       const penguinX = canvas.width * PENGUIN_X_FRACTION;
 
+      // Night-mode palette selection — pure visual, no physics change.
+      const hudScore = Math.floor(g.elapsedSeconds * POINTS_PER_SECOND);
+      const night = isNightMode(
+        hudScore,
+        GAME_NIGHT_INTERVAL_PTS,
+        GAME_NIGHT_DURATION_PTS,
+      );
+      const skyColor = night ? GAME_NIGHT_SKY_COLOR : SKY_COLOR;
+      const groundColor = night ? GAME_NIGHT_GROUND_COLOR : GROUND_COLOR;
+      const inkColor = night ? GAME_NIGHT_INK_COLOR : INK_COLOR;
+
       // Sky background
-      ctx.fillStyle = SKY_COLOR;
+      ctx.fillStyle = skyColor;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Ground
-      ctx.fillStyle = GROUND_COLOR;
+      ctx.fillStyle = groundColor;
       ctx.fillRect(
         0,
-        canvas.height - GROUND_HEIGHT,
+        canvas.height - GAME_GROUND_HEIGHT,
         canvas.width,
-        GROUND_HEIGHT,
+        GAME_GROUND_HEIGHT,
       );
 
       // Crisp pixel art — no smoothing.
@@ -446,12 +596,12 @@ export function PenguinRunGame({
         PENGUIN_FRAME_WIDTH, // source width
         PENGUIN_FRAME_HEIGHT, // source height
         penguinX, // dest x
-        g.penguinY, // dest y
+        g.penguinY + GAME_PENGUIN_DRAW_SINK, // dest y — sink to land visual feet on ground
         SPRITE_SIZE, // dest width
         SPRITE_SIZE, // dest height
       );
 
-      // Obstacles — single frame from dummy.png.
+      // Obstacles — single frame from dummy.png (64×64 source, rendered at GAME_OBSTACLE_WIDTH).
       for (const obs of g.obstacles) {
         ctx.drawImage(
           obstacleImage,
@@ -460,17 +610,31 @@ export function PenguinRunGame({
           64,
           64, // source: full 64×64 sprite
           obs.x,
-          obs.y, // dest position
-          SPRITE_SIZE,
-          SPRITE_SIZE, // dest size
+          obs.y, // dest position (y already accounts for OBS_FOOT_PAD)
+          GAME_OBSTACLE_WIDTH,
+          GAME_OBSTACLE_WIDTH, // dest size
+        );
+      }
+
+      // Birds — bat.png: 2 frames of 32×32 (64×32 sheet), animated flap.
+      for (const bird of g.birds) {
+        ctx.drawImage(
+          birdImage,
+          bird.frame * BIRD_FRAME_WIDTH,
+          0,
+          BIRD_FRAME_WIDTH,
+          BIRD_FRAME_HEIGHT,
+          bird.x,
+          bird.y,
+          GAME_BIRD_SIZE,
+          GAME_BIRD_SIZE,
         );
       }
 
       // HUD — big score, centred top, with round + record below.
-      const hudScore = Math.floor(g.elapsedSeconds * POINTS_PER_SECOND);
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.fillStyle = INK_COLOR;
+      ctx.fillStyle = inkColor;
       ctx.font = "bold 56px sans-serif";
       ctx.fillText(String(hudScore), canvas.width / 2, 12);
       ctx.font = "16px sans-serif";
@@ -483,7 +647,7 @@ export function PenguinRunGame({
 
       rafIdRef.current = requestAnimationFrame(tick);
     },
-    [handleCollision, t, penguinImage, obstacleImage],
+    [handleCollision, t, penguinImage, obstacleImage, birdImage],
   );
 
   // -------------------------------------------------------------------------
@@ -536,6 +700,9 @@ export function PenguinRunGame({
       lastTimestamp: 0,
       walkFrame: 0,
       walkFrameAccMs: 0,
+      birds: [],
+      birdSpawnAccMs: 0,
+      nextBirdSpawnMs: GAME_BIRD_SPAWN_INTERVAL_MIN_MS,
     };
     gameRef.current = g;
 

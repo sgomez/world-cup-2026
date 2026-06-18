@@ -1,6 +1,18 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PenguinRunGame } from "./penguin-run-game";
+import {
+  GAME_BIRD_GROUND_CLEARANCE,
+  GAME_BIRD_SIZE,
+  GAME_BIRD_UNLOCK_PTS,
+  GAME_PENGUIN_DRAW_SINK,
+} from "@/config/arcade";
+import {
+  aabbOverlap,
+  birdHitbox,
+  PenguinRunGame,
+  penguinHitbox,
+  shouldSpawnBirds,
+} from "./penguin-run-game";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -72,6 +84,7 @@ interface GameProps {
   onFinished?: () => void;
   penguinImage?: HTMLImageElement;
   obstacleImage?: HTMLImageElement;
+  birdImage?: HTMLImageElement;
 }
 
 /** Minimal HTMLImageElement stub for tests. */
@@ -84,6 +97,7 @@ function renderGame({
   onFinished = vi.fn(),
   penguinImage = makeMockImage(),
   obstacleImage = makeMockImage(),
+  birdImage = makeMockImage(),
 }: GameProps = {}) {
   return render(
     <PenguinRunGame
@@ -91,6 +105,7 @@ function renderGame({
       onFinished={onFinished}
       penguinImage={penguinImage}
       obstacleImage={obstacleImage}
+      birdImage={birdImage}
     />,
   );
 }
@@ -544,5 +559,81 @@ describe("PenguinRunGame", () => {
     window.dispatchEvent(event);
 
     expect(preventDefaultSpy).toHaveBeenCalled();
+  });
+
+  // -------------------------------------------------------------------------
+  // High birds
+  // -------------------------------------------------------------------------
+
+  it("renders without error when birdImage is provided", () => {
+    renderGame({ birdImage: makeMockImage() });
+    expect(screen.getByTestId("penguin-run-canvas")).toBeInTheDocument();
+  });
+
+  describe("shouldSpawnBirds", () => {
+    it("returns false below the unlock threshold", () => {
+      expect(shouldSpawnBirds(GAME_BIRD_UNLOCK_PTS - 1)).toBe(false);
+    });
+
+    it("returns true at the unlock threshold", () => {
+      expect(shouldSpawnBirds(GAME_BIRD_UNLOCK_PTS)).toBe(true);
+    });
+
+    it("returns true above the unlock threshold", () => {
+      expect(shouldSpawnBirds(GAME_BIRD_UNLOCK_PTS + 100)).toBe(true);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Hitbox geometry (regression: false bat hits when jumping underneath)
+  // -------------------------------------------------------------------------
+
+  describe("hitbox geometry", () => {
+    // A representative ground line; helpers are pure in absolute canvas coords.
+    const GROUND_Y = 300;
+    const PENGUIN_X = 100;
+    // Bird spawned at the configured high-flying altitude, same column so the
+    // boxes overlap horizontally and only vertical clearance decides a hit.
+    const BIRD_Y = GROUND_Y - GAME_BIRD_GROUND_CLEARANCE - GAME_BIRD_SIZE;
+
+    it("anchors the penguin box to the drawn sprite (no phantom head above it)", () => {
+      // The sprite is drawn at penguinY + DRAW_SINK; the collision box top must
+      // sit at or below that, not floating above the visible head.
+      const box = penguinHitbox(PENGUIN_X, GROUND_Y);
+      expect(box.top).toBeGreaterThanOrEqual(GROUND_Y + GAME_PENGUIN_DRAW_SINK);
+    });
+
+    it("does not collide a grounded penguin with a high bird", () => {
+      expect(
+        aabbOverlap(
+          penguinHitbox(PENGUIN_X, GROUND_Y),
+          birdHitbox(PENGUIN_X, BIRD_Y),
+        ),
+      ).toBe(false);
+    });
+
+    it("does not register a hit while the penguin's visible body is still clear under the bird", () => {
+      // penguinY = GROUND_Y - 60: mid-jump, head still below the bat's body.
+      // The old centred-fraction box (top = penguinY + 9.6) falsely collided
+      // here; the sink-anchored box must not.
+      const penguinY = GROUND_Y - 60;
+      expect(
+        aabbOverlap(
+          penguinHitbox(PENGUIN_X, penguinY),
+          birdHitbox(PENGUIN_X, BIRD_Y),
+        ),
+      ).toBe(false);
+    });
+
+    it("still registers a hit when the penguin jumps into the bat's body", () => {
+      // penguinY = GROUND_Y - 95: high enough that the bodies truly overlap.
+      const penguinY = GROUND_Y - 95;
+      expect(
+        aabbOverlap(
+          penguinHitbox(PENGUIN_X, penguinY),
+          birdHitbox(PENGUIN_X, BIRD_Y),
+        ),
+      ).toBe(true);
+    });
   });
 });

@@ -7,3 +7,7 @@ Animated: Dimensions are: w 32px | h 32 px, 4 images.
 - https://caz-bee.itch.io/dummy
 File: public/sprites/dummy.png: PNG image data, 64 x 64, 8-bit/color RGBA, non-interlaced
 Non animated
+
+- https://caz-bee.itch.io/bat
+File public/sprites/bat.png: PNG image data, 64 x 32, 8-bit/color RGBA, non-interlaced
+Animated: Dimensions are: w 32px | h 32 px, 2 images.

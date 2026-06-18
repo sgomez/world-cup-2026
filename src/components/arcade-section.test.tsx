@@ -15,6 +15,12 @@ import { ArcadeSection } from "./arcade-section";
 // Mocks
 // ---------------------------------------------------------------------------
 
+const mockRefresh = vi.fn();
+
+vi.mock("@/i18n/navigation", () => ({
+  useRouter: () => ({ refresh: mockRefresh }),
+}));
+
 vi.mock("next-intl", () => ({
   useTranslations: vi.fn((_namespace: string) => {
     return (key: string) => {
@@ -112,6 +118,7 @@ global.fetch = mockFetch;
 
 beforeEach(() => {
   mockFetch.mockReset();
+  mockRefresh.mockReset();
   capturedOnFinished = undefined;
   createdImages.length = 0;
   autoResolveImages = true;
@@ -199,6 +206,28 @@ describe("ArcadeSection", () => {
 
     expect(screen.queryByTestId("penguin-run-game")).not.toBeInTheDocument();
     expect(screen.getByText("Already played today")).toBeInTheDocument();
+  });
+
+  // Regression: the ranking table is server-rendered, so finishing a run must
+  // refresh server data or the new score only appears after a manual reload.
+  it("refreshes server data when the game fires onFinished", async () => {
+    mockFetch.mockResolvedValueOnce({
+      status: 201,
+      json: async () => ({ id: "run-refresh", playDay: "2026-06-18" }),
+    });
+
+    render(<ArcadeSection hasPlayedToday={false} enabled={true} />);
+
+    await dismissModal();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Play Penguin Run" }),
+    );
+
+    act(() => {
+      capturedOnFinished?.();
+    });
+
+    expect(mockRefresh).toHaveBeenCalled();
   });
 
   it("shows 'Already played today' when start returns 409", async () => {
