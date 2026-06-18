@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   GAME_INITIAL_SPEED,
+  GAME_MIN_GAP_SAFETY,
   GAME_OBSTACLE_WIDTH,
   GAME_SPEED_CAP,
 } from "@/config/arcade";
 import {
   computeMinGap,
   computeReach,
-  MIN_GAP_SAFETY,
   type PlanInput,
   planNextGroup,
 } from "./penguin-run-planner";
@@ -43,7 +43,7 @@ function airtime(): number {
 describe("computeMinGap", () => {
   it("returns speed * airtime * SAFETY", () => {
     const speed = GAME_INITIAL_SPEED;
-    const expected = speed * airtime() * MIN_GAP_SAFETY;
+    const expected = speed * airtime() * GAME_MIN_GAP_SAFETY;
     expect(computeMinGap(speed)).toBeCloseTo(expected, 5);
   });
 
