@@ -77,7 +77,7 @@ export function ArcadeInvitationModal({
 
           {/* Error */}
           {startState.kind === "error" && (
-            <p className="mt-4 text-center text-caption-sm text-sale">
+            <p className="mt-4 text-center text-caption-sm text-destructive">
               {t("startError")}
             </p>
           )}
