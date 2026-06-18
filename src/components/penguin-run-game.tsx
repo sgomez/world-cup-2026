@@ -530,8 +530,3 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
     </div>
   );
 }
-
-// Workaround: declare triggerCollisionForTest so eslint doesn't complain
-// about the void expression above
-function triggerCollisionForTest(_fn: unknown) {}
-void triggerCollisionForTest;

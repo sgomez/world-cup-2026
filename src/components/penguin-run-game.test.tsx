@@ -20,7 +20,6 @@ vi.mock("next-intl", () => ({
             nextRound: "Next Round",
             viewRanking: "View Ranking",
             roundError: "Could not record round. Please try again.",
-            finishError: "Could not finish run. Please try again.",
             retryRound: "Retry",
             runFinished: "Run finished",
           } as Record<string, string>
