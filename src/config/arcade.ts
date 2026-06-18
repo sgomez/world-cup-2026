@@ -149,7 +149,7 @@ export const GAME_TOTAL_ROUNDS = 3;
 // ---------------------------------------------------------------------------
 
 /** Score (pts) at which birds start appearing. ~2.5 min at 1 pt/s. */
-export const GAME_BIRD_UNLOCK_PTS = 1;
+export const GAME_BIRD_UNLOCK_PTS = 60;
 
 /** Minimum ms between consecutive bird spawns. */
 export const GAME_BIRD_SPAWN_INTERVAL_MIN_MS = 4_000;
