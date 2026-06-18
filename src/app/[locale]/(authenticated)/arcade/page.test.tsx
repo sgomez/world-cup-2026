@@ -27,14 +27,7 @@ vi.mock("@/lib/container", () => ({
       getRanking: mockGetRanking,
       hasPlayedToday: mockHasPlayedToday,
     }),
-  },
-}));
-
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    user: {
-      findUnique: vi.fn().mockResolvedValue(null),
-    },
+    getNameResolver: vi.fn(() => vi.fn().mockResolvedValue(null)),
   },
 }));
 

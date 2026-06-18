@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArcadeInvitationModal } from "@/components/arcade-invitation-modal";
-import { ArcadeStart, type ArcadeStartStatus } from "@/components/arcade-start";
+import { ArcadeStart } from "@/components/arcade-start";
 import { PenguinRunGame } from "@/components/penguin-run-game";
 
 type ArcadeRunState =
@@ -53,9 +53,6 @@ export function ArcadeSection({ hasPlayedToday, enabled }: ArcadeSectionProps) {
     }
   }
 
-  const startStatus: ArcadeStartStatus =
-    state.kind === "started" ? "idle" : state.kind;
-
   return (
     <>
       <ArcadeInvitationModal
@@ -65,13 +62,21 @@ export function ArcadeSection({ hasPlayedToday, enabled }: ArcadeSectionProps) {
         loading={state.kind === "loading"}
         error={state.kind === "error"}
       />
-      <div className="mb-6 flex justify-end">
-        <ArcadeStart
-          enabled={enabled}
-          status={startStatus}
-          onPlay={handleStart}
-        />
-      </div>
+      {/* ArcadeStart is hidden while the game overlay occupies the screen.
+       * Note: if the API call triggered from the modal fails, the modal has
+       * already closed (handlePlayNow sets open=false before delegating
+       * onPlay), so the error is shown here on the ArcadeStart button rather
+       * than in the modal. This is intentional and tracked as a UX nit.
+       */}
+      {state.kind !== "started" && (
+        <div className="mb-6 flex justify-end">
+          <ArcadeStart
+            enabled={enabled}
+            status={state.kind}
+            onPlay={handleStart}
+          />
+        </div>
+      )}
       {state.kind === "started" && (
         <PenguinRunGame
           runId={state.runId}

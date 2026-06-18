@@ -6,7 +6,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ARCADE_GAME_ENABLED } from "@/config/arcade";
 import { redirect } from "@/i18n/navigation";
 import { container } from "@/lib/container";
-import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
 export default async function ArcadePage({
@@ -22,16 +21,10 @@ export default async function ArcadePage({
 
   const t = await getTranslations({ locale, namespace: "arcade" });
 
-  // Build a NameResolver backed by Prisma so we resolve names for all
-  // arcade users without copying the ad-hoc multi-query pattern from the
-  // leaderboard page (issue #374).
-  const nameResolver = async (userId: string): Promise<string | null> => {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true },
-    });
-    return user?.name ?? null;
-  };
+  // Use the container's memoized NameResolver seam (same as the leaderboard
+  // page) so we avoid N+1 queries: each userId is looked up at most once per
+  // request and the cache is shared across the getRanking call.
+  const nameResolver = container.getNameResolver();
 
   const [arcadeRanking, hasPlayedToday] = await Promise.all([
     container.arcade().getRanking(nameResolver),
