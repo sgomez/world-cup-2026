@@ -3,6 +3,7 @@ import type { ArcadeRunRepository } from "../domain/arcade-run-repository";
 export type ArcadeRankingEntry = {
   rank: number;
   userId: string;
+  userName: string;
   bestScore: number;
   achievedAt: Date;
 };
@@ -16,6 +17,12 @@ export type GetArcadeRankingQuery = {
    * server-side before the ranking is computed (lazy sweep, ADR 0034).
    */
   staleTolerance: number;
+  /**
+   * Optional name resolver. When provided, each entry's `userName` is resolved
+   * via this seam (symmetric with the betting Leaderboard NameResolver). Falls
+   * back to `userId` when the resolver returns null or is omitted.
+   */
+  nameResolver?: (userId: string) => Promise<string | null>;
 };
 
 /**
@@ -61,10 +68,21 @@ export async function getArcadeRanking(
     return a.achievedAt.getTime() - b.achievedAt.getTime();
   });
 
-  return rows.map((row, index) => ({
-    rank: index + 1,
-    userId: row.userId,
-    bestScore: row.bestScore,
-    achievedAt: row.achievedAt,
-  }));
+  // Resolve user names in parallel when a NameResolver is provided.
+  const entries = await Promise.all(
+    rows.map(async (row, index) => {
+      const resolved = query.nameResolver
+        ? await query.nameResolver(row.userId)
+        : null;
+      return {
+        rank: index + 1,
+        userId: row.userId,
+        userName: resolved ?? row.userId,
+        bestScore: row.bestScore,
+        achievedAt: row.achievedAt,
+      };
+    }),
+  );
+
+  return entries;
 }

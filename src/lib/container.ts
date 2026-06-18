@@ -412,10 +412,13 @@ export function createBaseContainer(deps: BaseContainerDeps) {
           });
         },
         /** Returns the global Arcade Ranking, lazily finalising stale runs. */
-        getRanking(): Promise<ArcadeRankingEntry[]> {
+        getRanking(
+          nameResolver?: (userId: string) => Promise<string | null>,
+        ): Promise<ArcadeRankingEntry[]> {
           return getArcadeRankingUseCase(deps.arcadeRunRepo, {
             clock: deps.clock,
             staleTolerance: ARCADE_STALE_TOLERANCE_MS,
+            nameResolver,
           });
         },
         /** Returns true if the user has already played Penguin Run today (UTC). */

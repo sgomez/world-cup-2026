@@ -28,11 +28,30 @@ const EMOJI_BOX_FRACTION = 0.7;
 const JUMP_VELOCITY = -700; // px/s (negative = up)
 const GRAVITY = 1800; // px/s²
 
+/** Total rounds (lives) per run. */
+const TOTAL_ROUNDS = 3;
+
+// Centred play-box dimensions. On desktop the canvas is a bounded box (like
+// the classic running-dinosaur game); on narrow screens it shrinks to fit.
+const GAME_MAX_WIDTH = 960;
+const GAME_MAX_HEIGHT = 320;
+const GAME_MARGIN = 32;
+
+// Palette for the light play-box.
+const SKY_COLOR = "#e8f3fb";
+const GROUND_COLOR = "#39393b"; // charcoal
+const INK_COLOR = "#1a1a1a";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type GamePhase = "playing" | "between-rounds" | "game-over" | "round-error";
+type GamePhase =
+  | "ready"
+  | "playing"
+  | "between-rounds"
+  | "game-over"
+  | "round-error";
 
 interface Snowman {
   x: number;
@@ -91,11 +110,12 @@ function getGroundY(canvas: HTMLCanvasElement): number {
 // ---------------------------------------------------------------------------
 
 /**
- * PenguinRunGame — full-screen canvas Penguin Run game overlay.
+ * PenguinRunGame — Penguin Run canvas game in a full-screen overlay.
  *
- * Accepts `{ runId, onFinished }`. Renders a `position: fixed` overlay
- * containing a `<canvas>` element. All game loop state lives in mutable
- * refs; React state is used only for phase transitions.
+ * Accepts `{ runId, onFinished }`. The dimmed overlay centres a bounded
+ * canvas play-box (desktop) that fills available width on narrow screens.
+ * All game-loop state lives in mutable refs; React state drives only the
+ * phase-transition overlays.
  */
 export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
   const t = useTranslations("arcade");
@@ -104,6 +124,7 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
   const rafIdRef = useRef<number>(0);
 
   type ScreenState =
+    | { kind: "ready" }
     | { kind: "playing" }
     | {
         kind: "between-rounds";
@@ -114,7 +135,7 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
     | { kind: "game-over"; bestScore: number }
     | { kind: "round-error" };
 
-  const [screen, setScreen] = useState<ScreenState>({ kind: "playing" });
+  const [screen, setScreen] = useState<ScreenState>({ kind: "ready" });
 
   // -------------------------------------------------------------------------
   // API calls
@@ -188,7 +209,7 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
       if (gameRef.current) gameRef.current.phase = "game-over";
       setScreen({ kind: "game-over", bestScore: serverBestScore });
     } else {
-      const livesRemaining = 3 - roundsPlayed;
+      const livesRemaining = TOTAL_ROUNDS - roundsPlayed;
       if (gameRef.current) gameRef.current.phase = "between-rounds";
       setScreen({
         kind: "between-rounds",
@@ -203,11 +224,11 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
   // Game loop
   // -------------------------------------------------------------------------
 
-  const resetRound = useCallback((canvas: HTMLCanvasElement) => {
+  /** Reset positions/speed and arm the round in the "ready" phase. */
+  const enterReady = useCallback((canvas: HTMLCanvasElement) => {
     const g = gameRef.current;
     if (!g) return;
-    g.phase = "playing";
-    g.roundStartedAt = Date.now();
+    g.phase = "ready";
     g.elapsedSeconds = 0;
     g.penguinY = getGroundY(canvas);
     g.penguinVY = 0;
@@ -217,6 +238,18 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
     g.rampAccumulator = 0;
     g.snowmen = [];
     g.spawnAccumulator = 0;
+    g.lastTimestamp = 0;
+  }, []);
+
+  /** Transition from "ready" to "playing" on the first input. */
+  const startRound = useCallback(() => {
+    const g = gameRef.current;
+    if (!g || g.phase !== "ready") return;
+    g.phase = "playing";
+    g.roundStartedAt = Date.now();
+    g.elapsedSeconds = 0;
+    g.lastTimestamp = 0;
+    setScreen({ kind: "playing" });
   }, []);
 
   const tick = useCallback(
@@ -228,75 +261,85 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
       const g = gameRef.current;
       if (!g) return;
 
-      if (g.phase !== "playing") return; // pause loop while in overlay
+      // Only "ready" and "playing" animate; overlays pause the loop.
+      if (g.phase !== "playing" && g.phase !== "ready") return;
 
-      const dt =
-        g.lastTimestamp === 0 ? 0 : (timestamp - g.lastTimestamp) / 1000;
-      g.lastTimestamp = timestamp;
+      if (g.phase === "playing") {
+        const dt =
+          g.lastTimestamp === 0 ? 0 : (timestamp - g.lastTimestamp) / 1000;
+        g.lastTimestamp = timestamp;
 
-      // --- physics ---
-      g.penguinVY += GRAVITY * dt;
-      g.penguinY += g.penguinVY * dt;
-      const groundY = getGroundY(canvas);
-      if (g.penguinY >= groundY) {
-        g.penguinY = groundY;
-        g.penguinVY = 0;
-        g.onGround = true;
-      }
-
-      // --- score (elapsed seconds) ---
-      g.elapsedSeconds += dt;
-
-      // --- speed ramp ---
-      g.rampAccumulator += dt * 1000;
-      if (g.rampAccumulator >= GAME_RAMP_INTERVAL_MS) {
-        g.rampAccumulator -= GAME_RAMP_INTERVAL_MS;
-        g.scrollSpeed = Math.min(
-          g.scrollSpeed + GAME_SPEED_RAMP,
-          GAME_SPEED_CAP,
-        );
-        g.spawnIntervalMs = Math.max(
-          g.spawnIntervalMs - GAME_SPAWN_INTERVAL_RAMP_MS,
-          GAME_SPAWN_INTERVAL_FLOOR_MS,
-        );
-      }
-
-      // --- spawn snowmen ---
-      g.spawnAccumulator += dt * 1000;
-      if (g.spawnAccumulator >= g.spawnIntervalMs) {
-        g.spawnAccumulator = 0;
-        g.snowmen.push({ x: canvas.width + FONT_SIZE, y: groundY });
-      }
-
-      // --- move snowmen ---
-      for (const s of g.snowmen) {
-        s.x -= g.scrollSpeed * dt;
-      }
-      g.snowmen = g.snowmen.filter((s) => s.x > -FONT_SIZE * 2);
-
-      // --- collision detection ---
-      const penguinX = canvas.width * PENGUIN_X_FRACTION;
-      const boxSize = FONT_SIZE * EMOJI_BOX_FRACTION;
-      for (const s of g.snowmen) {
-        const px = penguinX;
-        const py = g.penguinY;
-        if (
-          px < s.x + boxSize &&
-          px + boxSize > s.x &&
-          py < s.y + boxSize &&
-          py + boxSize > s.y
-        ) {
-          g.phase = "between-rounds"; // pause loop to prevent re-entry
-          void handleCollision();
-          return; // stop this frame
+        // --- physics ---
+        g.penguinVY += GRAVITY * dt;
+        g.penguinY += g.penguinVY * dt;
+        const groundY = getGroundY(canvas);
+        if (g.penguinY >= groundY) {
+          g.penguinY = groundY;
+          g.penguinVY = 0;
+          g.onGround = true;
         }
+
+        // --- score (elapsed seconds) ---
+        g.elapsedSeconds += dt;
+
+        // --- speed ramp ---
+        g.rampAccumulator += dt * 1000;
+        if (g.rampAccumulator >= GAME_RAMP_INTERVAL_MS) {
+          g.rampAccumulator -= GAME_RAMP_INTERVAL_MS;
+          g.scrollSpeed = Math.min(
+            g.scrollSpeed + GAME_SPEED_RAMP,
+            GAME_SPEED_CAP,
+          );
+          g.spawnIntervalMs = Math.max(
+            g.spawnIntervalMs - GAME_SPAWN_INTERVAL_RAMP_MS,
+            GAME_SPAWN_INTERVAL_FLOOR_MS,
+          );
+        }
+
+        // --- spawn snowmen ---
+        g.spawnAccumulator += dt * 1000;
+        if (g.spawnAccumulator >= g.spawnIntervalMs) {
+          g.spawnAccumulator = 0;
+          g.snowmen.push({ x: canvas.width + FONT_SIZE, y: groundY });
+        }
+
+        // --- move snowmen ---
+        for (const s of g.snowmen) {
+          s.x -= g.scrollSpeed * dt;
+        }
+        g.snowmen = g.snowmen.filter((s) => s.x > -FONT_SIZE * 2);
+
+        // --- collision detection ---
+        const penguinX = canvas.width * PENGUIN_X_FRACTION;
+        const boxSize = FONT_SIZE * EMOJI_BOX_FRACTION;
+        for (const s of g.snowmen) {
+          const px = penguinX;
+          const py = g.penguinY;
+          if (
+            px < s.x + boxSize &&
+            px + boxSize > s.x &&
+            py < s.y + boxSize &&
+            py + boxSize > s.y
+          ) {
+            g.phase = "between-rounds"; // pause loop to prevent re-entry
+            void handleCollision();
+            return; // stop this frame
+          }
+        }
+      } else {
+        // "ready" — keep the clock fresh so the first playing frame has dt 0.
+        g.lastTimestamp = timestamp;
       }
 
       // --- draw ---
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const penguinX = canvas.width * PENGUIN_X_FRACTION;
+
+      // Sky background
+      ctx.fillStyle = SKY_COLOR;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Ground
-      ctx.fillStyle = "#39393b"; // charcoal
+      ctx.fillStyle = GROUND_COLOR;
       ctx.fillRect(
         0,
         canvas.height - GROUND_HEIGHT,
@@ -306,6 +349,7 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
 
       // Penguin
       ctx.font = `${FONT_SIZE}px sans-serif`;
+      ctx.textAlign = "left";
       ctx.textBaseline = "top";
       ctx.fillText("🐧", penguinX, g.penguinY);
 
@@ -314,18 +358,24 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
         ctx.fillText("⛄", s.x, s.y);
       }
 
-      // HUD — score top-right
+      // HUD — big score, centred top, with round + record below.
       const hudScore = Math.floor(g.elapsedSeconds * POINTS_PER_SECOND);
-      ctx.font = "bold 20px sans-serif";
-      ctx.fillStyle = "#ffffff";
-      ctx.textAlign = "right";
+      ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.fillText(String(hudScore), canvas.width - 16, 16);
+      ctx.fillStyle = INK_COLOR;
+      ctx.font = "bold 56px sans-serif";
+      ctx.fillText(String(hudScore), canvas.width / 2, 12);
+      ctx.font = "16px sans-serif";
+      ctx.fillText(
+        `${t("round")} ${g.round}/${TOTAL_ROUNDS}   ★ ${g.bestScore}`,
+        canvas.width / 2,
+        76,
+      );
       ctx.textAlign = "left"; // reset
 
       rafIdRef.current = requestAnimationFrame(tick);
     },
-    [handleCollision],
+    [handleCollision, t],
   );
 
   // -------------------------------------------------------------------------
@@ -336,18 +386,24 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Size canvas to viewport
+    // Size the canvas to a bounded, centred play-box.
     function resize() {
       if (!canvas) return;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.width = Math.min(window.innerWidth - GAME_MARGIN, GAME_MAX_WIDTH);
+      canvas.height = Math.min(
+        window.innerHeight - GAME_MARGIN,
+        GAME_MAX_HEIGHT,
+      );
+      const g = gameRef.current;
+      // Keep the penguin grounded if it is resting when the box resizes.
+      if (g?.onGround) g.penguinY = getGroundY(canvas);
     }
     resize();
     window.addEventListener("resize", resize);
 
     // Initialise mutable state
     const g: MutableGameState = {
-      phase: "playing",
+      phase: "ready",
       round: 1,
       roundStartedAt: Date.now(),
       elapsedSeconds: 0,
@@ -366,7 +422,7 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
     };
     gameRef.current = g;
 
-    // Start loop
+    // Start loop (renders the static "ready" frame until first input)
     rafIdRef.current = requestAnimationFrame(tick);
 
     // Heartbeat
@@ -380,10 +436,16 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
       });
     }, 30_000);
 
-    // Jump controls
+    // Jump / start controls. The first input starts the round; subsequent
+    // inputs jump (single jump only while grounded).
     function jump() {
       const g = gameRef.current;
-      if (g?.phase !== "playing") return;
+      if (!g) return;
+      if (g.phase === "ready") {
+        startRound();
+        return;
+      }
+      if (g.phase !== "playing") return;
       if (!g.onGround) return; // single jump only
       g.penguinVY = JUMP_VELOCITY;
       g.onGround = false;
@@ -403,10 +465,13 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
     window.addEventListener("keydown", onKeyDown);
     canvas.addEventListener("pointerdown", onPointerDown);
 
-    // Test hook — allows tests to trigger a collision via a custom DOM event
+    // Test hook — allows tests to trigger a collision via a custom DOM event.
+    // Auto-starts the round if still in the "ready" phase.
     function onTestCollision() {
       const g = gameRef.current;
-      if (g?.phase !== "playing") return;
+      if (!g) return;
+      if (g.phase === "ready") startRound();
+      if (g.phase !== "playing") return;
       g.phase = "between-rounds";
       void handleCollision();
     }
@@ -426,7 +491,7 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
         onTestCollision as EventListener,
       );
     };
-  }, [runId, tick, handleCollision]);
+  }, [runId, tick, handleCollision, startRound]);
 
   // -------------------------------------------------------------------------
   // Handlers for HTML overlay buttons
@@ -436,9 +501,8 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
     const canvas = canvasRef.current;
     if (!canvas || !gameRef.current) return;
     gameRef.current.round += 1;
-    resetRound(canvas);
-    setScreen({ kind: "playing" });
-    gameRef.current.lastTimestamp = 0;
+    enterReady(canvas);
+    setScreen({ kind: "ready" });
     rafIdRef.current = requestAnimationFrame(tick);
   }
 
@@ -446,13 +510,17 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
     onFinished();
   }
 
+  /** Quit mid-run from the between-round screen: finalise then exit. */
+  async function handleQuit() {
+    await finishRun();
+    onFinished();
+  }
+
   function handleRetry() {
     const canvas = canvasRef.current;
     if (!canvas || !gameRef.current) return;
-    // re-attempt round report with same round state — simplest UX is to restart round
-    resetRound(canvas);
-    setScreen({ kind: "playing" });
-    gameRef.current.lastTimestamp = 0;
+    enterReady(canvas);
+    setScreen({ kind: "ready" });
     rafIdRef.current = requestAnimationFrame(tick);
   }
 
@@ -463,70 +531,89 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
   return (
     <div
       data-testid="penguin-run-overlay"
-      className="fixed inset-0 z-[200] bg-black/85"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4"
       style={{ isolation: "isolate" }}
     >
-      <canvas
-        ref={canvasRef}
-        data-testid="penguin-run-canvas"
-        className="block h-full w-full"
-        aria-label="Penguin Run game canvas"
-      />
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          data-testid="penguin-run-canvas"
+          className="block touch-none rounded-2xl border border-white/10 shadow-2xl"
+          aria-label="Penguin Run game canvas"
+        />
 
-      {/* Between-round overlay */}
-      {screen.kind === "between-rounds" && (
-        <div
-          data-testid="between-round-screen"
-          className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-black/70"
-        >
-          <p className="text-heading-xl font-medium text-white uppercase tracking-tight">
-            {t("round")} {gameRef.current?.round ?? 1}
-          </p>
-          <p className="text-body-md text-white/80">
-            {t("roundScore")}: {screen.roundScore}
-          </p>
-          <p className="text-body-md text-white/80">
-            {t("bestScore")}: {screen.bestScore}
-          </p>
-          <p className="text-caption-md text-white/70">
-            {t("livesRemaining", { count: screen.livesRemaining })}
-          </p>
-          <Button variant="default" size="sm" onClick={handleNextRound}>
-            {t("nextRound")}
-          </Button>
-        </div>
-      )}
+        {/* Press-to-start prompt */}
+        {screen.kind === "ready" && (
+          <div
+            data-testid="press-to-start-screen"
+            className="pointer-events-none absolute inset-x-0 bottom-12 flex justify-center"
+          >
+            <p className="rounded-full bg-black/70 px-4 py-2 text-caption-md font-medium text-white">
+              {t("pressToStart")}
+            </p>
+          </div>
+        )}
 
-      {/* Round error overlay */}
-      {screen.kind === "round-error" && (
-        <div
-          data-testid="round-error-screen"
-          className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-black/70"
-        >
-          <p className="text-body-md text-destructive">{t("roundError")}</p>
-          <Button variant="outline" size="sm" onClick={handleRetry}>
-            {t("retryRound")}
-          </Button>
-        </div>
-      )}
+        {/* Between-round overlay */}
+        {screen.kind === "between-rounds" && (
+          <div
+            data-testid="between-round-screen"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-6 rounded-2xl bg-black/70"
+          >
+            <p className="text-heading-xl font-medium text-white uppercase tracking-tight">
+              {t("round")} {gameRef.current?.round ?? 1}
+            </p>
+            <p className="text-body-md text-white/80">
+              {t("roundScore")}: {screen.roundScore}
+            </p>
+            <p className="text-body-md text-white/80">
+              {t("bestScore")}: {screen.bestScore}
+            </p>
+            <p className="text-caption-md text-white/70">
+              {t("livesRemaining", { count: screen.livesRemaining })}
+            </p>
+            <div className="flex items-center gap-3">
+              <Button variant="default" size="sm" onClick={handleNextRound}>
+                {t("nextRound")}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleQuit}>
+                {t("viewRanking")}
+              </Button>
+            </div>
+          </div>
+        )}
 
-      {/* Game-over overlay */}
-      {screen.kind === "game-over" && (
-        <div
-          data-testid="game-over-screen"
-          className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-black/70"
-        >
-          <p className="text-heading-xl font-medium text-white uppercase tracking-tight">
-            {t("runFinished")}
-          </p>
-          <p className="text-body-md text-white/80">
-            {t("bestScore")}: {screen.bestScore}
-          </p>
-          <Button variant="default" size="sm" onClick={handleViewRanking}>
-            {t("viewRanking")}
-          </Button>
-        </div>
-      )}
+        {/* Round error overlay */}
+        {screen.kind === "round-error" && (
+          <div
+            data-testid="round-error-screen"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-6 rounded-2xl bg-black/70"
+          >
+            <p className="text-body-md text-destructive">{t("roundError")}</p>
+            <Button variant="outline" size="sm" onClick={handleRetry}>
+              {t("retryRound")}
+            </Button>
+          </div>
+        )}
+
+        {/* Game-over overlay */}
+        {screen.kind === "game-over" && (
+          <div
+            data-testid="game-over-screen"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-6 rounded-2xl bg-black/70"
+          >
+            <p className="text-heading-xl font-medium text-white uppercase tracking-tight">
+              {t("runFinished")}
+            </p>
+            <p className="text-body-md text-white/80">
+              {t("bestScore")}: {screen.bestScore}
+            </p>
+            <Button variant="default" size="sm" onClick={handleViewRanking}>
+              {t("viewRanking")}
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -7,3 +7,9 @@ The platform's **Leaderboard** is strictly Community-scoped, one row per closed 
 - Arcade Ranking has **no effect on bet standings** and never breaks ties in the betting Leaderboard — they share only a UI page (sibling tabs), nothing in the model.
 - A new `arcade` module owns its own aggregate (the Penguin Run) and read model; the `leaderboard`, `bet`, and `score` modules are untouched.
 - Reversing this (e.g. merging the rankings) would mean schema and UI rework, hence recording the boundary now.
+
+## Amendment — UI route separation (issue #374)
+
+The **UI clause** of this decision is updated: the Arcade Ranking now lives on its own authenticated route `/arcade` (under `app/[locale]/(authenticated)/arcade/`), rather than as a sibling tab on the `/leaderboard` page. The model boundary is unchanged — Arcade Ranking remains a separate bounded context with no coupling to bet standings.
+
+The `/leaderboard` page retains its arcade tab temporarily (to be stripped in a follow-up slice). The `getArcadeRanking` use case now accepts a `NameResolver` seam (symmetric with the betting Leaderboard), so callers no longer issue their own Prisma name-resolution queries.
