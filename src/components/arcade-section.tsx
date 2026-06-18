@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArcadeInvitationModal } from "@/components/arcade-invitation-modal";
 import { ArcadeStart } from "@/components/arcade-start";
 import { PenguinRunGame } from "@/components/penguin-run-game";
+import { useRouter } from "@/i18n/navigation";
 
 type ArcadeRunState =
   | { kind: "idle" }
@@ -41,6 +42,17 @@ export function ArcadeSection({ hasPlayedToday, enabled }: ArcadeSectionProps) {
     hasPlayedToday ? { kind: "already_played" } : { kind: "idle" },
   );
   const [spriteState, setSpriteState] = useState<SpriteLoadState>("loading");
+  const router = useRouter();
+
+  /**
+   * Finishing a run transitions the UI to already_played and refreshes the
+   * server component so the freshly recorded score shows up in the ranking
+   * table without a manual page reload.
+   */
+  function handleFinished() {
+    setState({ kind: "already_played" });
+    router.refresh();
+  }
 
   const penguinImageRef = useRef<HTMLImageElement | null>(null);
   const obstacleImageRef = useRef<HTMLImageElement | null>(null);
@@ -148,7 +160,7 @@ export function ArcadeSection({ hasPlayedToday, enabled }: ArcadeSectionProps) {
         birdImageRef.current && (
           <PenguinRunGame
             runId={state.runId}
-            onFinished={() => setState({ kind: "already_played" })}
+            onFinished={handleFinished}
             penguinImage={penguinImageRef.current}
             obstacleImage={obstacleImageRef.current}
             birdImage={birdImageRef.current}
