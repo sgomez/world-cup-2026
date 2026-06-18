@@ -1,7 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
-import { ArcadeSection } from "@/components/arcade-section";
-import { LeaderboardTabs } from "@/components/leaderboard-tabs";
-import { ARCADE_GAME_ENABLED } from "@/config/arcade";
+import { Leaderboard } from "@/components/leaderboard";
 import { redirect } from "@/i18n/navigation";
 import { container } from "@/lib/container";
 import { prisma } from "@/lib/prisma";
@@ -80,33 +78,12 @@ export default async function LeaderboardPage({
     (s): s is NonNullable<typeof s> => s !== null,
   );
 
-  // Fetch arcade ranking (name resolution delegated to the use case via NameResolver).
-  const [arcadeRankingRaw, hasPlayedToday] = await Promise.all([
-    container.arcade().getRanking(nameResolver),
-    container.arcade().hasPlayedToday(session.user.id),
-  ]);
-
-  const arcadeEntries = arcadeRankingRaw.map((entry) => ({
-    rank: entry.rank,
-    userId: entry.userId,
-    userName: entry.userName,
-    bestScore: entry.bestScore,
-    achievedAt: entry.achievedAt.toISOString(),
-  }));
-
   return (
-    <div>
-      <ArcadeSection
-        hasPlayedToday={hasPlayedToday}
-        enabled={ARCADE_GAME_ENABLED}
-      />
-      <LeaderboardTabs
-        scopes={scopes}
-        arcadeEntries={arcadeEntries}
-        currentUserId={session.user.id}
-        tournamentEnded={tournamentEnded}
-        hasLiveMatch={liveMatchActive}
-      />
-    </div>
+    <Leaderboard
+      scopes={scopes}
+      currentUserId={session.user.id}
+      tournamentEnded={tournamentEnded}
+      hasLiveMatch={liveMatchActive}
+    />
   );
 }
