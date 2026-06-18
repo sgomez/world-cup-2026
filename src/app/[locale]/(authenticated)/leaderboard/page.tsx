@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { ArcadeInvitationModal } from "@/components/arcade-invitation-modal";
 import { ArcadeStart } from "@/components/arcade-start";
 import { LeaderboardTabs } from "@/components/leaderboard-tabs";
 import { redirect } from "@/i18n/navigation";
@@ -109,6 +110,7 @@ export default async function LeaderboardPage({
 
   return (
     <div>
+      <ArcadeInvitationModal hasPlayedToday={hasPlayedToday} />
       <div className="mb-6 flex justify-end">
         <ArcadeStart hasPlayedToday={hasPlayedToday} />
       </div>

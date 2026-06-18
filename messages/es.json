@@ -422,7 +422,11 @@
     "roundError": "No se pudo registrar la ronda. Inténtalo de nuevo.",
     "finishError": "No se pudo finalizar la partida. Inténtalo de nuevo.",
     "runNotFound": "Partida no encontrada.",
-    "runNotInProgress": "Esta partida ya ha terminado."
+    "runNotInProgress": "Esta partida ya ha terminado.",
+    "invitationModalTitle": "¡Juega Penguin Run!",
+    "invitationModalDescription": "Ponte a prueba en el Penguin Run de hoy. Solo tienes una oportunidad al día — ¡aprovéchala!",
+    "playNow": "Jugar ahora",
+    "maybeLater": "Quizás después"
   },
   "tournament": {
     "title": "Clasificación del Torneo",

@@ -422,7 +422,11 @@
     "roundError": "Could not record round. Please try again.",
     "finishError": "Could not finish run. Please try again.",
     "runNotFound": "Run not found.",
-    "runNotInProgress": "This run is already over."
+    "runNotInProgress": "This run is already over.",
+    "invitationModalTitle": "Play Penguin Run!",
+    "invitationModalDescription": "Challenge yourself in today's Penguin Run. You get one shot per day — make it count!",
+    "playNow": "Play Now",
+    "maybeLater": "Maybe Later"
   },
   "tournament": {
     "title": "Tournament Standings",
