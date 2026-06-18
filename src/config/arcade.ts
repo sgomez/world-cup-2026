@@ -14,3 +14,28 @@ export const ARCADE_STALE_TOLERANCE_MS: number =
 /** Feature flag: Penguin Run game is playable. Default off until the game ships. */
 export const ARCADE_GAME_ENABLED: boolean =
   process.env.ARCADE_GAME_ENABLED === "true";
+
+// ---------------------------------------------------------------------------
+// Penguin Run canvas game — tunable physics/speed constants
+// ---------------------------------------------------------------------------
+
+/** Initial horizontal scroll speed of snowmen (px/s). */
+export const GAME_INITIAL_SPEED = 300;
+
+/** Speed increase applied every GAME_RAMP_INTERVAL_MS (px/s). */
+export const GAME_SPEED_RAMP = 20;
+
+/** Maximum scroll speed cap (px/s). */
+export const GAME_SPEED_CAP = 800;
+
+/** Interval at which speed and spawn rate are ramped (ms). */
+export const GAME_RAMP_INTERVAL_MS = 5_000;
+
+/** Initial snowman spawn interval (ms). */
+export const GAME_INITIAL_SPAWN_INTERVAL_MS = 2_000;
+
+/** Reduction applied to spawn interval every GAME_RAMP_INTERVAL_MS (ms). */
+export const GAME_SPAWN_INTERVAL_RAMP_MS = 100;
+
+/** Floor for snowman spawn interval (ms). */
+export const GAME_SPAWN_INTERVAL_FLOOR_MS = 800;

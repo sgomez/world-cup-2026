@@ -426,7 +426,11 @@
     "invitationModalTitle": "¡Juega Penguin Run!",
     "invitationModalDescription": "Ponte a prueba en el Penguin Run de hoy. Solo tienes una oportunidad al día — ¡aprovéchala!",
     "playNow": "Jugar ahora",
-    "maybeLater": "Quizás después"
+    "maybeLater": "Quizás después",
+    "nextRound": "Siguiente ronda",
+    "viewRanking": "Ver clasificación",
+    "roundScore": "Puntuación de ronda",
+    "retryRound": "Reintentar"
   },
   "tournament": {
     "title": "Clasificación del Torneo",
