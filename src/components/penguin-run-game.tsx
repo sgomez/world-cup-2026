@@ -2,13 +2,12 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { planNextGroup } from "@/components/penguin-run-planner";
 import { Button } from "@/components/ui/button";
 import {
-  GAME_INITIAL_SPAWN_INTERVAL_MS,
   GAME_INITIAL_SPEED,
+  GAME_OBSTACLE_WIDTH,
   GAME_RAMP_INTERVAL_MS,
-  GAME_SPAWN_INTERVAL_FLOOR_MS,
-  GAME_SPAWN_INTERVAL_RAMP_MS,
   GAME_SPEED_CAP,
   GAME_SPEED_RAMP,
 } from "@/config/arcade";
@@ -22,14 +21,24 @@ const FONT_SIZE = 48;
 const GROUND_HEIGHT = 8;
 /** Penguin horizontal position as fraction of canvas width. */
 const PENGUIN_X_FRACTION = 0.2;
-/** Approximate bounding box for emoji collision (fraction of font size). */
-const EMOJI_BOX_FRACTION = 0.7;
+
+/**
+ * Forgiving hitbox: ~60% of the sprite size, centred.
+ * Applies to both penguin and obstacle (ADR 0035).
+ */
+const HITBOX_FRACTION = 0.6;
 
 const JUMP_VELOCITY = -700; // px/s (negative = up)
 const GRAVITY = 1800; // px/s²
 
 /** Total rounds (lives) per run. */
 const TOTAL_ROUNDS = 3;
+
+/**
+ * Gap (px) between contiguous obstacles within the same Obstacle Group.
+ * Zero gap = touching edges (one uninterrupted wall the player must clear).
+ */
+const OBSTACLE_GAP_WITHIN_GROUP = 0;
 
 // Centred play-box dimensions. On desktop the canvas is a bounded box (like
 // the classic running-dinosaur game); on narrow screens it shrinks to fit.
@@ -53,7 +62,7 @@ type GamePhase =
   | "game-over"
   | "round-error";
 
-interface Snowman {
+interface Obstacle {
   x: number;
   y: number;
 }
@@ -78,14 +87,21 @@ interface MutableGameState {
   penguinVY: number;
   /** Current scroll speed (px/s). */
   scrollSpeed: number;
-  /** Current snowman spawn interval (ms). */
-  spawnIntervalMs: number;
   /** Elapsed time since last speed ramp (ms). */
   rampAccumulator: number;
-  /** Snowmen on screen. */
-  snowmen: Snowman[];
-  /** Time since last snowman spawned (ms). */
-  spawnAccumulator: number;
+  /** Obstacles on screen. */
+  obstacles: Obstacle[];
+  /**
+   * Distance (px) of clear ground scrolled since the trailing edge of the
+   * last Obstacle Group. Counts up until it hits `nextGroupGapPx`, at which
+   * point the next group is spawned and this resets to 0.
+   */
+  distanceSinceLastGroup: number;
+  /**
+   * The clear gap (px) the game must scroll before spawning the next group.
+   * Determined by `planNextGroup` after each group is emitted.
+   */
+  nextGroupGapPx: number;
   /** Whether the penguin is on the ground. */
   onGround: boolean;
   /** Timestamp of the previous frame (ms from performance.now()). */
@@ -228,16 +244,21 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
   const enterReady = useCallback((canvas: HTMLCanvasElement) => {
     const g = gameRef.current;
     if (!g) return;
+    const initialPlan = planNextGroup({
+      speed: GAME_INITIAL_SPEED,
+      elapsedMs: 0,
+      rng: Math.random,
+    });
     g.phase = "ready";
     g.elapsedSeconds = 0;
     g.penguinY = getGroundY(canvas);
     g.penguinVY = 0;
     g.onGround = true;
     g.scrollSpeed = GAME_INITIAL_SPEED;
-    g.spawnIntervalMs = GAME_INITIAL_SPAWN_INTERVAL_MS;
     g.rampAccumulator = 0;
-    g.snowmen = [];
-    g.spawnAccumulator = 0;
+    g.obstacles = [];
+    g.distanceSinceLastGroup = 0;
+    g.nextGroupGapPx = initialPlan.gapPx;
     g.lastTimestamp = 0;
   }, []);
 
@@ -290,36 +311,68 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
             g.scrollSpeed + GAME_SPEED_RAMP,
             GAME_SPEED_CAP,
           );
-          g.spawnIntervalMs = Math.max(
-            g.spawnIntervalMs - GAME_SPAWN_INTERVAL_RAMP_MS,
-            GAME_SPAWN_INTERVAL_FLOOR_MS,
-          );
         }
 
-        // --- spawn snowmen ---
-        g.spawnAccumulator += dt * 1000;
-        if (g.spawnAccumulator >= g.spawnIntervalMs) {
-          g.spawnAccumulator = 0;
-          g.snowmen.push({ x: canvas.width + FONT_SIZE, y: groundY });
+        // --- distance-based obstacle spawning (ADR 0035) ---
+        const distanceDelta = g.scrollSpeed * dt;
+        g.distanceSinceLastGroup += distanceDelta;
+
+        if (g.distanceSinceLastGroup >= g.nextGroupGapPx) {
+          // Overshoot: the distance beyond the gap becomes the leading edge
+          // of the first obstacle in the new group.
+          const overshoot = g.distanceSinceLastGroup - g.nextGroupGapPx;
+          const spawnX = canvas.width + GAME_OBSTACLE_WIDTH - overshoot;
+
+          // Plan the next group
+          const plan = planNextGroup({
+            speed: g.scrollSpeed,
+            elapsedMs: g.elapsedSeconds * 1000,
+            rng: Math.random,
+          });
+
+          // Spawn all obstacles in this group (contiguous)
+          for (let i = 0; i < plan.size; i++) {
+            g.obstacles.push({
+              x: spawnX + i * (GAME_OBSTACLE_WIDTH + OBSTACLE_GAP_WITHIN_GROUP),
+              y: groundY,
+            });
+          }
+
+          // Reset distance tracking and record next gap
+          g.distanceSinceLastGroup = 0;
+          g.nextGroupGapPx = plan.gapPx;
         }
 
-        // --- move snowmen ---
-        for (const s of g.snowmen) {
-          s.x -= g.scrollSpeed * dt;
+        // --- move obstacles ---
+        for (const obs of g.obstacles) {
+          obs.x -= g.scrollSpeed * dt;
         }
-        g.snowmen = g.snowmen.filter((s) => s.x > -FONT_SIZE * 2);
+        g.obstacles = g.obstacles.filter(
+          (obs) => obs.x > -(GAME_OBSTACLE_WIDTH * 2),
+        );
 
-        // --- collision detection ---
+        // --- collision detection (forgiving 60% hitbox, centred) ---
         const penguinX = canvas.width * PENGUIN_X_FRACTION;
-        const boxSize = FONT_SIZE * EMOJI_BOX_FRACTION;
-        for (const s of g.snowmen) {
-          const px = penguinX;
-          const py = g.penguinY;
+        const penguinHitSize = FONT_SIZE * HITBOX_FRACTION;
+        const penguinHitOffset = (FONT_SIZE - penguinHitSize) / 2;
+        const penguinLeft = penguinX + penguinHitOffset;
+        const penguinTop = g.penguinY + penguinHitOffset;
+        const penguinRight = penguinLeft + penguinHitSize;
+        const penguinBottom = penguinTop + penguinHitSize;
+
+        for (const obs of g.obstacles) {
+          const obsHitSize = GAME_OBSTACLE_WIDTH * HITBOX_FRACTION;
+          const obsHitOffset = (GAME_OBSTACLE_WIDTH - obsHitSize) / 2;
+          const obsLeft = obs.x + obsHitOffset;
+          const obsTop = obs.y + obsHitOffset;
+          const obsRight = obsLeft + obsHitSize;
+          const obsBottom = obsTop + obsHitSize;
+
           if (
-            px < s.x + boxSize &&
-            px + boxSize > s.x &&
-            py < s.y + boxSize &&
-            py + boxSize > s.y
+            penguinLeft < obsRight &&
+            penguinRight > obsLeft &&
+            penguinTop < obsBottom &&
+            penguinBottom > obsTop
           ) {
             g.phase = "between-rounds"; // pause loop to prevent re-entry
             void handleCollision();
@@ -353,9 +406,9 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
       ctx.textBaseline = "top";
       ctx.fillText("🐧", penguinX, g.penguinY);
 
-      // Snowmen
-      for (const s of g.snowmen) {
-        ctx.fillText("⛄", s.x, s.y);
+      // Obstacles
+      for (const obs of g.obstacles) {
+        ctx.fillText("⛄", obs.x, obs.y);
       }
 
       // HUD — big score, centred top, with round + record below.
@@ -401,6 +454,13 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
     resize();
     window.addEventListener("resize", resize);
 
+    // Plan the initial gap before any group spawns.
+    const initialPlan = planNextGroup({
+      speed: GAME_INITIAL_SPEED,
+      elapsedMs: 0,
+      rng: Math.random,
+    });
+
     // Initialise mutable state
     const g: MutableGameState = {
       phase: "ready",
@@ -413,10 +473,10 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
       penguinY: getGroundY(canvas),
       penguinVY: 0,
       scrollSpeed: GAME_INITIAL_SPEED,
-      spawnIntervalMs: GAME_INITIAL_SPAWN_INTERVAL_MS,
       rampAccumulator: 0,
-      snowmen: [],
-      spawnAccumulator: 0,
+      obstacles: [],
+      distanceSinceLastGroup: 0,
+      nextGroupGapPx: initialPlan.gapPx,
       onGround: true,
       lastTimestamp: 0,
     };

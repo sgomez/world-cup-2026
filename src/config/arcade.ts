@@ -28,14 +28,12 @@ export const GAME_SPEED_RAMP = 20;
 /** Maximum scroll speed cap (px/s). */
 export const GAME_SPEED_CAP = 800;
 
-/** Interval at which speed and spawn rate are ramped (ms). */
+/** Interval at which speed is ramped (ms). */
 export const GAME_RAMP_INTERVAL_MS = 5_000;
 
-/** Initial snowman spawn interval (ms). */
-export const GAME_INITIAL_SPAWN_INTERVAL_MS = 2_000;
-
-/** Reduction applied to spawn interval every GAME_RAMP_INTERVAL_MS (ms). */
-export const GAME_SPAWN_INTERVAL_RAMP_MS = 100;
-
-/** Floor for snowman spawn interval (ms). */
-export const GAME_SPAWN_INTERVAL_FLOOR_MS = 800;
+/**
+ * Width of a single obstacle sprite as rendered on the canvas (px).
+ * Used by the obstacle-group planner to compute group span and assert
+ * it stays within jump reach (ADR 0035).
+ */
+export const GAME_OBSTACLE_WIDTH = 48;
