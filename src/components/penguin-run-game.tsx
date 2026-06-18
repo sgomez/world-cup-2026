@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isNightMode } from "@/components/penguin-run-night-mode";
 import { planNextGroup } from "@/components/penguin-run-planner";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +11,11 @@ import {
   GAME_HITBOX_FRACTION,
   GAME_INITIAL_SPEED,
   GAME_JUMP_VELOCITY,
+  GAME_NIGHT_DURATION_PTS,
+  GAME_NIGHT_GROUND_COLOR,
+  GAME_NIGHT_INK_COLOR,
+  GAME_NIGHT_INTERVAL_PTS,
+  GAME_NIGHT_SKY_COLOR,
   GAME_OBS_FOOT_PAD,
   GAME_OBSTACLE_GAP_WITHIN_GROUP,
   GAME_OBSTACLE_WIDTH,
@@ -43,6 +49,21 @@ const GAME_MARGIN = 32;
 const SKY_COLOR = "#e8f3fb";
 const GROUND_COLOR = "#39393b"; // charcoal
 const INK_COLOR = "#1a1a1a";
+
+// ---------------------------------------------------------------------------
+// Local aliases — the arcade config exports with GAME_ prefix; the loop body
+// uses the short names for readability. These were bare names before the
+// config rename (feat: refactor arcade config) and are aliased here to fix
+// the resulting ReferenceErrors.
+// ---------------------------------------------------------------------------
+const GRAVITY = GAME_GRAVITY;
+const SPRITE_SIZE = GAME_SPRITE_SIZE;
+const TOTAL_ROUNDS = GAME_TOTAL_ROUNDS;
+const WALK_FRAME_MS = GAME_WALK_FRAME_MS;
+const PENGUIN_X_FRACTION = GAME_PENGUIN_X_FRACTION;
+const OBS_FOOT_PAD = GAME_OBS_FOOT_PAD;
+const OBSTACLE_GAP_WITHIN_GROUP = GAME_OBSTACLE_GAP_WITHIN_GROUP;
+const JUMP_VELOCITY = GAME_JUMP_VELOCITY;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -412,12 +433,23 @@ export function PenguinRunGame({
       // --- draw ---
       const penguinX = canvas.width * PENGUIN_X_FRACTION;
 
+      // Night-mode palette selection — pure visual, no physics change.
+      const hudScore = Math.floor(g.elapsedSeconds * POINTS_PER_SECOND);
+      const night = isNightMode(
+        hudScore,
+        GAME_NIGHT_INTERVAL_PTS,
+        GAME_NIGHT_DURATION_PTS,
+      );
+      const skyColor = night ? GAME_NIGHT_SKY_COLOR : SKY_COLOR;
+      const groundColor = night ? GAME_NIGHT_GROUND_COLOR : GROUND_COLOR;
+      const inkColor = night ? GAME_NIGHT_INK_COLOR : INK_COLOR;
+
       // Sky background
-      ctx.fillStyle = SKY_COLOR;
+      ctx.fillStyle = skyColor;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Ground
-      ctx.fillStyle = GROUND_COLOR;
+      ctx.fillStyle = groundColor;
       ctx.fillRect(
         0,
         canvas.height - GAME_GROUND_HEIGHT,
@@ -458,10 +490,9 @@ export function PenguinRunGame({
       }
 
       // HUD — big score, centred top, with round + record below.
-      const hudScore = Math.floor(g.elapsedSeconds * POINTS_PER_SECOND);
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.fillStyle = INK_COLOR;
+      ctx.fillStyle = inkColor;
       ctx.font = "bold 56px sans-serif";
       ctx.fillText(String(hudScore), canvas.width / 2, 12);
       ctx.font = "16px sans-serif";

@@ -116,3 +116,44 @@ export const GAME_HITBOX_FRACTION = 0.6;
 
 /** Total rounds (lives) per run. */
 export const GAME_TOTAL_ROUNDS = 3;
+
+// ---------------------------------------------------------------------------
+// Penguin Run — night mode (visual distractor, pure palette flip)
+// ---------------------------------------------------------------------------
+
+/**
+ * Score interval between each night-mode window (points).
+ *
+ * With POINTS_PER_SECOND = 1, this is also the survival-seconds interval.
+ * Set to 150 so the first night fires ~2.5 min in — noticeable in a normal
+ * run but not so frequent it becomes annoying.
+ */
+export const GAME_NIGHT_INTERVAL_PTS = 150;
+
+/**
+ * Duration of each night-mode window (points / seconds).
+ *
+ * Set to 35 so the dark palette lasts ~35 s before reverting to day.
+ */
+export const GAME_NIGHT_DURATION_PTS = 35;
+
+/**
+ * Dark sky fill color for night mode.
+ * Uses `{colors.ink}` (#111111) from DESIGN.md — deep near-black that
+ * inverts the light sky without introducing an arbitrary custom color.
+ */
+export const GAME_NIGHT_SKY_COLOR = "#111111";
+
+/**
+ * Light ground strip color for night mode.
+ * Uses `{colors.soft-cloud}` (#f5f5f5) from DESIGN.md — inverts the
+ * charcoal ground strip so it remains visible against the dark sky.
+ */
+export const GAME_NIGHT_GROUND_COLOR = "#f5f5f5";
+
+/**
+ * Light HUD text color for night mode.
+ * Uses `{colors.on-primary}` (#ffffff) from DESIGN.md — pure white ink
+ * on the dark sky canvas.
+ */
+export const GAME_NIGHT_INK_COLOR = "#ffffff";
