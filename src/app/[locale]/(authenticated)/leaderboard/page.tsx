@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { ArcadeInvitationModal } from "@/components/arcade-invitation-modal";
 import { ArcadeStart } from "@/components/arcade-start";
 import { LeaderboardTabs } from "@/components/leaderboard-tabs";
+import { ARCADE_GAME_ENABLED } from "@/config/arcade";
 import { redirect } from "@/i18n/navigation";
 import { container } from "@/lib/container";
 import { prisma } from "@/lib/prisma";
@@ -110,9 +111,15 @@ export default async function LeaderboardPage({
 
   return (
     <div>
-      <ArcadeInvitationModal hasPlayedToday={hasPlayedToday} />
+      <ArcadeInvitationModal
+        hasPlayedToday={hasPlayedToday}
+        enabled={ARCADE_GAME_ENABLED}
+      />
       <div className="mb-6 flex justify-end">
-        <ArcadeStart hasPlayedToday={hasPlayedToday} />
+        <ArcadeStart
+          hasPlayedToday={hasPlayedToday}
+          enabled={ARCADE_GAME_ENABLED}
+        />
       </div>
       <LeaderboardTabs
         scopes={scopes}

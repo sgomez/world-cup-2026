@@ -10,3 +10,7 @@
 export const ARCADE_STALE_TOLERANCE_MS: number =
   Number.parseInt(process.env.ARCADE_STALE_TOLERANCE_MS ?? "", 10) ||
   5 * 60 * 1000;
+
+/** Feature flag: Penguin Run game is playable. Default off until the game ships. */
+export const ARCADE_GAME_ENABLED: boolean =
+  process.env.ARCADE_GAME_ENABLED === "true";
