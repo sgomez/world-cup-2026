@@ -22,6 +22,7 @@ vi.mock("next-intl", () => ({
             roundError: "Could not record round. Please try again.",
             retryRound: "Retry",
             runFinished: "Run finished",
+            pressToStart: "Press Space or tap to start",
           } as Record<string, string>
         )[key] ?? key
       );
@@ -121,12 +122,54 @@ describe("PenguinRunGame", () => {
     expect(canvas.tagName).toBe("CANVAS");
   });
 
-  it("starts in playing phase — no between-round or game-over overlay visible", () => {
+  it("starts in the ready phase — shows a press-to-start prompt, no overlays", () => {
     renderGame();
+    expect(screen.getByTestId("press-to-start-screen")).toBeInTheDocument();
+    expect(screen.getByText("Press Space or tap to start")).toBeInTheDocument();
     expect(
       screen.queryByTestId("between-round-screen"),
     ).not.toBeInTheDocument();
     expect(screen.queryByTestId("game-over-screen")).not.toBeInTheDocument();
+  });
+
+  it("removes the press-to-start prompt once the round starts via Space", () => {
+    renderGame();
+    expect(screen.getByTestId("press-to-start-screen")).toBeInTheDocument();
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: " ", bubbles: true }),
+      );
+    });
+
+    expect(
+      screen.queryByTestId("press-to-start-screen"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides the press-to-start prompt after the round begins (collision flow)", async () => {
+    mockFetch.mockResolvedValueOnce(
+      stubFetchOk({
+        id: "run-1",
+        status: "in_progress",
+        bestScore: 5,
+        roundsPlayed: 1,
+      }),
+    );
+
+    renderGame();
+    expect(screen.getByTestId("press-to-start-screen")).toBeInTheDocument();
+
+    // triggerCollision auto-starts the round, then collides.
+    triggerCollision();
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(
+      screen.queryByTestId("press-to-start-screen"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("between-round-screen")).toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------------
@@ -232,6 +275,37 @@ describe("PenguinRunGame", () => {
       screen.queryByTestId("between-round-screen"),
     ).not.toBeInTheDocument();
     expect(screen.queryByTestId("game-over-screen")).not.toBeInTheDocument();
+  });
+
+  it("quits mid-run from the between-round screen — finalises and fires onFinished", async () => {
+    const onFinished = vi.fn();
+    mockFetch.mockResolvedValueOnce(
+      stubFetchOk({
+        id: "run-1",
+        status: "in_progress",
+        bestScore: 4,
+        roundsPlayed: 1,
+      }),
+    );
+
+    renderGame({ onFinished });
+    triggerCollision();
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId("between-round-screen")).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "View Ranking" }));
+      await Promise.resolve();
+    });
+
+    const finishCall = mockFetch.mock.calls.find(
+      ([url]) => url === "/api/arcade/finish",
+    );
+    expect(finishCall).toBeDefined();
+    expect(onFinished).toHaveBeenCalledOnce();
   });
 
   // -------------------------------------------------------------------------

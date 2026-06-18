@@ -6,21 +6,26 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-type StartState = { kind: "idle" } | { kind: "loading" } | { kind: "error" };
-
 interface ArcadeInvitationModalProps {
   /** Whether the logged-in user has already played today (server-determined). */
   hasPlayedToday: boolean;
   /** Feature flag: game is playable. When false, modal never opens. */
   enabled: boolean;
+  /** Called when the User presses "Play Now". Parent owns the run lifecycle. */
+  onPlay: () => void;
+  /** Whether a run is currently being started (disables actions). */
+  loading: boolean;
+  /** Whether the last start attempt failed. */
+  error: boolean;
 }
 
 /**
  * ArcadeInvitationModal — auto-opens once per page load when the User has not
  * yet played today.
  *
- * On "Play Now", calls POST /api/arcade/start and closes. On "Maybe Later",
- * dismisses without starting. Does nothing if hasPlayedToday is true.
+ * Presentational only: "Play Now" delegates to `onPlay`; the parent
+ * (`ArcadeSection`) owns the run lifecycle so the modal and the page Play
+ * button share a single run and the game overlay always launches.
  *
  * Server clock is authoritative (ADR 0034). Arcade scores never affect bet
  * standings (ADR 0033).
@@ -28,34 +33,21 @@ interface ArcadeInvitationModalProps {
 export function ArcadeInvitationModal({
   hasPlayedToday,
   enabled,
+  onPlay,
+  loading,
+  error,
 }: ArcadeInvitationModalProps) {
   const t = useTranslations("arcade");
 
   const [open, setOpen] = useState(enabled && !hasPlayedToday);
-  const [startState, setStartState] = useState<StartState>({ kind: "idle" });
 
-  async function handlePlayNow() {
-    setStartState({ kind: "loading" });
-    try {
-      const res = await fetch("/api/arcade/start", { method: "POST" });
-      if (res.status === 201) {
-        setOpen(false);
-      } else if (res.status === 409) {
-        // Already played (race condition); just close the modal.
-        setOpen(false);
-      } else {
-        setStartState({ kind: "error" });
-      }
-    } catch {
-      setStartState({ kind: "error" });
-    }
+  function handlePlayNow() {
+    onPlay();
+    setOpen(false);
   }
 
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen) {
-      setOpen(false);
-      setStartState({ kind: "idle" });
-    }
+    if (!nextOpen) setOpen(false);
   }
 
   return (
@@ -79,7 +71,7 @@ export function ArcadeInvitationModal({
           </div>
 
           {/* Error */}
-          {startState.kind === "error" && (
+          {error && (
             <p className="mt-4 text-center text-caption-sm text-destructive">
               {t("startError")}
             </p>
@@ -89,7 +81,7 @@ export function ArcadeInvitationModal({
           <div className="mt-6 flex flex-col gap-2">
             <Button
               variant="default"
-              loading={startState.kind === "loading"}
+              loading={loading}
               className="w-full"
               onClick={handlePlayNow}
             >
@@ -103,7 +95,7 @@ export function ArcadeInvitationModal({
                   type="button"
                   variant="secondary"
                   className="w-full"
-                  disabled={startState.kind === "loading"}
+                  disabled={loading}
                 />
               }
             >

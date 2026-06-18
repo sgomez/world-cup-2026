@@ -2,37 +2,29 @@
 
 import { Gamepad2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
-import { PenguinRunGame } from "@/components/penguin-run-game";
 import { Button } from "@/components/ui/button";
 
-type ArcadeRunState =
-  | { kind: "idle" }
-  | { kind: "loading" }
-  | { kind: "started"; runId: string; playDay: string }
-  | { kind: "already_played" }
-  | { kind: "error" };
+/** Visible status of the page Play control (parent owns the run lifecycle). */
+export type ArcadeStartStatus = "idle" | "loading" | "already_played" | "error";
 
 interface ArcadeStartProps {
-  /** Whether the logged-in user has already played today (server-determined). */
-  hasPlayedToday: boolean;
   /** Feature flag: game is playable. When false, renders a disabled button. */
   enabled: boolean;
+  /** Current status, derived from the parent's run state. */
+  status: ArcadeStartStatus;
+  /** Called when the User presses Play / Retry. */
+  onPlay: () => void;
 }
 
 /**
  * ArcadeStart — the Penguin Run start control shown on the rankings area.
  *
- * Shows a "Play" button when the User has not yet played today, or an
- * "already played" state with the reset time when they have.
- *
- * Calls POST /api/arcade/start; server clock is authoritative.
+ * Presentational only: it renders the Play button, the loading/error/already
+ * -played states, and delegates the actual run start to `onPlay`. The parent
+ * (`ArcadeSection`) owns the run lifecycle and mounts the game overlay.
  */
-export function ArcadeStart({ hasPlayedToday, enabled }: ArcadeStartProps) {
+export function ArcadeStart({ enabled, status, onPlay }: ArcadeStartProps) {
   const t = useTranslations("arcade");
-  const [state, setState] = useState<ArcadeRunState>(
-    hasPlayedToday ? { kind: "already_played" } : { kind: "idle" },
-  );
 
   if (!enabled) {
     return (
@@ -45,59 +37,22 @@ export function ArcadeStart({ hasPlayedToday, enabled }: ArcadeStartProps) {
     );
   }
 
-  async function handleStart() {
-    setState({ kind: "loading" });
-    try {
-      const res = await fetch("/api/arcade/start", { method: "POST" });
-      if (res.status === 201) {
-        const data = await res.json();
-        setState({
-          kind: "started",
-          runId: data.id,
-          playDay: data.playDay,
-        });
-      } else if (res.status === 409) {
-        setState({ kind: "already_played" });
-      } else {
-        setState({ kind: "error" });
-      }
-    } catch {
-      setState({ kind: "error" });
-    }
-  }
-
-  if (state.kind === "started") {
-    return (
-      <PenguinRunGame
-        runId={state.runId}
-        onFinished={() => setState({ kind: "already_played" })}
-      />
-    );
-  }
-
-  if (state.kind === "already_played") {
+  if (status === "already_played") {
     return (
       <div className="flex flex-col items-center gap-1 rounded-xl border border-hairline bg-soft-cloud/50 p-4 text-center dark:border-ash dark:bg-charcoal/20">
         <div className="flex items-center gap-2 text-body-sm text-muted-foreground">
           <Gamepad2 className="size-4" aria-hidden="true" />
           <span>{t("alreadyPlayedToday")}</span>
         </div>
-        <span className="text-caption-sm text-muted-foreground/70">
-          {t("resetsAt")}
-        </span>
       </div>
     );
   }
 
-  if (state.kind === "error") {
+  if (status === "error") {
     return (
       <div className="flex flex-col items-center gap-3 rounded-xl border border-hairline bg-soft-cloud/50 p-4 text-center dark:border-ash dark:bg-charcoal/20">
         <p className="text-body-sm text-destructive">{t("startError")}</p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setState({ kind: "idle" })}
-        >
+        <Button variant="outline" size="sm" onClick={onPlay}>
           {t("playButton")}
         </Button>
       </div>
@@ -109,11 +64,11 @@ export function ArcadeStart({ hasPlayedToday, enabled }: ArcadeStartProps) {
       <Button
         variant="default"
         size="sm"
-        disabled={state.kind === "loading"}
-        onClick={handleStart}
+        disabled={status === "loading"}
+        onClick={onPlay}
       >
         <Gamepad2 className="size-4" aria-hidden="true" />
-        {state.kind === "loading" ? t("starting") : t("playButton")}
+        {status === "loading" ? t("starting") : t("playButton")}
       </Button>
     </div>
   );
