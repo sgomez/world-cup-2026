@@ -52,10 +52,12 @@ export default async function ArcadePage({
         title={t("pageTitle")}
         description={t("pageDescription")}
         icon={<Gamepad2 className="size-6" />}
-      />
-      <ArcadeSection
-        hasPlayedToday={hasPlayedToday}
-        enabled={ARCADE_GAME_ENABLED}
+        action={
+          <ArcadeSection
+            hasPlayedToday={hasPlayedToday}
+            enabled={ARCADE_GAME_ENABLED}
+          />
+        }
       />
       <section className="space-y-4">
         <h2 className="text-heading-md font-medium text-foreground">

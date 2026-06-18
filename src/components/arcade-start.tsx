@@ -39,11 +39,11 @@ export function ArcadeStart({ enabled, status, onPlay }: ArcadeStartProps) {
 
   if (status === "already_played") {
     return (
-      <div className="flex flex-col items-center gap-1 rounded-xl border border-hairline bg-soft-cloud/50 p-4 text-center dark:border-ash dark:bg-charcoal/20">
-        <div className="flex items-center gap-2 text-body-sm text-muted-foreground">
+      <div className="flex items-center justify-center">
+        <Button variant="default" size="sm" disabled={true}>
           <Gamepad2 className="size-4" aria-hidden="true" />
-          <span>{t("alreadyPlayedToday")}</span>
-        </div>
+          {t("alreadyPlayedToday")}
+        </Button>
       </div>
     );
   }
