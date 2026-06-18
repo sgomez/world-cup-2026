@@ -173,6 +173,21 @@ describe("ArcadeStart", () => {
     expect(screen.queryByTestId("penguin-run-game")).not.toBeInTheDocument();
   });
 
+  it("shows an error message when fetch throws (network failure)", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("network"));
+
+    render(<ArcadeStart hasPlayedToday={false} enabled={true} />);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Play Penguin Run" }),
+    );
+
+    expect(
+      screen.getByText("Could not start a run. Please try again."),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("penguin-run-game")).not.toBeInTheDocument();
+  });
+
   it("shows 'Already played today' when /api/arcade/start returns 409", async () => {
     mockFetch.mockResolvedValueOnce({ status: 409 });
 
