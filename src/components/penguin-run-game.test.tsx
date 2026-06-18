@@ -407,6 +407,35 @@ describe("PenguinRunGame", () => {
     expect(screen.queryByTestId("game-over-screen")).not.toBeInTheDocument();
   });
 
+  it("stops sending heartbeat pings after the component unmounts", async () => {
+    const { unmount } = renderGame({ runId: "run-unmount" });
+
+    // First interval fires — one ping expected
+    await act(async () => {
+      vi.advanceTimersByTime(30_000);
+    });
+    const pingsBefore = mockFetch.mock.calls.filter(
+      ([url]) => url === "/api/arcade/ping",
+    ).length;
+    expect(pingsBefore).toBeGreaterThanOrEqual(1);
+
+    mockFetch.mockClear();
+
+    // Unmount the component — heartbeat interval should be cleared
+    act(() => {
+      unmount();
+    });
+
+    // Advance another full interval; no more pings should fire
+    await act(async () => {
+      vi.advanceTimersByTime(30_000);
+    });
+    const pingsAfter = mockFetch.mock.calls.filter(
+      ([url]) => url === "/api/arcade/ping",
+    ).length;
+    expect(pingsAfter).toBe(0);
+  });
+
   // -------------------------------------------------------------------------
   // Jump controls
   // -------------------------------------------------------------------------
