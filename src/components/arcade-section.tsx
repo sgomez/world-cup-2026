@@ -44,6 +44,7 @@ export function ArcadeSection({ hasPlayedToday, enabled }: ArcadeSectionProps) {
 
   const penguinImageRef = useRef<HTMLImageElement | null>(null);
   const obstacleImageRef = useRef<HTMLImageElement | null>(null);
+  const birdImageRef = useRef<HTMLImageElement | null>(null);
 
   // ---------------------------------------------------------------------------
   // Sprite preloading — runs on mount, before the user can press Play.
@@ -55,7 +56,7 @@ export function ArcadeSection({ hasPlayedToday, enabled }: ArcadeSectionProps) {
 
     function onLoad() {
       loadedCount += 1;
-      if (loadedCount === 2 && !cancelled) {
+      if (loadedCount === 3 && !cancelled) {
         setSpriteState("ready");
       }
     }
@@ -77,6 +78,12 @@ export function ArcadeSection({ hasPlayedToday, enabled }: ArcadeSectionProps) {
     obstacle.onerror = onError;
     obstacle.src = "/sprites/dummy.png";
     obstacleImageRef.current = obstacle;
+
+    const bird = new Image();
+    bird.onload = onLoad;
+    bird.onerror = onError;
+    bird.src = "/sprites/bat.png";
+    birdImageRef.current = bird;
 
     return () => {
       cancelled = true;
@@ -132,17 +139,19 @@ export function ArcadeSection({ hasPlayedToday, enabled }: ArcadeSectionProps) {
           />
         </div>
       )}
-      {/* Safety belt only: both refs are guaranteed non-null when state.kind === "started"
+      {/* Safety belt only: all three refs are guaranteed non-null when state.kind === "started"
           because handleStart is gated on spriteState === "ready", which is set only after
-          both refs are populated synchronously in the preload effect. */}
+          all three refs are populated in the preload effect. */}
       {state.kind === "started" &&
         penguinImageRef.current &&
-        obstacleImageRef.current && (
+        obstacleImageRef.current &&
+        birdImageRef.current && (
           <PenguinRunGame
             runId={state.runId}
             onFinished={() => setState({ kind: "already_played" })}
             penguinImage={penguinImageRef.current}
             obstacleImage={obstacleImageRef.current}
+            birdImage={birdImageRef.current}
           />
         )}
     </>

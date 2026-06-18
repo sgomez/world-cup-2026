@@ -1,6 +1,13 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PenguinRunGame } from "./penguin-run-game";
+import {
+  GAME_BIRD_GROUND_CLEARANCE,
+  GAME_BIRD_SIZE,
+  GAME_BIRD_UNLOCK_PTS,
+  GAME_HITBOX_FRACTION,
+  GAME_SPRITE_SIZE,
+} from "@/config/arcade";
+import { PenguinRunGame, shouldSpawnBirds } from "./penguin-run-game";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -72,6 +79,7 @@ interface GameProps {
   onFinished?: () => void;
   penguinImage?: HTMLImageElement;
   obstacleImage?: HTMLImageElement;
+  birdImage?: HTMLImageElement;
 }
 
 /** Minimal HTMLImageElement stub for tests. */
@@ -84,6 +92,7 @@ function renderGame({
   onFinished = vi.fn(),
   penguinImage = makeMockImage(),
   obstacleImage = makeMockImage(),
+  birdImage = makeMockImage(),
 }: GameProps = {}) {
   return render(
     <PenguinRunGame
@@ -91,6 +100,7 @@ function renderGame({
       onFinished={onFinished}
       penguinImage={penguinImage}
       obstacleImage={obstacleImage}
+      birdImage={birdImage}
     />,
   );
 }
@@ -544,5 +554,45 @@ describe("PenguinRunGame", () => {
     window.dispatchEvent(event);
 
     expect(preventDefaultSpy).toHaveBeenCalled();
+  });
+
+  // -------------------------------------------------------------------------
+  // High birds
+  // -------------------------------------------------------------------------
+
+  it("renders without error when birdImage is provided", () => {
+    renderGame({ birdImage: makeMockImage() });
+    expect(screen.getByTestId("penguin-run-canvas")).toBeInTheDocument();
+  });
+
+  describe("shouldSpawnBirds", () => {
+    it("returns false below the unlock threshold", () => {
+      expect(shouldSpawnBirds(GAME_BIRD_UNLOCK_PTS - 1)).toBe(false);
+    });
+
+    it("returns true at the unlock threshold", () => {
+      expect(shouldSpawnBirds(GAME_BIRD_UNLOCK_PTS)).toBe(true);
+    });
+
+    it("returns true above the unlock threshold", () => {
+      expect(shouldSpawnBirds(GAME_BIRD_UNLOCK_PTS + 100)).toBe(true);
+    });
+  });
+
+  it("high bird AABB never overlaps grounded penguin AABB (canvas-height invariant)", () => {
+    // Bird Y is computed as groundY - GAME_BIRD_GROUND_CLEARANCE - GAME_BIRD_SIZE.
+    // Express both AABBs relative to groundY so the assertion holds regardless
+    // of canvas height.
+    const penguinHitSize = GAME_SPRITE_SIZE * GAME_HITBOX_FRACTION;
+    const penguinTopRelGround = (GAME_SPRITE_SIZE - penguinHitSize) / 2;
+
+    const birdHitSize = GAME_BIRD_SIZE * GAME_HITBOX_FRACTION;
+    const birdBottomRelGround =
+      -GAME_BIRD_GROUND_CLEARANCE -
+      GAME_BIRD_SIZE +
+      (GAME_BIRD_SIZE - birdHitSize) / 2 +
+      birdHitSize;
+
+    expect(birdBottomRelGround).toBeLessThan(penguinTopRelGround);
   });
 });

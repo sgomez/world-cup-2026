@@ -118,6 +118,32 @@ export const GAME_HITBOX_FRACTION = 0.6;
 export const GAME_TOTAL_ROUNDS = 3;
 
 // ---------------------------------------------------------------------------
+// Penguin Run — high birds
+// ---------------------------------------------------------------------------
+
+/** Score (pts) at which birds start appearing. ~2.5 min at 1 pt/s. */
+export const GAME_BIRD_UNLOCK_PTS = 150;
+
+/** Minimum ms between consecutive bird spawns. */
+export const GAME_BIRD_SPAWN_INTERVAL_MIN_MS = 4_000;
+
+/** Maximum ms between consecutive bird spawns. */
+export const GAME_BIRD_SPAWN_INTERVAL_MAX_MS = 8_000;
+
+/**
+ * Clearance (px) between the bird sprite bottom and the ground line.
+ * Bird sprite top Y = groundY - GAME_BIRD_GROUND_CLEARANCE - GAME_BIRD_SIZE.
+ * Canvas-height invariant: clearance holds at any canvas height.
+ */
+export const GAME_BIRD_GROUND_CLEARANCE = 80;
+
+/** Rendered size (px) of the bird sprite. Source frame is 32×32. */
+export const GAME_BIRD_SIZE = 48;
+
+/** Ms per bird flap animation frame. */
+export const GAME_BIRD_FRAME_MS = 150;
+
+// ---------------------------------------------------------------------------
 // Penguin Run — night mode (visual distractor, pure palette flip)
 // ---------------------------------------------------------------------------
 
