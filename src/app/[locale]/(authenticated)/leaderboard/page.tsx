@@ -1,6 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
-import { ArcadeInvitationModal } from "@/components/arcade-invitation-modal";
-import { ArcadeStart } from "@/components/arcade-start";
+import { ArcadeSection } from "@/components/arcade-section";
 import { LeaderboardTabs } from "@/components/leaderboard-tabs";
 import { ARCADE_GAME_ENABLED } from "@/config/arcade";
 import { redirect } from "@/i18n/navigation";
@@ -81,46 +80,26 @@ export default async function LeaderboardPage({
     (s): s is NonNullable<typeof s> => s !== null,
   );
 
-  // Fetch arcade ranking and resolve user names.
+  // Fetch arcade ranking (name resolution delegated to the use case via NameResolver).
   const [arcadeRankingRaw, hasPlayedToday] = await Promise.all([
-    container.arcade().getRanking(),
+    container.arcade().getRanking(nameResolver),
     container.arcade().hasPlayedToday(session.user.id),
   ]);
-
-  // Resolve names for all arcade ranking users (may include users outside
-  // the current user's communities — query Prisma directly for those).
-  const arcadeUserIds = arcadeRankingRaw.map((e) => e.userId);
-  const arcadeUsers =
-    arcadeUserIds.length > 0
-      ? await prisma.user.findMany({
-          where: { id: { in: arcadeUserIds } },
-          select: { id: true, name: true },
-        })
-      : [];
-  const arcadeNameCache = new Map(
-    arcadeUsers.map((u) => [u.id, u.name ?? u.id]),
-  );
 
   const arcadeEntries = arcadeRankingRaw.map((entry) => ({
     rank: entry.rank,
     userId: entry.userId,
-    userName: arcadeNameCache.get(entry.userId) ?? entry.userId,
+    userName: entry.userName,
     bestScore: entry.bestScore,
     achievedAt: entry.achievedAt.toISOString(),
   }));
 
   return (
     <div>
-      <ArcadeInvitationModal
+      <ArcadeSection
         hasPlayedToday={hasPlayedToday}
         enabled={ARCADE_GAME_ENABLED}
       />
-      <div className="mb-6 flex justify-end">
-        <ArcadeStart
-          hasPlayedToday={hasPlayedToday}
-          enabled={ARCADE_GAME_ENABLED}
-        />
-      </div>
       <LeaderboardTabs
         scopes={scopes}
         arcadeEntries={arcadeEntries}

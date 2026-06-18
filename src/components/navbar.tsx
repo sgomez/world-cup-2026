@@ -84,6 +84,12 @@ export function Navbar({ user, isImpersonating = false }: NavbarProps) {
           >
             {t("leaderboard")}
           </Link>
+          <Link
+            href="/arcade"
+            className="hidden sm:block text-caption-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {t("arcade")}
+          </Link>
 
           <span
             className="hidden sm:block h-4 w-px bg-hairline"
@@ -137,6 +143,9 @@ export function Navbar({ user, isImpersonating = false }: NavbarProps) {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/leaderboard")}>
                 {t("leaderboard")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/arcade")}>
+                {t("arcade")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/communities/new")}>
                 {t("createCommunity")}

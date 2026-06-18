@@ -8,6 +8,7 @@
     "communities": "Communities",
     "myBets": "My Bets",
     "leaderboard": "Leaderboard",
+    "arcade": "Arcade",
     "standings": "Standings",
     "editProfile": "Edit Profile",
     "createCommunity": "Create Community",
@@ -400,6 +401,8 @@
     "topLevelTabsLabel": "Rankings navigation"
   },
   "arcade": {
+    "pageTitle": "Arcade",
+    "pageDescription": "Play Penguin Run and compete on the global Arcade Ranking.",
     "title": "Arcade Ranking",
     "description": "Global ranking of Penguin Run daily high scores.",
     "playButton": "Play Penguin Run",
@@ -430,7 +433,8 @@
     "nextRound": "Next Round",
     "viewRanking": "View Ranking",
     "roundScore": "Round score",
-    "retryRound": "Retry"
+    "retryRound": "Retry",
+    "pressToStart": "Press Space or tap to start"
   },
   "tournament": {
     "title": "Tournament Standings",

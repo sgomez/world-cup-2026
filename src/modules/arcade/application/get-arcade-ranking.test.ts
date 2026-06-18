@@ -3,6 +3,13 @@ import { PenguinRun } from "../domain/penguin-run";
 import { InMemoryArcadeRunRepository } from "../infrastructure/in-memory-arcade-run-repository";
 import { getArcadeRanking } from "./get-arcade-ranking";
 
+/** Minimal NameResolver that resolves from a static map. */
+function makeNameResolver(
+  map: Record<string, string>,
+): (userId: string) => Promise<string | null> {
+  return async (userId: string) => map[userId] ?? null;
+}
+
 describe("getArcadeRanking application service", () => {
   const STALE_TOLERANCE_MS = 2 * 60 * 1000; // 2 minutes
 
@@ -205,5 +212,67 @@ describe("getArcadeRanking application service", () => {
     });
 
     expect(result).toHaveLength(0);
+  });
+
+  it("resolves userName via the provided NameResolver", async () => {
+    const aliceRun = makeFinishedRun({
+      userId: "user-alice",
+      startedAt: new Date("2026-06-17T10:00:00Z"),
+      scores: [30],
+    });
+
+    const repo = new InMemoryArcadeRunRepository([aliceRun]);
+    const clock = () => new Date("2026-06-17T12:00:00Z");
+    const nameResolver = makeNameResolver({ "user-alice": "Alice" });
+
+    const result = await getArcadeRanking(repo, {
+      clock,
+      staleTolerance: STALE_TOLERANCE_MS,
+      nameResolver,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].userName).toBe("Alice");
+  });
+
+  it("falls back to userId when NameResolver returns null", async () => {
+    const bobRun = makeFinishedRun({
+      userId: "user-bob",
+      startedAt: new Date("2026-06-17T10:00:00Z"),
+      scores: [20],
+    });
+
+    const repo = new InMemoryArcadeRunRepository([bobRun]);
+    const clock = () => new Date("2026-06-17T12:00:00Z");
+    const nameResolver = makeNameResolver({}); // returns null for user-bob
+
+    const result = await getArcadeRanking(repo, {
+      clock,
+      staleTolerance: STALE_TOLERANCE_MS,
+      nameResolver,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].userName).toBe("user-bob");
+  });
+
+  it("returns userId as userName when no NameResolver is provided", async () => {
+    const carolRun = makeFinishedRun({
+      userId: "user-carol",
+      startedAt: new Date("2026-06-17T10:00:00Z"),
+      scores: [10],
+    });
+
+    const repo = new InMemoryArcadeRunRepository([carolRun]);
+    const clock = () => new Date("2026-06-17T12:00:00Z");
+
+    const result = await getArcadeRanking(repo, {
+      clock,
+      staleTolerance: STALE_TOLERANCE_MS,
+      // no nameResolver
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].userName).toBe("user-carol");
   });
 });
