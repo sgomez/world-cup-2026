@@ -3,6 +3,7 @@
 import { Gamepad2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { PenguinRunGame } from "@/components/penguin-run-game";
 import { Button } from "@/components/ui/button";
 
 type ArcadeRunState =
@@ -65,7 +66,16 @@ export function ArcadeStart({ hasPlayedToday, enabled }: ArcadeStartProps) {
     }
   }
 
-  if (state.kind === "already_played" || state.kind === "started") {
+  if (state.kind === "started") {
+    return (
+      <PenguinRunGame
+        runId={state.runId}
+        onFinished={() => setState({ kind: "already_played" })}
+      />
+    );
+  }
+
+  if (state.kind === "already_played") {
     return (
       <div className="flex flex-col items-center gap-1 rounded-xl border border-hairline bg-soft-cloud/50 p-4 text-center dark:border-ash dark:bg-charcoal/20">
         <div className="flex items-center gap-2 text-body-sm text-muted-foreground">

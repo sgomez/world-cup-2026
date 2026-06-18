@@ -426,7 +426,11 @@
     "invitationModalTitle": "Play Penguin Run!",
     "invitationModalDescription": "Challenge yourself in today's Penguin Run. You get one shot per day — make it count!",
     "playNow": "Play Now",
-    "maybeLater": "Maybe Later"
+    "maybeLater": "Maybe Later",
+    "nextRound": "Next Round",
+    "viewRanking": "View Ranking",
+    "roundScore": "Round score",
+    "retryRound": "Retry"
   },
   "tournament": {
     "title": "Tournament Standings",
