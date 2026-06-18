@@ -5,50 +5,33 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { planNextGroup } from "@/components/penguin-run-planner";
 import { Button } from "@/components/ui/button";
 import {
+  GAME_GRAVITY,
+  GAME_GROUND_HEIGHT,
+  GAME_HITBOX_FRACTION,
   GAME_INITIAL_SPEED,
+  GAME_JUMP_VELOCITY,
+  GAME_OBS_FOOT_PAD,
+  GAME_OBSTACLE_GAP_WITHIN_GROUP,
   GAME_OBSTACLE_WIDTH,
+  GAME_PENGUIN_DRAW_SINK,
+  GAME_PENGUIN_X_FRACTION,
   GAME_RAMP_INTERVAL_MS,
   GAME_SPEED_CAP,
   GAME_SPEED_RAMP,
+  GAME_SPRITE_SIZE,
+  GAME_TOTAL_ROUNDS,
+  GAME_WALK_FRAME_MS,
 } from "@/config/arcade";
 import { POINTS_PER_SECOND } from "@/modules/arcade/domain/penguin-run";
 
 // ---------------------------------------------------------------------------
-// Constants
+// Constants — sprite sheet (asset-specific, not tunable)
 // ---------------------------------------------------------------------------
-
-/** Rendered size (px) for both penguin and obstacle sprites. */
-const SPRITE_SIZE = 48;
 
 /** Penguin walk sprite sheet: 4 frames, each 32×32. */
 const PENGUIN_FRAME_COUNT = 4;
 const PENGUIN_FRAME_WIDTH = 32;
 const PENGUIN_FRAME_HEIGHT = 32;
-
-/** Walk animation speed: ~11 fps = ~91 ms per frame. */
-const WALK_FRAME_MS = 91;
-
-const GROUND_HEIGHT = 8;
-/** Penguin horizontal position as fraction of canvas width. */
-const PENGUIN_X_FRACTION = 0.2;
-
-/**
- * Forgiving hitbox: ~60% of the sprite size, centred.
- * Applies to both penguin and obstacle (ADR 0035).
- */
-const HITBOX_FRACTION = 0.6;
-
-const JUMP_VELOCITY = -700; // px/s (negative = up)
-const GRAVITY = 1800; // px/s²
-
-/** Total rounds (lives) per run. */
-const TOTAL_ROUNDS = 3;
-
-/**
- * Gap (px) between contiguous obstacles within the same Obstacle Group.
- * Zero gap = touching edges (one uninterrupted wall the player must clear).
- */
-const OBSTACLE_GAP_WITHIN_GROUP = 0;
 
 // Centred play-box dimensions. On desktop the canvas is a bounded box (like
 // the classic running-dinosaur game); on narrow screens it shrinks to fit.
@@ -136,7 +119,7 @@ export interface PenguinRunGameProps {
 // ---------------------------------------------------------------------------
 
 function getGroundY(canvas: HTMLCanvasElement): number {
-  return canvas.height - GROUND_HEIGHT - SPRITE_SIZE;
+  return canvas.height - GAME_GROUND_HEIGHT - GAME_SPRITE_SIZE;
 }
 
 // ---------------------------------------------------------------------------
@@ -364,11 +347,19 @@ export function PenguinRunGame({
             rng: Math.random,
           });
 
-          // Spawn all obstacles in this group (contiguous)
+          // Spawn all obstacles in this group (contiguous).
+          // y is shifted down by OBS_FOOT_PAD so the visible base of the
+          // sprite sits on the ground line (the sprite has transparent space
+          // at the bottom of its bounding box).
+          const obsGroundY =
+            canvas.height -
+            GAME_GROUND_HEIGHT -
+            GAME_OBSTACLE_WIDTH +
+            OBS_FOOT_PAD;
           for (let i = 0; i < plan.size; i++) {
             g.obstacles.push({
               x: spawnX + i * (GAME_OBSTACLE_WIDTH + OBSTACLE_GAP_WITHIN_GROUP),
-              y: groundY,
+              y: obsGroundY,
             });
           }
 
@@ -386,8 +377,8 @@ export function PenguinRunGame({
         );
 
         // --- collision detection (forgiving 60% hitbox, centred) ---
-        const penguinX = canvas.width * PENGUIN_X_FRACTION;
-        const penguinHitSize = SPRITE_SIZE * HITBOX_FRACTION;
+        const penguinX = canvas.width * GAME_PENGUIN_X_FRACTION;
+        const penguinHitSize = SPRITE_SIZE * GAME_HITBOX_FRACTION;
         const penguinHitOffset = (SPRITE_SIZE - penguinHitSize) / 2;
         const penguinLeft = penguinX + penguinHitOffset;
         const penguinTop = g.penguinY + penguinHitOffset;
@@ -395,7 +386,7 @@ export function PenguinRunGame({
         const penguinBottom = penguinTop + penguinHitSize;
 
         for (const obs of g.obstacles) {
-          const obsHitSize = GAME_OBSTACLE_WIDTH * HITBOX_FRACTION;
+          const obsHitSize = GAME_OBSTACLE_WIDTH * GAME_HITBOX_FRACTION;
           const obsHitOffset = (GAME_OBSTACLE_WIDTH - obsHitSize) / 2;
           const obsLeft = obs.x + obsHitOffset;
           const obsTop = obs.y + obsHitOffset;
@@ -429,9 +420,9 @@ export function PenguinRunGame({
       ctx.fillStyle = GROUND_COLOR;
       ctx.fillRect(
         0,
-        canvas.height - GROUND_HEIGHT,
+        canvas.height - GAME_GROUND_HEIGHT,
         canvas.width,
-        GROUND_HEIGHT,
+        GAME_GROUND_HEIGHT,
       );
 
       // Crisp pixel art — no smoothing.
@@ -446,12 +437,12 @@ export function PenguinRunGame({
         PENGUIN_FRAME_WIDTH, // source width
         PENGUIN_FRAME_HEIGHT, // source height
         penguinX, // dest x
-        g.penguinY, // dest y
+        g.penguinY + GAME_PENGUIN_DRAW_SINK, // dest y — sink to land visual feet on ground
         SPRITE_SIZE, // dest width
         SPRITE_SIZE, // dest height
       );
 
-      // Obstacles — single frame from dummy.png.
+      // Obstacles — single frame from dummy.png (64×64 source, rendered at GAME_OBSTACLE_WIDTH).
       for (const obs of g.obstacles) {
         ctx.drawImage(
           obstacleImage,
@@ -460,9 +451,9 @@ export function PenguinRunGame({
           64,
           64, // source: full 64×64 sprite
           obs.x,
-          obs.y, // dest position
-          SPRITE_SIZE,
-          SPRITE_SIZE, // dest size
+          obs.y, // dest position (y already accounts for OBS_FOOT_PAD)
+          GAME_OBSTACLE_WIDTH,
+          GAME_OBSTACLE_WIDTH, // dest size
         );
       }
 

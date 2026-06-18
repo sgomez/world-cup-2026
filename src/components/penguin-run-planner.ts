@@ -5,47 +5,21 @@
  * injectable RNG so the "always jumpable" invariant can be verified in tests
  * without a canvas or `Math.random`.
  *
- * Physics constants below must be kept in sync with `penguin-run-game.tsx`.
+ * All tunable constants are in `src/config/arcade.ts`.
  */
 
-import { GAME_OBSTACLE_WIDTH } from "@/config/arcade";
-
-// ---------------------------------------------------------------------------
-// Physics constants (must match penguin-run-game.tsx)
-// ---------------------------------------------------------------------------
-
-const JUMP_VELOCITY = 700; // absolute value of JUMP_VELOCITY in the game, px/s
-const GRAVITY = 1800; // px/s²
-
-// ---------------------------------------------------------------------------
-// Spawn-model constants (ADR 0035)
-// ---------------------------------------------------------------------------
-
-/** Safety multiplier applied to the airtime-derived minimum gap. */
-export const MIN_GAP_SAFETY = 1.3;
-
-/**
- * The extra (random) gap range, in seconds of airtime, beyond `minGap`.
- * Shrinks as the Round progresses toward EXTRA_RANGE_FLOOR.
- */
-const EXTRA_RANGE_START_AIRTIME = 3.0; // ≈ 2.3 s start range at initial speed
-const EXTRA_RANGE_FLOOR_AIRTIME = 0.2; // never drops below ~0.2× airtime of ground
-
-/**
- * Elapsed time (ms) at which the extra-range shrinking reaches its floor.
- * Beyond this, the floor stays constant.
- */
-const EXTRA_RANGE_DECAY_MS = 90_000; // 90 s to reach the floor
-
-/**
- * Group-size weights [size-1, size-2, size-3] as a tuple of three numbers.
- * Interpolated between EARLY and LATE by elapsed time.
- */
-const SIZE_WEIGHTS_EARLY = [70, 25, 5] as const;
-const SIZE_WEIGHTS_LATE = [30, 40, 30] as const;
-
-/** Time (ms) at which the distribution has fully transitioned to LATE. */
-const SIZE_WEIGHT_TRANSITION_MS = 120_000; // 120 s
+import {
+  GAME_EXTRA_RANGE_DECAY_MS,
+  GAME_EXTRA_RANGE_FLOOR_AIRTIME,
+  GAME_EXTRA_RANGE_START_AIRTIME,
+  GAME_GRAVITY,
+  GAME_JUMP_VELOCITY,
+  GAME_MIN_GAP_SAFETY,
+  GAME_OBSTACLE_WIDTH,
+  GAME_SIZE_WEIGHT_TRANSITION_MS,
+  GAME_SIZE_WEIGHTS_EARLY,
+  GAME_SIZE_WEIGHTS_LATE,
+} from "@/config/arcade";
 
 // ---------------------------------------------------------------------------
 // Public helpers
@@ -53,7 +27,7 @@ const SIZE_WEIGHT_TRANSITION_MS = 120_000; // 120 s
 
 /** airtime of a jump at constant gravity (seconds). */
 function jumpAirtime(): number {
-  return (2 * JUMP_VELOCITY) / GRAVITY;
+  return (2 * Math.abs(GAME_JUMP_VELOCITY)) / GAME_GRAVITY;
 }
 
 /**
@@ -63,7 +37,7 @@ function jumpAirtime(): number {
  * Guarantees a land-and-rejump window at any speed.
  */
 export function computeMinGap(scrollSpeed: number): number {
-  return scrollSpeed * jumpAirtime() * MIN_GAP_SAFETY;
+  return scrollSpeed * jumpAirtime() * GAME_MIN_GAP_SAFETY;
 }
 
 /**
@@ -103,11 +77,14 @@ export interface PlanResult {
  * Returns [w1, w2, w3] where each wN is the relative weight of group size N.
  */
 function sizeWeights(elapsedMs: number): [number, number, number] {
-  const t = Math.min(elapsedMs / SIZE_WEIGHT_TRANSITION_MS, 1);
+  const t = Math.min(elapsedMs / GAME_SIZE_WEIGHT_TRANSITION_MS, 1);
   return [
-    SIZE_WEIGHTS_EARLY[0] + t * (SIZE_WEIGHTS_LATE[0] - SIZE_WEIGHTS_EARLY[0]),
-    SIZE_WEIGHTS_EARLY[1] + t * (SIZE_WEIGHTS_LATE[1] - SIZE_WEIGHTS_EARLY[1]),
-    SIZE_WEIGHTS_EARLY[2] + t * (SIZE_WEIGHTS_LATE[2] - SIZE_WEIGHTS_EARLY[2]),
+    GAME_SIZE_WEIGHTS_EARLY[0] +
+      t * (GAME_SIZE_WEIGHTS_LATE[0] - GAME_SIZE_WEIGHTS_EARLY[0]),
+    GAME_SIZE_WEIGHTS_EARLY[1] +
+      t * (GAME_SIZE_WEIGHTS_LATE[1] - GAME_SIZE_WEIGHTS_EARLY[1]),
+    GAME_SIZE_WEIGHTS_EARLY[2] +
+      t * (GAME_SIZE_WEIGHTS_LATE[2] - GAME_SIZE_WEIGHTS_EARLY[2]),
   ];
 }
 
@@ -132,10 +109,10 @@ function pickSize(rng: () => number, elapsedMs: number): number {
  * and stays there.
  */
 function extraRange(speed: number, elapsedMs: number): number {
-  const t = Math.min(elapsedMs / EXTRA_RANGE_DECAY_MS, 1);
+  const t = Math.min(elapsedMs / GAME_EXTRA_RANGE_DECAY_MS, 1);
   const airtimePx = jumpAirtime() * speed;
-  const startRange = EXTRA_RANGE_START_AIRTIME * airtimePx;
-  const floorRange = EXTRA_RANGE_FLOOR_AIRTIME * airtimePx;
+  const startRange = GAME_EXTRA_RANGE_START_AIRTIME * airtimePx;
+  const floorRange = GAME_EXTRA_RANGE_FLOOR_AIRTIME * airtimePx;
   return startRange + t * (floorRange - startRange);
 }
 
