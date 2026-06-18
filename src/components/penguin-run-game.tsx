@@ -17,7 +17,17 @@ import { POINTS_PER_SECOND } from "@/modules/arcade/domain/penguin-run";
 // Constants
 // ---------------------------------------------------------------------------
 
-const FONT_SIZE = 48;
+/** Rendered size (px) for both penguin and obstacle sprites. */
+const SPRITE_SIZE = 48;
+
+/** Penguin walk sprite sheet: 4 frames, each 32×32. */
+const PENGUIN_FRAME_COUNT = 4;
+const PENGUIN_FRAME_WIDTH = 32;
+const PENGUIN_FRAME_HEIGHT = 32;
+
+/** Walk animation speed: ~11 fps = ~91 ms per frame. */
+const WALK_FRAME_MS = 91;
+
 const GROUND_HEIGHT = 8;
 /** Penguin horizontal position as fraction of canvas width. */
 const PENGUIN_X_FRACTION = 0.2;
@@ -106,11 +116,19 @@ interface MutableGameState {
   onGround: boolean;
   /** Timestamp of the previous frame (ms from performance.now()). */
   lastTimestamp: number;
+  /** Current walk animation frame index (0–3). Frozen while airborne. */
+  walkFrame: number;
+  /** Accumulated time (ms) toward the next walk frame advance. */
+  walkFrameAccMs: number;
 }
 
 export interface PenguinRunGameProps {
   runId: string;
   onFinished: () => void;
+  /** Preloaded penguin walk sprite sheet (128×32 = four 32×32 frames). */
+  penguinImage: HTMLImageElement;
+  /** Preloaded obstacle sprite (64×64, single frame). */
+  obstacleImage: HTMLImageElement;
 }
 
 // ---------------------------------------------------------------------------
@@ -118,7 +136,7 @@ export interface PenguinRunGameProps {
 // ---------------------------------------------------------------------------
 
 function getGroundY(canvas: HTMLCanvasElement): number {
-  return canvas.height - GROUND_HEIGHT - FONT_SIZE;
+  return canvas.height - GROUND_HEIGHT - SPRITE_SIZE;
 }
 
 // ---------------------------------------------------------------------------
@@ -133,7 +151,12 @@ function getGroundY(canvas: HTMLCanvasElement): number {
  * All game-loop state lives in mutable refs; React state drives only the
  * phase-transition overlays.
  */
-export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
+export function PenguinRunGame({
+  runId,
+  onFinished,
+  penguinImage,
+  obstacleImage,
+}: PenguinRunGameProps) {
   const t = useTranslations("arcade");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<MutableGameState | null>(null);
@@ -260,6 +283,8 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
     g.distanceSinceLastGroup = 0;
     g.nextGroupGapPx = initialPlan.gapPx;
     g.lastTimestamp = 0;
+    g.walkFrame = 0;
+    g.walkFrameAccMs = 0;
   }, []);
 
   /** Transition from "ready" to "playing" on the first input. */
@@ -302,6 +327,15 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
 
         // --- score (elapsed seconds) ---
         g.elapsedSeconds += dt;
+
+        // --- walk frame animation (only while grounded) ---
+        if (g.onGround) {
+          g.walkFrameAccMs += dt * 1000;
+          while (g.walkFrameAccMs >= WALK_FRAME_MS) {
+            g.walkFrameAccMs -= WALK_FRAME_MS;
+            g.walkFrame = (g.walkFrame + 1) % PENGUIN_FRAME_COUNT;
+          }
+        }
 
         // --- speed ramp ---
         g.rampAccumulator += dt * 1000;
@@ -353,8 +387,8 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
 
         // --- collision detection (forgiving 60% hitbox, centred) ---
         const penguinX = canvas.width * PENGUIN_X_FRACTION;
-        const penguinHitSize = FONT_SIZE * HITBOX_FRACTION;
-        const penguinHitOffset = (FONT_SIZE - penguinHitSize) / 2;
+        const penguinHitSize = SPRITE_SIZE * HITBOX_FRACTION;
+        const penguinHitOffset = (SPRITE_SIZE - penguinHitSize) / 2;
         const penguinLeft = penguinX + penguinHitOffset;
         const penguinTop = g.penguinY + penguinHitOffset;
         const penguinRight = penguinLeft + penguinHitSize;
@@ -400,15 +434,36 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
         GROUND_HEIGHT,
       );
 
-      // Penguin
-      ctx.font = `${FONT_SIZE}px sans-serif`;
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-      ctx.fillText("🐧", penguinX, g.penguinY);
+      // Crisp pixel art — no smoothing.
+      ctx.imageSmoothingEnabled = false;
 
-      // Obstacles
+      // Penguin — walk frame cycles while grounded, freezes on frame 0 airborne.
+      const frameIndex = g.onGround ? g.walkFrame : 0;
+      ctx.drawImage(
+        penguinImage,
+        frameIndex * PENGUIN_FRAME_WIDTH, // source x
+        0, // source y
+        PENGUIN_FRAME_WIDTH, // source width
+        PENGUIN_FRAME_HEIGHT, // source height
+        penguinX, // dest x
+        g.penguinY, // dest y
+        SPRITE_SIZE, // dest width
+        SPRITE_SIZE, // dest height
+      );
+
+      // Obstacles — single frame from dummy.png.
       for (const obs of g.obstacles) {
-        ctx.fillText("⛄", obs.x, obs.y);
+        ctx.drawImage(
+          obstacleImage,
+          0,
+          0,
+          64,
+          64, // source: full 64×64 sprite
+          obs.x,
+          obs.y, // dest position
+          SPRITE_SIZE,
+          SPRITE_SIZE, // dest size
+        );
       }
 
       // HUD — big score, centred top, with round + record below.
@@ -428,7 +483,7 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
 
       rafIdRef.current = requestAnimationFrame(tick);
     },
-    [handleCollision, t],
+    [handleCollision, t, penguinImage, obstacleImage],
   );
 
   // -------------------------------------------------------------------------
@@ -479,6 +534,8 @@ export function PenguinRunGame({ runId, onFinished }: PenguinRunGameProps) {
       nextGroupGapPx: initialPlan.gapPx,
       onGround: true,
       lastTimestamp: 0,
+      walkFrame: 0,
+      walkFrameAccMs: 0,
     };
     gameRef.current = g;
 

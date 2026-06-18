@@ -35,6 +35,7 @@ HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
   clearRect: vi.fn(),
   fillRect: vi.fn(),
   fillText: vi.fn(),
+  drawImage: vi.fn(),
   measureText: vi.fn().mockReturnValue({ width: 20 }),
   save: vi.fn(),
   restore: vi.fn(),
@@ -45,6 +46,7 @@ HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
   set fillStyle(_v: string) {},
   set textAlign(_v: string) {},
   set textBaseline(_v: string) {},
+  set imageSmoothingEnabled(_v: boolean) {},
 });
 
 // requestAnimationFrame — queue but never auto-execute, so the game loop
@@ -68,10 +70,29 @@ function stubFetchOk(json: unknown = {}) {
 interface GameProps {
   runId?: string;
   onFinished?: () => void;
+  penguinImage?: HTMLImageElement;
+  obstacleImage?: HTMLImageElement;
 }
 
-function renderGame({ runId = "run-1", onFinished = vi.fn() }: GameProps = {}) {
-  return render(<PenguinRunGame runId={runId} onFinished={onFinished} />);
+/** Minimal HTMLImageElement stub for tests. */
+function makeMockImage(): HTMLImageElement {
+  return { src: "", width: 128, height: 32 } as unknown as HTMLImageElement;
+}
+
+function renderGame({
+  runId = "run-1",
+  onFinished = vi.fn(),
+  penguinImage = makeMockImage(),
+  obstacleImage = makeMockImage(),
+}: GameProps = {}) {
+  return render(
+    <PenguinRunGame
+      runId={runId}
+      onFinished={onFinished}
+      penguinImage={penguinImage}
+      obstacleImage={obstacleImage}
+    />,
+  );
 }
 
 /** Dispatch the test-only collision event on the canvas. */
