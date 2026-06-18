@@ -147,7 +147,13 @@ A side attraction, fully separate from betting. It exists to drive return visits
 A single arcade game session belonging to one **User** on one **Play Day**. A User may begin **at most one** Penguin Run per Play Day; starting one consumes that day's play, whether or not it is completed. A Penguin Run consists of exactly three **Rounds** (the three **Lives**). Its outcome is a single number — the highest of its three Round scores — which is the only value that feeds the **Arcade Ranking**.
 
 ### Round
-One **Life** within a **Penguin Run**: the penguin runs and jumps until it collides with a **Snowman**, which ends the Round. A Round's score is the time survived (a known function of elapsed real time). When a Round ends, its score is captured and the running score resets to zero for the next Round. **Snowmen score nothing** — they are obstacles, not point sources.
+One **Life** within a **Penguin Run**: the penguin runs and jumps until it collides with an **Obstacle**, which ends the Round. A Round's score is the time survived (a known function of elapsed real time). When a Round ends, its score is captured and the running score resets to zero for the next Round. **Obstacles score nothing** — they are hazards, not point sources.
+
+### Obstacle
+A hazard the penguin must jump. Colliding with one ends the **Round**. Obstacles are visually identical and behave identically; an Obstacle carries no points and no state beyond its position. Obstacles arrive in **Obstacle Groups** rather than singly.
+
+### Obstacle Group
+A cluster of one to three adjacent **Obstacles** spawned together as a unit. The group is a spawn/render pattern, not a domain entity — collision and scoring treat every Obstacle in a group identically (hitting any one ends the Round). The run guarantees the penguin can always clear a group: a jumpable free gap is preserved before and after every group (see ADR on obstacle spawning).
 
 ### Life
 One of the three chances within a **Penguin Run**. Losing a Life ends the current **Round**; the third loss ends the Penguin Run. "Losing" a Life carries no penalty to past Rounds — only the **best** Round score survives.
