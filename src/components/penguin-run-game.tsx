@@ -11,6 +11,7 @@ import {
   GAME_BIRD_SIZE,
   GAME_BIRD_SPAWN_INTERVAL_MAX_MS,
   GAME_BIRD_SPAWN_INTERVAL_MIN_MS,
+  GAME_BIRD_SPRITE_INSET,
   GAME_BIRD_UNLOCK_PTS,
   GAME_GRAVITY,
   GAME_GROUND_HEIGHT,
@@ -26,8 +27,8 @@ import {
   GAME_OBSTACLE_GAP_WITHIN_GROUP,
   GAME_OBSTACLE_WIDTH,
   GAME_PENGUIN_DRAW_SINK,
+  GAME_PENGUIN_SPRITE_INSET,
   GAME_PENGUIN_X_FRACTION,
-  GAME_PIXEL_SPRITE_MARGIN,
   GAME_RAMP_INTERVAL_MS,
   GAME_SPEED_CAP,
   GAME_SPEED_RAMP,
@@ -58,6 +59,56 @@ const BIRD_FRAME_HEIGHT = 32;
 /** Returns true once score reaches the bird unlock threshold. */
 export function shouldSpawnBirds(score: number): boolean {
   return score >= GAME_BIRD_UNLOCK_PTS;
+}
+
+/** Axis-aligned bounding box in absolute canvas coordinates. */
+export interface Aabb {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+/**
+ * Penguin collision box.
+ *
+ * Anchored to the DRAWN sprite — the draw is shifted down by
+ * GAME_PENGUIN_DRAW_SINK, so the box is too — then inset by the sprite's
+ * measured transparent margins (scaled to render size). Without the sink the
+ * box floats ~16px above the visible head, producing false hits when the
+ * penguin jumps underneath a high bird.
+ */
+export function penguinHitbox(penguinX: number, penguinY: number): Aabb {
+  const scale = SPRITE_SIZE / PENGUIN_FRAME_WIDTH;
+  const drawTop = penguinY + GAME_PENGUIN_DRAW_SINK;
+  return {
+    left: penguinX + GAME_PENGUIN_SPRITE_INSET.left * scale,
+    right: penguinX + SPRITE_SIZE - GAME_PENGUIN_SPRITE_INSET.right * scale,
+    top: drawTop + GAME_PENGUIN_SPRITE_INSET.top * scale,
+    bottom: drawTop + SPRITE_SIZE - GAME_PENGUIN_SPRITE_INSET.bottom * scale,
+  };
+}
+
+/**
+ * Bird (bat) collision box. The bat is drawn at bird.y with no sink; its
+ * content sits with unequal top/bottom margins, so explicit insets keep the
+ * box off the empty space below the wings.
+ */
+export function birdHitbox(birdX: number, birdY: number): Aabb {
+  const scale = GAME_BIRD_SIZE / BIRD_FRAME_WIDTH;
+  return {
+    left: birdX + GAME_BIRD_SPRITE_INSET.left * scale,
+    right: birdX + GAME_BIRD_SIZE - GAME_BIRD_SPRITE_INSET.right * scale,
+    top: birdY + GAME_BIRD_SPRITE_INSET.top * scale,
+    bottom: birdY + GAME_BIRD_SIZE - GAME_BIRD_SPRITE_INSET.bottom * scale,
+  };
+}
+
+/** Standard AABB overlap test. */
+export function aabbOverlap(a: Aabb, b: Aabb): boolean {
+  return (
+    a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
+  );
 }
 
 // Centred play-box dimensions. On desktop the canvas is a bounded box (like
@@ -470,32 +521,24 @@ export function PenguinRunGame({
         g.birds = g.birds.filter((b) => b.x > -(GAME_BIRD_SIZE * 2));
 
         // --- collision detection ---
-        // Penguin and bird hitboxes are derived from the actual 5px transparent
-        // margin in the 32×32 source frames, scaled to rendered size.
+        // Penguin and bird boxes are anchored to the drawn sprites and inset
+        // by their measured transparent margins (see penguinHitbox/birdHitbox)
+        // so they match what the player sees. Obstacles keep the centred
+        // forgiving fraction — they collide on the side, where it works well.
         const penguinX = canvas.width * GAME_PENGUIN_X_FRACTION;
-        const penguinMargin =
-          GAME_PIXEL_SPRITE_MARGIN * (SPRITE_SIZE / PENGUIN_FRAME_WIDTH);
-        const penguinHitOffset = penguinMargin;
-        const penguinHitSize = SPRITE_SIZE - 2 * penguinMargin;
-        const penguinLeft = penguinX + penguinHitOffset;
-        const penguinTop = g.penguinY + penguinHitOffset;
-        const penguinRight = penguinLeft + penguinHitSize;
-        const penguinBottom = penguinTop + penguinHitSize;
+        const penguinBox = penguinHitbox(penguinX, g.penguinY);
 
         for (const obs of g.obstacles) {
           const obsHitSize = GAME_OBSTACLE_WIDTH * GAME_HITBOX_FRACTION;
           const obsHitOffset = (GAME_OBSTACLE_WIDTH - obsHitSize) / 2;
-          const obsLeft = obs.x + obsHitOffset;
-          const obsTop = obs.y + obsHitOffset;
-          const obsRight = obsLeft + obsHitSize;
-          const obsBottom = obsTop + obsHitSize;
+          const obsBox: Aabb = {
+            left: obs.x + obsHitOffset,
+            top: obs.y + obsHitOffset,
+            right: obs.x + obsHitOffset + obsHitSize,
+            bottom: obs.y + obsHitOffset + obsHitSize,
+          };
 
-          if (
-            penguinLeft < obsRight &&
-            penguinRight > obsLeft &&
-            penguinTop < obsBottom &&
-            penguinBottom > obsTop
-          ) {
+          if (aabbOverlap(penguinBox, obsBox)) {
             g.phase = "between-rounds"; // pause loop to prevent re-entry
             void handleCollision();
             return; // stop this frame
@@ -503,21 +546,7 @@ export function PenguinRunGame({
         }
 
         for (const bird of g.birds) {
-          const birdMargin =
-            GAME_PIXEL_SPRITE_MARGIN * (GAME_BIRD_SIZE / BIRD_FRAME_WIDTH);
-          const birdHitOffset = birdMargin;
-          const birdHitSize = GAME_BIRD_SIZE - 2 * birdMargin;
-          const birdLeft = bird.x + birdHitOffset;
-          const birdTop = bird.y + birdHitOffset;
-          const birdRight = birdLeft + birdHitSize;
-          const birdBottom = birdTop + birdHitSize;
-
-          if (
-            penguinLeft < birdRight &&
-            penguinRight > birdLeft &&
-            penguinTop < birdBottom &&
-            penguinBottom > birdTop
-          ) {
+          if (aabbOverlap(penguinBox, birdHitbox(bird.x, bird.y))) {
             g.phase = "between-rounds";
             void handleCollision();
             return;

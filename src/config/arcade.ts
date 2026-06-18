@@ -115,11 +115,31 @@ export const GAME_PENGUIN_X_FRACTION = 0.2;
 export const GAME_HITBOX_FRACTION = 0.6;
 
 /**
- * Transparent margin (px) on each side of the penguin and bird 32×32 source
- * frames. The hitbox for these sprites is derived from this margin so it
- * matches the actual visible pixel content rather than an arbitrary fraction.
+ * Transparent insets (px) of the visible content inside the 32×32 penguin
+ * source frame, measured from penguin-walk.png. The collision AABB is built
+ * from these (scaled to render size) and anchored to the DRAWN sprite —
+ * i.e. it includes GAME_PENGUIN_DRAW_SINK — so the box matches what the
+ * player sees instead of a phantom box floating above the head.
  */
-export const GAME_PIXEL_SPRITE_MARGIN = 5;
+export const GAME_PENGUIN_SPRITE_INSET = {
+  top: 7,
+  bottom: 5,
+  left: 5,
+  right: 4,
+} as const;
+
+/**
+ * Transparent insets (px) of the visible content inside the 32×32 bat source
+ * frame, measured from bat.png. The bat is centred vertically with unequal
+ * top/bottom margins, so a centred fraction over-sizes the box downward and
+ * causes false hits when the penguin runs underneath.
+ */
+export const GAME_BIRD_SPRITE_INSET = {
+  top: 7,
+  bottom: 9,
+  left: 3,
+  right: 1,
+} as const;
 
 /** Total rounds (lives) per run. */
 export const GAME_TOTAL_ROUNDS = 3;
@@ -141,8 +161,11 @@ export const GAME_BIRD_SPAWN_INTERVAL_MAX_MS = 8_000;
  * Clearance (px) between the bird sprite bottom and the ground line.
  * Bird sprite top Y = groundY - GAME_BIRD_GROUND_CLEARANCE - GAME_BIRD_SIZE.
  * Canvas-height invariant: clearance holds at any canvas height.
+ * With the sprite-inset hitboxes a grounded penguin (box top = groundY + 26.5)
+ * stays ~70px clear of the bat (box bottom = groundY - 43.5), so running
+ * underneath never registers a false hit.
  */
-export const GAME_BIRD_GROUND_CLEARANCE = 80;
+export const GAME_BIRD_GROUND_CLEARANCE = 30;
 
 /** Rendered size (px) of the bird sprite. Source frame is 32×32. */
 export const GAME_BIRD_SIZE = 48;

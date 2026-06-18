@@ -4,10 +4,15 @@ import {
   GAME_BIRD_GROUND_CLEARANCE,
   GAME_BIRD_SIZE,
   GAME_BIRD_UNLOCK_PTS,
-  GAME_PIXEL_SPRITE_MARGIN,
-  GAME_SPRITE_SIZE,
+  GAME_PENGUIN_DRAW_SINK,
 } from "@/config/arcade";
-import { PenguinRunGame, shouldSpawnBirds } from "./penguin-run-game";
+import {
+  aabbOverlap,
+  birdHitbox,
+  PenguinRunGame,
+  penguinHitbox,
+  shouldSpawnBirds,
+} from "./penguin-run-game";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -579,23 +584,56 @@ describe("PenguinRunGame", () => {
     });
   });
 
-  it("high bird AABB never overlaps grounded penguin AABB (canvas-height invariant)", () => {
-    // Bird Y is computed as groundY - GAME_BIRD_GROUND_CLEARANCE - GAME_BIRD_SIZE.
-    // Express both AABBs relative to groundY so the assertion holds regardless
-    // of canvas height. Both sprites are 32×32 source with GAME_PIXEL_SPRITE_MARGIN
-    // transparent px on each side; hitbox is derived from that margin.
-    const SOURCE_FRAME = 32;
+  // -------------------------------------------------------------------------
+  // Hitbox geometry (regression: false bat hits when jumping underneath)
+  // -------------------------------------------------------------------------
 
-    const penguinMargin =
-      GAME_PIXEL_SPRITE_MARGIN * (GAME_SPRITE_SIZE / SOURCE_FRAME);
-    const penguinTopRelGround = penguinMargin; // hitbox top relative to sprite top = groundY
+  describe("hitbox geometry", () => {
+    // A representative ground line; helpers are pure in absolute canvas coords.
+    const GROUND_Y = 300;
+    const PENGUIN_X = 100;
+    // Bird spawned at the configured high-flying altitude, same column so the
+    // boxes overlap horizontally and only vertical clearance decides a hit.
+    const BIRD_Y = GROUND_Y - GAME_BIRD_GROUND_CLEARANCE - GAME_BIRD_SIZE;
 
-    const birdMargin =
-      GAME_PIXEL_SPRITE_MARGIN * (GAME_BIRD_SIZE / SOURCE_FRAME);
-    const birdHitSize = GAME_BIRD_SIZE - 2 * birdMargin;
-    const birdBottomRelGround =
-      -GAME_BIRD_GROUND_CLEARANCE - GAME_BIRD_SIZE + birdMargin + birdHitSize;
+    it("anchors the penguin box to the drawn sprite (no phantom head above it)", () => {
+      // The sprite is drawn at penguinY + DRAW_SINK; the collision box top must
+      // sit at or below that, not floating above the visible head.
+      const box = penguinHitbox(PENGUIN_X, GROUND_Y);
+      expect(box.top).toBeGreaterThanOrEqual(GROUND_Y + GAME_PENGUIN_DRAW_SINK);
+    });
 
-    expect(birdBottomRelGround).toBeLessThan(penguinTopRelGround);
+    it("does not collide a grounded penguin with a high bird", () => {
+      expect(
+        aabbOverlap(
+          penguinHitbox(PENGUIN_X, GROUND_Y),
+          birdHitbox(PENGUIN_X, BIRD_Y),
+        ),
+      ).toBe(false);
+    });
+
+    it("does not register a hit while the penguin's visible body is still clear under the bird", () => {
+      // penguinY = GROUND_Y - 60: mid-jump, head still below the bat's body.
+      // The old centred-fraction box (top = penguinY + 9.6) falsely collided
+      // here; the sink-anchored box must not.
+      const penguinY = GROUND_Y - 60;
+      expect(
+        aabbOverlap(
+          penguinHitbox(PENGUIN_X, penguinY),
+          birdHitbox(PENGUIN_X, BIRD_Y),
+        ),
+      ).toBe(false);
+    });
+
+    it("still registers a hit when the penguin jumps into the bat's body", () => {
+      // penguinY = GROUND_Y - 95: high enough that the bodies truly overlap.
+      const penguinY = GROUND_Y - 95;
+      expect(
+        aabbOverlap(
+          penguinHitbox(PENGUIN_X, penguinY),
+          birdHitbox(PENGUIN_X, BIRD_Y),
+        ),
+      ).toBe(true);
+    });
   });
 });
