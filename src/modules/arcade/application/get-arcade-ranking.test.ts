@@ -275,4 +275,111 @@ describe("getArcadeRanking application service", () => {
     expect(result).toHaveLength(1);
     expect(result[0].userName).toBe("user-carol");
   });
+
+  describe("period filtering", () => {
+    // Runs on different days:
+    //   alice: 2026-06-17 (today, Wed) — bestScore 40
+    //   bob:   2026-06-15 (same week, Mon) — bestScore 30
+    //   carol: 2026-06-10 (previous week) — bestScore 50
+    // Clock = 2026-06-17T12:00:00Z (Wednesday)
+
+    function makeRuns() {
+      const aliceRun = makeFinishedRun({
+        userId: "user-alice",
+        startedAt: new Date("2026-06-17T10:00:00Z"), // today
+        scores: [40],
+      });
+      const bobRun = makeFinishedRun({
+        userId: "user-bob",
+        startedAt: new Date("2026-06-15T10:00:00Z"), // Monday this week
+        scores: [30],
+      });
+      const carolRun = makeFinishedRun({
+        userId: "user-carol",
+        startedAt: new Date("2026-06-10T10:00:00Z"), // previous week
+        scores: [50],
+      });
+      return { aliceRun, bobRun, carolRun };
+    }
+
+    const clock = () => new Date("2026-06-17T12:00:00Z");
+
+    it("daily period returns only runs from today", async () => {
+      const { aliceRun, bobRun, carolRun } = makeRuns();
+      const repo = new InMemoryArcadeRunRepository([
+        aliceRun,
+        bobRun,
+        carolRun,
+      ]);
+
+      const result = await getArcadeRanking(repo, {
+        clock,
+        staleTolerance: STALE_TOLERANCE_MS,
+        period: "daily",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].userId).toBe("user-alice");
+      expect(result[0].bestScore).toBe(40);
+    });
+
+    it("weekly period returns only runs from the current UTC week (Mon–Sun)", async () => {
+      const { aliceRun, bobRun, carolRun } = makeRuns();
+      const repo = new InMemoryArcadeRunRepository([
+        aliceRun,
+        bobRun,
+        carolRun,
+      ]);
+
+      const result = await getArcadeRanking(repo, {
+        clock,
+        staleTolerance: STALE_TOLERANCE_MS,
+        period: "weekly",
+      });
+
+      // alice (today) and bob (this Monday) are in this week; carol is not
+      expect(result).toHaveLength(2);
+      const userIds = result.map((e) => e.userId);
+      expect(userIds).toContain("user-alice");
+      expect(userIds).toContain("user-bob");
+      expect(userIds).not.toContain("user-carol");
+    });
+
+    it("all_time period returns all runs regardless of date", async () => {
+      const { aliceRun, bobRun, carolRun } = makeRuns();
+      const repo = new InMemoryArcadeRunRepository([
+        aliceRun,
+        bobRun,
+        carolRun,
+      ]);
+
+      const result = await getArcadeRanking(repo, {
+        clock,
+        staleTolerance: STALE_TOLERANCE_MS,
+        period: "all_time",
+      });
+
+      expect(result).toHaveLength(3);
+      // carol has the highest score of 50
+      expect(result[0].userId).toBe("user-carol");
+      expect(result[0].bestScore).toBe(50);
+    });
+
+    it("undefined period defaults to all_time behaviour", async () => {
+      const { aliceRun, bobRun, carolRun } = makeRuns();
+      const repo = new InMemoryArcadeRunRepository([
+        aliceRun,
+        bobRun,
+        carolRun,
+      ]);
+
+      const result = await getArcadeRanking(repo, {
+        clock,
+        staleTolerance: STALE_TOLERANCE_MS,
+        // no period
+      });
+
+      expect(result).toHaveLength(3);
+    });
+  });
 });

@@ -38,6 +38,36 @@ export function toPlayDay(date: Date): PlayDay {
 }
 
 /**
+ * Computes the UTC calendar week range (Monday to Sunday) containing `date`.
+ *
+ * Returns `start` as Monday 00:00:00.000 UTC and `end` as Sunday
+ * 23:59:59.999 UTC of the same week. ISO week convention: week starts on
+ * Monday (day 1), Sunday is day 0 (treated as day 7 for offset arithmetic).
+ */
+export function getWeekRange(date: Date): { start: Date; end: Date } {
+  // getUTCDay() returns 0=Sun, 1=Mon, ... 6=Sat.
+  // We treat Sunday (0) as 7 so Monday is offset 0.
+  const dayOfWeek = date.getUTCDay(); // 0=Sun, 1=Mon, …, 6=Sat
+  const offsetToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+  const startMs =
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      0,
+      0,
+      0,
+      0,
+    ) -
+    offsetToMonday * 24 * 60 * 60 * 1000;
+
+  const endMs = startMs + 7 * 24 * 60 * 60 * 1000 - 1;
+
+  return { start: new Date(startMs), end: new Date(endMs) };
+}
+
+/**
  * Points awarded per second of survival time.
  * This is the single monotonic function that maps elapsed time → score ceiling.
  * A client-reported score cannot exceed elapsedSeconds * POINTS_PER_SECOND.
