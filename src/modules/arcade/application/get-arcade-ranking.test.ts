@@ -275,4 +275,89 @@ describe("getArcadeRanking application service", () => {
     expect(result).toHaveLength(1);
     expect(result[0].userName).toBe("user-carol");
   });
+
+  describe("period filtering", () => {
+    function makeFinishedRunOnDay(
+      userId: string,
+      dateStr: string,
+      score: number,
+    ): ReturnType<typeof makeFinishedRun> {
+      return makeFinishedRun({
+        userId,
+        startedAt: new Date(`${dateStr}T10:00:00Z`),
+        scores: [score],
+      });
+    }
+
+    it("daily period returns only runs from today's Play Day", async () => {
+      const todayRun = makeFinishedRunOnDay("user-alice", "2026-06-17", 50);
+      const yesterdayRun = makeFinishedRunOnDay("user-bob", "2026-06-16", 80);
+
+      const repo = new InMemoryArcadeRunRepository([todayRun, yesterdayRun]);
+      // Clock is 2026-06-17: today
+      const clock = () => new Date("2026-06-17T12:00:00Z");
+
+      const result = await getArcadeRanking(repo, {
+        clock,
+        staleTolerance: STALE_TOLERANCE_MS,
+        period: "daily",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].userId).toBe("user-alice");
+      expect(result[0].bestScore).toBe(50);
+    });
+
+    it("weekly period returns only runs from the current UTC week (Mon–Sun)", async () => {
+      // 2026-06-17 is a Wednesday; week is Mon 2026-06-15 to Sun 2026-06-21
+      const thisWeekRun = makeFinishedRunOnDay("user-alice", "2026-06-15", 40); // Monday
+      const lastWeekRun = makeFinishedRunOnDay("user-bob", "2026-06-14", 90); // Sunday last week
+
+      const repo = new InMemoryArcadeRunRepository([thisWeekRun, lastWeekRun]);
+      const clock = () => new Date("2026-06-17T12:00:00Z"); // Wednesday
+
+      const result = await getArcadeRanking(repo, {
+        clock,
+        staleTolerance: STALE_TOLERANCE_MS,
+        period: "weekly",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].userId).toBe("user-alice");
+      expect(result[0].bestScore).toBe(40);
+    });
+
+    it("all_time period returns runs from all days", async () => {
+      const oldRun = makeFinishedRunOnDay("user-alice", "2026-01-01", 100);
+      const newRun = makeFinishedRunOnDay("user-bob", "2026-06-17", 50);
+
+      const repo = new InMemoryArcadeRunRepository([oldRun, newRun]);
+      const clock = () => new Date("2026-06-17T12:00:00Z");
+
+      const result = await getArcadeRanking(repo, {
+        clock,
+        staleTolerance: STALE_TOLERANCE_MS,
+        period: "all_time",
+      });
+
+      expect(result).toHaveLength(2);
+      expect(result[0].userId).toBe("user-alice");
+      expect(result[0].bestScore).toBe(100);
+    });
+
+    it("defaults to all_time when no period is specified", async () => {
+      const oldRun = makeFinishedRunOnDay("user-alice", "2026-01-01", 100);
+      const repo = new InMemoryArcadeRunRepository([oldRun]);
+      const clock = () => new Date("2026-06-17T12:00:00Z");
+
+      const result = await getArcadeRanking(repo, {
+        clock,
+        staleTolerance: STALE_TOLERANCE_MS,
+        // no period
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].userId).toBe("user-alice");
+    });
+  });
 });

@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { ResultAsync } from "neverthrow";
 import type {
+  ArcadeRankingFilter,
   ArcadeRankingRow,
   ArcadeRunRepository,
 } from "../domain/arcade-run-repository";
@@ -75,7 +76,20 @@ export class PrismaArcadeRunRepository implements ArcadeRunRepository {
     );
   }
 
-  async findAllTimeRanking(): Promise<ArcadeRankingRow[]> {
+  async findRanking(filter?: ArcadeRankingFilter): Promise<ArcadeRankingRow[]> {
+    // Build the period filter clause
+    const periodWhere: Record<string, unknown> = {};
+    if (filter) {
+      if ("playDay" in filter) {
+        periodWhere.playDay = filter.playDay;
+      } else if ("startedAtRange" in filter) {
+        periodWhere.startedAt = {
+          gte: filter.startedAtRange.gte,
+          lte: filter.startedAtRange.lte,
+        };
+      }
+    }
+
     // Step 1: aggregate best score per user in the DB (avoids full-table scan
     // in application code for large datasets).
     const grouped = await this.client.penguinRun.groupBy({
@@ -83,6 +97,7 @@ export class PrismaArcadeRunRepository implements ArcadeRunRepository {
       where: {
         status: { in: ["finished", "finalised"] },
         bestScore: { gt: 0 },
+        ...periodWhere,
       },
       _max: { bestScore: true },
     });
@@ -101,6 +116,7 @@ export class PrismaArcadeRunRepository implements ArcadeRunRepository {
             userId: agg.userId,
             bestScore: userBest,
             status: { in: ["finished", "finalised"] },
+            ...periodWhere,
           },
           orderBy: { startedAt: "asc" },
           select: { startedAt: true },

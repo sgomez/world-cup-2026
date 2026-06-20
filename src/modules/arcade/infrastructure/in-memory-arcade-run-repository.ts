@@ -1,5 +1,6 @@
 import { okAsync, type ResultAsync } from "neverthrow";
 import type {
+  ArcadeRankingFilter,
   ArcadeRankingRow,
   ArcadeRunRepository,
 } from "../domain/arcade-run-repository";
@@ -39,8 +40,8 @@ export class InMemoryArcadeRunRepository implements ArcadeRunRepository {
     return [...this.store.values()].filter((r) => r.status === "in_progress");
   }
 
-  async findAllTimeRanking(): Promise<ArcadeRankingRow[]> {
-    // Collect the best score per user across finished/finalised runs.
+  async findRanking(filter?: ArcadeRankingFilter): Promise<ArcadeRankingRow[]> {
+    // Collect the best score per user across finished/finalised runs in the period.
     const bestByUser = new Map<
       string,
       { bestScore: number; achievedAt: Date }
@@ -49,6 +50,17 @@ export class InMemoryArcadeRunRepository implements ArcadeRunRepository {
     for (const run of this.store.values()) {
       if (run.status === "in_progress") continue;
       if (run.bestScore === 0) continue;
+
+      // Apply period filter
+      if (filter) {
+        if ("playDay" in filter) {
+          if (run.playDay !== filter.playDay) continue;
+        } else if ("startedAtRange" in filter) {
+          const { gte, lte } = filter.startedAtRange;
+          if (run.startedAt < gte || run.startedAt > lte) continue;
+        }
+      }
+
       const existing = bestByUser.get(run.userId);
       if (!existing || run.bestScore > existing.bestScore) {
         bestByUser.set(run.userId, {

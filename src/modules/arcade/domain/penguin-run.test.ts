@@ -1,5 +1,43 @@
 import { describe, expect, it } from "vitest";
-import { PenguinRun, toPlayDay } from "./penguin-run";
+import { getWeekRange, PenguinRun, toPlayDay } from "./penguin-run";
+
+describe("getWeekRange", () => {
+  it("returns Monday 00:00:00.000 UTC as start and Sunday 23:59:59.999 UTC as end for a mid-week date", () => {
+    // 2026-06-17 is a Wednesday
+    const date = new Date("2026-06-17T14:30:00Z");
+    const { start, end } = getWeekRange(date);
+    expect(start.toISOString()).toBe("2026-06-15T00:00:00.000Z"); // Monday
+    expect(end.toISOString()).toBe("2026-06-21T23:59:59.999Z"); // Sunday
+  });
+
+  it("returns the correct range when the date is Monday 00:00:00 UTC", () => {
+    const date = new Date("2026-06-15T00:00:00.000Z"); // Monday
+    const { start, end } = getWeekRange(date);
+    expect(start.toISOString()).toBe("2026-06-15T00:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-06-21T23:59:59.999Z");
+  });
+
+  it("returns the correct range when the date is Sunday 23:59:59.999 UTC", () => {
+    const date = new Date("2026-06-21T23:59:59.999Z"); // Sunday
+    const { start, end } = getWeekRange(date);
+    expect(start.toISOString()).toBe("2026-06-15T00:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-06-21T23:59:59.999Z");
+  });
+
+  it("returns the correct range for a Sunday (same week as the preceding Monday)", () => {
+    const date = new Date("2026-06-21T10:00:00Z"); // Sunday
+    const { start, end } = getWeekRange(date);
+    expect(start.toISOString()).toBe("2026-06-15T00:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-06-21T23:59:59.999Z");
+  });
+
+  it("rolls to next week correctly on Monday", () => {
+    const date = new Date("2026-06-22T00:00:00Z"); // Next Monday
+    const { start, end } = getWeekRange(date);
+    expect(start.toISOString()).toBe("2026-06-22T00:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-06-28T23:59:59.999Z");
+  });
+});
 
 describe("PenguinRun aggregate", () => {
   const userId = "user-alice";

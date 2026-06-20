@@ -35,7 +35,7 @@ describe("GET /api/arcade/ranking", () => {
     expect(await res.json()).toEqual({ error: "Unauthorized" });
   });
 
-  it("returns 200 with ranked entries when authenticated", async () => {
+  it("returns 200 with ranked entries when authenticated (no period)", async () => {
     mockGetSession.mockResolvedValue({
       user: { id: "user-alice", role: "user" },
       session: { id: "session-1" },
@@ -69,6 +69,80 @@ describe("GET /api/arcade/ranking", () => {
     expect(body.entries[0].rank).toBe(1);
     expect(body.entries[0].userId).toBe("user-bob");
     expect(body.entries[0].bestScore).toBe(100);
+    // No period = undefined passed to getRanking
+    expect(mockGetRanking).toHaveBeenCalledWith(undefined, undefined);
+  });
+
+  it("passes period=daily to getRanking when ?period=daily is given", async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: "user-alice", role: "user" },
+      session: { id: "session-1" },
+    } as any);
+    mockGetRanking.mockResolvedValue([]);
+
+    const { GET } = await import("./route");
+    const req = new Request(
+      "http://localhost/api/arcade/ranking?period=daily",
+      { method: "GET" },
+    );
+
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    expect(mockGetRanking).toHaveBeenCalledWith(undefined, "daily");
+  });
+
+  it("passes period=weekly to getRanking when ?period=weekly is given", async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: "user-alice", role: "user" },
+      session: { id: "session-1" },
+    } as any);
+    mockGetRanking.mockResolvedValue([]);
+
+    const { GET } = await import("./route");
+    const req = new Request(
+      "http://localhost/api/arcade/ranking?period=weekly",
+      { method: "GET" },
+    );
+
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    expect(mockGetRanking).toHaveBeenCalledWith(undefined, "weekly");
+  });
+
+  it("passes period=all_time to getRanking when ?period=all_time is given", async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: "user-alice", role: "user" },
+      session: { id: "session-1" },
+    } as any);
+    mockGetRanking.mockResolvedValue([]);
+
+    const { GET } = await import("./route");
+    const req = new Request(
+      "http://localhost/api/arcade/ranking?period=all_time",
+      { method: "GET" },
+    );
+
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    expect(mockGetRanking).toHaveBeenCalledWith(undefined, "all_time");
+  });
+
+  it("ignores unknown period values and passes undefined", async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: "user-alice", role: "user" },
+      session: { id: "session-1" },
+    } as any);
+    mockGetRanking.mockResolvedValue([]);
+
+    const { GET } = await import("./route");
+    const req = new Request(
+      "http://localhost/api/arcade/ranking?period=invalid",
+      { method: "GET" },
+    );
+
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    expect(mockGetRanking).toHaveBeenCalledWith(undefined, undefined);
   });
 
   it("returns 500 when getRanking throws", async () => {

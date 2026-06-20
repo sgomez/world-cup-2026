@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { finishPenguinRun as finishPenguinRunUseCase } from "@/modules/arcade/application/finish-penguin-run";
 import {
   type ArcadeRankingEntry,
+  type ArcadeRankingPeriod,
   getArcadeRanking as getArcadeRankingUseCase,
 } from "@/modules/arcade/application/get-arcade-ranking";
 import { recordHeartbeat as recordHeartbeatUseCase } from "@/modules/arcade/application/record-heartbeat";
@@ -411,13 +412,15 @@ export function createBaseContainer(deps: BaseContainerDeps) {
             userId: args.userId,
           });
         },
-        /** Returns the global Arcade Ranking, lazily finalising stale runs. */
+        /** Returns the Arcade Ranking for the given period, lazily finalising stale runs. */
         getRanking(
           nameResolver?: (userId: string) => Promise<string | null>,
+          period?: ArcadeRankingPeriod,
         ): Promise<ArcadeRankingEntry[]> {
           return getArcadeRankingUseCase(deps.arcadeRunRepo, {
             clock: deps.clock,
             staleTolerance: ARCADE_STALE_TOLERANCE_MS,
+            period,
             nameResolver,
           });
         },

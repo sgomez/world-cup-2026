@@ -434,7 +434,13 @@
     "viewRanking": "Ver clasificación",
     "roundScore": "Puntuación de ronda",
     "retryRound": "Reintentar",
-    "pressToStart": "Pulsa Espacio o toca para empezar"
+    "pressToStart": "Pulsa Espacio o toca para empezar",
+    "rankingDaily": "Hoy",
+    "rankingWeekly": "Esta Semana",
+    "rankingAllTime": "Histórico",
+    "descriptionDaily": "Mejores puntuaciones de hoy (UTC).",
+    "descriptionWeekly": "Mejores puntuaciones de esta semana (lun–dom UTC).",
+    "descriptionAllTime": "Mejores puntuaciones de todos los tiempos."
   },
   "tournament": {
     "title": "Clasificación del Torneo",

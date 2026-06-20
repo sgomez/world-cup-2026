@@ -55,6 +55,12 @@ vi.mock("next-intl/server", () => ({
         player: "Player",
         score: "Score",
         you: "You",
+        rankingDaily: "Today",
+        rankingWeekly: "This Week",
+        rankingAllTime: "All Time",
+        descriptionDaily: "Best scores achieved today (UTC).",
+        descriptionWeekly: "Best scores achieved this week (Mon–Sun UTC).",
+        descriptionAllTime: "All-time best scores across all runs.",
       },
     };
     return Promise.resolve(
@@ -63,7 +69,7 @@ vi.mock("next-intl/server", () => ({
   }),
 }));
 
-// Minimal mock for next-intl (client side, used by ArcadeSection subcomponents)
+// Minimal mock for next-intl (client side, used by ArcadeRankingTabs subcomponents)
 vi.mock("next-intl", () => ({
   useTranslations: vi.fn((_namespace: string) => (key: string) => key),
 }));
@@ -73,6 +79,51 @@ vi.mock("@/components/arcade-section", () => ({
   ArcadeSection: ({ hasPlayedToday }: { hasPlayedToday: boolean }) => (
     <div data-testid="arcade-section" data-has-played={String(hasPlayedToday)}>
       ArcadeSection mock
+    </div>
+  ),
+}));
+
+// ArcadeRankingTabs is a client component — mock it to avoid router issues
+vi.mock("@/components/arcade-ranking-tabs", () => ({
+  ArcadeRankingTabs: ({
+    daily,
+    weekly,
+    allTime,
+    currentUserId,
+  }: {
+    daily: {
+      rank: number;
+      userId: string;
+      userName: string;
+      bestScore: number;
+      achievedAt: string;
+    }[];
+    weekly: {
+      rank: number;
+      userId: string;
+      userName: string;
+      bestScore: number;
+      achievedAt: string;
+    }[];
+    allTime: {
+      rank: number;
+      userId: string;
+      userName: string;
+      bestScore: number;
+      achievedAt: string;
+    }[];
+    currentUserId?: string;
+  }) => (
+    <div
+      data-testid="arcade-ranking-tabs"
+      data-current-user={currentUserId}
+      data-daily-count={daily.length}
+      data-weekly-count={weekly.length}
+      data-alltime-count={allTime.length}
+    >
+      {daily.map((e) => (
+        <span key={`daily-${e.userId}`}>{e.userName}</span>
+      ))}
     </div>
   ),
 }));
@@ -104,7 +155,7 @@ describe("ArcadePage", () => {
     expect(redirect).toHaveBeenCalledWith({ href: "/login", locale: "en" });
   });
 
-  it("renders the arcade page with the section and ranking table", async () => {
+  it("renders the arcade page with the section and ranking tabs", async () => {
     mockGetSession.mockResolvedValue({
       user: {
         id: "user-1",
@@ -143,9 +194,8 @@ describe("ArcadePage", () => {
       "false",
     );
 
-    // Arcade ranking table shows the entry
-    expect(screen.getByText("Alice")).toBeInTheDocument();
-    expect(screen.getByText("50")).toBeInTheDocument();
+    // ArcadeRankingTabs rendered
+    expect(screen.getByTestId("arcade-ranking-tabs")).toBeInTheDocument();
   });
 
   it("passes hasPlayedToday correctly to ArcadeSection", async () => {
@@ -170,7 +220,7 @@ describe("ArcadePage", () => {
     );
   });
 
-  it("passes the session userId to getRanking and hasPlayedToday", async () => {
+  it("fetches all three ranking periods via getRanking", async () => {
     mockGetSession.mockResolvedValue({
       user: {
         id: "user-42",
@@ -185,6 +235,33 @@ describe("ArcadePage", () => {
     render(jsx);
 
     expect(mockHasPlayedToday).toHaveBeenCalledWith("user-42");
-    expect(mockGetRanking).toHaveBeenCalledWith(expect.any(Function));
+    // getRanking is called three times: daily, weekly, all_time
+    expect(mockGetRanking).toHaveBeenCalledTimes(3);
+    expect(mockGetRanking).toHaveBeenCalledWith(expect.any(Function), "daily");
+    expect(mockGetRanking).toHaveBeenCalledWith(expect.any(Function), "weekly");
+    expect(mockGetRanking).toHaveBeenCalledWith(
+      expect.any(Function),
+      "all_time",
+    );
+  });
+
+  it("passes the session userId as currentUserId to ArcadeRankingTabs", async () => {
+    mockGetSession.mockResolvedValue({
+      user: {
+        id: "user-99",
+        name: "Carol",
+        email: "carol@example.com",
+        role: "user",
+      },
+      session: { id: "session-3", impersonatedBy: null },
+    } as any);
+
+    const jsx = await ArcadePage({ params: Promise.resolve({ locale: "en" }) });
+    render(jsx);
+
+    expect(screen.getByTestId("arcade-ranking-tabs")).toHaveAttribute(
+      "data-current-user",
+      "user-99",
+    );
   });
 });

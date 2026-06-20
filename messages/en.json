@@ -434,7 +434,13 @@
     "viewRanking": "View Ranking",
     "roundScore": "Round score",
     "retryRound": "Retry",
-    "pressToStart": "Press Space or tap to start"
+    "pressToStart": "Press Space or tap to start",
+    "rankingDaily": "Today",
+    "rankingWeekly": "This Week",
+    "rankingAllTime": "All Time",
+    "descriptionDaily": "Best scores achieved today (UTC).",
+    "descriptionWeekly": "Best scores achieved this week (Mon–Sun UTC).",
+    "descriptionAllTime": "All-time best scores across all runs."
   },
   "tournament": {
     "title": "Tournament Standings",
