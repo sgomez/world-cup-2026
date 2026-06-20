@@ -162,7 +162,11 @@ One of the three chances within a **Penguin Run**. Losing a Life ends the curren
 The boundary of the once-per-day rule for **Penguin Run**, defined as the **UTC calendar day** (00:00–24:00 UTC), consistent with the platform's UTC-everywhere timekeeping. A User's eligibility to start a new Penguin Run resets at 00:00 UTC.
 
 ### Arcade Ranking
-A **global**, cross-everyone ranking of Users by their best **Penguin Run** score, displayed as a sibling tab to the **Leaderboard**. It is **not** a Leaderboard: it is keyed by **User** (one row per User, their all-time best score), spans all Users rather than a single Community, and has **no bearing on bet standings** — it never breaks ties in the betting **Leaderboard**. Ties share a position and are broken by who reached the score first.
+A **global**, cross-everyone ranking of Users by their best **Penguin Run** score, displayed as a sibling tab to the **Leaderboard**. It is **not** a Leaderboard: it is keyed by **User** (one row per User, their best score in the selected period), spans all Users rather than a single Community, and has **no bearing on bet standings** — it never breaks ties in the betting **Leaderboard**. Ties share a position and are broken by who reached the score first. It supports three time scopes:
+- **Daily** — best score achieved during the current **Play Day** (UTC calendar date string). Since a User can play at most once per Play Day, this represents the single daily run score.
+- **Weekly** — best score achieved during the current UTC calendar week (starting Monday 00:00:00 UTC and ending Sunday 23:59:59.999 UTC).
+- **All-Time** — best score achieved across all finished/finalised runs since the beginning.
+
 
 ### Heartbeat
 A periodic client-to-server signal proving a **Penguin Run** is still being played live. Its absence beyond a tolerance is treated as the player having left; the Run is then finalized server-side with the best Round score recorded so far, and the **Play Day** stays consumed. The Heartbeat, together with server-stamped Round timings and a score ceiling derived from elapsed time, is what keeps a reported score honest — the server never trusts a client clock or an impossible score.
