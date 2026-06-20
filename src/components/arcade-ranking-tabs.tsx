@@ -89,9 +89,11 @@ export function ArcadeRankingTabs({
           return (
             <button
               key={period}
+              id={`tab-${period}`}
               role="tab"
               type="button"
               aria-selected={isActive}
+              aria-controls={`panel-${period}`}
               onClick={() => {
                 setActivePeriod(period);
                 router.replace(
@@ -119,11 +121,21 @@ export function ArcadeRankingTabs({
         {DESCRIPTIONS[activePeriod]}
       </p>
 
-      {/* Ranking table for the active period */}
-      <ArcadeRankingTable
-        entries={rankings[activePeriod]}
-        currentUserId={currentUserId}
-      />
+      {/* Ranking tables — one panel per period, hidden when inactive */}
+      {PERIODS.map((period) => (
+        <div
+          key={period}
+          role="tabpanel"
+          id={`panel-${period}`}
+          aria-labelledby={`tab-${period}`}
+          hidden={period !== activePeriod}
+        >
+          <ArcadeRankingTable
+            entries={rankings[period]}
+            currentUserId={currentUserId}
+          />
+        </div>
+      ))}
     </div>
   );
 }
