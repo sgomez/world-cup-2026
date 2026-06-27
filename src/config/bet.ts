@@ -4,3 +4,6 @@ export const BET_DEADLINE = new Date(
 
 export const MAX_BETS_PER_USER: number =
   Number.parseInt(process.env.MAX_BETS_PER_USER ?? "", 10) || 3;
+
+export const SHOW_IMPORTED_NAMES: boolean =
+  process.env.SHOW_IMPORTED_NAMES === "1";
