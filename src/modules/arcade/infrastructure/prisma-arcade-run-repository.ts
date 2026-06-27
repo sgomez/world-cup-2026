@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { ResultAsync } from "neverthrow";
 import type {
+  ArcadeRankingFilter,
   ArcadeRankingRow,
   ArcadeRunRepository,
 } from "../domain/arcade-run-repository";
@@ -75,7 +76,20 @@ export class PrismaArcadeRunRepository implements ArcadeRunRepository {
     );
   }
 
-  async findAllTimeRanking(): Promise<ArcadeRankingRow[]> {
+  async findRanking(filter?: ArcadeRankingFilter): Promise<ArcadeRankingRow[]> {
+    // Build the time-scope WHERE clause from the optional filter.
+    const scopeWhere: Record<string, unknown> = {};
+    if (filter !== undefined) {
+      if ("playDay" in filter) {
+        scopeWhere.playDay = filter.playDay;
+      } else if ("startedAtRange" in filter) {
+        scopeWhere.startedAt = {
+          gte: filter.startedAtRange.gte,
+          lte: filter.startedAtRange.lte,
+        };
+      }
+    }
+
     // Step 1: aggregate best score per user in the DB (avoids full-table scan
     // in application code for large datasets).
     const grouped = await this.client.penguinRun.groupBy({
@@ -83,6 +97,7 @@ export class PrismaArcadeRunRepository implements ArcadeRunRepository {
       where: {
         status: { in: ["finished", "finalised"] },
         bestScore: { gt: 0 },
+        ...scopeWhere,
       },
       _max: { bestScore: true },
     });
@@ -101,6 +116,7 @@ export class PrismaArcadeRunRepository implements ArcadeRunRepository {
             userId: agg.userId,
             bestScore: userBest,
             status: { in: ["finished", "finalised"] },
+            ...scopeWhere,
           },
           orderBy: { startedAt: "asc" },
           select: { startedAt: true },

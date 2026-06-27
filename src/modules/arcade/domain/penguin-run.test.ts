@@ -1,5 +1,42 @@
 import { describe, expect, it } from "vitest";
-import { PenguinRun, toPlayDay } from "./penguin-run";
+import { getWeekRange, PenguinRun, toPlayDay } from "./penguin-run";
+
+describe("getWeekRange", () => {
+  it("returns Monday 00:00:00.000 UTC as start for a Wednesday date", () => {
+    const wednesday = new Date("2026-06-17T14:30:00Z"); // Wednesday
+    const { start, end } = getWeekRange(wednesday);
+    expect(start).toEqual(new Date("2026-06-15T00:00:00.000Z")); // Monday
+    expect(end).toEqual(new Date("2026-06-21T23:59:59.999Z")); // Sunday
+  });
+
+  it("returns the same day as start and end for a Monday", () => {
+    const monday = new Date("2026-06-15T00:00:00Z");
+    const { start, end } = getWeekRange(monday);
+    expect(start).toEqual(new Date("2026-06-15T00:00:00.000Z"));
+    expect(end).toEqual(new Date("2026-06-21T23:59:59.999Z"));
+  });
+
+  it("returns Saturday as part of the week that started on Monday", () => {
+    const saturday = new Date("2026-06-20T12:00:00Z");
+    const { start, end } = getWeekRange(saturday);
+    expect(start).toEqual(new Date("2026-06-15T00:00:00.000Z"));
+    expect(end).toEqual(new Date("2026-06-21T23:59:59.999Z"));
+  });
+
+  it("handles a Sunday boundary correctly (Sunday is end of week)", () => {
+    const sunday = new Date("2026-06-21T23:59:00Z");
+    const { start, end } = getWeekRange(sunday);
+    expect(start).toEqual(new Date("2026-06-15T00:00:00.000Z"));
+    expect(end).toEqual(new Date("2026-06-21T23:59:59.999Z"));
+  });
+
+  it("handles week crossing month boundary", () => {
+    const thursday = new Date("2026-06-25T10:00:00Z"); // Thu, June 25
+    const { start, end } = getWeekRange(thursday);
+    expect(start).toEqual(new Date("2026-06-22T00:00:00.000Z")); // Mon June 22
+    expect(end).toEqual(new Date("2026-06-28T23:59:59.999Z")); // Sun June 28
+  });
+});
 
 describe("PenguinRun aggregate", () => {
   const userId = "user-alice";

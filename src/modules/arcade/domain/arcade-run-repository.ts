@@ -3,19 +3,33 @@ import type { DomainError } from "./errors";
 import type { PenguinRun, PlayDay } from "./penguin-run";
 
 /**
- * One row in the global Arcade Ranking.
- * Represents a user's all-time best score and the first time they achieved it.
+ * One row in the Arcade Ranking.
+ * Represents a user's best score (within a given filter scope) and the first
+ * time they achieved it.
  */
 export type ArcadeRankingRow = {
   userId: string;
-  /** The user's all-time best score across all their finished/finalised Penguin Runs. */
+  /** The user's best score within the filter scope. */
   bestScore: number;
   /**
    * The `startedAt` timestamp of the run in which the user first achieved their
-   * all-time best score. Used to break ties deterministically (earlier = higher rank).
+   * best score. Used to break ties deterministically (earlier = higher rank).
    */
   achievedAt: Date;
 };
+
+/**
+ * Optional filter for `findRanking`.
+ *
+ * - `playDay` — restrict to runs whose `playDay` field matches (daily scope).
+ * - `startedAtRange` — restrict to runs whose `startedAt` falls within the
+ *   given UTC range (weekly scope).
+ * - `undefined` — no filter; all-time scope.
+ */
+export type ArcadeRankingFilter =
+  | { playDay: string }
+  | { startedAtRange: { gte: Date; lte: Date } }
+  | undefined;
 
 /**
  * Persistence port for the PenguinRun aggregate (ADR 0008).
@@ -26,9 +40,9 @@ export type ArcadeRankingRow = {
  *   given Play Day. Used to enforce the daily limit.
  * - `findAllInProgress` — returns all runs with status `in_progress`.
  *   Used by `getArcadeRanking` to lazily finalise stale runs on read.
- * - `findAllTimeRanking` — returns one row per User with their all-time best
- *   score (across finished and finalised runs) and the timestamp of the run
- *   where that score was first achieved. Used by `getArcadeRanking`.
+ * - `findRanking` — returns one row per User with their best score (within the
+ *   optional filter scope) and the timestamp of the run where that score was
+ *   first achieved. Used by `getArcadeRanking`.
  * - `save` — upserts the run by id.
  */
 export interface ArcadeRunRepository {
@@ -38,6 +52,6 @@ export interface ArcadeRunRepository {
     playDay: PlayDay,
   ): Promise<PenguinRun | null>;
   findAllInProgress(): Promise<PenguinRun[]>;
-  findAllTimeRanking(): Promise<ArcadeRankingRow[]>;
+  findRanking(filter?: ArcadeRankingFilter): Promise<ArcadeRankingRow[]>;
   save(run: PenguinRun): ResultAsync<void, DomainError>;
 }

@@ -1,4 +1,10 @@
-import type { ArcadeRunRepository } from "../domain/arcade-run-repository";
+import type {
+  ArcadeRankingFilter,
+  ArcadeRunRepository,
+} from "../domain/arcade-run-repository";
+import { getWeekRange, toPlayDay } from "../domain/penguin-run";
+
+export type ArcadeRankingPeriod = "daily" | "weekly" | "all_time";
 
 export type ArcadeRankingEntry = {
   rank: number;
@@ -18,6 +24,13 @@ export type GetArcadeRankingQuery = {
    */
   staleTolerance: number;
   /**
+   * Time scope for the ranking. Defaults to "all_time".
+   * - "daily": best score achieved on the current UTC calendar day.
+   * - "weekly": best score achieved during the current UTC calendar week (Mon–Sun).
+   * - "all_time": best score across all runs (original behaviour).
+   */
+  period?: ArcadeRankingPeriod;
+  /**
    * Optional name resolver. When provided, each entry's `userName` is resolved
    * via this seam (symmetric with the betting Leaderboard NameResolver). Falls
    * back to `userId` when the resolver returns null or is omitted.
@@ -26,10 +39,27 @@ export type GetArcadeRankingQuery = {
 };
 
 /**
+ * Translates a period string into an `ArcadeRankingFilter` using the given
+ * reference timestamp (typically the server clock's `now`).
+ */
+function periodToFilter(
+  period: ArcadeRankingPeriod | undefined,
+  now: Date,
+): ArcadeRankingFilter {
+  if (!period || period === "all_time") return undefined;
+  if (period === "daily") {
+    return { playDay: toPlayDay(now) };
+  }
+  // "weekly"
+  const { start, end } = getWeekRange(now);
+  return { startedAtRange: { gte: start, lte: end } };
+}
+
+/**
  * `getArcadeRanking` use case.
  *
- * Returns the global Arcade Ranking: one entry per User, ordered descending
- * by all-time best score; ties broken by earliest `achievedAt` (the
+ * Returns the Arcade Ranking for the requested period: one entry per User,
+ * ordered descending by best score; ties broken by earliest `achievedAt` (the
  * `startedAt` timestamp of the run in which the user first achieved the score).
  *
  * Before querying, it lazily finalises any in_progress runs whose heartbeat
@@ -59,8 +89,11 @@ export async function getArcadeRanking(
     );
   }
 
-  // Query all-time ranking rows (finished + finalised, best score per user).
-  const rows = await repo.findAllTimeRanking();
+  // Build the repository filter from the requested period.
+  const filter = periodToFilter(query.period, now);
+
+  // Query ranking rows (finished + finalised, best score per user within scope).
+  const rows = await repo.findRanking(filter);
 
   // Sort: descending score, then ascending achievedAt for tie-break.
   rows.sort((a, b) => {
