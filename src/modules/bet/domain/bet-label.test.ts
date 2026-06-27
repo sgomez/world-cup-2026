@@ -51,14 +51,22 @@ describe("bet label obfuscation", () => {
     });
   });
 
-  it("obfuscates imported non-owner labels", () => {
+  it("obfuscates imported non-owner labels when showing is disabled", () => {
     const label = "123 | David";
-    expect(serializeLabel(label, true, false)).toEqual({
+    expect(serializeLabel(label, true, false, false)).toEqual({
       obfuscated: true,
       num: "123",
       head: "Da",
       tail: "id",
       middleLen: 1,
+    });
+  });
+
+  it("does not obfuscate imported non-owner labels when showing is enabled", () => {
+    const label = "123 | David";
+    expect(serializeLabel(label, true, false, true)).toEqual({
+      obfuscated: false,
+      value: label,
     });
   });
 

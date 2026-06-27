@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: world_cup_2026
+      POSTGRES_DB: worldcup2026
     ports:
       - "5432:5432"
     volumes:

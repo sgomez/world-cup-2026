@@ -1,4 +1,5 @@
 import { err, ok, type Result } from "neverthrow";
+import { SHOW_IMPORTED_NAMES } from "@/config/bet";
 import { type DomainError, domainError } from "./errors";
 
 export class BetLabel {
@@ -68,8 +69,9 @@ export function serializeLabel(
   label: string,
   imported: boolean,
   isOwner: boolean,
+  showNames = SHOW_IMPORTED_NAMES,
 ): SerializedBetLabel {
-  if (imported && !isOwner) {
+  if (imported && !isOwner && !showNames) {
     return obfuscateLabel(label);
   }
   return { obfuscated: false, value: label };

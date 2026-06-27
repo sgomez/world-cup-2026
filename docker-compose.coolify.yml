@@ -21,6 +21,7 @@ services:
       - 'BETTER_AUTH_URL=${BETTER_AUTH_URL}'
       - 'NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}'
       - 'BET_DEADLINE=${BET_DEADLINE}'
+      - 'SHOW_IMPORTED_NAMES=${SHOW_IMPORTED_NAMES:-0}'
       - PORT=3000
     ports:
       - '3000:3000'

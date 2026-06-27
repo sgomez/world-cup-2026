@@ -47,3 +47,34 @@ describe("MAX_BETS_PER_USER", () => {
     expect(typeof MAX_BETS_PER_USER).toBe("number");
   });
 });
+
+describe("SHOW_IMPORTED_NAMES", () => {
+  const ORIGINAL = process.env.SHOW_IMPORTED_NAMES;
+
+  afterEach(() => {
+    if (ORIGINAL === undefined) {
+      delete process.env.SHOW_IMPORTED_NAMES;
+    } else {
+      process.env.SHOW_IMPORTED_NAMES = ORIGINAL;
+    }
+    vi.resetModules();
+  });
+
+  it("defaults to false when env var is absent", async () => {
+    delete process.env.SHOW_IMPORTED_NAMES;
+    const { SHOW_IMPORTED_NAMES } = await import("./bet");
+    expect(SHOW_IMPORTED_NAMES).toBe(false);
+  });
+
+  it("resolves to true when env var is '1'", async () => {
+    process.env.SHOW_IMPORTED_NAMES = "1";
+    const { SHOW_IMPORTED_NAMES } = await import("./bet");
+    expect(SHOW_IMPORTED_NAMES).toBe(true);
+  });
+
+  it("resolves to false when env var is '0'", async () => {
+    process.env.SHOW_IMPORTED_NAMES = "0";
+    const { SHOW_IMPORTED_NAMES } = await import("./bet");
+    expect(SHOW_IMPORTED_NAMES).toBe(false);
+  });
+});
