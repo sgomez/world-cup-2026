@@ -56,12 +56,14 @@ export type CalendarViewProps = {
   liveResults: LiveResultState[];
   bracketView: Record<string, KnockoutMatch>;
   locale: string;
+  isAdmin?: boolean;
 };
 
 export function CalendarView({
   liveResults,
   bracketView,
   locale,
+  isAdmin = false,
 }: CalendarViewProps) {
   useLiveRefresh();
   const tCalendar = useTranslations("calendar");
@@ -503,6 +505,11 @@ export function CalendarView({
                               "team2",
                             );
 
+                            const liveResult = num
+                              ? liveResults.find((lr) => lr.num === num)
+                              : undefined;
+                            const link = liveResult?.link;
+
                             return (
                               <MatchCard
                                 key={
@@ -519,6 +526,8 @@ export function CalendarView({
                                 status={status}
                                 score1={score1}
                                 score2={score2}
+                                isAdmin={isAdmin}
+                                link={link}
                               />
                             );
                           })}

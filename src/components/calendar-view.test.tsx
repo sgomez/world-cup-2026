@@ -202,4 +202,50 @@ describe("CalendarView", () => {
     expect(mexicoIndex).toBeGreaterThan(-1);
     expect(koreaIndex).toBeLessThan(mexicoIndex);
   });
+
+  it("does not render the match time as a link when the user is not an admin", () => {
+    const liveResult: LiveResultState = {
+      num: 1,
+      status: "live",
+      goals1: 1,
+      goals2: 0,
+      link: "https://example.com/stream-link",
+    };
+    render(
+      <CalendarView
+        liveResults={[liveResult]}
+        bracketView={emptyBracket}
+        locale="en"
+        isAdmin={false}
+      />,
+    );
+    const allLinks = screen.queryAllByRole("link");
+    const hrefs = allLinks.map((link) => link.getAttribute("href"));
+    expect(hrefs).not.toContain("https://example.com/stream-link");
+  });
+
+  it("renders the match time as a blank target link when the user is an admin and the live result has a link", () => {
+    const liveResult: LiveResultState = {
+      num: 1,
+      status: "live",
+      goals1: 1,
+      goals2: 0,
+      link: "https://example.com/stream-link",
+    };
+    render(
+      <CalendarView
+        liveResults={[liveResult]}
+        bracketView={emptyBracket}
+        locale="en"
+        isAdmin={true}
+      />,
+    );
+    const linkElement = screen.getByRole("link");
+    expect(linkElement).toHaveAttribute(
+      "href",
+      "https://example.com/stream-link",
+    );
+    expect(linkElement).toHaveAttribute("target", "_blank");
+    expect(linkElement).toHaveAttribute("rel", "noopener noreferrer");
+  });
 });

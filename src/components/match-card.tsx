@@ -21,6 +21,8 @@ export type MatchCardProps = {
   status: "LIVE" | "FINISHED" | "UPCOMING";
   score1?: string;
   score2?: string;
+  isAdmin?: boolean;
+  link?: string;
 };
 
 function PlaceholderRow({ label, score }: { label: string; score?: string }) {
@@ -62,6 +64,8 @@ export function MatchCard({
   status,
   score1,
   score2,
+  isAdmin = false,
+  link,
 }: MatchCardProps) {
   const t = useTranslations("calendar");
 
@@ -97,7 +101,18 @@ export function MatchCard({
       {/* Header Info */}
       <CardHeader className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs font-semibold text-mute dark:text-stone">
-          <span>{localTime}</span>
+          {isAdmin && link ? (
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline hover:text-ink dark:hover:text-canvas transition-colors"
+            >
+              {localTime}
+            </a>
+          ) : (
+            <span>{localTime}</span>
+          )}
           {group && (
             <>
               <span className="opacity-40">•</span>
