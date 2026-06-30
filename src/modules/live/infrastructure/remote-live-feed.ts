@@ -18,13 +18,26 @@ type FetchFn = (url: string, init?: RequestInit) => Promise<Response>;
  * The parsing contract is derived from the local, gitignored
  * `scripts/scrape-live-scores.mjs` (never committed, see ADR 0030).
  *
- * Returns `{ goals1, goals2, isLive }` when a scoreline is found,
- * or `null` when no score elements are present yet
+ * Returns `{ goals1, goals2, penalties1?, penalties2?, isLive }` when a
+ * scoreline is found, or `null` when no score elements are present yet
  * (e.g. the real-world kickoff is delayed — caller treats this as still live).
+ *
+ * Penalties appear as bare parenthesised numbers after each score point,
+ * e.g. `(3)` after the first score and `(4)` after the second:
+ *
+ *     <p class="score-board__content__score__point">1</p>
+ *     (3)
+ *     <span class="…__divider"></span>
+ *     <p class="score-board__content__score__point">1</p>
+ *     (4)
  */
-function extractScore(
-  html: string,
-): { goals1: number; goals2: number; isLive: boolean } | null {
+function extractScore(html: string): {
+  goals1: number;
+  goals2: number;
+  penalties1?: number;
+  penalties2?: number;
+  isLive: boolean;
+} | null {
   const points = [
     ...html.matchAll(
       /<p class="score-board__content__score__point">\s*(\d+)\s*<\/p>/g,
@@ -35,11 +48,32 @@ function extractScore(
     return null;
   }
 
-  return {
+  const result: {
+    goals1: number;
+    goals2: number;
+    penalties1?: number;
+    penalties2?: number;
+    isLive: boolean;
+  } = {
     goals1: parseInt(points[0][1], 10),
     goals2: parseInt(points[1][1], 10),
     isLive: html.includes("live-light"),
   };
+
+  // Penalties: parenthesised number directly after each </p> of a
+  // score-board__content__score__point element.  We match the full pattern
+  // so we only pick up penalty markers adjacent to score points.
+  const penMatches = [
+    ...html.matchAll(
+      /<p class="score-board__content__score__point">\s*\d+\s*<\/p>\s*\((\d+)\)/g,
+    ),
+  ];
+  if (penMatches.length === 2) {
+    result.penalties1 = parseInt(penMatches[0][1], 10);
+    result.penalties2 = parseInt(penMatches[1][1], 10);
+  }
+
+  return result;
 }
 
 /**
@@ -57,7 +91,9 @@ function extractScore(
  * or an unparseable response all return `Err` — the Tick logs the error
  * and retries next cycle.
  *
- * Penalties are always echoed from `current` and never written by this Feed.
+ * Penalties are extracted from the page when present (parenthesised numbers
+ * next to each score point). When absent from the page they are left
+ * undefined, letting the upsert layer decide whether to clear or preserve.
  */
 export class RemoteLiveFeed implements LiveFeed {
   constructor(private readonly fetchFn: FetchFn = fetch) {}
@@ -126,8 +162,8 @@ export class RemoteLiveFeed implements LiveFeed {
       goals1: score.goals1,
       goals2: score.goals2,
       finished: !score.isLive,
-      penalties1: current.penalties1,
-      penalties2: current.penalties2,
+      penalties1: score.penalties1,
+      penalties2: score.penalties2,
     });
   }
 }

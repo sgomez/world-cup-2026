@@ -26,24 +26,46 @@ function makeLiveResult(
 }
 
 /** Build a minimal HTML page body that represents the two states */
-function buildLivePage(goals1: number, goals2: number): string {
+function buildLivePage(
+  goals1: number,
+  goals2: number,
+  penalties?: { pen1: number; pen2: number },
+): string {
+  const pen1 = penalties ? `(${penalties.pen1})` : "";
+  const pen2 = penalties ? `(${penalties.pen2})` : "";
   return `
     <html>
       <body>
         <span class="live-light"></span>
-        <p class="score-board__content__score__point">${goals1}</p>
-        <p class="score-board__content__score__point">${goals2}</p>
+        <div class="score-board__content__score">
+          <p class="score-board__content__score__point">${goals1}</p>
+          ${pen1}
+          <span class="score-board__content__score__divider"></span>
+          <p class="score-board__content__score__point">${goals2}</p>
+          ${pen2}
+        </div>
       </body>
     </html>
   `;
 }
 
-function buildFinishedPage(goals1: number, goals2: number): string {
+function buildFinishedPage(
+  goals1: number,
+  goals2: number,
+  penalties?: { pen1: number; pen2: number },
+): string {
+  const pen1 = penalties ? `(${penalties.pen1})` : "";
+  const pen2 = penalties ? `(${penalties.pen2})` : "";
   return `
     <html>
       <body>
-        <p class="score-board__content__score__point">${goals1}</p>
-        <p class="score-board__content__score__point">${goals2}</p>
+        <div class="score-board__content__score">
+          <p class="score-board__content__score__point">${goals1}</p>
+          ${pen1}
+          <span class="score-board__content__score__divider"></span>
+          <p class="score-board__content__score__point">${goals2}</p>
+          ${pen2}
+        </div>
       </body>
     </html>
   `;
@@ -143,24 +165,68 @@ describe("RemoteLiveFeed", () => {
     expect(snapshot.goals2).toBe(0);
   });
 
-  it("penalties from current are echoed through, never overwritten", async () => {
+  it("extracts penalties from finished page with penalty shootout", async () => {
     const current = LiveResult.fromState({
       num: 73,
       status: "live",
       goals1: 1,
       goals2: 1,
-      penalties1: 5,
-      penalties2: 4,
       link: "https://example.com/match/73",
     });
     const feed = new RemoteLiveFeed(
-      makeFetch({ ok: true, text: buildLivePage(1, 1) }),
+      makeFetch({
+        ok: true,
+        text: buildFinishedPage(1, 1, { pen1: 3, pen2: 4 }),
+      }),
     );
     const result = await feed.fetchSnapshot({ ...mockMatch, num: 73 }, current);
     expect(result.isOk()).toBe(true);
     const snapshot = result._unsafeUnwrap();
-    expect(snapshot.penalties1).toBe(5);
+    expect(snapshot.finished).toBe(true);
+    expect(snapshot.goals1).toBe(1);
+    expect(snapshot.goals2).toBe(1);
+    expect(snapshot.penalties1).toBe(3);
     expect(snapshot.penalties2).toBe(4);
+  });
+
+  it("extracts penalties from live page with penalty shootout", async () => {
+    const current = LiveResult.fromState({
+      num: 73,
+      status: "live",
+      goals1: 1,
+      goals2: 1,
+      link: "https://example.com/match/73",
+    });
+    const feed = new RemoteLiveFeed(
+      makeFetch({
+        ok: true,
+        text: buildLivePage(1, 1, { pen1: 5, pen2: 6 }),
+      }),
+    );
+    const result = await feed.fetchSnapshot({ ...mockMatch, num: 73 }, current);
+    expect(result.isOk()).toBe(true);
+    const snapshot = result._unsafeUnwrap();
+    expect(snapshot.finished).toBe(false);
+    expect(snapshot.penalties1).toBe(5);
+    expect(snapshot.penalties2).toBe(6);
+  });
+
+  it("returns no penalties when page has no penalty markers", async () => {
+    const current = LiveResult.fromState({
+      num: 73,
+      status: "live",
+      goals1: 2,
+      goals2: 1,
+      link: "https://example.com/match/73",
+    });
+    const feed = new RemoteLiveFeed(
+      makeFetch({ ok: true, text: buildLivePage(2, 1) }),
+    );
+    const result = await feed.fetchSnapshot({ ...mockMatch, num: 73 }, current);
+    expect(result.isOk()).toBe(true);
+    const snapshot = result._unsafeUnwrap();
+    expect(snapshot.penalties1).toBeUndefined();
+    expect(snapshot.penalties2).toBeUndefined();
   });
 
   it("returns Err on non-success HTTP status", async () => {
