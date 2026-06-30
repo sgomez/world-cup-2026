@@ -366,7 +366,10 @@
     "noLiveResults": "No live or finished matches yet.",
     "correctionNote": "Finished scores can be corrected here.",
     "filterTitle": "Filters",
-    "penaltiesTitle": "Penalties"
+    "penaltiesTitle": "Penalties",
+    "forceRefresh": "Force refresh match data from source",
+    "refreshSuccess": "Match data refreshed.",
+    "refreshing": "Refreshing…"
   },
   "adminTieBreak": {
     "title": "Tie-Break Factors",

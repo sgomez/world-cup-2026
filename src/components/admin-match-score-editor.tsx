@@ -1,9 +1,12 @@
 "use client";
 
-import { CalendarDays, Filter, Loader2 } from "lucide-react";
+import { CalendarDays, Filter, Loader2, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { upsertLiveResultAction } from "@/app/actions/live";
+import {
+  forceRefreshMatchAction,
+  upsertLiveResultAction,
+} from "@/app/actions/live";
 import { placeholderLabel } from "@/components/placeholder-label";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
@@ -395,6 +398,7 @@ function MatchEditorCard({
   );
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Keep track of last saved values to prevent redundant server calls
   const lastSavedRef = useRef({
@@ -527,6 +531,23 @@ function MatchEditorCard({
     }
   };
 
+  const handleForceRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const result = await forceRefreshMatchAction(match.num);
+      if (result?.error) {
+        toast(result.error, "error");
+      } else {
+        toast(tAdmin("refreshSuccess"), "success");
+      }
+    } catch (e) {
+      console.error(e);
+      toast("An unexpected error occurred", "error");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const handleStatusChange = (newStatus: LiveStatus) => {
     setStatus(newStatus);
     let updatedGoals1 = goals1;
@@ -596,6 +617,17 @@ function MatchEditorCard({
             {isSaving && (
               <Loader2 className="h-3.5 w-3.5 animate-spin text-info" />
             )}
+            <button
+              type="button"
+              onClick={handleForceRefresh}
+              disabled={isRefreshing || isSaving}
+              title={tAdmin("forceRefresh")}
+              className="rounded p-0.5 text-mute transition-colors hover:bg-soft-cloud hover:text-ink focus:outline-none focus:ring-1 focus:ring-info disabled:opacity-40 dark:text-stone dark:hover:bg-charcoal dark:hover:text-canvas"
+            >
+              <RefreshCw
+                className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")}
+              />
+            </button>
             <select
               value={status}
               onChange={(e) => handleStatusChange(e.target.value as LiveStatus)}

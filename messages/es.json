@@ -366,7 +366,10 @@
     "noLiveResults": "Aún no hay partidos en directo o finalizados.",
     "correctionNote": "Los resultados finalizados se pueden corregir aquí.",
     "filterTitle": "Filtros",
-    "penaltiesTitle": "Penaltis"
+    "penaltiesTitle": "Penaltis",
+    "forceRefresh": "Forzar actualización de datos desde la fuente",
+    "refreshSuccess": "Datos del partido actualizados.",
+    "refreshing": "Actualizando…"
   },
   "adminTieBreak": {
     "title": "Factores de Desempate",
