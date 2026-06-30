@@ -131,7 +131,7 @@ describe("CalendarView", () => {
     expect(screen.getAllByText("1").length).toBeGreaterThan(0);
   });
 
-  it("shows penalty score for a penalty-decided knockout match", () => {
+  it("shows goals and penalty badges for a penalty-decided knockout match", () => {
     const liveResult: LiveResultState = {
       num: 73,
       status: "finished",
@@ -140,14 +140,28 @@ describe("CalendarView", () => {
       penalties1: 5,
       penalties2: 3,
     };
+    // Resolve placeholder teams "2A"/"2B" to real teams so TeamBadge is used
+    // (PlaceholderRow does not render penalty badges)
+    const bracket: Record<string, KnockoutMatch> = {
+      "R32-73": {
+        id: "R32-73",
+        round: "R32",
+        team1Id: "mex",
+        team2Id: "kor",
+        winnerId: null,
+        loserId: null,
+      },
+    };
     render(
       <CalendarView
         liveResults={[liveResult]}
-        bracketView={emptyBracket}
+        bracketView={bracket}
         locale="en"
       />,
     );
-    // Penalty scores (5 and 3) should appear
+    // Goal scores (1 and 1) should appear in the score boxes
+    expect(screen.getAllByText("1").length).toBeGreaterThan(0);
+    // Penalty badge values (5 and 3) should appear as badges
     expect(screen.getAllByText("5").length).toBeGreaterThan(0);
     expect(screen.getAllByText("3").length).toBeGreaterThan(0);
   });

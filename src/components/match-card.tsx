@@ -5,12 +5,13 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { placeholderLabel } from "@/components/placeholder-label";
 import { TeamBadge } from "@/components/team-badge";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
 import { getKickoffInstant } from "@/modules/schedule";
 import { getTeamByName } from "@/modules/teams";
 
 export type MatchCardProps = {
-  round: string;
+  isKnockout: boolean;
   date: string;
   time: string;
   team1: string;
@@ -21,6 +22,10 @@ export type MatchCardProps = {
   status: "LIVE" | "FINISHED" | "UPCOMING";
   score1?: string;
   score2?: string;
+  penalties1?: number;
+  penalties2?: number;
+  t1Eliminated?: boolean;
+  t2Eliminated?: boolean;
   isAdmin?: boolean;
   link?: string;
 };
@@ -53,7 +58,37 @@ function PlaceholderRow({ label, score }: { label: string; score?: string }) {
   );
 }
 
+function ScoreWithBadge({
+  goals,
+  penalty,
+  showBadge,
+}: {
+  goals: string;
+  penalty?: number;
+  showBadge: boolean;
+}) {
+  const scoreBox = (
+    <div className="flex h-7 w-8 items-center justify-center rounded bg-soft-cloud dark:bg-charcoal text-sm font-bold text-ink dark:text-canvas border border-hairline dark:border-ash shrink-0 z-20">
+      {goals}
+    </div>
+  );
+
+  if (showBadge && penalty !== undefined) {
+    return (
+      <Badge.Anchor>
+        {scoreBox}
+        <Badge color="default" size="sm" placement="top-right">
+          {penalty}
+        </Badge>
+      </Badge.Anchor>
+    );
+  }
+
+  return scoreBox;
+}
+
 export function MatchCard({
+  isKnockout,
   date,
   time,
   team1,
@@ -64,6 +99,10 @@ export function MatchCard({
   status,
   score1,
   score2,
+  penalties1,
+  penalties2,
+  t1Eliminated = false,
+  t2Eliminated = false,
   isAdmin = false,
   link,
 }: MatchCardProps) {
@@ -95,6 +134,8 @@ export function MatchCard({
 
   const t1Label = isT1Placeholder ? placeholderLabel(team1, t) : t1.name;
   const t2Label = isT2Placeholder ? placeholderLabel(team2, t) : t2.name;
+
+  const showBadge = isKnockout && status === "FINISHED";
 
   return (
     <Card variant="interactive" className="flex flex-col justify-between">
@@ -150,11 +191,14 @@ export function MatchCard({
             size="default"
             border={true}
             showGrip={false}
+            eliminated={t1Eliminated}
             rightAddon={
               score1 !== undefined ? (
-                <div className="flex h-7 w-8 items-center justify-center rounded bg-soft-cloud dark:bg-charcoal text-sm font-bold text-ink dark:text-canvas border border-hairline dark:border-ash shrink-0 z-20">
-                  {score1}
-                </div>
+                <ScoreWithBadge
+                  goals={score1}
+                  penalty={penalties1}
+                  showBadge={showBadge}
+                />
               ) : null
             }
           />
@@ -168,11 +212,14 @@ export function MatchCard({
             size="default"
             border={true}
             showGrip={false}
+            eliminated={t2Eliminated}
             rightAddon={
               score2 !== undefined ? (
-                <div className="flex h-7 w-8 items-center justify-center rounded bg-soft-cloud dark:bg-charcoal text-sm font-bold text-ink dark:text-canvas border border-hairline dark:border-ash shrink-0 z-20">
-                  {score2}
-                </div>
+                <ScoreWithBadge
+                  goals={score2}
+                  penalty={penalties2}
+                  showBadge={showBadge}
+                />
               ) : null
             }
           />
