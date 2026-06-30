@@ -83,6 +83,7 @@ describe("Badge", () => {
       expect(badge).toBeInTheDocument();
       expect(badge?.className).toContain("py-0.5");
       expect(badge?.className).toContain("px-1.5");
+      expect(badge?.className).toContain("rounded-full");
     });
 
     it("applies sm size classes", () => {
@@ -91,6 +92,7 @@ describe("Badge", () => {
       expect(badge).toBeInTheDocument();
       expect(badge?.className).toContain("py-px");
       expect(badge?.className).toContain("px-1");
+      expect(badge?.className).toContain("rounded-full");
     });
 
     it("applies lg size classes", () => {
@@ -99,6 +101,7 @@ describe("Badge", () => {
       expect(badge).toBeInTheDocument();
       expect(badge?.className).toContain("py-0.5");
       expect(badge?.className).toContain("px-2");
+      expect(badge?.className).toContain("rounded-full");
     });
   });
 

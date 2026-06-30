@@ -1,7 +1,7 @@
 "use client";
 
-import { clsx } from "clsx";
 import type * as React from "react";
+import { cn } from "@/lib/utils";
 
 export type BadgePlacement =
   | "top-right"
@@ -28,9 +28,9 @@ const placementClasses: Record<BadgePlacement, string> = {
 };
 
 const sizeClasses: Record<BadgeSize, string> = {
-  sm: "text-[10px] py-px px-1 rounded-full min-w-4",
-  md: "text-caption-sm py-0.5 px-1.5 rounded-full min-w-[18px]",
-  lg: "text-caption-md py-0.5 px-2 rounded-full min-w-[22px]",
+  sm: "text-[10px] leading-none py-px px-1 rounded-full min-w-4",
+  md: "text-caption-sm leading-none py-0.5 px-1.5 rounded-full min-w-[18px]",
+  lg: "text-caption-md leading-none py-0.5 px-2 rounded-full min-w-[22px]",
 };
 
 const colorClasses: Record<BadgeColor, string> = {
@@ -65,8 +65,8 @@ export function Badge({
 
   return (
     <span
-      className={clsx(
-        "absolute inline-flex items-center justify-center font-medium leading-none whitespace-nowrap",
+      className={cn(
+        "absolute inline-flex items-center justify-center font-medium whitespace-nowrap",
         placementClasses[placement],
         sizeClasses[size],
         colorClasses[color],
