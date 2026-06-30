@@ -474,22 +474,48 @@ export function CalendarView({
                                   ? "FINISHED"
                                   : "UPCOMING";
 
+                            const isKnockout =
+                              !match.round.startsWith("Matchday");
+
                             let score1: string | undefined;
                             let score2: string | undefined;
+                            let penalties1: number | undefined;
+                            let penalties2: number | undefined;
 
                             if (num) {
                               const score = matchScore(num, liveResults);
                               if (score) {
-                                if (
-                                  score.penalties1 !== undefined &&
-                                  score.penalties2 !== undefined
-                                ) {
-                                  // Show penalty score for knockout penalty shootout deciders
-                                  score1 = String(score.penalties1);
-                                  score2 = String(score.penalties2);
-                                } else {
-                                  score1 = String(score.goals1);
-                                  score2 = String(score.goals2);
+                                score1 = String(score.goals1);
+                                score2 = String(score.goals2);
+                                penalties1 = score.penalties1;
+                                penalties2 = score.penalties2;
+                              }
+                            }
+
+                            // Derive eliminated flags for finished knockout matches
+                            let t1Eliminated = false;
+                            let t2Eliminated = false;
+
+                            if (
+                              isKnockout &&
+                              status === "FINISHED" &&
+                              score1 !== undefined &&
+                              score2 !== undefined
+                            ) {
+                              const g1 = Number(score1);
+                              const g2 = Number(score2);
+                              if (g1 > g2) {
+                                t2Eliminated = true;
+                              } else if (g2 > g1) {
+                                t1Eliminated = true;
+                              } else if (
+                                penalties1 !== undefined &&
+                                penalties2 !== undefined
+                              ) {
+                                if (penalties1 > penalties2) {
+                                  t2Eliminated = true;
+                                } else if (penalties2 > penalties1) {
+                                  t1Eliminated = true;
                                 }
                               }
                             }
@@ -515,7 +541,7 @@ export function CalendarView({
                                 key={
                                   match.num || `${match.team1}-${match.team2}`
                                 }
-                                round={match.round}
+                                isKnockout={isKnockout}
                                 date={match.date}
                                 time={match.time}
                                 team1={team1}
@@ -526,6 +552,10 @@ export function CalendarView({
                                 status={status}
                                 score1={score1}
                                 score2={score2}
+                                penalties1={penalties1}
+                                penalties2={penalties2}
+                                t1Eliminated={t1Eliminated}
+                                t2Eliminated={t2Eliminated}
                                 isAdmin={isAdmin}
                                 link={link}
                               />

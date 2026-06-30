@@ -6,7 +6,7 @@ const meta: Meta<typeof MatchCard> = {
   title: "Components/MatchCard",
   component: MatchCard,
   args: {
-    round: "Group Stage",
+    isKnockout: false,
     date: "2026-06-11",
     time: "19:00 UTC-5",
     team1: "Argentina",
@@ -49,11 +49,36 @@ export const Finished: Story = {
     status: "FINISHED",
     score1: "2",
     score2: "1",
-    round: "Group Stage",
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const finished = canvas.getByText("Finished");
     await expect(finished).toBeInTheDocument();
+  },
+};
+
+export const FinishedKnockout: Story = {
+  args: {
+    isKnockout: true,
+    status: "FINISHED",
+    score1: "1",
+    score2: "1",
+    penalties1: 5,
+    penalties2: 3,
+    t1Eliminated: false,
+    t2Eliminated: true,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const finished = canvas.getByText("Finished");
+    await expect(finished).toBeInTheDocument();
+    // Goal scores appear
+    const ones = canvas.getAllByText("1");
+    await expect(ones.length).toBeGreaterThan(0);
+    // Penalty badge values appear
+    const penaltyBadge5 = canvas.getByText("5");
+    await expect(penaltyBadge5).toBeInTheDocument();
+    const penaltyBadge3 = canvas.getByText("3");
+    await expect(penaltyBadge3).toBeInTheDocument();
   },
 };
