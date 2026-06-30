@@ -36,7 +36,7 @@ function extractScore(html: string): {
   goals2: number;
   penalties1?: number;
   penalties2?: number;
-  isLive: boolean;
+  isFinished: boolean;
 } | null {
   const points = [
     ...html.matchAll(
@@ -53,11 +53,14 @@ function extractScore(html: string): {
     goals2: number;
     penalties1?: number;
     penalties2?: number;
-    isLive: boolean;
+    isFinished: boolean;
   } = {
     goals1: parseInt(points[0][1], 10),
     goals2: parseInt(points[1][1], 10),
-    isLive: html.includes("live-light"),
+    isFinished:
+      /<div class=["']score-board__content__kicker["'][^>]*>\s*<p class=["']score-board__text["'][^>]*>\s*Finalizado\s*<\/p>\s*<\/div>/.test(
+        html,
+      ),
   };
 
   // Penalties: parenthesised number directly after each </p> of a
@@ -161,7 +164,7 @@ export class RemoteLiveFeed implements LiveFeed {
     return ok({
       goals1: score.goals1,
       goals2: score.goals2,
-      finished: !score.isLive,
+      finished: score.isFinished,
       penalties1: score.penalties1,
       penalties2: score.penalties2,
     });

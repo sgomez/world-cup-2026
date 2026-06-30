@@ -59,6 +59,9 @@ function buildFinishedPage(
   return `
     <html>
       <body>
+        <div class="score-board__content__kicker">
+          <p class="score-board__text">Finalizado</p>
+        </div>
         <div class="score-board__content__score">
           <p class="score-board__content__score__point">${goals1}</p>
           ${pen1}
@@ -227,6 +230,35 @@ describe("RemoteLiveFeed", () => {
     const snapshot = result._unsafeUnwrap();
     expect(snapshot.penalties1).toBeUndefined();
     expect(snapshot.penalties2).toBeUndefined();
+  });
+
+  it("page without Finalizado text (e.g. Descanso, Prórroga) → finished:false", async () => {
+    const html = `
+      <html>
+        <body>
+          <div class="score-board__content__kicker">
+            <p class="score-board__text">Descanso</p>
+          </div>
+          <div class="score-board__content__score">
+            <p class="score-board__content__score__point">1</p>
+            <span class="score-board__content__score__divider"></span>
+            <p class="score-board__content__score__point">1</p>
+          </div>
+        </body>
+      </html>
+    `;
+    const current = makeLiveResult({
+      link: "https://example.com/match/1",
+      goals1: 0,
+      goals2: 0,
+    });
+    const feed = new RemoteLiveFeed(makeFetch({ ok: true, text: html }));
+    const result = await feed.fetchSnapshot(mockMatch, current);
+    expect(result.isOk()).toBe(true);
+    const snapshot = result._unsafeUnwrap();
+    expect(snapshot.finished).toBe(false);
+    expect(snapshot.goals1).toBe(1);
+    expect(snapshot.goals2).toBe(1);
   });
 
   it("returns Err on non-success HTTP status", async () => {
