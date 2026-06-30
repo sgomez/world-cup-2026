@@ -97,7 +97,7 @@ describe("MatchCard", () => {
     expect(screen.queryByText("3")).not.toBeInTheDocument();
   });
 
-  it("does not show penalty badge for a live knockout match", () => {
+  it("does not show penalty badge for a live knockout match without penalties", () => {
     renderWithIntl(
       <MatchCard
         {...defaultProps}
@@ -110,6 +110,37 @@ describe("MatchCard", () => {
       />,
     );
     expect(screen.queryByText("5")).not.toBeInTheDocument();
+  });
+
+  it("shows penalty badge for a live knockout match when penalties are defined", () => {
+    renderWithIntl(
+      <MatchCard
+        {...defaultProps}
+        isKnockout={true}
+        score1="1"
+        score2="1"
+        penalties1={4}
+        penalties2={2}
+        status="LIVE"
+      />,
+    );
+    expect(screen.getByText("4")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
+  it("shows penalty badge for an upcoming knockout match when penalties are defined", () => {
+    renderWithIntl(
+      <MatchCard
+        {...defaultProps}
+        isKnockout={true}
+        score1="1"
+        score2="1"
+        penalties1={0}
+        penalties2={0}
+        status="UPCOMING"
+      />,
+    );
+    expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(2);
   });
 
   it("applies grayscale class to team1 when t1Eliminated is true", () => {

@@ -73,7 +73,7 @@ function ScoreWithBadge({
     </div>
   );
 
-  if (showBadge && penalty !== undefined) {
+  if (showBadge && penalty != null) {
     return (
       <Badge.Anchor>
         {scoreBox}
@@ -135,7 +135,7 @@ export function MatchCard({
   const t1Label = isT1Placeholder ? placeholderLabel(team1, t) : t1.name;
   const t2Label = isT2Placeholder ? placeholderLabel(team2, t) : t2.name;
 
-  const showBadge = isKnockout && status === "FINISHED";
+  const showBadge = isKnockout;
 
   return (
     <Card variant="interactive" className="flex flex-col justify-between">
